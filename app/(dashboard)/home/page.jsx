@@ -12,15 +12,15 @@ export default async function DashboardHome() {
     <div className='bg-white min-h-screen'>
      <main className="flex-1 overflow-y-auto">
         {/* Top Bar */}
-        <header className="bg-white shadow-sm p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Welcome {user?.firstName}!</h1>
+        <header className="bg-white shadow-sm p-4 py-6 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-blue-500 ">Welcome {user?.firstName}!</h1>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
+            {/* <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon">
               <LogOut className="h-5 w-5" />
-            </Button>
+            </Button> */}
           </div>
         </header>
 

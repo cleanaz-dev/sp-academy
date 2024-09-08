@@ -21,12 +21,22 @@ export default async function DashboardLessonsPage() {
   //   { id: 6, title: "World War II Overview", subject: "History", duration: "70 min", level: "Advanced", rating: 4.9 },
   // ]
   return (
-    <div className="h-screen bg-zinc-100">
-  <main className="px-4 py-8 max-w-7xl"> {/* Added max-width for main content */}
-    <h1 className="text-3xl font-bold text-blue-500 mb-6">Available Lessons</h1>
+    <div className="h-screen ">
+  <main className="max-w-7xl"> {/* Added max-width for main content */}
+  <header className="bg-white shadow-sm p-4 py-6 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-blue-500 ">Available Lessons</h1>
+          <div className="flex items-center space-x-4">
+            {/* <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <LogOut className="h-5 w-5" />
+            </Button> */}
+          </div>
+        </header>
 
     {/* Grid container with improved column spacing */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
       {lessons.map((lesson) => (
         <Card key={lesson.id}>
           <CardHeader>
