@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  lessons   Lesson[] @relation(fields: [lessonIds], references: [id])
+  lessonIds String[] @db.ObjectId
+}
+
+model Lesson {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  subject    String?
+  duration   String?
+  level      Int?
+  content    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  students   Student[] @relation(fields: [studentIds], references: [id])
+  studentIds String[]  @db.ObjectId
+  Quiz       Quiz?
+}
+
+model Quiz {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  questions Question[]
+  lessonId  String @unique @db.ObjectId
+  lesson    Lesson @relation(fields: [lessonId], references: [id])
+}
+
+model Question {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  quizId    String   @db.ObjectId
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  text      String
+  options   String[]
+  answer    String
+}
