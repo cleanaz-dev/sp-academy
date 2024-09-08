@@ -1,6 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import {Roboto} from "next/font/google"
 
 const geistSans = localFont({
  src: "./fonts/GeistVF.woff",
@@ -13,6 +14,11 @@ const geistMono = localFont({
  weight: "100 900",
 });
 
+const roboto = Roboto({ 
+  subsets: ["latin"],
+  weight: ["100", "300", "400", "500", "700", "900"]
+})
+
 export const metadata = {
  title: "SP Academy - Revolutionizing Learning with AI",
  description:
@@ -23,7 +29,7 @@ export default function RootLayout({ children }) {
  return (
   <ClerkProvider>
    <html lang="en">
-    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <body className={roboto.className}>
      {children}
     </body>
    </html>

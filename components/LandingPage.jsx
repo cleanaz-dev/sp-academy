@@ -46,15 +46,15 @@ export default function LandingPage() {
   </div>
 </header>
    <main className="flex-1">
-    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-primary">
+    <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-r from-indigo-200 to-yellow-100">
      <div className="container px-4 md:px-6 mx-auto">
       <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
        <div className="flex flex-col justify-center space-y-4 text-white">
         <div className="space-y-2">
-         <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
+         <h1 className="text-3xl tracking-tighter sm:text-5xl xl:text-6xl/none">
           Welcome to Spoon Fed Academy
          </h1>
-         <p className="max-w-[600px] text-zinc-200 md:text-xl">
+         <p className="max-w-[600px] text-zinc-600 md:text-xl font-thin">
           Where learning is as easy as being spoon-fed! Join us for a fun and
           engaging educational journey.
          </p>
@@ -88,7 +88,7 @@ export default function LandingPage() {
      <div className="container px-4 md:px-6 mx-auto">
       <div className="flex flex-col items-center justify-center space-y-4 text-center">
        <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+        <h2 className="text-3xl tracking-tighter sm:text-5xl">
          Our Mission
         </h2>
         <p className="max-w-[900px] text-zinc-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
@@ -103,10 +103,10 @@ export default function LandingPage() {
     </section>
     <section
      id="features"
-     className="w-full py-12 md:py-24 lg:py-32 bg-zinc-100"
+     className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-indigo-200 to-yellow-100"
     >
      <div className="container px-4 md:px-6 mx-auto">
-      <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">
+      <h2 className="text-3xl tracking-tighter sm:text-5xl text-center mb-12 text-white">
        Our Features
       </h2>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -139,7 +139,7 @@ export default function LandingPage() {
      className="w-full py-12 md:py-24 lg:py-32 bg-white"
     >
      <div className="container px-4 md:px-6 mx-auto">
-      <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">
+      <h2 className="text-3xl tracking-tighter sm:text-5xl text-center mb-12">
        What Our Students Say
       </h2>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -170,7 +170,7 @@ export default function LandingPage() {
       </div>
      </div>
     </section>
-    <section
+    {/* <section
      id="contact"
      className="w-full py-12 md:py-24 lg:py-32 bg-primary text-white"
     >
@@ -211,7 +211,7 @@ export default function LandingPage() {
        </div>
       </div>
      </div>
-    </section>
+    </section> */}
    </main>
    <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
     <p className="text-xs text-zinc-500">
