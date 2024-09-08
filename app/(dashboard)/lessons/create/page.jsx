@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import QuizCreator from '../../components/QuizCreator';
+
 
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
@@ -71,12 +71,6 @@ export default function CreateLesson() {
           Create Lesson
         </button>
       </form>
-      {lessonId && (
-        <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Create Quiz for Lesson</h2>
-          <QuizCreator lessonId={lessonId} onQuizCreated={handleQuizCreated} />
-        </div>
-      )}
     </div>
   );
 }
