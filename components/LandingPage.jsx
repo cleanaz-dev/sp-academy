@@ -10,7 +10,7 @@ const navItems = [
  { id: 1, label: "Our Mission", href: "#mission" },
  { id: 2, label: "Features", href: "#features" },
  { id: 3, label: "Testimonials", href: "#testimonials" },
- { id: 4, label: "Contact", href: "#contact" },
+//  { id: 4, label: "Contact", href: "#contact" },
  {id: 5, label: "Sign In", href: "/sign-in" },
 ];
 
@@ -34,7 +34,7 @@ export default function LandingPage() {
         href={item.href}
         className={`text-sm font-medium hover:underline underline-offset-4 ${
           item.label === "Sign In"
-            ? "bg-white text-black rounded-md px-3 py-1 hover:no-underline hover:bg-purple-500 hover:text-white transition-colors duration-300" // Add custom styles for "Sign In"
+            ? "bg-white text-black rounded-md px-3 py-1 hover:no-underline hover:bg-zinc-600 hover:text-white transition-colors duration-300" // Add custom styles for "Sign In"
             : ""
         }`}
       >

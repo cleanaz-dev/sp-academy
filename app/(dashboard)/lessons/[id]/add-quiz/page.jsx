@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import QuizCreator from '../../../components/QuizCreator';
+import QuizCreator from '@/components/QuizCreator';
+
 
 export default function AddQuizPage({ params }) {
   const [lesson, setLesson] = useState(null);
