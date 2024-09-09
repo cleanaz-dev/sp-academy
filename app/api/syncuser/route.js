@@ -17,7 +17,7 @@ export async function POST(request) {
     const createdUser = await prisma.user.create({
       data: user,
     })
-    console.log(createdUser)
+    
     return new NextResponse({ status: 200, body: JSON.stringify(createdUser) }  );
    
   } catch (error) {
