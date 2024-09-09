@@ -13,6 +13,8 @@ import { Settings2Icon } from "lucide-react";
 import { PhoneForwarded } from "lucide-react";
 import { PanelRight } from "lucide-react";
 import { BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User } from "lucide-react";
 
 
 const shortStack = Short_Stack({ 
@@ -90,7 +92,9 @@ function Sidebar({ sideBarOpen, toggleSideBar }) {
     </div>
 
     <div className="mt-auto py-4 px-8 items-center flex gap-2 hover:bg-primary/10 transition-all duration-300">
-     <UserButton /> {user?.firstName}
+    
+     <UserButton showName />
+     
     </div>
    </div>
    {!sideBarOpen ? (

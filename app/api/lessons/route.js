@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma'; // Assuming you have Prisma set up
 
 export async function POST(request) {
-  const { title, content } = await request.json();
+  const { title, content, subject } = await request.json();
 
   try {
     const lesson = await prisma.lesson.create({
       data: {
         title,
         content,
+        subject
       },
     });
 

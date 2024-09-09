@@ -14,12 +14,12 @@ export default async function SingleLessonsPage({ params }) {
  }
  return (
   <div className="w-full p-4 flex flex-col h-screen max-w-none bg-white">
-   <h1 className="text-2xl font-bold mb-4 text-black">{lesson.title}</h1>
+   <h1 className="text-2xl font-bold mb-4 text-black bg-transparent">{lesson.title}</h1>
    <div className="prose prose-lg w-full flex-1 overflow-y-auto max-w-none dark:prose-invert">
     <span>
      
       <Markdown remarkPlugins={[remarkGfm]}>{lesson.content}</Markdown>
-      {lesson.Quiz && (
+      {lesson.quiz && (
         <Link href={`/lessons/${lesson.id}/quiz`} className="bg-blue-500 text-white px-4 py-2 rounded">
           Take Quiz
         </Link>

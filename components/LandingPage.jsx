@@ -20,13 +20,14 @@ export default function LandingPage() {
    <header className="px-4 lg:px-6 h-14 flex items-center justify-between">
   <Link className="flex items-center justify-center" href="#">
     <BookOpen className="h-6 w-6 text-primary" />
-    <span className="ml-2 text-2xl font-bold text-primary hidden md:block">
-      SP Academy
+    <span className="ml-2 text-2xl font-bold text-primary ">
+     <span> SP</span> Academy
     </span>
   </Link>
 
   <div className="flex items-center">
-    <MenuIcon className="block sm:block md:block lg:hidden text-primary" />
+    <Button variant="ghost"><MenuIcon className="block sm:block md:block lg:hidden text-primary" /></Button>
+    
     <nav className="ml-4 gap-4 sm:gap-6 hidden lg:flex">
       {navItems.map((item, id) => (
         <div key={id} className="flex items-center">

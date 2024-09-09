@@ -20,7 +20,7 @@ const roboto = Roboto({
 })
 
 export const metadata = {
- title: "SP Academy - Revolutionizing Learning with AI",
+ title: "Spoon Fed Academy - Revolutionizing Learning with AI",
  description:
   "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
 };
