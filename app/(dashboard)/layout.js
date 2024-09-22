@@ -15,6 +15,9 @@ import { PanelRight } from "lucide-react";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
+import { Star } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
+import { BookHeartIcon } from "lucide-react";
 
 
 const shortStack = Short_Stack({ 
@@ -28,10 +31,11 @@ const anton = Anton({
 });
 
 const sidebarItems = [
- { name: "Dashboard", href: "/home", icon: <DashboardIcon/> },
+ { name: "Dashboard", href: "/home", icon: <LayoutDashboard/> },
  { name: "Lessons", href: "/lessons", icon: <BookCheck /> },
  { name: "Schedule", href: "/schedule", icon: <Calendar /> },
- { name: "Achievments", href: "/achievements", icon: <StarFilledIcon /> },
+ { name:"Journals", href: "/journals", icon: <BookHeartIcon />},
+ { name: "Achievments", href: "/achievements", icon: <Star /> },
  { name: "Settings", href: "/settings", icon: <Settings2Icon />}
 ];
 
@@ -80,7 +84,7 @@ function Sidebar({ sideBarOpen, toggleSideBar }) {
           {link.icon}
         </span>
         <p
-          className={`text-sm ${
+          className={`text-base ${
             pathname.startsWith(link.href) ? "text-blue-500" : ""
           }`}
         >
@@ -92,9 +96,9 @@ function Sidebar({ sideBarOpen, toggleSideBar }) {
     </div>
 
     <div className="mt-auto py-4 px-8 items-center flex gap-2 hover:bg-primary/10 transition-all duration-300">
-    
-     <UserButton showName />
-     
+
+     <UserButton children/> {user?.firstName}
+ 
     </div>
    </div>
    {!sideBarOpen ? (
