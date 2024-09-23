@@ -4,15 +4,24 @@ import { getJournalByUserId } from '@/lib/actions'
 import { auth } from '@clerk/nextjs/server'
 
 export default async function JournalHistory() {
-  const {userId} = auth()
-  const userData = await getJournalByUserId(userId)
-  const journals = userData.Journal
-  console.log(journals)
+  const { userId } = auth();
   
-  
+  if (!userId) {
+    console.error("User is not authenticated");
+    return <div>Please log in to view your journals.</div>;
+  }
+
+  const userData = await getJournalByUserId(userId);
+  const journals = userData?.Journal || []; // Fallback to empty array if undefined
+  console.log(journals);
+
   return (
     <div>
-      <JournalHistoryPage journals={journals}/>
+      {journals.length > 0 ? (
+        <JournalHistoryPage journals={journals} />
+      ) : (
+        <div>No journals available.</div>
+      )}
     </div>
-  )
+  );
 }
