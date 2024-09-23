@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 
 export default async function JournalHistory() {
   const { userId } = auth();
+  console.log(userId)
   
   if (!userId) {
     console.error("User is not authenticated");
