@@ -77,3 +77,8 @@ export async function POST(request) {
   return new NextResponse({ status: 500, body: JSON.stringify({ error: "Internal Server Error" }) });
  }
 }
+
+export async function GET(request) {
+  
+  return new NextResponse("hello from journal api")
+}
