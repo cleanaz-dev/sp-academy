@@ -61,7 +61,7 @@ export async function POST(request) {
       "dynamic_data": [],
       "analysis_preset": null,
       "analysis_schema": {},
-      "webhook": "https://llmgem.ngrok.app/api/create-journal",
+      "webhook": "https://sp-academy.vercel.app/api/create-journal",
     },
     {
       
