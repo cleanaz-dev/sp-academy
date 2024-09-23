@@ -40,7 +40,7 @@ export default function CreateLesson() {
   
       if (createWithAi) {
         // If creating with AI, send data to the AI lesson creation endpoint
-        const aiLessonResponse = await fetch("/api/create-lesson", {
+        const aiLessonResponse = await fetch("https://sp-academy.vercel.app/api/create-lesson", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export default function CreateLesson() {
         lessonContent = aiLesson.content; // Assuming the AI returns the generated content
       } else {
         // Regular lesson creation with user inputted content
-        const lessonResponse = await fetch("/api/lessons", {
+        const lessonResponse = await fetch("https://sp-academy.vercel.app/api/lessons", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export default function CreateLesson() {
   
   const createQuizForLesson = async (lessonId, lessonContent) => {
     try {
-      const quizResponse = await fetch("/api/create-quiz", {
+      const quizResponse = await fetch("https://sp-academy.vercel.app/api/create-quiz", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
