@@ -15,7 +15,7 @@ datasource db {
 
 model User {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   
+  userId    String
   email     String   @unique
   name      String
   role      Role     @default(USER)
@@ -23,14 +23,14 @@ model User {
   updatedAt DateTime @updatedAt
   student   Student?
   teacher   Teacher?
+  Journal   Journal[]
 }
 
 model Student {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @unique @db.ObjectId
-  lessons   StudentLesson[]
-  
+  id      String          @id @default(auto()) @map("_id") @db.ObjectId
+  user    User            @relation(fields: [userId], references: [id])
+  userId  String          @unique @db.ObjectId
+  lessons StudentLesson[]
 }
 
 model Teacher {
@@ -52,20 +52,19 @@ model Lesson {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  teacher    Teacher?  @relation(fields: [teacherId], references: [id])
-  teacherId  String?   @db.ObjectId
-  students   StudentLesson[]
-  quiz       Quiz?
+  teacher   Teacher?        @relation(fields: [teacherId], references: [id])
+  teacherId String?         @db.ObjectId
+  students  StudentLesson[]
+  quiz      Quiz?
 }
 
 model StudentLesson {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  student   Student  @relation(fields: [studentId], references: [id])
-  studentId String   @db.ObjectId
-  lesson    Lesson   @relation(fields: [lessonId], references: [id])
-  lessonId  String   @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  student   Student @relation(fields: [studentId], references: [id])
+  studentId String  @db.ObjectId
+  lesson    Lesson  @relation(fields: [lessonId], references: [id])
+  lessonId  String  @db.ObjectId
 }
-
 
 model Quiz {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
@@ -82,6 +81,25 @@ model Question {
   text    String
   options String[]
   answer  String
+}
+
+model Journal {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String    @unique @db.ObjectId
+  user         User      @relation(fields: [userId], references: [id])
+  callId       String    @unique
+  record       Boolean?
+  recordingUrl String?
+  length       String?
+  completed    Boolean
+  summary      String?
+  to           String?
+  from         String?
+  transcripts  String?
+  language     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {

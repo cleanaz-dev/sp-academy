@@ -20,6 +20,7 @@ import { LayoutDashboard } from "lucide-react";
 import { BookHeartIcon } from "lucide-react";
 
 
+
 const shortStack = Short_Stack({ 
   subsets: ["latin"],
   weight: "400"
@@ -122,7 +123,9 @@ export default function Layout({ children }) {
 
  return (
   <div className="flex h-screen">
-   <Sidebar sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar} />
+
+
+  <Sidebar sideBarOpen={sideBarOpen} toggleSideBar={toggleSideBar} />
    <div
     className={`flex-1 transition-all duration-300 ${
      sideBarOpen ? "ml-0" : "-ml-40"
@@ -130,6 +133,7 @@ export default function Layout({ children }) {
    >
     {children}
    </div>
+
   </div>
  );
 }

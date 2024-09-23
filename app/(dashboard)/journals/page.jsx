@@ -1,20 +1,33 @@
+import CalendarComponent from "@/components/CalendarComponent";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
-import bunnyImg from "../../../public/bunny-1.png";
+import { Button } from "rsuite";
 
-export default function page() {
+
+
+export default async function page() {
+ 
  return (
-  <div className="bg-white min-h-screen flex justify-center">
-   <div className=" flex text-center items-center">
-    <h1 className="text-7xl tracking-widest bg-gradient-to-tr from-cyan-500 to-pink-500 bg-clip-text text-transparent p-5">Journal Page coming soon! ❤️</h1>
-    <Image
-     src={bunnyImg}
-     width={200}
-     height={200}
-     alt="A cute bunny"
-     className="animate-bounce object-contain"
-    />
+  <div className="min-h-screen">
+   <main className=" flex-col text-center items-center">
+   <header className="bg-white p-4 py-6 flex justify-between items-center">
+     <h1 className="text-3xl font-bold text-blue-500 ">Journals</h1>
+     {/* <div className="flex items-center space-x-4">
+   
+     </div> */}
+    </header>
+   <div>
+    <CalendarComponent />
    </div>
+   <div className="flex p-4">
+    <Button appearance="primary">
+      <Link href="/journals/history">
+      View Journal History
+      </Link>
+    </Button>
+   </div>
+   </main>
   </div>
  );
 }
