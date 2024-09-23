@@ -12,7 +12,7 @@ export default function JournalRecordModal() {
  const {user} = useUser();
  const [open, setOpen] = React.useState(false);
  const [size, setSize] = React.useState();
- const [accept, setAccept] = React.useState()
+ const [accept, setAccept] = React.useState(false)
  const [submitting, setSubmitting] = React.useState(false)
 
  const handleOpen = (value) => {
