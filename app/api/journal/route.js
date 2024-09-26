@@ -4,11 +4,11 @@ import axios from "axios";
 export async function POST(request) {
  try {
   const data = await request.json();
- const name = data.name
+  const name = data.name
   const phoneNumber = data.phoneNumber
   const userId = data.userId
   const journalId = data.journalId
-  console.log(data)
+  console.log("From Journal API",journalId)
 
   if (journalId) {
     await axios.post(
@@ -66,6 +66,13 @@ export async function POST(request) {
         "analysis_preset": null,
         "analysis_schema": {},
         "webhook": "https://sp-academy.vercel.app/api/rerecord-journal",
+      },
+      {
+        
+        headers: {
+          authorization: process.env.BLAND_API_KEY, 
+          "Content-Type": "application/json", 
+        },
       }
     )
   } else {
