@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 
 export default async function JournalHistory() {
   const { userId } = auth();
-  console.log(userId)
+  // console.log(userId)
   
   if (!userId) {
     console.error("User is not authenticated");
@@ -13,8 +13,7 @@ export default async function JournalHistory() {
   }
 
   const userData = await getJournalByUserId(userId);
-  const journals = userData?.Journal || []; // Fallback to empty array if undefined
-  console.log(journals);
+  const journals = userData?.Journal || []; // Fallback to empty array if undefinedclear
 
   return (
     <div>

@@ -6,6 +6,7 @@ import { Calendar, Volume2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import JournalRecordAgainModal from './JournalRecordAgainModel'
 
 export default function JournalHistoryPage({ journals }) {
   
@@ -44,9 +45,10 @@ export default function JournalHistoryPage({ journals }) {
                   <CardHeader>
                     <CardTitle>{format(new Date(journal.createdAt), 'MMMM d, yyyy')}</CardTitle>
                   </CardHeader>
-                  <CardContent className="gap-2">
+                  <CardContent className="gap-2 space-y-2">
                     <p><Calendar className="inline mr-2" />{format(new Date(journal.createdAt), 'h:mm a')}</p>
                     <p><Volume2 className="inline mr-2" />Length: {journal.length} seconds</p>
+                   <JournalRecordAgainModal journalId={journal.id}/>
                   </CardContent>
                 </Card>
               ))
