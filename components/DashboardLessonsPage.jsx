@@ -57,7 +57,7 @@ export default async function DashboardLessonsPage() {
          </Badge>
         </div>
 
-        <div className="bg-white/50 border my-4 rounded-md min-h-40">
+        <div className="bg-white/50 border my-4 rounded-md h-40">
          <p className="text-sm  p-2  text-slate-500 ">
           {lesson.description}
          </p>
@@ -67,11 +67,11 @@ export default async function DashboardLessonsPage() {
          <span>{lesson.duration}m</span>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500 my21">
-         <Star className="h-4 w-4 text-yellow-400" />
-         <Star className="h-4 w-4 text-yellow-400" />
-         <Star className="h-4 w-4 text-yellow-400" />
-         <Star className="h-4 w-4 text-yellow-400" />
-         <Star className="h-4 w-4 text-yellow-400" />
+         <Star className="h-4 w-4 text-yellow-400" fill="gold" />
+         <Star className="h-4 w-4 text-yellow-400" fill="gold"/>
+         <Star className="h-4 w-4 text-yellow-400" fill="gold"/>
+         <Star className="h-4 w-4 text-yellow-400" fill="gold"/>
+         <Star className="h-4 w-4 text-yellow-400" fill="gold"/>
          <span>{lesson.rating}</span>
         </div>
        </CardContent>

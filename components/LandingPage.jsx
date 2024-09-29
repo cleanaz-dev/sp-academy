@@ -5,6 +5,7 @@ import { MenuIcon } from "lucide-react";
 import { BookOpen, Brain, Rocket, Star, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import {Lobster} from "next/font/google"
 
 const navItems = [
  { id: 1, label: "Our Mission", href: "#mission" },
@@ -14,15 +15,20 @@ const navItems = [
  {id: 5, label: "Sign In", href: "/sign-in" },
 ];
 
+const lobster = Lobster({
+  subsets: ["latin"],
+  weight: "400"
+})
+
 export default function LandingPage() {
  return (
   <div className="flex flex-col min-h-screen">
    <header className="px-4 lg:px-6 h-14 flex items-center justify-between">
   <Link className="flex items-center justify-center" href="#">
     <BookOpen className="h-6 w-6 text-primary" />
-    <span className="ml-2 text-2xl font-bold text-primary ">
-     <span> SP</span> Academy
-    </span>
+    <p className="ml-2 text-2xl font-bold text-primary ">
+     <span className={lobster.className}> SP Academy</span>
+    </p>
   </Link>
 
   <div className="flex items-center">
@@ -35,11 +41,11 @@ export default function LandingPage() {
         href={item.href}
         className={`text-sm font-medium hover:underline underline-offset-4 ${
           item.label === "Sign In"
-            ? "bg-white text-black rounded-md px-3 py-1 hover:no-underline hover:bg-zinc-600 hover:text-white transition-colors duration-300" // Add custom styles for "Sign In"
+            ? "bg-white text-black rounded-md px-3 py-1 hover:no-underline hover:bg-indigo-200 hover:text-white transition-colors duration-300" // Add custom styles for "Sign In"
             : ""
         }`}
       >
-            {item.label}
+            <span className={lobster.className}>{item.label}</span>
           </Link>
         </div>
       ))}

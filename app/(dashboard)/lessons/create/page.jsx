@@ -35,79 +35,93 @@ export default function CreateLesson() {
     e.preventDefault();
   
     try {
-      let lessonId;
-      let lessonContent;
-  
-      if (createWithAi) {
-        // If creating with AI, send data to the AI lesson creation endpoint
-        const aiLessonResponse = await fetch("https://sp-academy.vercel.app/api/create-lesson", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ title, subject, topic, level }),
-        });
-  
-        if (!aiLessonResponse.ok) {
-          console.error("Failed to create lesson with AI");
-          return;
-        }
-  
-        const aiLesson = await aiLessonResponse.json();
-        lessonId = aiLesson.id;
-        lessonContent = aiLesson.content; // Assuming the AI returns the generated content
-      } else {
-        // Regular lesson creation with user inputted content
-        const lessonResponse = await fetch("https://sp-academy.vercel.app/api/lessons", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ title, content, subject }),
-        });
-  
-        if (!lessonResponse.ok) {
-          console.error("Failed to create lesson");
-          return;
-        }
-  
-        const lesson = await lessonResponse.json();
-        lessonId = lesson.id;
-        lessonContent = content; // Use the user-provided content
+      const lesson = await createLesson();
+      if (!lesson) {
+        throw new Error("Lesson creation failed.");
       }
+  
+      const { lessonId, lessonContent } = lesson;
   
       // If createQuiz is true, create the quiz using the lesson ID and content
       if (createQuiz && lessonId) {
-        await createQuizForLesson(lessonId, lessonContent);
+        const quizCreated = await createQuizForLesson(lessonId, lessonContent);
+        if (!quizCreated) {
+          throw new Error("Quiz creation failed.");
+        }
       }
   
       router.push("/lessons");
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error:", error.message);
     }
   };
   
+  // Function to handle lesson creation (both AI and manual)
+  const createLesson = async () => {
+    try {
+      if (createWithAi) {
+        // AI-generated lesson
+        return await sendLessonRequest("https://sp-academy.vercel.app/api/create-lesson", {
+          title,
+          subject,
+          topic,
+          level,
+        });
+      } else {
+        // User-provided lesson
+        return await sendLessonRequest("https://sp-academy.vercel.app/api/lessons", {
+          title,
+          content,
+          subject,
+        });
+      }
+    } catch (error) {
+      console.error("Error creating lesson:", error.message);
+      return null;
+    }
+  };
+  
+  // Function to send the lesson request (for both AI and regular lessons)
+  const sendLessonRequest = async (url, body) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  
+    if (!response.ok) {
+      console.error(`Failed to create lesson. Status: ${response.status}`);
+      return null;
+    }
+  
+    const lesson = await response.json();
+    return { lessonId: lesson.id, lessonContent: lesson.content || content };
+  };
+  
+  // Function to create the quiz
   const createQuizForLesson = async (lessonId, lessonContent) => {
     try {
-      const quizResponse = await fetch("https://sp-academy.vercel.app/api/create-quiz", {
+      const response = await fetch("https://sp-academy.vercel.app/api/create-quiz", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lessonId,
           title,
-          content: lessonContent, // Use the lesson content here
+          content: lessonContent, // Use the lesson content
           questionCount,
           isMultipleChoice,
         }),
       });
   
-      if (!quizResponse.ok) {
-        console.error("Failed to create quiz");
+      if (!response.ok) {
+        console.error(`Failed to create quiz. Status: ${response.status}`);
+        return false;
       }
+  
+      return true;
     } catch (error) {
-      console.error("Error creating quiz:", error);
+      console.error("Error creating quiz:", error.message);
+      return false;
     }
   };
 
