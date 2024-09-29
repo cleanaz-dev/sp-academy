@@ -29,10 +29,12 @@ export default function CreateLesson() {
   const [createQuiz, setCreateQuiz] = useState(false);
   const [questionCount, setQuestionCount] = useState(15);
   const [isMultipleChoice, setIsMultipleChoice] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading state
   
     try {
       const lesson = await createLesson();
@@ -61,7 +63,7 @@ export default function CreateLesson() {
     try {
       if (createWithAi) {
         // AI-generated lesson
-        return await sendLessonRequest("https://sp-academy.vercel.app/api/create-lesson", {
+        return await sendLessonRequest("http://localhost:3000/api/create-lesson", {
           title,
           subject,
           topic,
@@ -69,7 +71,7 @@ export default function CreateLesson() {
         });
       } else {
         // User-provided lesson
-        return await sendLessonRequest("https://sp-academy.vercel.app/api/lessons", {
+        return await sendLessonRequest("http://localhost:3000/api/lessons", {
           title,
           content,
           subject,
@@ -101,7 +103,7 @@ export default function CreateLesson() {
   // Function to create the quiz
   const createQuizForLesson = async (lessonId, lessonContent) => {
     try {
-      const response = await fetch("https://sp-academy.vercel.app/api/create-quiz", {
+      const response = await fetch("http://localhost:3000/api/create-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -265,8 +267,9 @@ export default function CreateLesson() {
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              Create Lesson
+            {isLoading ? "Creating..." : "Create Lesson"}
             </button>
+            
           </form>
         </Card>
       </main>

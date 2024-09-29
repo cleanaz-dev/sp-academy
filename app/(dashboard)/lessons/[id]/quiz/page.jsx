@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Confetti from 'react-confetti'; // Import the Confetti component
 
 export default function Quiz({ params }) {
   const [quiz, setQuiz] = useState(null);
@@ -9,6 +10,8 @@ export default function Quiz({ params }) {
   const [selectedAnswer, setSelectedAnswer] = useState('');
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Track window width
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight); // Track window height
   const router = useRouter();
 
   useEffect(() => {
@@ -46,11 +49,25 @@ export default function Quiz({ params }) {
     router.push(`/lessons/${params.id}`);
   };
 
+  useEffect(() => {
+    // Update window dimensions on resize
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   if (!quiz) return <div>Loading...</div>;
 
   if (quizCompleted) {
     return (
       <div className="container mx-auto p-4">
+        <Confetti width={windowWidth} height={windowHeight} /> {/* Render Confetti */}
         <h1 className="text-2xl font-bold mb-4">Quiz Completed</h1>
         <p className="mb-4">Your score: {score} out of {quiz.questions.length}</p>
         <button onClick={handleReturnToLesson} className="bg-blue-500 text-white px-4 py-2 rounded">
