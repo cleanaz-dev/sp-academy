@@ -131,7 +131,9 @@ export default function Layout({ children }) {
      sideBarOpen ? "ml-0" : "-ml-40"
     } w-full`}
    >
+    <span className={shortStack.className}>
     {children}
+    </span>
    </div>
 
   </div>

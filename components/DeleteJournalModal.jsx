@@ -5,6 +5,7 @@ import RemindIcon from '@rsuite/icons/legacy/Remind';
 import React, {useState, useEffect} from 'react'
 import { deleteJournalById } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
+import { TrashIcon } from 'lucide-react';
 
 
 
@@ -25,7 +26,7 @@ export default function DeleteJournalModal({journalId}) {
     <>
   <ButtonToolbar>
     <span className=''>
-      <Button color="red" appearance="primary" onClick={handleOpen}>Delete</Button>
+      <Button color="blue" appearance="primary" onClick={handleOpen}>Delete</Button>
     </span>
   </ButtonToolbar>
 

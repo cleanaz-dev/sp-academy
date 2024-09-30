@@ -52,7 +52,7 @@ export default function JournalHistoryPage({ journals }) {
         <Card
          key={journal.id}
          className={`m-4 cursor-pointer ${
-          selectedJournal?.id === journal.id ? "bg-blue-50" : ""
+          selectedJournal?.id === journal.id ? "bg-gradient-to-br from-blue-100 to-yellow-50" : ""
          }`}
          onClick={() => setSelectedJournal(journal)}
         >
@@ -68,7 +68,7 @@ export default function JournalHistoryPage({ journals }) {
           </p>
           <p>
            <Volume2 className="inline mr-2" />
-           Length: {journal.length} seconds
+          {journal.length} seconds
           </p>
           {/* Re-record Button, conditionally rendered */}
           {isSameDay(new Date(journal.createdAt), new Date(isToday)) && (
@@ -90,14 +90,14 @@ export default function JournalHistoryPage({ journals }) {
        <div className="mb-4 flex justify-between items-center">
         <div>
          <Button
-          variant={activeTab === "summary" ? "default" : "outline"}
+          variant={activeTab === "summary" ? "secondary" : "outline"}
           onClick={() => setActiveTab("summary")}
           className="mr-2"
          >
           Summary
          </Button>
          <Button
-          variant={activeTab === "transcript" ? "default" : "outline"}
+          variant={activeTab === "transcript" ? "secondary" : "outline"}
           onClick={() => setActiveTab("transcript")}
          >
           Transcript
