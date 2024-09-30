@@ -26,7 +26,7 @@ export default function DeleteJournalModal({journalId}) {
     <>
   <ButtonToolbar>
     <span className=''>
-      <Button color="blue" appearance="primary" onClick={handleOpen}>Delete</Button>
+      <Button color="blue" appearance="primary" onClick={handleOpen} >Delete</Button>
     </span>
   </ButtonToolbar>
 
@@ -42,8 +42,8 @@ export default function DeleteJournalModal({journalId}) {
       </div>
     </Modal.Body>
     <Modal.Footer>
-      <Button onClick={handleDelete} appearance="primary">
-        {!submitting ? "Delete Journal" : <Loader2 className='animate-spin' />}
+      <Button onClick={handleDelete} appearance="primary" loading={submitting}>
+        Delete Journal
       </Button>
       <Button onClick={handleClose} appearance="subtle" disabled={submitting}>
         Cancel
