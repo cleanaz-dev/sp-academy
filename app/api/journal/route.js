@@ -17,6 +17,10 @@ export async function POST(request) {
         "phone_number": `${phoneNumber}`,
         "from": "+14372920555",
         "task": `You're Jeanne, a french teacher assistant at SP Academy. You're calling students to speak about their day,  like a verbal journal. You ask 4 questions only. 1. How was your day 2. What was something that made you happy today? 3. What was something that didnt make you happy today? 4. What was something that made you laugh today?
+        2 Rules to follow
+        - Only ask 4 questions
+        - Always wait for student to answer the question before asking next question
+        
         Here are the details:
         Student Name: ${name}
         Grade: 5
@@ -48,7 +52,7 @@ export async function POST(request) {
         "wait_for_greeting": true,
         "record": true,
         "amd": false,
-        "interruption_threshold": 100,
+        "interruption_threshold": 130,
         "voicemail_message": null,
         "temperature": null,
         "transfer_phone_number": null,
@@ -82,6 +86,10 @@ export async function POST(request) {
         "phone_number": `${phoneNumber}`,
         "from": "+14372920555",
         "task": `You're Jeanne, a french teacher assistant at SP Academy. You're calling students to speak about their day,  like a verbal journal. You ask 4 questions only. 1. How was your day 2. What was something that made you happy today? 3. What was something that didnt make you happy today? 4. What was something that made you laugh today?
+        2 Rules to follow
+        - Only ask 4 questions
+        - Always wait for student to answer the question before asking next question
+
         Here are the details:
         Student Name: ${name}
         Grade: 5
@@ -113,7 +121,7 @@ export async function POST(request) {
         "wait_for_greeting": true,
         "record": true,
         "amd": false,
-        "interruption_threshold": 100,
+        "interruption_threshold": 130,
         "voicemail_message": null,
         "temperature": null,
         "transfer_phone_number": null,

@@ -36,10 +36,10 @@ export default function LandingPage() {
     
     <nav className="ml-4 gap-4 sm:gap-6 hidden lg:flex">
       {navItems.map((item, id) => (
-        <div key={id} className="flex items-center">
+        <div key={id} className="flex items-center ">
           <Link
         href={item.href}
-        className={`text-sm font-medium hover:underline underline-offset-4 ${
+        className={`text-lg font-medium hover:underline underline-offset-4 ${
           item.label === "Sign In"
             ? "bg-white text-black rounded-md px-3 py-1 hover:no-underline hover:bg-indigo-200 hover:text-white transition-colors duration-300" // Add custom styles for "Sign In"
             : ""
@@ -81,25 +81,26 @@ export default function LandingPage() {
          >
           Get Started
          </Link>
-         <Link
+         {/* <Link
           className="inline-flex h-10 items-center justify-center rounded-md border border-white bg-transparent px-8 text-sm font-medium text-white shadow-sm transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50"
           href="#features"
          >
           Learn More
-         </Link>
+         </Link> */}
         </div>
        </div>
        <Image
         alt="Happy students learning"
         className="mx-auto overflow-hidden rounded-xl sm:object-contain md:object-cover object-center"
         height="550"
-        src="/hero-image.svg"
+        src="/hero-image1.svg"
         width="550"
        />
       </div>
      </div>
     </section>
     <section id="mission" className="relative w-full py-12 md:py-24 lg:py-32 bg-white">
+        {/* Mission Statement */}
       {/* SVG */}
       <Image
         src="/bg-shapes2.svg"
@@ -111,7 +112,7 @@ export default function LandingPage() {
      <div className="container px-4 md:px-6 mx-auto relative z-20">
       <div className="flex flex-col items-center justify-center space-y-4 text-center">
        <div className="space-y-2">
-        <h2 className="text-3xl tracking-tighter sm:text-5xl">
+        <h2 className="text-4xl tracking-tighter sm:text-5xl mb-6">
          Our Mission
         </h2>
         <p className="max-w-[900px] text-zinc-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
@@ -128,6 +129,7 @@ export default function LandingPage() {
      id="features"
      className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-indigo-200 to-yellow-100"
     >
+    
      <div className="container px-4 md:px-6 mx-auto">
       <h2 className="text-3xl tracking-tighter sm:text-5xl text-center mb-12 text-white">
        Our Features
@@ -161,6 +163,7 @@ export default function LandingPage() {
      id="testimonials"
      className="relative w-full py-12 md:py-24 lg:py-32 bg-white"
     >
+      {/* Testimonials */}
       {/* SVG */}
       <Image
         src="/bg-shapes2.svg"
