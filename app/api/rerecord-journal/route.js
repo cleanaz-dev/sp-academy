@@ -4,9 +4,7 @@ import prisma from "@/lib/prisma";
 
 export async function POST(request) {
  try {
-  function capitalizeFirstLetter(string) {
-   return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+
   const data = await request.json()
   console.log(data)
   const {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import JournalRecordAgainModal from "./JournalRecordAgainModel";
+import DeleteJournalModal from "./DeleteJournalModal";
 
 export default function JournalHistoryPage({ journals }) {
  const [selectedJournal, setSelectedJournal] = React.useState(
@@ -73,7 +74,11 @@ export default function JournalHistoryPage({ journals }) {
           {isSameDay(new Date(journal.createdAt), new Date(isToday)) && (
            <JournalRecordAgainModal journalId={journal.id} />
           )}
+           <div className="justify-end">
+         <DeleteJournalModal journalId={journal.id}/>
+         </div>
          </CardContent>
+        
         </Card>
        ))
       )}
