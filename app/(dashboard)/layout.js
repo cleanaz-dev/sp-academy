@@ -6,18 +6,9 @@ import { usePathname } from "next/navigation";
 import {Short_Stack, Anton} from 'next/font/google'
 import Image from 'next/image'
 import { UserButton, useUser  } from '@clerk/nextjs';
-import { DashboardIcon, StarFilledIcon } from "@radix-ui/react-icons";
-import { BookCheck } from "lucide-react";
-import { Calendar } from "lucide-react";
-import { Settings2Icon } from "lucide-react";
-import { PhoneForwarded } from "lucide-react";
-import { PanelRight } from "lucide-react";
-import { BookOpen } from "lucide-react";
+import { BookAudioIcon, BookCheck } from "lucide-react";
+import { Calendar, Settings2Icon, PanelRight, BookOpen, LayoutDashboard, BookHeartIcon, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
-import { Star } from "lucide-react";
-import { LayoutDashboard } from "lucide-react";
-import { BookHeartIcon } from "lucide-react";
 
 
 
@@ -37,7 +28,8 @@ const sidebarItems = [
  { name: "Schedule", href: "/schedule", icon: <Calendar /> },
  { name:"Journals", href: "/journals", icon: <BookHeartIcon />},
  { name: "Achievments", href: "/achievements", icon: <Star /> },
- { name: "Settings", href: "/settings", icon: <Settings2Icon />}
+ { name: "Settings", href: "/settings", icon: <Settings2Icon />},
+ {name:"Short Story", href: "/short-story", icon: <BookAudioIcon />}
 ];
 
 function Sidebar({ sideBarOpen, toggleSideBar }) {

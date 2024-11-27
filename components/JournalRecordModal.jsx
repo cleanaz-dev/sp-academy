@@ -27,7 +27,7 @@ export default function JournalRecordModal() {
           Record
         </Button> */}
    <Button size="lg" onClick={() => handleOpen("lg")} className="py-2">
-    Record 🎙️
+    🎙️
    </Button>
 
    <Modal size={size} open={open} onClose={handleClose}>
