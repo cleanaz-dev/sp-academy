@@ -66,7 +66,7 @@ export async function POST(reqeust) {
           "third_answer": "string",
           "fourth_answer": "string",
         },
-        webhook: "https://llmgem.ngrok.app/api/short-story-questions/response",
+        webhook: "https://sp-academy.vercel.app/api/short-story-questions/response",
       },
       {
         headers: {
