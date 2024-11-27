@@ -4,9 +4,16 @@ import prisma from "@/lib/prisma";
 export async function POST(request) {
   try {
     const data = await request.json();
+  
 
     // Transform the data to match the StoryQuestions schema
     const { metadata, analysis_schema, analysis } = data;
+    console.log(metadata + analysis)
+
+    // Validate User
+    const user = await prisma.user.findFirst({
+      where: { userId: metadata.userId },
+    });
 
     // Validate and construct the data object
     const storyQuestionData = {
@@ -24,8 +31,10 @@ export async function POST(request) {
         analysis.fourth_answer,
       ],
       mark: `${analysis.correct_answers}/${analysis.correct_answers + analysis.incorrect_answers}`,
-      userId: metadata.userId,
+      userId: user.id
     };
+
+    
 
     // Save to the database
     const savedData = await prisma.storyQuestions.create({
