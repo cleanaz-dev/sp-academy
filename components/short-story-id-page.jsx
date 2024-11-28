@@ -2,8 +2,10 @@
 import React from 'react'
 import { Button } from '@/components/ui/button';
 import ShortStoryQuestionsModal from './short-story-questions-modal';
+import { useUser } from '@clerk/nextjs';
 
 export default function ShortStorySinglePage({ story }) {
+  const {user} = useUser()
   return (
     <div className="max-w-4xl mx-auto p-6">
     <div className="mb-6">

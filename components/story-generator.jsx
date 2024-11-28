@@ -71,22 +71,22 @@ export default function StoryGenerator() {
       if (audioBlob) {
         // Create FormData and append the audio blob
         const formData = new FormData();
-        formData.append('audio', audioBlob);
-  
+        formData.append("audio", audioBlob);
+
         // Upload via API route
-        const uploadResponse = await fetch('/api/upload-story-audio', {
-          method: 'POST',
+        const uploadResponse = await fetch("/api/upload-story-audio", {
+          method: "POST",
           body: formData,
         });
-  
+
         const uploadResult = await uploadResponse.json();
         if (!uploadResult.success) {
-          throw new Error(uploadResult.error || 'Failed to upload audio');
+          throw new Error(uploadResult.error || "Failed to upload audio");
         }
-  
+
         audioUrl = uploadResult.audioUrl;
       }
-  
+
       const storyData = {
         title: story.title,
         frenchText: story.frenchText,
@@ -95,22 +95,24 @@ export default function StoryGenerator() {
         grammarHighlights: story.grammarHighlights,
         topic: document.querySelector('input[name="topic"]').value,
         difficulty: document.querySelector('select[name="difficulty"]').value,
-        paragraphs: parseInt(document.querySelector('input[name="paragraphs"]').value),
+        paragraphs: parseInt(
+          document.querySelector('input[name="paragraphs"]').value
+        ),
         genre: document.querySelector('select[name="genre"]').value,
         grammar: document.querySelector('select[name="grammar"]').value,
         audioUrl: audioUrl,
       };
-  
+
       const result = await saveStory(storyData);
-  
+
       if (result.success) {
         router.push(`/short-story/${result.id}`);
       } else {
-        setError(result.error || 'Failed to save story');
+        setError(result.error || "Failed to save story");
       }
     } catch (error) {
-      console.error('Save story error:', error);
-      setError(error.message || 'Failed to save story');
+      console.error("Save story error:", error);
+      setError(error.message || "Failed to save story");
     }
   };
 
@@ -181,6 +183,31 @@ export default function StoryGenerator() {
                       Imperfect Tense (Imparfait)
                     </SelectItem>
                     <SelectItem value="future">Future</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="mb-2">
+              <Label>Learning Objectives</Label>
+              <Select name="learningObjectives" multiple>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Learning Objectives" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Objectives</SelectLabel>
+                    <SelectItem value="vocabulary">New Vocabulary</SelectItem>
+                    <SelectItem value="grammar">Grammar Practice</SelectItem>
+                    <SelectItem value="culture">
+                      Cultural Understanding
+                    </SelectItem>
+                    <SelectItem value="pronunciation">
+                      Pronunciation Focus
+                    </SelectItem>
+                    <SelectItem value="conversation">
+                      Conversation Practice
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>

@@ -4,18 +4,37 @@ import prisma from "@/lib/prisma";
 export async function POST(request) {
   try {
     const data = await request.json();
-  
 
-    // Transform the data to match the StoryQuestions schema
-    const { metadata, analysis_schema, analysis } = data;
-    console.log(metadata + analysis)
+    const { metadata, analysis } = data;
 
     // Validate User
     const user = await prisma.user.findFirst({
       where: { userId: metadata.userId },
     });
 
-    // Validate and construct the data object
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if an entry already exists for this user and story
+    const existingQuestion = await prisma.storyQuestions.findFirst({
+      where: {
+        storyId: metadata.storyId,
+        userId: user.id,
+      },
+    });
+
+    if (existingQuestion) {
+      // Delete existing entry
+      await prisma.storyQuestions.delete({
+        where: { id: existingQuestion.id },
+      });
+    }
+
+    // Construct the new question data
     const storyQuestionData = {
       storyId: metadata.storyId,
       question: [
@@ -31,12 +50,10 @@ export async function POST(request) {
         analysis.fourth_answer,
       ],
       mark: `${analysis.correct_answers}/${analysis.correct_answers + analysis.incorrect_answers}`,
-      userId: user.id
+      userId: user.id,
     };
 
-    
-
-    // Save to the database
+    // Create a new entry
     const savedData = await prisma.storyQuestions.create({
       data: storyQuestionData,
     });
