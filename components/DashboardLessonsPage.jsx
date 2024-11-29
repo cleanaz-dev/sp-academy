@@ -27,11 +27,11 @@ export default async function DashboardLessonsPage() {
  //   { id: 6, title: "World War II Overview", subject: "History", duration: "70 min", level: "Advanced", rating: 4.9 },
  // ]
  return (
-  <div className="h-screen ">
+  <div className="">
    <main className="max-w-7xl">
     {" "}
     {/* Added max-width for main content */}
-    <header className="bg-white p-4 py-6 flex justify-between items-center">
+    <header className="bg-white p-4 flex justify-between items-center">
      <h1 className="text-3xl font-bold text-blue-500 ">Available Lessons</h1>
      {/* <div className="flex items-center space-x-4">
    

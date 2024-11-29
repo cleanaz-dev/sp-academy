@@ -30,7 +30,10 @@ export default function ShortStoryQuestionsModal({ story }) {
         onClick={() => handleOpen("lg")}
         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
       >
-        {story.StoryQuestions && story.StoryQuestions.length > 0
+        {story.StoryQuestions &&
+        story.StoryQuestions.some(
+          (question) => question.userId === story.user.userId
+        )
           ? "Practice Again"
           : "Practice Speaking"}
       </Button>

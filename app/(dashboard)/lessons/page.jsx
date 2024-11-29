@@ -3,7 +3,7 @@ import React from 'react'
 
 export default function LessonsPage() {
   return (
-    <div className='min-h-screen'>
+    <div>
       <DashboardLessonsPage />
     </div>
   )
