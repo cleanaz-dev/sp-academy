@@ -6,7 +6,6 @@ export async function POST(request) {
  try {
 
   const data = await request.json()
-  console.log(data)
   const {
    call_id,
    to,

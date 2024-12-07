@@ -3,7 +3,7 @@ import prisma from '../../../lib/prisma';
 
 export async function POST(request) {
   const { lessonId, title, questions } = await request.json();
-  console.log("quiz incoming")
+  
 
   try {
     const quiz = await prisma.quiz.create({

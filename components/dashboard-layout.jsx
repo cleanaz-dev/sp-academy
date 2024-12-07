@@ -183,7 +183,7 @@ const SidebarContent = ({
     <div className="px-2" key={index}>
      <Link
       href={navItem.href}
-      className={`flex gap-4 items-center p-2 group hover:bg-amber-400 hover:text-white rounded-sm ${
+      className={`flex gap-4 items-center p-2 group hover:bg-yellow-300 hover:text-white rounded-sm ${
        pathname.includes(navItem.href)
         ? "text-white bg-blue-400/60"
         : "text-blue-400"
@@ -202,7 +202,7 @@ const SidebarContent = ({
     <div className="px-2" key={index}>
      <Link
       href={settingItem.href}
-      className={`flex gap-4 items-center p-2 hover:bg-amber-400 hover:text-white rounded-sm ${
+      className={`flex gap-4 items-center p-2 hover:bg-yellow-300 hover:text-white rounded-sm ${
        settingItem.href === pathname
         ? "text-white bg-blue-400/60"
         : "text-blue-400"

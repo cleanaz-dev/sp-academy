@@ -8,7 +8,7 @@ export async function POST(request) {
    return string.charAt(0).toUpperCase() + string.slice(1);
   }
   const data = await request.json()
-  console.log(data)
+  
   const {
    call_id,
    to,

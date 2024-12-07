@@ -14,17 +14,19 @@ datasource db {
 }
 
 model User {
-  id             String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String
-  email          String           @unique
-  name           String
-  role           Role             @default(USER)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  student        Student?
-  teacher        Teacher?
-  Journal        Journal[]
-  StoryQuestions StoryQuestions[]
+  id                    String                  @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String
+  email                 String                  @unique
+  name                  String
+  role                  Role                    @default(USER)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  student               Student?
+  teacher               Teacher?
+  Journal               Journal[]
+  StoryQuestions        StoryQuestions[]
+  PronunciationSession  PronunciationSession[]
+  PronunciationProgress PronunciationProgress[]
 }
 
 model Student {
@@ -140,3 +142,55 @@ enum Role {
   TEACHER
   ADMIN
 }
+
+// Add these new models to your schema
+
+model PronunciationSession {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String              @db.ObjectId
+  user               User                @relation(fields: [userId], references: [id])
+  referenceText      String
+  recognizedText     String
+  language           String
+  audioUrl           String?
+  duration           Float
+  overallScore       Float
+  accuracyScore      Float
+  fluencyScore       Float
+  pronunciationScore Float
+  completenessScore  Float
+  words              PronunciationWord[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model PronunciationWord {
+  id            String               @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId     String               @db.ObjectId
+  session       PronunciationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  word          String
+  accuracyScore Float
+  errorType     String // None, Omission, Insertion, Mispronunciation
+  duration      Float?
+  offset        Float?
+  syllables     String[]
+  createdAt     DateTime             @default(now())
+}
+
+model PronunciationProgress {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id])
+  language         String
+  totalSessions    Int       @default(0)
+  averageScore     Float     @default(0)
+  practiceStreak   Int       @default(0)
+  lastPracticeDate DateTime?
+  commonMistakes   Json? // Array of {word, count, errorType}
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, language])
+}
+
+// Update the User model to include the relations

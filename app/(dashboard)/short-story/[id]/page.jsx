@@ -8,7 +8,7 @@ export default async function StoryPage({ params }) {
   const { userId } = auth()
   const user = await getUserbyUserId(userId)
   const storyData = {...story, user}
-  console.log(storyData)
+  // console.log(storyData)
   return (
     <>
     <ShortStorySinglePage story={storyData}/>

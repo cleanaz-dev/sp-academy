@@ -12,6 +12,7 @@ import {
  CarouselNext,
  CarouselPrevious,
 } from "@/components/ui/carousel";
+import SpoonLogo from "@/components/SpoonLogo";
 
 export default async function DashboardHome() {
  const user = await currentUser();
@@ -20,6 +21,7 @@ export default async function DashboardHome() {
    <main className="flex-1 overflow-y-auto">
     {/* Top Bar */}
     <header className="bg-white  p-4 py-6 flex justify-between items-center">
+      <SpoonLogo />
      <h1 className="text-3xl font-bold text-blue-500 ">
       Welcome {user?.firstName}!
      </h1>
