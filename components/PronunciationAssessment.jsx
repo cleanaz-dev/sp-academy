@@ -36,6 +36,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { WaveformVisualizer } from "./WaveformVisualizer";
+import { Textarea } from "./ui/textarea";
 
 const SUPPORTED_LANGUAGES = {
   "en-US": "English (US)",
@@ -47,7 +48,7 @@ const SUPPORTED_LANGUAGES = {
 
 export default function PronunciationAssessment({ userId, storyText }) {
   const [isRecording, setIsRecording] = useState(false);
-  const [referenceText, setReferenceText] = useState("");
+  const [referenceText, setReferenceText] = useState(storyText);
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -348,7 +349,8 @@ export default function PronunciationAssessment({ userId, storyText }) {
         <CardHeader>
           <CardTitle>Pronunciation Assessment</CardTitle>
           <CardDescription>
-            Practice and improve your pronunciation with real-time feedback. Please read the story provided.
+            Practice and improve your pronunciation with real-time feedback.
+            Please read the story provided.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -375,13 +377,15 @@ export default function PronunciationAssessment({ userId, storyText }) {
                   </SelectContent>
                 </Select>
 
-
-                <Input
-                  placeholder="Enter text to practice..."
-                  value={storyText}
-                  type="hidden"
+                <Card
+                  className="h-auto max-h-full resize-none overflow-auto p-2 whitespace-pre-wrap"
+                  contentEditable={false}
                   disabled={isRecording || isLoading}
-                />
+                >
+                  <span className="text-sm">
+                    {referenceText}
+                  </span>
+                </Card>
 
                 <WaveformVisualizer isRecording={isRecording} />
 
