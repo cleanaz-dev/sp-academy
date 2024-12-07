@@ -387,7 +387,7 @@ export default function PronunciationAssessment({ userId, storyText }) {
 
                 <Button
                   onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isLoading || !referenceText.trim()}
+                  disabled={isLoading}
                   variant={isRecording ? "destructive" : "default"}
                   className="w-full"
                 >
