@@ -3,7 +3,6 @@
 
 import { useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import {
   Mic,
   MicOff,
@@ -36,7 +34,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { WaveformVisualizer } from "./WaveformVisualizer";
-import { Textarea } from "./ui/textarea";
+
 
 const SUPPORTED_LANGUAGES = {
   "en-US": "English (US)",
@@ -114,59 +112,92 @@ export default function PronunciationAssessment({ userId, storyText }) {
     }
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+  
+
   const startRecording = async () => {
     try {
       setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
+  
+      if (isMobileDevice()) {
+        // Mobile-specific code
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  
+        mediaRecorder.current = new MediaRecorder(stream);
+  
+        audioChunks.current = [];
+  
+        mediaRecorder.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.current.push(event.data);
+          }
+        };
+  
+        mediaRecorder.current.onstop = async () => {
+          const tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
+  
+          if (audioChunks.current.length > 0) {
+            await processAudio();
+          } else {
+            setError("No audio data recorded");
+          }
+        };
+  
+        mediaRecorder.current.start();
+        setIsRecording(true);
+      } else {
+        // Desktop-specific code
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            sampleRate: 16000,
+            sampleSize: 16,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+  
+        audioContext.current = new (window.AudioContext || window.webkitAudioContext)({
           sampleRate: 16000,
-          sampleSize: 16,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-
-      audioContext.current = new (window.AudioContext ||
-        window.webkitAudioContext)({
-        sampleRate: 16000,
-      });
-
-      mediaRecorder.current = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-        audioBitsPerSecond: 128000,
-      });
-
-      audioChunks.current = [];
-
-      mediaRecorder.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunks.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.current.onstop = async () => {
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => track.stop());
-
-        if (audioChunks.current.length > 0) {
-          await processAudio();
-        } else {
-          setError("No audio data recorded");
-        }
-      };
-
-      mediaRecorder.current.start(100);
-      setIsRecording(true);
+        });
+  
+        mediaRecorder.current = new MediaRecorder(stream, {
+          mimeType: "audio/webm",
+          audioBitsPerSecond: 128000,
+        });
+  
+        audioChunks.current = [];
+  
+        mediaRecorder.current.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.current.push(event.data);
+          }
+        };
+  
+        mediaRecorder.current.onstop = async () => {
+          const tracks = stream.getTracks();
+          tracks.forEach((track) => track.stop());
+  
+          if (audioChunks.current.length > 0) {
+            await processAudio();
+          } else {
+            setError("No audio data recorded");
+          }
+        };
+  
+        mediaRecorder.current.start(100);
+        setIsRecording(true);
+      }
     } catch (error) {
-      setError(
-        "Error accessing microphone. Please ensure you have granted permission."
-      );
+      setError("Error accessing microphone. Please ensure you have granted permission.");
       console.error("Error accessing microphone:", error);
     }
   };
-
+  
   const processAudio = async () => {
     try {
       const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
@@ -382,9 +413,7 @@ export default function PronunciationAssessment({ userId, storyText }) {
                   contentEditable={false}
                   disabled={isRecording || isLoading}
                 >
-                  <span className="text-sm">
-                    {referenceText}
-                  </span>
+                  <span className="text-sm">{referenceText}</span>
                 </Card>
 
                 <WaveformVisualizer isRecording={isRecording} />
@@ -546,6 +575,9 @@ export default function PronunciationAssessment({ userId, storyText }) {
                               color="text-red-600"
                               icon={AlertCircle}
                             />
+                            <Button>
+                              Practice Words
+                            </Button>
                           </>
                         )}
                       </div>

@@ -27,6 +27,7 @@ model User {
   StoryQuestions        StoryQuestions[]
   PronunciationSession  PronunciationSession[]
   PronunciationProgress PronunciationProgress[]
+  PracticeSessions     PracticeSession[]      // Add this relation
 }
 
 model Student {
@@ -160,6 +161,7 @@ model PronunciationSession {
   pronunciationScore Float
   completenessScore  Float
   words              PronunciationWord[]
+  practiceSessions   PracticeSession[]  // Add this relation
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -193,4 +195,49 @@ model PronunciationProgress {
   @@unique([userId, language])
 }
 
-// Update the User model to include the relations
+model PracticeSession {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String         @db.ObjectId
+  user        User           @relation(fields: [userId], references: [id])
+  sessionId   String         @db.ObjectId // Reference to PronunciationSession
+  session     PronunciationSession @relation(fields: [sessionId], references: [id])
+  status      PracticeStatus @default(IN_PROGRESS)
+  language    String
+  practiceWords PracticeWord[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model PracticeWord {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  practiceSessionId String       @db.ObjectId
+  practiceSession PracticeSession @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  originalWord    String
+  attempts        PracticeAttempt[]
+  status         WordStatus     @default(NEEDS_PRACTICE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model PracticeAttempt {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  practiceWordId String     @db.ObjectId
+  practiceWord  PracticeWord @relation(fields: [practiceWordId], references: [id], onDelete: Cascade)
+  audioUrl      String?
+  accuracyScore Float?
+  feedback      String?
+  createdAt     DateTime    @default(now())
+}
+
+enum PracticeStatus {
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum WordStatus {
+  NEEDS_PRACTICE
+  IMPROVING
+  MASTERED
+}
+
