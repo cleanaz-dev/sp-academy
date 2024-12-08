@@ -1,5 +1,5 @@
 // app/practice-vocabulary/[id]/page.tsx
-import { PracticeSession } from "@/components/practice/PracticeSession";
+
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs";
@@ -29,7 +29,7 @@ export default async function PracticePage({ params }) {
 
   return (
     <div className="container mx-auto py-6">
-      <PracticeSession practiceSession={practiceSession} />
+
     </div>
   );
 };
