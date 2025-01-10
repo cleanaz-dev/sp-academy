@@ -1,35 +1,34 @@
-// app/practice-vocabulary/[id]/page.tsx
+// practice-vocabulary/[id]/page.jsx
+import { redirect } from 'next/navigation'
+import prisma from '@/lib/prisma'
+import PracticeSession from '@/components/PracticeSession'
+import { auth } from '@clerk/nextjs'
 
-import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs";
-
-export default async function PracticePage({ params }) {
-  const { userId } = auth();
-
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
-  const practiceSession = await prisma.practiceSession.findUnique({
-    where: { id: params.id },
+async function getPracticeSession(id) {
+  const session = await prisma.practiceSession.findUnique({
+    where: { id },
     include: {
-      practiceWords: {
-        include: {
-          attempts: true,
-        },
-      },
-      session: true, // Original pronunciation session
+      practiceWords: true,
+      story: true,
     },
-  });
+  })
+  return session
+}
 
-  if (!practiceSession || practiceSession.userId !== userId) {
-    redirect("/");
-  }
+export default async function PracticeVocabularyPage({ params }) {
+ 
+
+  const session = await getPracticeSession(params.id)
+  if (!session) redirect('/dashboard')
 
   return (
-    <div className="container mx-auto py-6">
-
+    <div className="container mx-auto px-4 py-8">
+      <PracticeSession 
+        sessionId={session.id}
+        words={session.practiceWords}
+        language={session.language}
+        storyTitle={session.story.title}
+      />
     </div>
-  );
-};
+  )
+}

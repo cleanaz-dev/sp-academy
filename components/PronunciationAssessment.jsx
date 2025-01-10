@@ -34,7 +34,8 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { WaveformVisualizer } from "./WaveformVisualizer";
-
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const SUPPORTED_LANGUAGES = {
   "en-US": "English (US)",
@@ -44,7 +45,7 @@ const SUPPORTED_LANGUAGES = {
   "it-IT": "Italian",
 };
 
-export default function PronunciationAssessment({ userId, storyText }) {
+export default function PronunciationAssessment({ userId, storyText, storyId }) {
   const [isRecording, setIsRecording] = useState(false);
   const [referenceText, setReferenceText] = useState(storyText);
   const [result, setResult] = useState(null);
@@ -53,6 +54,7 @@ export default function PronunciationAssessment({ userId, storyText }) {
   const [activeTab, setActiveTab] = useState("record");
   const [language, setLanguage] = useState("fr-FR");
   const [interimResults, setInterimResults] = useState("");
+  const [isPracticeSaving, setIsPracticeSaving] = useState(false);
 
   const mediaRecorder = useRef(null);
   const audioContext = useRef(null);
@@ -113,39 +115,42 @@ export default function PronunciationAssessment({ userId, storyText }) {
   };
 
   const isMobileDevice = () => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   };
-  
 
   const startRecording = async () => {
     try {
       setError(null);
-  
+
       if (isMobileDevice()) {
         // Mobile-specific code
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+
         mediaRecorder.current = new MediaRecorder(stream);
-  
+
         audioChunks.current = [];
-  
+
         mediaRecorder.current.ondataavailable = (event) => {
           if (event.data.size > 0) {
             audioChunks.current.push(event.data);
           }
         };
-  
+
         mediaRecorder.current.onstop = async () => {
           const tracks = stream.getTracks();
           tracks.forEach((track) => track.stop());
-  
+
           if (audioChunks.current.length > 0) {
             await processAudio();
           } else {
             setError("No audio data recorded");
           }
         };
-  
+
         mediaRecorder.current.start();
         setIsRecording(true);
       } else {
@@ -160,44 +165,47 @@ export default function PronunciationAssessment({ userId, storyText }) {
             autoGainControl: true,
           },
         });
-  
-        audioContext.current = new (window.AudioContext || window.webkitAudioContext)({
+
+        audioContext.current = new (window.AudioContext ||
+          window.webkitAudioContext)({
           sampleRate: 16000,
         });
-  
+
         mediaRecorder.current = new MediaRecorder(stream, {
           mimeType: "audio/webm",
           audioBitsPerSecond: 128000,
         });
-  
+
         audioChunks.current = [];
-  
+
         mediaRecorder.current.ondataavailable = (event) => {
           if (event.data.size > 0) {
             audioChunks.current.push(event.data);
           }
         };
-  
+
         mediaRecorder.current.onstop = async () => {
           const tracks = stream.getTracks();
           tracks.forEach((track) => track.stop());
-  
+
           if (audioChunks.current.length > 0) {
             await processAudio();
           } else {
             setError("No audio data recorded");
           }
         };
-  
+
         mediaRecorder.current.start(100);
         setIsRecording(true);
       }
     } catch (error) {
-      setError("Error accessing microphone. Please ensure you have granted permission.");
+      setError(
+        "Error accessing microphone. Please ensure you have granted permission."
+      );
       console.error("Error accessing microphone:", error);
     }
   };
-  
+
   const processAudio = async () => {
     try {
       const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
@@ -373,6 +381,44 @@ export default function PronunciationAssessment({ userId, storyText }) {
       )}
     </div>
   );
+
+  const handlePracticeWords = async () => {
+    if (!result?.words) return;
+
+    setIsPracticeSaving(true);
+
+    const groupedWords = getGroupedWords(result.words);
+    const wordsForPractice = [
+      ...groupedWords.needsWork,
+      ...groupedWords.mispronounced,
+    ];
+    console.log("StoryID:",storyId)
+    try {
+      const response = await fetch("/api/practice-vocabulary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          words: wordsForPractice,
+          language: language,
+          timestamp: new Date().toISOString(),
+          storyId: storyId || "No story ID available"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save practice words");
+      }
+
+      toast.success("Words saved for practice successfully");
+    } catch (error) {
+      console.error("Error saving practice words:", error);
+      toast.error("Failed to save practice words");
+    } finally {
+      setIsPracticeSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -575,8 +621,25 @@ export default function PronunciationAssessment({ userId, storyText }) {
                               color="text-red-600"
                               icon={AlertCircle}
                             />
-                            <Button>
-                              Practice Words
+                            <Button
+                              onClick={handlePracticeWords}
+                              disabled={
+                                isPracticeSaving ||
+                                !result?.words ||
+                                (getGroupedWords(result.words).needsWork
+                                  .length === 0 &&
+                                  getGroupedWords(result.words).mispronounced
+                                    .length === 0)
+                              }
+                            >
+                              {isPracticeSaving ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                "Practice Words"
+                              )}
                             </Button>
                           </>
                         )}

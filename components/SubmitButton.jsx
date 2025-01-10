@@ -23,3 +23,23 @@ export function SubmitNoteButton() {
   </>
  );
 }
+
+export function CreateBookReportButton() {
+  const { pending } = useFormStatus();
+ return (
+  <>
+   {pending ? (
+    <Button disabled>
+     <Loader2Icon className="w-4 h-4 animate-spin" />
+    </Button>
+   ) : (
+    <Button
+      type="submit"
+      variant="outline"
+    >
+      Create Book Report
+    </Button>
+   )}
+  </>
+ )
+}

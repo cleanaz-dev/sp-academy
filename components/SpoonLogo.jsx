@@ -3,7 +3,7 @@ import React from "react";
 export default function SpoonLogo() {
   return (
     <div className="flex flex-col items-center">
-      <div className="flex gap-1 h-10">
+      {/* <div className="flex gap-1 h-10">
         <div className="text-5xl font-bold text-white bg-sky-400 rounded-lg px-2 py-0 transform -skew-x-12 leading-none relative w-10">
           <span className="relative left-[-13px] top-[0px]">S</span>
         </div>
@@ -20,7 +20,7 @@ export default function SpoonLogo() {
           <span className="relative left-[-13px] top-[0px]">N</span>
         </div>
       </div>
-      <div className="text-gray-700 text-sm tracking-wider mt-2">ACADEMY</div>
+      <div className="text-gray-700 text-sm tracking-wider mt-2">ACADEMY</div> */}
 
       <div className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white text-center p-8 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold">Welcome to SPOON Academy</h1>

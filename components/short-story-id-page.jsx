@@ -53,12 +53,8 @@ export default function ShortStorySinglePage({ story }) {
         </div>
         <div>
           <h2 className="text-xl font-bold mb-4">Practice Pronunciation:</h2>
-          {/* <AudioRecorder
-            storyId={story.id}
-            storyText={story.frenchText}
-            onAssessmentComplete={handleAssessmentComplete}
-          /> */}
-          <PronunciationAssessment userId={story.user.id} storyText={story.frenchText}/>
+        
+          <PronunciationAssessment userId={story.user.id} storyText={story.frenchText} storyId={story.id}/>
         </div>
         <div>
           <h2 className="text-xl font-bold">Grammar Highlights:</h2>

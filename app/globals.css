@@ -101,3 +101,35 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+.rbc-date-cell {
+  text-align: center !important;
+}
+
+.rbc-row-segment {
+  padding: 0 !important;
+}
+
+.rbc-event {
+  background: none !important;
+  border: none !important;
+  color: inherit !important;
+  padding: 0 !important;
+}
+
+.calendar-cell {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.has-log {
+  background-color: #f3f4f6; /* Light grey background */
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
