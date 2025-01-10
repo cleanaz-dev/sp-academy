@@ -2,7 +2,6 @@
 
 // import { UserButton } from "@clerk/nextjs";
 import React, { useState } from "react";
-import Logo from "../public/logo.png";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
@@ -159,8 +158,10 @@ const SidebarContent = ({
   pathname,
   notifications,
 }) => (
-  <div className="flex flex-col h-full">
-    <div className="flex px-4 py-2 items-center justify-between">
+  <div className="flex flex-col h-full relative">
+    <div className="absolute right-0 top-0 h-full w-[2px] bg-gradient-to-l from-amber-400 via-purple-500 to-pink-500 blur-sm bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] z-0"></div>
+
+    <div className="flex px-4 py-2 items-center justify-between ">
       <div className="flex gap-2 items-center text-white">
         <Image
           src="/logo1.png"

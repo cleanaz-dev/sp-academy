@@ -17,13 +17,13 @@ import SpoonLogo from "@/components/SpoonLogo";
 export default async function DashboardHome() {
  const user = await currentUser();
  return (
-  <div className="bg-white min-h-screen">
+  <div className="bg-white ">
    <main className="flex-1 overflow-y-auto">
     {/* Top Bar */}
     <header className="bg-white  p-4 py-6 flex-col justify-between items-center">
       <SpoonLogo />
       <h1 class="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl">
-      Welcome {user?.firstName}! 
+      Hi {user?.firstName}! 
      </h1>
      <div className="flex items-center space-x-4">
       {/* <Button variant="ghost" size="icon">
@@ -36,7 +36,7 @@ export default async function DashboardHome() {
     </header>
 
     {/* Dashboard Content */}
-    <div className="p-6 space-y-6">
+    <div className="px-6 space-y-6">
      {/* Progress Overview */}
      <Card>
       <CardHeader>
