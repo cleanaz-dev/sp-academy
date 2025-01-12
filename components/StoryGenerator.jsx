@@ -117,16 +117,19 @@ export default function StoryGenerator() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 ">
       <form action={handleGenerateStory}>
         <div>
-          <h2 className="text-xl font-bold">Story Generator</h2>
+          <header>
+          <h1 className="header-title">Story Generator</h1>
+          </header>
+          
           <p className="mt-2">
             Generate a French story, vocabulary, and audio based on a topic and
             difficulty level.
           </p>
           {/* Story Options    */}
-          <div className="my-4">
+          <div className="my-4 max-w-96">
             <div className="mb-2">
               <Label>Genre</Label>
               <Select name="genre" required>

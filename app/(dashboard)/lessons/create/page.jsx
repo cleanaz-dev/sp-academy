@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
@@ -130,7 +131,7 @@ export default function CreateLesson() {
   return (
     <div className="max-w-4xl">
       <header className="bg-white p-4 py-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-blue-500 ">Create New Lesson</h1>
+        <h1 className="header-title">Create New Lesson</h1>
       </header>
       <main className="p-6 gap-6">
         <Card className="p-6 bg-gradient-to-b from-indigo-200/25 to-yellow-100/25">
@@ -263,12 +264,12 @@ export default function CreateLesson() {
                 </div>
               </div>
             )}
-            <button
+            <Button
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
             {isLoading ? "Creating..." : "Create Lesson"}
-            </button>
+            </Button>
             
           </form>
         </Card>

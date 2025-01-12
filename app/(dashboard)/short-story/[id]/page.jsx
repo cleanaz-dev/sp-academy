@@ -1,6 +1,6 @@
 import React from 'react'
 import { getStoryById, getUserbyUserId } from '@/lib/actions';
-import ShortStorySinglePage from '@/components/short-story-id-page';
+import ShortStorySinglePage from '@/components/ShortStorySinglePage';
 import { auth } from '@clerk/nextjs/server';
 
 export default async function StoryPage({ params }) {

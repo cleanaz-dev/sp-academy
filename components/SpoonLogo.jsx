@@ -22,7 +22,7 @@ export default function SpoonLogo() {
       </div>
       <div className="text-gray-700 text-sm tracking-wider mt-2">ACADEMY</div> */}
 
-<div className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white text-center p-8 rounded-lg shadow-lg w-full">
+<div className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white text-center p-8 rounded-lg  w-full">
         <h1 className="text-3xl font-bold">Welcome to SPOON Academy</h1>
         <p className="mt-2">Learning made simple, spoon-fed for success.</p>
       </div>

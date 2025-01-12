@@ -35,10 +35,11 @@ import { DM_Serif_Display } from "next/font/google";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
+import { DynaPuff } from "next/font/google"
 
-const displayFont = DM_Serif_Display({
+const dynaPuff = DynaPuff({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600", "700"]
 });
 const navItems = [
   {
@@ -158,10 +159,10 @@ const SidebarContent = ({
   pathname,
   notifications,
 }) => (
-  <div className="flex flex-col h-full relative">
-    <div className="absolute right-0 top-0 h-full w-[2px] bg-gradient-to-l from-amber-400 via-purple-500 to-pink-500 blur-sm bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] z-0"></div>
+  <div className="flex flex-col h-full relative z-10">
+    <div className="absolute right-0 top-0 h-full w-[1px] bg-gradient-to-r from-amber-400 via-purple-500 to-pink-500 blur- bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] z-0 opacity-20"></div>
 
-    <div className="flex px-4 py-2 items-center justify-between ">
+    <div className="flex px-4 py-2 items-center justify-between">
       <div className="flex gap-2 items-center text-white">
         <Image
           src="/logo1.png"
@@ -186,35 +187,27 @@ const SidebarContent = ({
     </div>
     <div className="flex-grow overflow-y-auto space-y-2">
       {/* Sidebar Title */}
-      <div className="flex gap-2 px-4 py-2 mb-2 ">
-        <h1 class="bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-xl font-bold tracking-wider">
+      <div className="flex gap-2 px-4 py-2 mb-2">
+        <h1 className={`bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-xl font-bold tracking-wider ${dynaPuff.className}`}>
           Dashboard
         </h1>
       </div>
       {/* Sidebar Nav */}
       {navItems.map((navItem, index) => (
         <div className="px-2" key={index}>
-          {/* Link container */}
           <Link
             href={navItem.href}
             className={`flex gap-4 items-center p-2 group rounded-sm 
-        ${
-          // Check if the current pathname includes the navItem.href
-          pathname.includes(navItem.href)
-            ? // Apply gradient background and white text for the selected (active) state
-              "text-white bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400"
-            : // Default text color for non-active links
-              "text-blue-400"
-        } 
-        // Gradient background and white text on hover
-        hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+            ${
+              pathname.includes(navItem.href)
+                ? "text-white bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400"
+                : "text-blue-400"
+            } 
+            hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
           >
-            {/* Icon for the navigation item */}
             {navItem.icon}
-            {/* Label for the navigation item */}
             <div
               className={`text-sm ${
-                // Ensure label text color is white when active, and follows hover styles
                 pathname.includes(navItem.href)
                   ? "text-white"
                   : "text-blue-500 group-hover:text-white"
@@ -228,34 +221,26 @@ const SidebarContent = ({
 
       {/* Sidebar Title */}
       <div className="flex gap-2 px-4 py-2 mb-4 mt-4">
-        <h1 class="bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-xl font-bold tracking-widest">
+        <h1 className={`bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-xl font-bold tracking-widest ${dynaPuff.className}`}>
           Settings
         </h1>
       </div>
       {settingItems.map((settingItem, index) => (
         <div className="px-2" key={index}>
-          {/* Link container */}
           <Link
             href={settingItem.href}
             className={`flex gap-4 items-center p-2 rounded-sm 
-        ${
-          // Check if the current pathname matches the settingItem.href
-          settingItem.href === pathname
-            ? // Apply gradient background and white text for the active state
-              "text-white bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400"
-            : // Default text color for non-active links
-              "text-blue-400"
-        } 
-        // Gradient background and white text on hover
-        hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 
-        hover:text-white`}
+            ${
+              settingItem.href === pathname
+                ? "text-white bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400"
+                : "text-blue-400"
+            } 
+            hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 
+            hover:text-white`}
           >
-            {/* Icon for the setting item */}
             {settingItem.icon}
-            {/* Label for the setting item */}
             <span
               className={`text-sm ${
-                // Ensure label text color matches the active/hover state
                 settingItem.href === pathname
                   ? "text-white"
                   : "text-blue-500 group-hover:text-white"
@@ -269,6 +254,7 @@ const SidebarContent = ({
     </div>
   </div>
 );
+
 
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -310,6 +296,7 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center">
             {/* Logo and menu for small screens */}
             <div className="flex lg:hidden -ml-3 gap-2 items-center text-white">
+              <Link href="/home">
               <Image
                 src="/logo1.png"
                 height={100}
@@ -319,7 +306,7 @@ export default function DashboardLayout({ children }) {
                 style={{ width: "auto", height: "auto" }}
                 className="ml-2"
               />
-
+              </Link>
               {/* Sheet for sidebar on small screens */}
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetTrigger asChild>

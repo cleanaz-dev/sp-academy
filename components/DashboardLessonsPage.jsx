@@ -32,7 +32,9 @@ export default async function DashboardLessonsPage() {
     {" "}
     {/* Added max-width for main content */}
     <header className="bg-white p-4 flex justify-between items-center">
-     <h1 className="text-3xl font-bold text-blue-500 ">Available Lessons</h1>
+    <h1 className="header-title">
+  Lessons
+</h1>
      {/* <div className="flex items-center space-x-4">
    
      </div> */}
@@ -42,10 +44,10 @@ export default async function DashboardLessonsPage() {
      {lessons.map((lesson) => (
       <Card
        key={lesson.id}
-       className="bg-gradient-to-b from-indigo-200/25 to-yellow-100/25"
+       className="svg-background"
       >
        <CardHeader>
-        <CardTitle className="min-h-10">{lesson.title}</CardTitle>
+        <CardTitle className="">{lesson.title}</CardTitle>
        </CardHeader>
        <CardContent>
         <div className="space-x-2">
@@ -57,7 +59,7 @@ export default async function DashboardLessonsPage() {
          </Badge>
         </div>
 
-        <div className="bg-white/50 border my-4 rounded-md h-40">
+        <div className="bg-white border my-4 rounded-md h-40">
          <p className="text-sm  p-2  text-slate-500 ">
           {lesson.description}
          </p>

@@ -29,7 +29,7 @@ export function CreateBookReportButton() {
  return (
   <>
    {pending ? (
-    <Button disabled>
+    <Button variant="outline" disabled>
      <Loader2Icon className="w-4 h-4 animate-spin" />
     </Button>
    ) : (
@@ -38,6 +38,26 @@ export function CreateBookReportButton() {
       variant="outline"
     >
       Create Book Report
+    </Button>
+   )}
+  </>
+ )
+}
+
+export function AddReadingLog() {
+  const { pending } = useFormStatus();
+ return (
+  <>
+   {pending? (
+    <Button variant="outline" disabled>
+     <Loader2Icon className="w-4 h-4 animate-spin" />
+    </Button>
+   ) : (
+    <Button
+      type="submit"
+      variant="outline"
+    >
+      Add Reading Log
     </Button>
    )}
   </>

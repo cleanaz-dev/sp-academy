@@ -1,7 +1,7 @@
 //app/(dashboard)/short-story/[id]/paje.jsx
 "use client";
 import React from "react";
-import ShortStoryQuestionsModal from "./short-story-questions-modal";
+import ShortStoryQuestionsModal from "./ShortStoryQuestionModal";
 import PronunciationAssessment from "./PronunciationAssessment";
 
 export default function ShortStorySinglePage({ story }) {
@@ -9,7 +9,7 @@ export default function ShortStorySinglePage({ story }) {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">{story.topic}</h1>
+        <h1 className="header-title">{story.title}</h1>
         <div className="mt-2 flex gap-2 text-sm">
           <span className="px-2 py-1 bg-blue-100 rounded">{story.genre}</span>
           <span className="px-2 py-1 bg-green-100 rounded">

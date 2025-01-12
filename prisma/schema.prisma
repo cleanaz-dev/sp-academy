@@ -29,6 +29,7 @@ model User {
   PronunciationProgress PronunciationProgress[]
   PracticeSessions      PracticeSession[] // Add this relation
   BookReport            BookReport[]
+  Book                  Book[]
 }
 
 model Student {
@@ -117,6 +118,8 @@ model Story {
   grammar           String
   frenchText        String
   englishText       String
+  teaser            String?
+  language          String?
   vocabulary        Json // Array of {french, english, grammarType}
   grammarHighlights Json // Array of {expression, explanation}
   audioUrl          String?
@@ -241,9 +244,10 @@ model BookReport {
   book        Book         @relation(fields: [bookId], references: [id])
   startDate   DateTime     @default(now())
   endDate     DateTime?
-  isCompleted Boolean      @default(false)
-  report      String? // The actual book report content
-  rating      Int?         @default(0) // Optional rating out of 5
+  status      ReportStatus @default(NOT_STARTED)
+  progress    Float        @default(0)
+  report      String?
+  rating      Int?         @default(0)
   readingLogs ReadingLog[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -251,14 +255,15 @@ model BookReport {
 
 model Book {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String       @db.ObjectId
+  user        User         @relation(fields: [userId], references: [id])
   title       String
   author      String
   genre       String
   language    String
   pages       Int
-  coverImage  String?
+  coverUrl    String?
   audioUrl    String?
-  isbn        String?      @unique // International Standard Book Number
   description String?
   bookReports BookReport[]
   createdAt   DateTime     @default(now())
@@ -288,4 +293,10 @@ enum WordStatus {
   NEEDS_PRACTICE
   IMPROVING
   MASTERED
+}
+
+enum ReportStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }

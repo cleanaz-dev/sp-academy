@@ -12,7 +12,7 @@ export default async function page() {
   <div className="min-h-screen">
    <main className=" flex-col text-center items-center">
    <header className="bg-white p-4 flex justify-between items-center">
-     <h1 className="text-3xl font-bold text-blue-500 ">Journals</h1>
+     <h1 className="header-title ">Journals</h1>
      {/* <div className="flex items-center space-x-4">
    
      </div> */}

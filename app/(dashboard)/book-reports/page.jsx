@@ -1,5 +1,7 @@
 import BookReportCard from "@/components/book-report/BookReportCard"
 import CreateBookReportCard from "@/components/book-report/CreateBookReportCard"
+import { getBooksByUserId } from "@/lib/actions"
+import { auth } from "@clerk/nextjs/server"
 
 
 // This would typically come from a database or API
@@ -9,17 +11,21 @@ const bookReports = [
   { id: 3, title: "Pride and Prejudice", author: "Jane Austen", summary: "A romantic novel focusing on the emotional development of Elizabeth Bennet." },
 ]
 
-export default function BookReportsPage() {
+export default async function BookReportsPage() {
+  const { userId } = auth();
+  const books = await getBooksByUserId(userId);
+
+  console.log("Books data:", books);
+
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Book Reports</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="container mx-auto">
+      <h1 className="header-title">Book Reports</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <CreateBookReportCard />
-        {bookReports.map((report) => (
-          <BookReportCard key={report.id} {...report} />
+        {books.map((book) => (
+          <BookReportCard key={book.id} book={book} bookReports={book.bookReports} />
         ))}
       </div>
     </div>
-  )
+  );
 }
-

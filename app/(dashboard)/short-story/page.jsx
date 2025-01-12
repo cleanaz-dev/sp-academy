@@ -10,26 +10,32 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 export default async function Home() {
   const stories = await getAllShortStories();
 
   return (
     <main className="container mx-auto">
-      <h1 className="text-3xl font-bold text-center my-8">
-        French Learning Stories
-      </h1>
+      <header className="mb-4">
+        <h1 className="header-title">Short Stories</h1>
+      </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-6">
         {stories.map((story) => (
-          <Card
-            key={story.id}
-            className="flex-col gap-4 bg-gradient-to-b from-indigo-200/25 to-yellow-100/25"
-          >
+          <Card key={story.id} className="flex-col gap-4 short-story-svg-bg">
             <CardHeader>
-              <CardTitle className="text-lg font-bold">{story.topic}</CardTitle>
+              <CardTitle>
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold">{story.title}</span>
+                  <Badge variant="outline" className="w-fit">
+                    {story.language}
+                  </Badge>
+                </div>
+              </CardTitle>
+              <CardDescription>What will Sophie discover on her exciting trip to the zoo?</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-white/50 border p-2 rounded text-gray-500">
+              <div className="bg-white border p-2 rounded text-gray-500">
                 <p>Difficulty: {story.difficulty}</p>
                 <p>Genre: {story.genre}</p>
                 <p>Grammar: {story.grammar}</p>

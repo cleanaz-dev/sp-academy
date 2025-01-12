@@ -1,7 +1,7 @@
-"use client"
+"use client";
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Calendar, Whisper, Popover, Badge, Button } from 'rsuite';
+import { Calendar, Whisper, Popover, Badge } from 'rsuite';
+import { FaUmbrellaBeach } from 'react-icons/fa'; // Example: Icon for weekends
 import JournalRecordModal from './JournalRecordModal';
 
 function getTodoList(date) {
@@ -23,6 +23,9 @@ export default function CalendarComponent() {
     const today = new Date(); // Get today's date
     const isToday = date.toDateString() === today.toDateString(); // Compare date with today
 
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Check if it's Saturday or Sunday
+
     const list = getTodoList(date);
 
     if (isToday && list.length) {
@@ -39,10 +42,16 @@ export default function CalendarComponent() {
       );
     }
 
-    return null; // Empty cell for weekends and non-today dates
+    if (isWeekend) {
+      return (
+        <div className="calendar-cell-content flex justify-center items-center py-2">
+          <FaUmbrellaBeach className="text-blue-500 text-xl" />
+        </div>
+      );
+    }
+
+    return null; // Empty cell for non-today dates on weekdays
   }
 
-  return <Calendar bordered renderCell={renderCell}  />;
+  return <Calendar bordered renderCell={renderCell} />;
 }
-
-

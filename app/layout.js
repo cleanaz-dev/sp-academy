@@ -2,7 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import "rsuite/dist/rsuite-no-reset.min.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Roboto } from "next/font/google";
+import { Roboto, Comfortaa, Nunito } from "next/font/google";
 import { CustomProvider } from "rsuite";
 import { Toaster } from "sonner";
 
@@ -22,6 +22,16 @@ const roboto = Roboto({
   weight: ["100", "300", "400", "500", "700", "900"],
 });
 
+const comfortaa = Comfortaa({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700" ],
+})
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "600", "700", "800", "900" ],
+})
+
 export const metadata = {
   title: "Spoon Fed Academy - Revolutionizing Learning with AI",
   description:
@@ -33,7 +43,7 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <CustomProvider>
         <html lang="en">
-          <body className={roboto.className}>
+          <body className={nunito.className}>
             {children}
             <Toaster position="bottom-right" richColors="true" theme="system"/>
           </body>
