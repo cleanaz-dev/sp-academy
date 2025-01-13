@@ -22,7 +22,7 @@ export default async function DashboardHome() {
     {/* Top Bar */}
     <header className="bg-white  p-4 py-6 flex-col justify-between items-center">
       <SpoonLogo />
-      <h1 class="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl">
+      <h1 className="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl">
       Hi {user?.firstName}! 
      </h1>
      <div className="flex items-center space-x-4">

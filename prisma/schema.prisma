@@ -123,6 +123,7 @@ model Story {
   vocabulary        Json // Array of {french, english, grammarType}
   grammarHighlights Json // Array of {expression, explanation}
   audioUrl          String?
+  imageUrl          String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   StoryQuestions    StoryQuestions[]
@@ -273,12 +274,12 @@ model Book {
 model ReadingLog {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   bookReportId String     @db.ObjectId
-  bookReport   BookReport @relation(fields: [bookReportId], references: [id])
+  bookReport   BookReport @relation(fields: [bookReportId], references: [id], onDelete: Cascade)
   dateRead     DateTime   @default(now())
   startPage    Int
   endPage      Int
-  pagesRead    Int // Can be calculated (endPage - startPage)
-  shortSummary String? // Optional notes for the reading session
+  pagesRead    Int
+  shortSummary String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }

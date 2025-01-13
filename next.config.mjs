@@ -14,8 +14,14 @@ const nextConfig = {
         port: '',
         pathname: '/books/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'sfaudiourlbucket.s3.us-east-1.amazonaws.com',
+        port: '',
+        pathname: '/story-images/**', // Adjust the pathname as needed
+      },
     ],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

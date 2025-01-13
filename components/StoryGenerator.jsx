@@ -21,7 +21,7 @@ import { uploadAudio } from "@/lib/storage";
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="bg-purple-500">
       {pending ? "Generating..." : "Generate Story"}
     </Button>
   );
@@ -32,19 +32,51 @@ export default function StoryGenerator() {
   const [story, setStory] = useState(null);
   const [error, setError] = useState(null);
   const [audio, setAudio] = useState(null);
-  const [audioBlob, setAudioBlob] = useState(null); // Add this state
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [storyImage, setStoryImage] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
+ const [imageUrl, setImageUrl] = useState(null);
 
+  // Generate story
   async function handleGenerateStory(formData) {
     setError(null);
     const result = await generateStory(formData);
-
+  
     if (!result.success) {
       setError(result.error);
       return;
     }
-
+  
     setStory(result.data);
-
+  
+    const imageDescription = formData.get("topic");
+    // Generate image based on the story with more detailed prompt
+    setImageLoading(true);
+    try {
+      // Create a more detailed prompt for better image generation
+      const imagePrompt = 
+        `Image of a book cover for kids story. Title: I like ${imageDescription} with a 9:16 aspect ratio`;
+  
+      const imageResponse = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: imagePrompt }),
+      });
+  
+      if (!imageResponse.ok) throw new Error("Failed to generate image");
+  
+      const imageData = await imageResponse.json();
+      if (imageData.success) {
+        // The image will be in base64 format
+        setStoryImage(`data:image/png;base64,${imageData.imageUrl}`);
+      }
+    } catch (error) {
+      console.error("Image generation error:", error);
+      setError("Failed to generate image");
+    } finally {
+      setImageLoading(false);
+    }
+  
     // Handle audio generation if needed
     if (result.data?.frenchText) {
       try {
@@ -53,9 +85,9 @@ export default function StoryGenerator() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: result.data.frenchText }),
         });
-
+  
         if (!audioResponse.ok) throw new Error("Failed to generate audio");
-
+  
         const blob = await audioResponse.blob();
         setAudioBlob(blob); // Save the blob for later upload
         setAudio(URL.createObjectURL(blob));
@@ -65,65 +97,89 @@ export default function StoryGenerator() {
     }
   }
 
-  const handleSaveStory = async () => {
-    try {
-      let audioUrl = null;
-      if (audioBlob) {
-        // Create FormData and append the audio blob
-        const formData = new FormData();
-        formData.append("audio", audioBlob);
+//handle save story
+const handleSaveStory = async () => { // Changed this line
+  try {
+    let audioUrl = null;
+    let imageUrl = null; // Added this line
 
-        // Upload via API route
-        const uploadResponse = await fetch("/api/upload-story-audio", {
-          method: "POST",
-          body: formData,
-        });
+    if (audioBlob) {
+      // Create FormData and append the audio blob
+      const formData = new FormData();
+      formData.append("audio", audioBlob);
 
-        const uploadResult = await uploadResponse.json();
-        if (!uploadResult.success) {
-          throw new Error(uploadResult.error || "Failed to upload audio");
-        }
+      // Upload via API route
+      const uploadResponse = await fetch("/api/upload-story-audio", {
+        method: "POST",
+        body: formData,
+      });
 
-        audioUrl = uploadResult.audioUrl;
+      const uploadResult = await uploadResponse.json();
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || "Failed to upload audio");
       }
 
-      const storyData = {
-        title: story.title,
-        frenchText: story.frenchText,
-        englishText: story.englishText,
-        vocabulary: story.vocabulary,
-        grammarHighlights: story.grammarHighlights,
-        topic: document.querySelector('input[name="topic"]').value,
-        difficulty: document.querySelector('select[name="difficulty"]').value,
-        paragraphs: parseInt(
-          document.querySelector('input[name="paragraphs"]').value
-        ),
-        genre: document.querySelector('select[name="genre"]').value,
-        grammar: document.querySelector('select[name="grammar"]').value,
-        audioUrl: audioUrl,
-      };
-
-      const result = await saveStory(storyData);
-
-      if (result.success) {
-        router.push(`/short-story/${result.id}`);
-      } else {
-        setError(result.error || "Failed to save story");
-      }
-    } catch (error) {
-      console.error("Save story error:", error);
-      setError(error.message || "Failed to save story");
+      audioUrl = uploadResult.audioUrl;
     }
-  };
 
+    // Use storyImage from state instead of parameter
+    if (storyImage) { // Changed this line
+      const imageBlob = await fetch(storyImage).then((r) => r.blob());
+      const imageFormData = new FormData();
+      imageFormData.append("image", imageBlob);
+
+      const imageUploadResponse = await fetch("/api/upload-story-image", {
+        method: "POST",
+        body: imageFormData,
+      });
+
+      const imageUploadResult = await imageUploadResponse.json();
+      if (!imageUploadResult.success) {
+        throw new Error(imageUploadResult.error || "Failed to upload image");
+      }
+
+      imageUrl = imageUploadResult.imageUrl;
+    }
+
+    console.log("image url:", imageUrl);
+
+    const storyData = {
+      title: story.title,
+      frenchText: story.frenchText,
+      englishText: story.englishText,
+      vocabulary: story.vocabulary,
+      grammarHighlights: story.grammarHighlights,
+      topic: document.querySelector('input[name="topic"]').value,
+      difficulty: document.querySelector('select[name="difficulty"]').value,
+      paragraphs: parseInt(
+        document.querySelector('input[name="paragraphs"]').value
+      ),
+      genre: document.querySelector('select[name="genre"]').value,
+      grammar: document.querySelector('select[name="grammar"]').value,
+      audioUrl: audioUrl,
+      imageUrl: imageUrl,
+    };
+
+    const result = await saveStory(storyData);
+
+    if (result.success) {
+      router.push(`/short-story/${result.id}`);
+    } else {
+      setError(result.error || "Failed to save story");
+    }
+  } catch (error) {
+    console.error("Save story error:", error);
+    setError(error.message || "Failed to save story");
+  }
+};
   return (
     <div className="p-4 ">
       <form action={handleGenerateStory}>
         <div>
           <header>
-          <h1 className="header-title">Story Generator</h1>
+            <h1 className="header-title">Story Generator</h1>
           </header>
-          
+
           <p className="mt-2">
             Generate a French story, vocabulary, and audio based on a topic and
             difficulty level.
@@ -227,6 +283,26 @@ export default function StoryGenerator() {
                 required
               />
             </div>
+
+            <div className="mb-2">
+              <Label>Image Style</Label>
+              <Select name="imageStyle">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Image Style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Style</SelectLabel>
+                    <SelectItem value="children">
+                      Children's Book Style
+                    </SelectItem>
+                    <SelectItem value="realistic">Realistic</SelectItem>
+                    <SelectItem value="cartoon">Cartoon</SelectItem>
+                    <SelectItem value="watercolor">Watercolor</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -239,8 +315,29 @@ export default function StoryGenerator() {
         </div>
       )}
 
+      {imageLoading && (
+        <div className="mt-4">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-xl bg-slate-200 h-48 w-full"></div>
+          </div>
+          <p className="text-center mt-2">Generating illustration...</p>
+        </div>
+      )}
+
       {story && (
         <div className="mt-4 space-y-6">
+          {storyImage && (
+            <div>
+              <h2 className="text-xl font-bold">Story Illustration:</h2>
+              <div className="mt-2 p-4 bg-gray-50 rounded">
+                <img
+                  src={storyImage}
+                  alt="Story illustration"
+                  className="max-w-full h-auto rounded"
+                />
+              </div>
+            </div>
+          )}
           <div>
             <h2 className="text-xl font-bold">French Story:</h2>
             <p className="mt-2 p-4 bg-gray-50 rounded">{story.frenchText}</p>

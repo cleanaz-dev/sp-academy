@@ -27,6 +27,7 @@ export async function POST(request) {
       Key: `audio/${filename}`,
       Body: buffer,
       ContentType: 'audio/mpeg',
+      ACL: 'public-read',
     });
 
     await s3Client.send(command);

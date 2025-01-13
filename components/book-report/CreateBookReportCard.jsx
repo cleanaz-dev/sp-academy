@@ -1,23 +1,22 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { PlusCircle } from 'lucide-react'
-import Link from "next/link"
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function CreateBookReportCard() {
   return (
-    <Card className="w-full max-w-sm h-64 flex flex-col justify-center items-center">
-      <CardHeader>
-        <CardTitle className="text-center">Create New Book Report</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Link href="/book-reports/create">
-          <Button variant="outline" size="lg" className="gap-2">
-            <PlusCircle className="h-5 w-5" />
-            Create Report
-          </Button>
-        </Link>
+    <Card className="w-full max-w-sm flex flex-col justify-center items-center bg-gray-50 shadow-sm hover:shadow-md transition-shadow rounded-md">
+      <CardContent className="flex flex-col items-center space-y-3 p-6">
+      <Link
+      href="/book-reports/create"
+      className="w-full max-w-sm flex flex-col items-center bg-gray-50 hover:shadow-md transition-shadow rounded-md p-6 text-center space-y-3"
+    >
+      <PlusCircle className="h-8 w-8 text-gray-500" />
+      <p className="text-sm text-gray-700">
+        Start a new journey by creating a book report.
+      </p>
+    </Link>
       </CardContent>
     </Card>
-  )
+  );
 }
-

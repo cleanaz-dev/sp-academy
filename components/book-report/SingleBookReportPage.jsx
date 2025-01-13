@@ -27,7 +27,6 @@ export default function SingleBookReportPage({ bookReport }) {
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const ReadingLogSchema = z
     .object({
       startPage: z.number().min(1, "Start page must be at least 1"),

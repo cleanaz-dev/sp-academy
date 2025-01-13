@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
         <html lang="en">
           <body className={nunito.className}>
             {children}
-            <Toaster position="bottom-right" richColors="true" theme="system"/>
+            <Toaster position="bottom-right" richColors theme="system"/>
           </body>
         </html>
       </CustomProvider>

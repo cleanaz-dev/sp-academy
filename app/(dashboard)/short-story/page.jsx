@@ -11,14 +11,15 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 export default async function Home() {
   const stories = await getAllShortStories();
 
   return (
-    <main className="container mx-auto">
+    <main className="mx-auto">
       <header className="mb-4">
-        <h1 className="header-title">Short Stories</h1>
+        <h1 className="header-title">Short Story</h1>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-6">
         {stories.map((story) => (
@@ -26,18 +27,50 @@ export default async function Home() {
             <CardHeader>
               <CardTitle>
                 <div className="flex flex-col">
-                  <span className="text-lg font-bold">{story.title}</span>
-                  <Badge variant="outline" className="w-fit">
-                    {story.language}
-                  </Badge>
+                  <span className="text-2xl font-bold">{story.title}</span>
+                  {story.imageUrl && (
+                    <Image
+                      src={story.imageUrl}
+                      alt={story.title}
+                      width={150}
+                      height={150}
+                      className="pb-4"
+                    />
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="w-fit bg-sky-500 text-white"
+                    >
+                      {story.language}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="w-fit bg-emerald-500 text-white"
+                    >
+                      {story.difficulty}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="w-fit bg-pink-500 text-white"
+                    >
+                      {story.genre}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="w-fit bg-amber-500 text-white"
+                    >
+                      {story.grammar}
+                    </Badge>
+                  </div>
                 </div>
               </CardTitle>
-              <CardDescription>What will Sophie discover on her exciting trip to the zoo?</CardDescription>
+              <CardDescription>{story.teaser}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-white border p-2 rounded text-gray-500">
+              <div className="bg-white border rounded text-gray-500 hidden">
                 <p>Difficulty: {story.difficulty}</p>
-                <p>Genre: {story.genre}</p>
+                <p>Genre: {story.difficulty}</p>
                 <p>Grammar: {story.grammar}</p>
               </div>
             </CardContent>
@@ -48,17 +81,6 @@ export default async function Home() {
                   className="w-full bg-gradient-to-br from-blue-600 to-violet-600 hover:animate-pulse"
                 >
                   <Link href={`/short-story/${story.id}`}>Read 🤓</Link>
-                </Button>
-                <Button
-                  asChild
-                  className="w-full bg-gradient-to-br from-blue-600 to-violet-600 hover:bg-opacity-90"
-                >
-                  <Link
-                    href={`/short-story/${story.id}`}
-                    aria-label="Go to Pronunciation Practice story"
-                  >
-                    Practice 🤔
-                  </Link>
                 </Button>
               </div>
             </CardFooter>
