@@ -4,7 +4,6 @@ import SingleBookReportPage from '@/components/book-report/SingleBookReportPage'
 
 export default async function page({ params }) {
   const bookReport = await getBookReportById(params.id)
-  console.log("Book Report: ", bookReport) 
   return (
     <div>
       <h1 className='header-title'>Daily Reading Log</h1>

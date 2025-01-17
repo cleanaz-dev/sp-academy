@@ -1,4 +1,4 @@
-// components/StoryGenerator.js
+// components/short-stories/StoryGenerator.jsx
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { uploadAudio } from "@/lib/storage";
+import InteractiveExercises from "./InteractiveExercises";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,143 +36,235 @@ export default function StoryGenerator() {
   const [audioBlob, setAudioBlob] = useState(null);
   const [storyImage, setStoryImage] = useState(null);
   const [imageLoading, setImageLoading] = useState(false);
- const [imageUrl, setImageUrl] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [exercises, setExercises] = useState(null);
 
   // Generate story
   async function handleGenerateStory(formData) {
     setError(null);
-    const result = await generateStory(formData);
-  
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-  
-    setStory(result.data);
-  
-    const imageDescription = formData.get("topic");
-    // Generate image based on the story with more detailed prompt
-    setImageLoading(true);
     try {
-      // Create a more detailed prompt for better image generation
-      const imagePrompt = 
-        `Image of a book cover for kids story. Title: I like ${imageDescription} with a 9:16 aspect ratio`;
-  
-      const imageResponse = await fetch("/api/generate-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: imagePrompt }),
-      });
-  
-      if (!imageResponse.ok) throw new Error("Failed to generate image");
-  
-      const imageData = await imageResponse.json();
-      if (imageData.success) {
-        // The image will be in base64 format
-        setStoryImage(`data:image/png;base64,${imageData.imageUrl}`);
+      const result = await generateStory(formData);
+
+      if (!result.success) {
+        setError(result.error);
+        return;
       }
-    } catch (error) {
-      console.error("Image generation error:", error);
-      setError("Failed to generate image");
-    } finally {
-      setImageLoading(false);
-    }
-  
-    // Handle audio generation if needed
-    if (result.data?.frenchText) {
+
+      setStory(result.data);
+
+      // Generate exercises
       try {
-        const audioResponse = await fetch("/api/text-to-speech", {
+        const exercisePrompt = `
+            Generate 6 French language learning exercises based on this story: "${result.data.frenchText}"
+
+            Please create:
+            1. Two multiple-choice vocabulary questions
+            2. Two fill-in-the-blank grammar exercises
+            3. One French-English matching exercise
+            4. One sentence ordering exercise. Only provide 5-6 scrambled words of a sentence.
+
+
+            Format your response as a valid JSON object with this exact structure:
+            {
+              "exercises": [
+                {
+                  "id": "1",
+                  "type": "multiple-choice",
+                  "question": "What does [word] mean in English?",
+                  "options": ["option1", "option2", "option3", "option4"],
+                  "correctAnswer": "correct option"
+                },
+                {
+                  "id": "2",
+                  "type": "fill-in-blanks",
+                  "question": "Complete this sentence: _____ [rest of sentence]",
+                  "correctAnswer": "correct word"
+                },
+                {
+                  "id": "3",
+                  "type": "matching",
+                  "question": "Match the French words with their English translations",
+                  "pairs": [
+                    {"left": "French word", "right": "English translation"}
+                  ]
+                },
+                {
+                  "id": "4",
+                  "type": "sentence-order",
+                  "question": "Arrange the words to form a correct French sentence",
+                  "parts": ["part1", "part2", "part3", "part4"],
+                  "correctOrder": [0, 1, 2, 3],
+                  "correctSentence": "Full correct sentence"
+                }
+              ]
+            }
+
+            ONLY OUTPUT JSON`;
+
+        const exerciseResponse = await fetch("/api/generate-exercises", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: result.data.frenchText }),
+          body: JSON.stringify({ prompt: exercisePrompt }),
         });
-  
-        if (!audioResponse.ok) throw new Error("Failed to generate audio");
-  
-        const blob = await audioResponse.blob();
-        setAudioBlob(blob); // Save the blob for later upload
-        setAudio(URL.createObjectURL(blob));
+
+        if (!exerciseResponse.ok)
+          throw new Error("Failed to generate exercises");
+
+        const exerciseData = await exerciseResponse.json();
+        if (exerciseData.success) {
+          setExercises(exerciseData.exercises);
+        }
       } catch (error) {
-        setError("Failed to generate audio");
+        console.error("Exercise generation error:", error);
+        setError("Failed to generate exercises");
       }
+
+      // const updatedExercises = await Promise.all(
+      //   exercises.map(async (exercise) => {
+      //     if (exercise.type === 'image-sentence') {
+      //       const imagePrompt = exercise.sceneDescription;
+      //       const imageResponse = await fetch('/api/generate-image', {
+      //         method: 'POST',
+      //         headers: { 'Content-Type': 'application/json' },
+      //         body: JSON.stringify({ prompt: imagePrompt }),
+      //       });
+      
+      //       if (!imageResponse.ok) {
+      //         throw new Error('Failed to generate image');
+      //       }
+      
+      //       const imageData = await imageResponse.json();
+      //       if (imageData.success) {
+      //         exercise.imageUrl = imageData.imageUrl;
+      //       }
+      //     }
+      //     return exercise;
+      //   })
+      // );
+      
+      // setExercises(updatedExercises);
+
+      // Generate image
+      const imageDescription = formData.get("topic");
+      setImageLoading(true);
+      try {
+        const imagePrompt = `Image of a book cover for kids story. Title: I like ${imageDescription} with a 9:16 aspect ratio`;
+
+        const imageResponse = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: imagePrompt }),
+        });
+
+        if (!imageResponse.ok) throw new Error("Failed to generate image");
+
+        const imageData = await imageResponse.json();
+        if (imageData.success) {
+          setStoryImage(`data:image/png;base64,${imageData.imageUrl}`);
+        }
+      } catch (error) {
+        console.error("Image generation error:", error);
+        setError("Failed to generate image");
+      } finally {
+        setImageLoading(false);
+      }
+
+      // Generate audio
+      if (result.data?.frenchText) {
+        try {
+          const audioResponse = await fetch("/api/text-to-speech", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: result.data.frenchText }),
+          });
+
+          if (!audioResponse.ok) throw new Error("Failed to generate audio");
+
+          const blob = await audioResponse.blob();
+          setAudioBlob(blob);
+          setAudio(URL.createObjectURL(blob));
+        } catch (error) {
+          setError("Failed to generate audio");
+        }
+      }
+    } catch (error) {
+      console.error("Story generation error:", error);
+      setError(error.message || "Failed to generate story and exercises");
     }
   }
 
-//handle save story
-const handleSaveStory = async () => { // Changed this line
-  try {
-    let audioUrl = null;
-    let imageUrl = null; // Added this line
+  //handle save story
+  const handleSaveStory = async () => {
+    try {
+      let audioUrl = null;
+      let imageUrl = null;
 
-    if (audioBlob) {
-      // Create FormData and append the audio blob
-      const formData = new FormData();
-      formData.append("audio", audioBlob);
+      if (audioBlob) {
+        const formData = new FormData();
+        formData.append("audio", audioBlob);
 
-      // Upload via API route
-      const uploadResponse = await fetch("/api/upload-story-audio", {
-        method: "POST",
-        body: formData,
-      });
+        const uploadResponse = await fetch("/api/upload-story-audio", {
+          method: "POST",
+          body: formData,
+        });
 
-      const uploadResult = await uploadResponse.json();
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error || "Failed to upload audio");
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || "Failed to upload audio");
+        }
+
+        audioUrl = uploadResult.audioUrl;
       }
 
-      audioUrl = uploadResult.audioUrl;
-    }
+      if (storyImage) {
+        const imageBlob = await fetch(storyImage).then((r) => r.blob());
+        const imageFormData = new FormData();
+        imageFormData.append("image", imageBlob);
 
-    // Use storyImage from state instead of parameter
-    if (storyImage) { // Changed this line
-      const imageBlob = await fetch(storyImage).then((r) => r.blob());
-      const imageFormData = new FormData();
-      imageFormData.append("image", imageBlob);
+        const imageUploadResponse = await fetch("/api/upload-story-image", {
+          method: "POST",
+          body: imageFormData,
+        });
 
-      const imageUploadResponse = await fetch("/api/upload-story-image", {
-        method: "POST",
-        body: imageFormData,
-      });
+        const imageUploadResult = await imageUploadResponse.json();
+        if (!imageUploadResult.success) {
+          throw new Error(imageUploadResult.error || "Failed to upload image");
+        }
 
-      const imageUploadResult = await imageUploadResponse.json();
-      if (!imageUploadResult.success) {
-        throw new Error(imageUploadResult.error || "Failed to upload image");
+        imageUrl = imageUploadResult.imageUrl;
       }
 
-      imageUrl = imageUploadResult.imageUrl;
+      const storyData = {
+        title: story.title,
+        frenchText: story.frenchText,
+        englishText: story.englishText,
+        vocabulary: story.vocabulary,
+        grammarHighlights: story.grammarHighlights,
+        topic: document.querySelector('input[name="topic"]').value,
+        difficulty: document.querySelector('select[name="difficulty"]').value,
+        paragraphs: parseInt(
+          document.querySelector('input[name="paragraphs"]').value
+        ),
+        genre: document.querySelector('select[name="genre"]').value,
+        grammar: document.querySelector('select[name="grammar"]').value,
+        audioUrl: audioUrl,
+        imageUrl: imageUrl,
+        exercises: exercises, // Add exercises to the saved data
+      };
+
+      const result = await saveStory(storyData);
+
+      if (result.success) {
+        router.push(`/short-story/${result.id}`);
+      } else {
+        setError(result.error || "Failed to save story");
+      }
+    } catch (error) {
+      console.error("Save story error:", error);
+      setError(error.message || "Failed to save story");
     }
+  };
 
-    console.log("image url:", imageUrl);
-
-    const storyData = {
-      title: story.title,
-      frenchText: story.frenchText,
-      englishText: story.englishText,
-      vocabulary: story.vocabulary,
-      grammarHighlights: story.grammarHighlights,
-      topic: document.querySelector('input[name="topic"]').value,
-      difficulty: document.querySelector('select[name="difficulty"]').value,
-      paragraphs: parseInt(
-        document.querySelector('input[name="paragraphs"]').value
-      ),
-      genre: document.querySelector('select[name="genre"]').value,
-      grammar: document.querySelector('select[name="grammar"]').value,
-      audioUrl: audioUrl,
-      imageUrl: imageUrl,
-    };
-
-    const result = await saveStory(storyData);
-
-    if (result.success) {
-      router.push(`/short-story/${result.id}`);
-    } else {
-      setError(result.error || "Failed to save story");
-    }
-  } catch (error) {
-    console.error("Save story error:", error);
-    setError(error.message || "Failed to save story");
-  }
-};
   return (
     <div className="p-4 ">
       <form action={handleGenerateStory}>
@@ -410,6 +503,13 @@ const handleSaveStory = async () => { // Changed this line
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Add the InteractiveExercises component here */}
+      {exercises && (
+        <div className="mt-6 border-t pt-6">
+          <InteractiveExercises exercises={exercises} />
         </div>
       )}
 

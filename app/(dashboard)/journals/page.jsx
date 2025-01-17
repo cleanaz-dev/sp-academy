@@ -11,8 +11,8 @@ export default async function page() {
  return (
   <div className="min-h-screen">
    <main className=" flex-col text-center items-center">
-   <header className="bg-white p-4 flex justify-between items-center">
-     <h1 className="header-title ">Journals</h1>
+   <header className="bg-white flex justify-between items-center">
+     <h1 className="header-title">Journals</h1>
      {/* <div className="flex items-center space-x-4">
    
      </div> */}

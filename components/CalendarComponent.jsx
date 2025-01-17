@@ -2,7 +2,7 @@
 import React from 'react';
 import { Calendar, Whisper, Popover, Badge } from 'rsuite';
 import { FaUmbrellaBeach } from 'react-icons/fa'; // Example: Icon for weekends
-import JournalRecordModal from './JournalRecordModal';
+import JournalRecordModal from '@/components/journals/JournalRecordModal';
 
 function getTodoList(date) {
   const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday

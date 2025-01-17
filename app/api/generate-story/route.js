@@ -35,13 +35,14 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const prompt = `Generate a short story in French with exactly ${paragraphs} paragraphs for ${difficulty} level students about ${topic}. And create a title for it in French.
+    const prompt = `Generate a short story in French with exactly ${paragraphs} paragraphs for grade ${difficulty} level students about ${topic}. And create a title for it in French.
     
     Respond with ONLY a JSON object in the following format, no additional text:
     {
       "title":"Your title",
       "frenchText": "Your French story here",
       "englishText": "Your English translation here",
+      "teaser": "Your question-based narrative teaser",
       "vocabulary": [
         {"french": "word1", "english": "translation1"},
         {"french": "word2", "english": "translation2"},

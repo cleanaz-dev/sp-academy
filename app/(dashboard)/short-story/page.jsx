@@ -75,7 +75,7 @@ export default async function Home() {
               </div>
             </CardContent>
             <CardFooter>
-              <div className="flex-col space-y-2 w-full">
+              <div className="flex-col space-y-2 w-full start-end">
                 <Button
                   asChild
                   className="w-full bg-gradient-to-br from-blue-600 to-violet-600 hover:animate-pulse"

@@ -5,6 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Edit } from "lucide-react"
+import { Trash2 } from "lucide-react"
+import EditReadingLog from "./EditReadingLog"
+import DeleteReadingDialog from "./DeleteReadingLog"
 
 
 export default function ReadingLogs({ data }) {
@@ -13,7 +17,7 @@ export default function ReadingLogs({ data }) {
   const logsPerPage = 5
 
   const filteredLogs = data.filter(log => 
-    log.shortSummary.toLowerCase().includes(searchTerm.toLowerCase())
+    log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const indexOfLastLog = currentPage * logsPerPage
@@ -39,25 +43,32 @@ export default function ReadingLogs({ data }) {
       </div>
 
       <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date Read</TableHead>
-              <TableHead>Pages</TableHead>
-              <TableHead>Summary</TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date Read</TableHead>
+            <TableHead className="w-24">Pages</TableHead>
+            <TableHead>Summary</TableHead>
+            <TableHead className="flex justify-end">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {currentLogs.map((log) => (
+            <TableRow key={log.id}>
+              <TableCell>{new Date(log.dateRead).toLocaleDateString()}</TableCell>
+              <TableCell>{log.startPage} - {log.endPage}</TableCell>
+              <TableCell>{log.shortSummary}</TableCell>
+              <TableCell>
+                <div className="flex gap-2 justify-end ">
+                  <EditReadingLog log={log} />
+                  <DeleteReadingDialog log={log} />
+                </div>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentLogs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell>{new Date(log.dateRead).toLocaleDateString()}</TableCell>
-                <TableCell>{log.startPage} - {log.endPage} ({log.pagesRead} pages)</TableCell>
-                <TableCell>{log.shortSummary}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
 
       <div className="flex items-center justify-between mt-4">
         <Button

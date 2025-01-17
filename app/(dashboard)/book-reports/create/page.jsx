@@ -101,9 +101,9 @@ export default function CreateBookReportPage() {
   }
 
   return (
-    <div className="container mx-auto pt-2 pb-8">
+    <div className=" max-w-2xl pt-2 pb-8">
       <header className="pb-4">
-        <h1 className="header-title">Create 😃🥹🤖🎊🎗️🎡🎪🎭</h1>
+        <h1 className="header-title">Create </h1>
       </header>
 
       <Card className="mx-auto relative overflow-hidden">

@@ -86,7 +86,7 @@ export default function SingleBookReportPage({ bookReport }) {
 
   return (
     <div className="py-8 h-full">
-      <Card className="max-w-4xl ">
+      <Card className="max-w-3xl ">
         <CardHeader>
           <CardTitle>
             <span className="text-4xl">{bookReport.book.title}</span>
@@ -97,13 +97,14 @@ export default function SingleBookReportPage({ bookReport }) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="mb-4">
             <div className="space-y-4">
               <div className="flex space-x-4">
-                <div className="flex-1 space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="startPage">Page Started</Label>
                   <Input
                     {...form.register("startPage", { valueAsNumber: true })}
                     type="number"
                     min="1"
                     max={bookReport.totalPages}
+                    className="w-20"
                   />
                   {form.formState.errors.startPage && (
                     <span className="text-red-500 text-xs">
@@ -111,13 +112,14 @@ export default function SingleBookReportPage({ bookReport }) {
                     </span>
                   )}
                 </div>
-                <div className="flex-1 space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="endPage">Page Finished</Label>
                   <Input
                     {...form.register("endPage", { valueAsNumber: true })}
                     type="number"
                     min={form.watch("startPage") + 1}
                     max={bookReport.totalPages}
+                    className="w-20"
                   />
                   {form.formState.errors.endPage && (
                     <span className="text-red-500 text-xs">

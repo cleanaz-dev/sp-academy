@@ -2,9 +2,9 @@
 import { Modal, Toggle, Loader } from "rsuite";
 import { recordStoryQuestions } from "@/lib/actions";
 import React from "react";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Button } from "./ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 
 export default function ShortStoryQuestionsModal({ story }) {
@@ -26,8 +26,8 @@ export default function ShortStoryQuestionsModal({ story }) {
            Record
          </Button> */}
       <Button
-        size="lg"
-        onClick={() => handleOpen("lg")}
+        size="md"
+        onClick={() => handleOpen("md")}
         className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
       >
         {story.StoryQuestions &&
@@ -42,8 +42,7 @@ export default function ShortStoryQuestionsModal({ story }) {
         <form action={recordStoryQuestions}>
           <Modal.Header>
             <Modal.Title>
-              Are you ready to practice speaking based on the story{" "}
-              <span className="font-bold">{user?.firstName}</span>!😄{" "}
+              Are you ready to practice speaking based on the {story.title}!
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -76,7 +75,7 @@ export default function ShortStoryQuestionsModal({ story }) {
                 ></Toggle>
                 <p className="text-sm text-green-500">
                   All answers are recorded and used to improving speech and
-                  vocabulary. Please accept consent.
+                  vocabulary.
                 </p>
               </div>
             </div>

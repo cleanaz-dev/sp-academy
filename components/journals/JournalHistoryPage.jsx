@@ -6,8 +6,8 @@ import { Calendar, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import JournalRecordAgainModal from "./JournalRecordAgainModel";
-import DeleteJournalModal from "./DeleteJournalModal";
+import JournalRecordAgainModal from "@/components/journals/JournalRecordAgainModel";
+import DeleteJournalModal from "@/components/journals/DeleteJournalModal";
 
 export default function JournalHistoryPage({ journals }) {
  const [selectedJournal, setSelectedJournal] = React.useState(
@@ -37,9 +37,6 @@ export default function JournalHistoryPage({ journals }) {
 
  return (
   <div className="flex flex-col h-screen max-h-screen">
-   <header className="bg-white p-4 py-6 flex justify-between items-center">
-    <h1 className="text-3xl font-bold text-blue-500 ">Journal History</h1>
-   </header>
    <div className="flex flex-1 overflow-hidden">
     <aside className="w-1/4 border-gray-200 flex flex-col">
      <ScrollArea className="flex-1">

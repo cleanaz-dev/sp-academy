@@ -7,7 +7,7 @@ export default async function BookReportsPage() {
   const { userId } = auth();
   const books = await getBooksByUserId(userId);
 
-  console.log("Books data:", books);
+  // console.log("Books data:", books);
 
   return (
     <div className="mx-auto">

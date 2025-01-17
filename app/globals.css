@@ -153,3 +153,20 @@ html {
   border-left: 4px solid #7c3aed; /* Corresponds to border-violet-500 in Tailwind */
   padding-left: 0.75rem;  /* Corresponds to pl-3 in Tailwind */
 }
+
+/* Add these to your global CSS or as a styled component */
+.form-container {
+  @apply max-w-4xl mx-auto p-6;
+}
+
+.error-message {
+  @apply text-red-500 text-sm mt-1;
+}
+
+.success-message {
+  @apply text-green-500 text-sm mt-1;
+}
+
+.input-error {
+  @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+}

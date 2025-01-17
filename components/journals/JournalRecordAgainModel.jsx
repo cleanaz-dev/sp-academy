@@ -2,11 +2,11 @@
 import { Modal, ButtonToolbar, Button, Placeholder, Toggle, Loader } from "rsuite";
 import { recordJournal } from "@/lib/actions";
 import React from "react";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Switch } from "./ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useUser } from "@clerk/nextjs";
-import { SubmitNoteButton } from "./SubmitButton";
+import { SubmitNoteButton } from "@/components/SubmitButton";
 
 export default function JournalRecordAgainModal({journalId}) {
  const {user} = useUser();

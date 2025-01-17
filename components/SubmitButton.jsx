@@ -63,3 +63,23 @@ export function AddReadingLog() {
   </>
  )
 }
+
+export function EditReadingLogSubmitButton() {
+  const { pending } = useFormStatus();
+ return (
+  <>
+   {pending? (
+    <Button variant="outline" disabled>
+     <Loader2Icon className="w-4 h-4 animate-spin" />
+    </Button>
+   ) : (
+    <Button
+      type="submit"
+      variant="outline"
+    >
+      Save Changes
+    </Button>
+   )}
+  </>
+ )
+}

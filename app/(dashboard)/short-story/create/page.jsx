@@ -1,4 +1,4 @@
-import StoryGenerator from '@/components/StoryGenerator'
+import StoryGenerator from '@/components/short-stories/StoryGenerator'
 
 import React from 'react'
 

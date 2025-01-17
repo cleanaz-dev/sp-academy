@@ -11,8 +11,8 @@ import {
 import { Clock, Star } from "lucide-react";
 import Link from "next/link";
 import { getAllLessons } from "@/lib/actions";
-import { Badge } from "./ui/badge";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+import { Badge } from "../ui/badge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 
 export default async function DashboardLessonsPage() {
