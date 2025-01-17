@@ -1,4 +1,4 @@
-//components/chat-bot/Chatbot.jsx
+//components/chat/ChatBot.jsx
 
 "use client"
 import { useState, useEffect } from 'react';
