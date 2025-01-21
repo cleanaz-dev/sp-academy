@@ -1,7 +1,7 @@
 // app/api/word-assessment/route.js
 
 import { NextResponse } from 'next/server';
-import { performSpeechAssessment } from '@/lib/azure';
+import { performPronunciationAssessment } from '@/lib/azure';
 
 export async function POST(request) {
   try {
@@ -26,7 +26,7 @@ export async function POST(request) {
     const arrayBuffer = await audioFile.arrayBuffer();
     const audioData = Buffer.from(arrayBuffer);
 
-    const result = await performSpeechAssessment(audioData, referenceText, language);
+    const result = await performPronunciationAssessment(audioData, referenceText, language);
     
     return NextResponse.json(result);
 
