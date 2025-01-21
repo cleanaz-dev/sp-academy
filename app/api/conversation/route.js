@@ -2,7 +2,6 @@
 
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
-import { getAIResponse } from '@/lib/groq'; 
 
 export async function POST(req) {
   try {
