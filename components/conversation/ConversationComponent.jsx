@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 
+
 export default function ConversationComponent() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -13,7 +14,7 @@ export default function ConversationComponent() {
   const [error, setError] = useState(null);
   const [recognition, setRecognition] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
-  const [historyConversation, setHistoryConversation] = useState([]);
+
 
   // Initialize speech recognition
   useEffect(() => {
@@ -56,6 +57,88 @@ export default function ConversationComponent() {
     }
   }, []);
 
+  useEffect(() => {
+    const savedHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
+    setConversationHistory(savedHistory);
+  }, []);
+
+
+  const handleConversation = async (message) => {
+    setIsProcessing(true);
+    setError(null);
+  
+    try {
+      // Load existing conversation history from localStorage
+      const storedHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
+  
+      // Add the new user message to the history
+      const newUserMessage = { role: "user", content: message };
+      const updatedHistory = [...storedHistory, newUserMessage];
+  
+      // // Log the updated history before the API call
+      // console.log("Updated Conversation History Before API Call:", updatedHistory);
+  
+      // Send the entire conversation history in the API request
+      const response = await fetch("/api/conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          history: updatedHistory,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.error) throw new Error(data.error);
+  
+      // // Log the response data
+      // console.log("API Response Data:", data);
+  
+      // Add AI's response to the conversation history
+      const aiMessage = { role: "assistant", content: data.text };
+      const finalHistory = [...updatedHistory, aiMessage];
+  
+      // Update the conversation history in state and localStorage
+      setConversationHistory(finalHistory);
+      localStorage.setItem("conversationHistory", JSON.stringify(finalHistory));
+  
+      // Log the updated history
+      console.log("Updated Conversation History After Adding AI Message:", finalHistory);
+  
+      setAiResponse(data.text);
+  
+      // Handle audio playback
+      setIsGeneratingAudio(true);
+      if (!isMuted) {
+        await handleAudioPlayback(data.audio);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("Failed to process conversation");
+    } finally {
+      setIsProcessing(false);
+      setIsGeneratingAudio(false);
+    }
+  };
+  
+  
+  const handleAudioPlayback = async (audioBase64) => {
+    try {
+      const audioBlob = new Blob([Buffer.from(audioBase64, "base64")], {
+        type: "audio/mpeg",
+      });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      await audio.play();
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      setError("Failed to play audio");
+    }
+  };
+
   const toggleRecording = () => {
     try {
       if (isRecording) {
@@ -71,92 +154,16 @@ export default function ConversationComponent() {
     }
   };
 
-  const handleConversation = async (message) => {
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      console.log("IO:", conversationHistory)
-      // Add the new user message directly
-      const newUserMessage = { role: "user", content: message };
-
-      // Immediately include the new message in the conversation history for API call
-      const updatedHistory = [...conversationHistory, newUserMessage];
-
-      // // Get the last 4 messages from the history (you can adjust this to include fewer or more)
-      // const historyToSend = updatedHistory.slice(-4); // Last 4 messages
-
-      // Log the sliced history to ensure it's correct
-      console.log("History:",updatedHistory);
-
-      // Send the last 4 messages in the API request
-      const response = await fetch("/api/conversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message,
-          history: updatedHistory, // Send only the last 4 messages
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.error) throw new Error(data.error);
-
-      // Log the response data to check what the API is returning
-      console.log("API Response Data:", data);
-
-      // Add AI's response to the conversation history
-      const aiMessage = { role: "assistant", content: data.text };
-
-      setConversationHistory((prevHistory) => {
-        const newHistory = [...prevHistory, newUserMessage, aiMessage];
-
-        // Log the history after the state update
-        console.log(
-          "Updated Conversation History After Adding AI Message:",
-          newHistory
-        );
-     
-        console.log("Conversation History:", historyConversation);
-        return newHistory;
-      });
-      setAiResponse(data.text);
-      setIsGeneratingAudio(true);
-
-      if (!isMuted) {
-        await handleAudioPlayback(data.audio);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Failed to process conversation");
-    } finally {
-      setIsProcessing(false);
-      setIsGeneratingAudio(false);
-    }
-  };
-
-  const handleAudioPlayback = async (audioBase64) => {
-    try {
-      const audioBlob = new Blob([Buffer.from(audioBase64, "base64")], {
-        type: "audio/mpeg",
-      });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      await audio.play();
-    } catch (error) {
-      console.error("Audio playback error:", error);
-      setError("Failed to play audio");
-    }
-  };
 
   const clearConversationHistory = () => {
+    // Clear the conversation history state
     setConversationHistory([]);
     setUserMessage("");
     setAiResponse("");
     setError(null);
+  
+    // Clear the conversation history from localStorage
+    localStorage.clear()
   };
 
   return (

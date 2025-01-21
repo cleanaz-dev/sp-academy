@@ -77,7 +77,7 @@ export default function ReadingLogs({ data }) {
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>
-        <span>Page {currentPage} of {totalPages}</span>
+        <span>Page {currentPage} of {totalPages + 1}</span>
         <Button
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}

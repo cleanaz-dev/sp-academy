@@ -2,12 +2,13 @@
 
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
+import { getAIResponse } from '@/lib/groq'; 
 
 export async function POST(req) {
   try {
     const data = await req.json();
     const { message, history } = data
-    console.log("Data stream:",data);
+    console.log("History:",history);
 
     if (!message) {
       return NextResponse.json(
@@ -31,7 +32,7 @@ export async function POST(req) {
         prompt: `\n\nHuman: You are a French language conversation partner.
         The conversation history is: "${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}"
         The user has said: "${message}"
-        Please respond naturally in French, keeping responses concise.
+        Please respond naturally in French, keeping responses 2 sentences max.
         \n\nAssistant:`,
         max_tokens_to_sample: 200,
         temperature: 0.7,

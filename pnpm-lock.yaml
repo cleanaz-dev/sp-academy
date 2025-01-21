@@ -143,6 +143,9 @@ importers:
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
+      groq-sdk:
+        specifier: ^0.12.0
+        version: 0.12.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -2698,6 +2701,9 @@ packages:
   gray-matter@4.0.3:
     resolution: {integrity: sha512-5v6yZd4JK3eMI3FqqCouswVqwugaA9r4dNZB1wwcmrD02QkV5H0y7XBQW8QwQqEaZY1pM9aqORSORhJRdNK44Q==}
     engines: {node: '>=6.0'}
+
+  groq-sdk@0.12.0:
+    resolution: {integrity: sha512-X8ogAHYJ0pfDFAzTxSmfTCac0GznA1Ypd6t8to2SL236FY2tPSOZrOhIBAobPx+oey/6WI96MbvT6VvvjCDTCQ==}
 
   has-property-descriptors@1.0.2:
     resolution: {integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==}
@@ -7566,6 +7572,18 @@ snapshots:
       kind-of: 6.0.3
       section-matter: 1.0.0
       strip-bom-string: 1.0.0
+
+  groq-sdk@0.12.0:
+    dependencies:
+      '@types/node': 18.19.66
+      '@types/node-fetch': 2.6.12
+      abort-controller: 3.0.0
+      agentkeepalive: 4.5.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
 
   has-property-descriptors@1.0.2:
     dependencies:
