@@ -52,10 +52,12 @@ export default function SingleConversationPage({ conversation }) {
             </div>
           </motion.div>
         </motion.div>
+       
         <div className="w-full">
           <NewConversationComponent
             vocabulary={conversation.vocabulary}
             dialogue={conversation.dialogue}
+            title={conversation.title}
           />
         </div>
       </div>

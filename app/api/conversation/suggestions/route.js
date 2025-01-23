@@ -10,7 +10,6 @@ export async function POST(req) {
   try {
     const { history } = await req.json();
 
-    // Convert conversation history to a format Claude can understand
     const formattedHistory = history
       .map(msg => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`)
       .join('\n');
@@ -19,20 +18,24 @@ export async function POST(req) {
       model: "claude-3-opus-20240229",
       max_tokens: 150,
       temperature: 0.7,
-      system: "You are a French language tutor. Based on the conversation history, suggest 2 natural French responses that the student could use to continue the conversation. Keep suggestions short, appropriate and simple for the context. Provide only the French phrases, separated by newlines, without translations or additional text.",
+      system: "You are a French language tutor for beginners. Based on the conversation history, suggest 2 natural French responses that the student could use to continue the conversation. For each suggestion, provide both the French phrase and its English translation in the format 'French|English', with suggestions separated by newlines.",
       messages: [
         {
           role: "user",
-          content: `Here's the conversation history:\n${formattedHistory}\n\nPlease suggest 2 natural French responses to continue this conversation.`
+          content: `Here's the conversation history:\n${formattedHistory}\n\n`
         }
       ]
     });
 
-    // Parse the response to get individual suggestions
+    // Parse the response to get suggestions with translations
     const suggestions = message.content[0].text
       .split('\n')
       .filter(suggestion => suggestion.trim())
-      .slice(0, 4);
+      .slice(0, 2)
+      .map(suggestion => {
+        const [french, english] = suggestion.split('|').map(s => s.trim());
+        return { french, english };
+      });
 
     return NextResponse.json({ suggestions });
   } catch (error) {

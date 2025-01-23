@@ -7,8 +7,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Mic, MicOff, Loader2 } from "lucide-react";
 import { RefreshCw } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 
-export default function NewConversationComponent({ vocabulary, dialogue }) {
+export default function NewConversationComponent({
+  vocabulary,
+  dialogue,
+  title,
+}) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,11 +86,16 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
     setConversationHistory(savedHistory);
   }, []);
 
+  // useEffect(() => {
+  //   console.log("Props received:", { vocabulary, dialogue, title });
+  // }, [vocabulary, dialogue, title]);
+
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
 
     try {
+   
       // Load existing conversation history from localStorage
       const storedHistory = JSON.parse(
         localStorage.getItem("conversationHistory") || "[]"
@@ -107,6 +117,9 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
         body: JSON.stringify({
           message,
           history: updatedHistory,
+          title: title,
+          vocabulary: vocabulary,
+          dialogue: dialogue,
         }),
       });
 
@@ -216,7 +229,9 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
   const SuggestionsPanel = () => (
     <div className="mt-4 space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-700">Suggested Responses</h4>
+        <h4 className="text-sm font-medium text-gray-700">
+          Suggested Responses
+        </h4>
         <Button
           size="sm"
           variant="outline"
@@ -237,7 +252,7 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
           )}
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 gap-2">
         {suggestions.map((suggestion, index) => (
           <motion.div
@@ -245,22 +260,40 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50 
+            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 
                        transition-colors duration-200"
           >
-            <button
-              onClick={() => handleConversation(suggestion)}
-              className="flex-1 text-left text-sm"
-            >
-              {suggestion}
-            </button>
-            <button
-              onClick={() => speakPhrase(suggestion)}
-              className="ml-2 p-1 text-gray-600 hover:text-purple-600 transition-colors"
-              title="Listen to pronunciation"
-            >
-              🔊
-            </button>
+            <div className="flex-1">
+              <div>
+                {" "}
+                <div className="flex gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => speakPhrase(suggestion.french)}
+                    className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                    title="Listen to pronunciation"
+                  >
+                    🔊
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => usePhrase(suggestion.french)}
+                    className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                    title="Use in conversation"
+                  >
+                    💬
+                  </Button>
+                </div>
+              </div>
+              <p className="text-sm font-medium text-purple-600">
+                {suggestion.french}
+              </p>
+              <p className="text-xs text-gray-600 italic mt-1">
+                {suggestion.english}
+              </p>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -281,47 +314,7 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
             <h3 className="text-lg font-semibold">
               Practice Conversation ✌🏼✌🏼✌🏼
             </h3>
-
-            <button
-              onClick={toggleRecording}
-              disabled={isProcessing}
-              className={`p-3 rounded-full ${
-                isRecording ? "bg-red-500" : "bg-blue-500"
-              } text-white disabled:opacity-50 transition-all`}
-            >
-              {isProcessing ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : isRecording ? (
-                <MicOff className="h-6 w-6" />
-              ) : (
-                <Mic className="h-6 w-6" />
-              )}
-            </button>
           </div>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          {isRecording && (
-            <div className="text-center text-red-600 animate-pulse">
-              Recording...
-            </div>
-          )}
-
-          {isProcessing && (
-            <div className="text-center text-blue-600">
-              Processing your message...
-            </div>
-          )}
-
-          {isGeneratingAudio && (
-            <div className="text-center text-green-600">
-              Generating audio response...
-            </div>
-          )}
 
           {/* Conversation History */}
           <ScrollArea className="flex-1 my-4">
@@ -343,6 +336,75 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
               ))}
             </div>
           </ScrollArea>
+
+          {/* Processing Indicator */}
+          {/* {(isProcessing || isGeneratingAudio) && (
+            <div className="bg-blue-50 border-t border-blue-100 p-2">
+              <div className="max-w-4xl mx-auto flex items-center gap-2 text-sm text-blue-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {isProcessing && <span>Processing your message...</span>}
+                {isGeneratingAudio && <span>Generating audio response...</span>}
+              </div>
+            </div>
+          )} */}
+
+          {/* Input Area */}
+          <div className="border-t bg-white/80 backdrop-blur-sm p-4">
+            <div className="max-w-4xl mx-auto flex items-center gap-4">
+              <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center">
+                <button
+                  onClick={toggleRecording}
+                  disabled={isProcessing}
+                  className={`p-2 rounded-full ${
+                    isRecording ? "bg-red-500" : "bg-gray-200"
+                  } text-white disabled:opacity-50 transition-all`}
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : isRecording ? (
+                    <MicOff className="h-5 w-5" />
+                  ) : (
+                    <Mic className="h-5 w-5" />
+                  )}
+                </button>
+                <div className="ml-3 text-sm text-gray-500">
+                  {isRecording ? (
+                    <span className="text-red-500 animate-pulse">
+                      Recording...
+                    </span>
+                  ) : isProcessing ? (
+                    <span className="text-blue-500">Processing...</span>
+                  ) : (
+                    "Click to speak"
+                  )}
+                </div>
+              </div>
+
+              {/* Optional Suggestions Button */}
+              <button
+                onClick={getSuggestions}
+                disabled={isLoadingSuggestions || isProcessing}
+                className={`p-2 rounded-full transition-all ${
+                  isLoadingSuggestions
+                    ? "bg-gray-100"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                {isLoadingSuggestions ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Lightbulb className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Error Messages */}
+          {error && (
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-full text-sm shadow-lg">
+              {error}
+            </div>
+          )}
 
           {/* Suggestions Panel */}
           <SuggestionsPanel />
@@ -396,7 +458,7 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
                       transition={{ delay: index * 0.1 }}
                       className="p-3 border rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-center">
                         <span className="font-medium text-purple-600">
                           {item.french}
                         </span>
@@ -421,7 +483,7 @@ export default function NewConversationComponent({ vocabulary, dialogue }) {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-gray-600">{item.english}</p>
+                      <p className="text-gray-600 -mt-1">{item.english}</p>
                       <p className="text-sm text-gray-500 mt-1 italic">
                         {item.example}
                       </p>

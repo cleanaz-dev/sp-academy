@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { message, history } = data
-    console.log("History:",history);
+    const { message, history, title, vocabulary, dialogue } = data
+    
 
     if (!message) {
       return NextResponse.json(
@@ -26,28 +26,49 @@ export async function POST(req) {
         },
       });
     
-      // Include the conversation history in the prompt
-      const prompt = {
-        prompt: `\n\nHuman: You are a French language conversation partner.
-        The conversation history is: "${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}"
-        The user has said: "${message}"
-        Please respond naturally in French, keeping responses 2 sentences max.
-        \n\nAssistant:`,
-        max_tokens_to_sample: 200,
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 250,
+        // Improved prompt for Claude
+        const prompt = {
+          prompt: `\n\nHuman: You are a French language conversation partner. Let me provide you with the context and parameters for our interaction:
+  
+  Topic: "${title}"
+  
+  Original Dialogue Scenario:
+  ${dialogue.map(d => `${d.speaker}: ${d.french} (${d.english})`).join('\n')}
+  
+  Relevant Vocabulary:
+  ${vocabulary.map(v => `${v.french} - ${v.english}`).join('\n')}
+  
+  Previous conversation:
+  ${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+  
+  User's latest message: "${message}"
+  
+  Instructions:
+  - Respond as if you are the vendor/staff member from the dialogue
+  - Keep your response in French only
+  - Limit to 1-2 short sentences
+  - Use vocabulary from the provided list when appropriate
+  - Stay strictly within the context of ${title} and the original dialogue scenario
+  - Maintain a natural, conversational tone
+  
+  Please provide your response now.
+  
+  \n\nAssistant:`,
+          max_tokens_to_sample: 200,
+          temperature: 0.7,
+          top_p: 0.9,
+          top_k: 250,
+        };
+      
+        const command = new InvokeModelCommand({
+          modelId: "anthropic.claude-v2:1",
+          body: JSON.stringify(prompt),
+          contentType: "application/json",
+        });
+      
+        const response = await client.send(command);
+        return JSON.parse(new TextDecoder().decode(response.body));
       };
-    
-      const command = new InvokeModelCommand({
-        modelId: "anthropic.claude-v2:1",
-        body: JSON.stringify(prompt),
-        contentType: "application/json",
-      });
-    
-      const response = await client.send(command);
-      return JSON.parse(new TextDecoder().decode(response.body));
-    };
     // Get TTS Function
     const getTextToSpeech = async (text) => {
       const response = await fetch(
