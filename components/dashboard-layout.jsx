@@ -22,6 +22,7 @@ import {
   Book,
   Bookmark,
   BookmarkCircle,
+  UserSpeak
 } from "solar-icon-set";
 import {
   Sheet,
@@ -76,10 +77,10 @@ const navItems = [
   //   ),
   //  },
   {
-    label: "Journals",
-    href: "/journals",
+    label: "Conversation",
+    href: "/conversation",
     icon: (
-      <History2
+      <UserSpeak
         size={24}
         iconStyle="BoldDuotone"
         svgProps={{ width: "24px", height: "24px" }}
@@ -114,8 +115,8 @@ const navItems = [
     ),
   },
   {
-    label: "Book Reports",
-    href: "/book-reports",
+    label: "Books",
+    href: "/books",
     icon: (
       <MaskHapply
         size={24}

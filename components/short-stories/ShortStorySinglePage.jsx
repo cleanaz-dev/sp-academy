@@ -317,7 +317,7 @@ const conversationSection = (
         </TabsContent>
       </Tabs>
       <div className="mt-6 flex gap-4">
-        <ShortStoryQuestionsModal story={story} />
+        {/* <ShortStoryQuestionsModal story={story} /> */}
       </div>
     </div>
   );

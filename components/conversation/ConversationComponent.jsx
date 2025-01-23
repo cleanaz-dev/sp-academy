@@ -1,3 +1,5 @@
+//app/component/conversation/ConversationComponent.jsx
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";

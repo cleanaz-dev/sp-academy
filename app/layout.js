@@ -36,7 +36,28 @@ export const metadata = {
   title: "Spoon Fed Academy - Revolutionizing Learning with AI",
   description:
     "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+  openGraph: {
+    title: "Spoon Fed Academy - Revolutionizing Learning with AI",
+    description:
+      "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+    images: [
+      {
+        url: "/logo1.png",
+        width: 1200,
+        height: 630,
+        alt: "Spoon Fed Academy Preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Spoon Fed Academy - Revolutionizing Learning with AI",
+    description:
+      "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+    images: ["/logo1.png"],
+  },
 };
+
 
 export default function RootLayout({ children }) {
   return (

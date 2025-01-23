@@ -27,6 +27,8 @@ export default function SpoonLogo() {
         <p className="mt-2">Learning made simple, spoon-fed for success.</p>
       </div>
 
+
+
       {/* <div className="h-screen flex">
       // Sidebar
         <aside className="bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 bg-[length:200%_200%] animate-gradient-x text-white w-64 flex flex-col justify-between p-4">

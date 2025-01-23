@@ -292,19 +292,21 @@ model Dialogue {
   dialogue  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  conversation Conversation[]
 }
 
 model Conversation {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  dialogueId String   @db.ObjectId
-  userId     String   @db.ObjectId
-  user       User     @relation(fields: [userId], references: [id])
-  messages   Json
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  Dialogue   Dialogue @relation(fields: [dialogueId], references: [id], onDelete: Cascade)
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  introduction Json
+  vocabulary   Json[]
+  characters   Json[]
+  dialogue     Json[]
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  messages     Json?
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum PracticeStatus {

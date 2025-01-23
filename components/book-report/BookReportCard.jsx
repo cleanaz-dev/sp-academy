@@ -75,7 +75,7 @@ export default function BookReportCard({ book, bookReports }) {
 
         {/* Footer */}
         <div className="mt-2">
-          <Link href={`/book-reports/${id}`} className="w-full">
+          <Link href={`/books/${id}`} className="w-full">
             <Button
               variant="default"
               className="w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-500 hover:to-blue-600 text-white transition-all duration-300"

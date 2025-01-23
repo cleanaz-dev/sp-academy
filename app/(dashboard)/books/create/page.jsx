@@ -92,7 +92,7 @@ export default function CreateBookReportPage() {
       form.append("coverUrl", bookData.coverUrl);
 
       await createBookReport(form);
-      router.push("/book-reports");
+      router.push("/books");
     } catch (error) {
       console.error("Failed to create book report:", error);
     } finally {

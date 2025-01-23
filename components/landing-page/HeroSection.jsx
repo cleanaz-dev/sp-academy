@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function NewLandingPage() {
+export default function HeroSection() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-sky-400/10 via-emerald-400/10 to-purple-400/10 relative overflow-hidden">
       {/* Animated background elements */}
@@ -27,19 +27,19 @@ export default function NewLandingPage() {
       {/* Main Container */}
       <div className="relative container mx-auto max-w-5xl h-screen px-4">
         {/* Content Wrapper */}
-        <div className="h-full flex flex-col lg:flex-row items-center justify-between gap-12 py-8">
+        <div className="h-full flex flex-col md:flex-row items-center gap-12 py-32 md:py-8 md:mx-24">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1 }}
-            className="flex-1 text-center lg:text-left"
+            className="flex-1"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="inline-block"
+              className=""
             >
               <span className="px-4 py-2 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 text-white text-sm font-medium shadow-lg shadow-sky-400/20">
                 Learning Made Magical ✨
@@ -78,7 +78,7 @@ export default function NewLandingPage() {
               className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
               <Link href="/sign-up">
-              <Button className="bg-gradient-to-r from-sky-400 to-emerald-400 hover:from-sky-500 hover:to-emerald-500 text-white px-8 py-6 rounded-full text-lg shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105">
+              <Button className="border-2 bg-gradient-to-r from-sky-400 to-emerald-400 hover:from-sky-500 hover:to-emerald-500 text-white px-8 py-6 rounded-full text-lg shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105">
                 Begin the Adventure
               </Button>
               </Link>
@@ -97,7 +97,7 @@ export default function NewLandingPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="relative w-full max-w-[300px] lg:max-w-[500px] aspect-square"
+            className="relative w-full h-1/2 aspect-square"
           >
             {/* Animated floating elements */}
             <motion.div
@@ -110,7 +110,7 @@ export default function NewLandingPage() {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute top-[20%] left-[20%] w-[30%] aspect-square bg-gradient-to-r from-sky-400 to-emerald-400 rounded-2xl shadow-xl backdrop-blur-sm border border-white/20"
+              className="absolute top-[20%] left-[20%] w-[30%] aspect-square bg-gradient-to-r from-sky-400 to-emerald-400 rounded-2xl shadow-xl backdrop-blur-sm"
             />
             <motion.div
               animate={{
@@ -123,7 +123,7 @@ export default function NewLandingPage() {
                 ease: "easeInOut",
                 delay: 0.5,
               }}
-              className="absolute bottom-[20%] right-[20%] w-[30%] aspect-square bg-gradient-to-r from-amber-400 to-purple-400 rounded-full shadow-xl backdrop-blur-sm border border-white/20"
+              className="absolute bottom-[20%] right-[60%] w-[30%] aspect-square bg-gradient-to-r from-amber-400 to-purple-400 rounded-full shadow-xl backdrop-blur-sm"
             />
             <motion.div
               animate={{
@@ -136,7 +136,7 @@ export default function NewLandingPage() {
                 ease: "easeInOut",
                 delay: 1,
               }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[40%] aspect-square bg-gradient-to-r from-purple-400 to-sky-400 rounded-3xl shadow-xl backdrop-blur-sm border border-white/20"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[40%] aspect-square bg-gradient-to-r from-purple-400 to-sky-400 rounded-3xl shadow-xl backdrop-blur-sm"
             />
 
             {/* Additional floating element */}
