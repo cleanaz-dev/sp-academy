@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Mic, MicOff, Loader2 } from "lucide-react";
 import { RefreshCw } from "lucide-react";
 import { Lightbulb } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 export default function NewConversationComponent({
   vocabulary,
@@ -26,6 +27,7 @@ export default function NewConversationComponent({
   const [aiResponse, setAiResponse] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Add these functions at the top of your component:
   const speakPhrase = (text, lang = "fr-FR") => {
@@ -95,7 +97,6 @@ export default function NewConversationComponent({
     setError(null);
 
     try {
-   
       // Load existing conversation history from localStorage
       const storedHistory = JSON.parse(
         localStorage.getItem("conversationHistory") || "[]"
@@ -300,6 +301,58 @@ export default function NewConversationComponent({
     </div>
   );
 
+  const analyzeAndSaveConversation = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/conversation/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          history: conversationHistory,
+          title: title,
+          vocabulary: vocabulary,
+          dialogue: dialogue,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) throw new Error(data.error);
+
+      // // Show success message
+      // toast({
+      //   title: "Conversation saved!",
+      //   description: "You can view the analysis in your Learning Hub.",
+      //   status: "success",
+      //   duration: 5000,
+      // });
+
+      // // Optionally, clear the conversation after saving
+      // clearConversationHistory();
+    } catch (error) {
+      console.error("Error saving conversation:", error);
+      // toast({
+      //   title: "Error saving conversation",
+      //   description: "Please try again later.",
+      //   status: "error",
+      //   duration: 5000,
+      // });
+    } finally {
+      setIsSaving(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const deleteLastExchange = () => {
+    // Remove last two messages (user and AI response)
+    const newHistory = conversationHistory.slice(0, -2);
+    setConversationHistory(newHistory);
+    // Update localStorage
+    localStorage.setItem("conversationHistory", JSON.stringify(newHistory));
+  };
+
   return (
     <div className="flex h-[calc(100vh-2rem)] gap-4 w-full">
       {/* Main Conversation Area */}
@@ -378,24 +431,18 @@ export default function NewConversationComponent({
                     "Click to speak"
                   )}
                 </div>
-              </div>
-
-              {/* Optional Suggestions Button */}
-              <button
-                onClick={getSuggestions}
-                disabled={isLoadingSuggestions || isProcessing}
-                className={`p-2 rounded-full transition-all ${
-                  isLoadingSuggestions
-                    ? "bg-gray-100"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                {isLoadingSuggestions ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Lightbulb className="h-5 w-5" />
+                {/* Add Delete Button */}
+                {conversationHistory.length >= 2 && (
+                  <button
+                    onClick={deleteLastExchange}
+                    className="ml-auto p-2 rounded-full hover:bg-gray-200 transition-all"
+                    title="Delete last exchange"
+                  >
+                    <Trash2 className="h-4 w-4 text-gray-500" />{" "}
+                    {/* Import Trash2 from lucide-react */}
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
           </div>
 
@@ -411,12 +458,32 @@ export default function NewConversationComponent({
 
           {/* Clear button at bottom */}
           {conversationHistory.length > 0 && (
-            <button
-              onClick={clearConversationHistory}
-              className="w-full p-2 mt-4 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
-            >
-              Clear Conversation
-            </button>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={clearConversationHistory}
+                className="w-1/2 p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
+              >
+                Clear Conversation
+              </button>
+              <button
+                onClick={analyzeAndSaveConversation}
+                disabled={isSaving}
+                className={`w-1/2 p-2 ${
+                  isSaving
+                    ? "bg-purple-300"
+                    : "bg-purple-500 hover:bg-purple-600"
+                } text-white rounded transition-all flex items-center justify-center gap-2`}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save & Analyze"
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -504,7 +571,7 @@ export default function NewConversationComponent({
                       transition={{ delay: index * 0.1 }}
                       className="p-3 border rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-center">
                         <div className="font-medium text-purple-600">
                           {line.speaker}
                         </div>

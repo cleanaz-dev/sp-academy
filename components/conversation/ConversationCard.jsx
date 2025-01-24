@@ -8,13 +8,13 @@ export default function ConversationCard({ conversation }) {
   return (
     <div className="p-4">
       <Link href={`/conversation/${conversation.id}`}>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-shadow duration-300">
-          <div className="relative h-48 w-full">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-shadow duration-300 overflow-hidden">
+          <div className="relative h-48 w-full group overflow-hidden">
             <Image
               src={conversation.imageUrl}
               alt={conversation.title}
               fill
-              className="object-cover"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
@@ -32,7 +32,7 @@ export default function ConversationCard({ conversation }) {
                 French
               </span>
               <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full text-sm">
-              Vocabulary Words
+                Vocabulary Words
               </span>
               <span className="px-3 py-1 bg-emerald-100 dark:bg-blue-900 text-emerald-600 dark:text-blue-300 rounded-full text-sm">
                 Beginner
