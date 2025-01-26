@@ -65,7 +65,7 @@ export default function FeaturesSection() {
             </h2>
           </motion.div>
 
-          {/* Features Grid */}absolute inset-0 -z-10
+          {/* Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
             {features.map((feature, index) => (
               <motion.div
@@ -76,7 +76,7 @@ export default function FeaturesSection() {
                 whileHover={{ scale: 1.05 }}
                 className="relative group cursor-default"
               >
-                <div className="relative z-10 bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <div className="relative z-10 bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 min-h-80">
                   {/* Feature Icon */}
                   <div className={`w-16 h-16 rounded-xl bg-gradient-to-r ${feature.gradient} p-4 mb-6 text-white shadow-lg`}>
                     {feature.icon}

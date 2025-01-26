@@ -10,6 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@11labs/react": "^0.0.5",
     "@anthropic-ai/sdk": "^0.32.1",
     "@aws-sdk/client-bedrock-runtime": "^3.726.1",
     "@aws-sdk/client-lex-runtime-v2": "^3.726.1",

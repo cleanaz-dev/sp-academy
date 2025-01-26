@@ -14,18 +14,23 @@ export async function POST(req) {
       .map(msg => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`)
       .join('\n');
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
-      max_tokens: 150,
-      temperature: 0.7,
-      system: "You are a French language tutor for beginners. Based on the conversation history, suggest 2 natural French responses that the student could use to continue the conversation. For each suggestion, provide both the French phrase and its English translation in the format 'French|English', with suggestions separated by newlines.",
-      messages: [
-        {
-          role: "user",
-          content: `Here's the conversation history:\n${formattedHistory}\n\n`
-        }
-      ]
-    });
+      console.log("Formatted history:", formattedHistory);
+
+      const message = await anthropic.messages.create({
+        model: "claude-3-5-haiku-latest",
+        max_tokens: 150,
+        temperature: 0.7,
+        system: `You are a French language tutor for beginners. Based on the conversation history, suggest exactly 2 natural French responses that the student could use to continue the conversation. Each suggestion must be in the format 'French|English', with no additional text or introductions. Separate the suggestions with newlines. Do not include any explanations or extra information.`,
+        messages: [
+          {
+            role: "user",
+            content: `Here's the conversation history:\n${formattedHistory}\n\n`
+          }
+        ]
+      });
+      
+
+    console.log("Message content:", message.content[0].text);
 
     // Parse the response to get suggestions with translations
     const suggestions = message.content[0].text

@@ -9,11 +9,13 @@ import { ChevronLeft, ChevronRight, Mic, MicOff, Loader2 } from "lucide-react";
 import { RefreshCw } from "lucide-react";
 import { Lightbulb } from "lucide-react";
 import { Trash2 } from "lucide-react";
+import { Send } from "lucide-react";
 
 export default function NewConversationComponent({
   vocabulary,
   dialogue,
   title,
+  id,
 }) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -28,6 +30,11 @@ export default function NewConversationComponent({
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [textInput, setTextInput] = useState("");
+  const [translationResult, setTranslationResult] = useState("");
+
+  const localStorageKey = `conversationHistory-${id}`;
 
   // Add these functions at the top of your component:
   const speakPhrase = (text, lang = "fr-FR") => {
@@ -83,34 +90,25 @@ export default function NewConversationComponent({
 
   useEffect(() => {
     const savedHistory = JSON.parse(
-      localStorage.getItem("conversationHistory") || "[]"
+      localStorage.getItem(localStorageKey) || "[]"
     );
     setConversationHistory(savedHistory);
-  }, []);
-
-  // useEffect(() => {
-  //   console.log("Props received:", { vocabulary, dialogue, title });
-  // }, [vocabulary, dialogue, title]);
+  }, [localStorageKey]);
 
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
 
     try {
-      // Load existing conversation history from localStorage
+      // Get the existing conversation history for the current id
       const storedHistory = JSON.parse(
-        localStorage.getItem("conversationHistory") || "[]"
+        localStorage.getItem(localStorageKey) || "[]"
       );
 
-      // Add the new user message to the history
       const newUserMessage = { role: "user", content: message };
       const updatedHistory = [...storedHistory, newUserMessage];
 
-      // // Log the updated history before the API call
-      // console.log("Updated Conversation History Before API Call:", updatedHistory);
-
-      // Send the entire conversation history in the API request
-      const response = await fetch("/api/conversation", {
+      const response = await fetch("/api/conversation-claude", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,33 +116,21 @@ export default function NewConversationComponent({
         body: JSON.stringify({
           message,
           history: updatedHistory,
-          title: title,
-          vocabulary: vocabulary,
-          dialogue: dialogue,
+          title,
+          vocabulary,
+          dialogue,
         }),
       });
 
       const data = await response.json();
-
       if (data.error) throw new Error(data.error);
 
-      // // Log the response data
-      // console.log("API Response Data:", data);
-
-      // Add AI's response to the conversation history
       const aiMessage = { role: "assistant", content: data.text };
       const finalHistory = [...updatedHistory, aiMessage];
 
-      // Update the conversation history in state and localStorage
+      // Save the updated history in state and localStorage
       setConversationHistory(finalHistory);
-      localStorage.setItem("conversationHistory", JSON.stringify(finalHistory));
-
-      // Log the updated history
-      console.log(
-        "Updated Conversation History After Adding AI Message:",
-        finalHistory
-      );
-
+      localStorage.setItem(localStorageKey, JSON.stringify(finalHistory));
       setAiResponse(data.text);
 
       // Handle audio playback
@@ -158,6 +144,7 @@ export default function NewConversationComponent({
     } finally {
       setIsProcessing(false);
       setIsGeneratingAudio(false);
+      setSuggestions([]); // Clear suggestions when starting a new conversation
     }
   };
 
@@ -176,6 +163,7 @@ export default function NewConversationComponent({
   };
 
   const toggleRecording = () => {
+    setTranslationResult("");
     try {
       if (isRecording) {
         recognition?.stop();
@@ -203,6 +191,7 @@ export default function NewConversationComponent({
 
   const getSuggestions = async () => {
     setIsLoadingSuggestions(true);
+    setSuggestions([]);
     try {
       // Get the last few messages for context
       const recentMessages = conversationHistory.slice(-3);
@@ -353,6 +342,40 @@ export default function NewConversationComponent({
     localStorage.setItem("conversationHistory", JSON.stringify(newHistory));
   };
 
+  const handleTranslation = async (text) => {
+    if (!text.trim()) return;
+
+    setError(null);
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch("/api/conversation/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          from: "en",
+          to: "fr",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Translation request failed");
+      }
+
+      const data = await response.json();
+      setTranslationResult(data.translatedText);
+      setTextInput(""); // Clear input after translation
+    } catch (error) {
+      console.error("Error translating text:", error.message);
+      setError("Failed to translate text");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex h-[calc(100vh-2rem)] gap-4 w-full">
       {/* Main Conversation Area */}
@@ -403,45 +426,90 @@ export default function NewConversationComponent({
 
           {/* Input Area */}
           <div className="border-t bg-white/80 backdrop-blur-sm p-4">
-            <div className="max-w-4xl mx-auto flex items-center gap-4">
-              <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center">
-                <button
-                  onClick={toggleRecording}
-                  disabled={isProcessing}
-                  className={`p-2 rounded-full ${
-                    isRecording ? "bg-red-500" : "bg-gray-200"
-                  } text-white disabled:opacity-50 transition-all`}
-                >
-                  {isProcessing ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : isRecording ? (
-                    <MicOff className="h-5 w-5" />
-                  ) : (
-                    <Mic className="h-5 w-5" />
-                  )}
-                </button>
-                <div className="ml-3 text-sm text-gray-500">
-                  {isRecording ? (
-                    <span className="text-red-500 animate-pulse">
-                      Recording...
+            <div className="max-w-4xl mx-auto flex flex-col gap-4">
+              {/* Status Indicators */}
+              <div className="flex items-center justify-center h-8">
+                {!isRecording && !isProcessing && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 w-full justify-center transition-opacity duration-300 ease-in-out">
+                    <span className="text-sm font-medium text-gray-600">
+                      Ready to start! 🚀
                     </span>
-                  ) : isProcessing ? (
-                    <span className="text-blue-500">Processing...</span>
-                  ) : (
-                    "Click to speak"
+                  </div>
+                )}
+
+                {isRecording && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-200 w-full justify-center transition-opacity duration-300 ease-in-out">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span className="text-sm font-medium text-red-600">
+                      Recording
+                    </span>
+                  </div>
+                )}
+
+                {isProcessing && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 w-full justify-center transition-opacity duration-300 ease-in-out">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                    <span className="text-sm font-medium text-blue-600">
+                      Processing
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Input Controls */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center">
+                  {/* Text Input */}
+                  <input
+                    type="text"
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    placeholder="Type something to translate..."
+                    className="flex-1 bg-transparent outline-none px-3 text-sm"
+                  />
+
+                  {/* Send Button */}
+                  <button
+                    onClick={() => handleTranslation(textInput)}
+                    disabled={isProcessing || !textInput.trim()}
+                    className="p-2 rounded-full hover:bg-blue-500 bg-blue-400 text-white disabled:opacity-50 transition-all mr-2"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+
+                  {/* Voice Recording Button */}
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isProcessing}
+                    className={`p-2 rounded-full hover:bg-red-500 duration-300 ${
+                      isRecording ? "bg-red-500" : "bg-blue-500"
+                    } text-white disabled:opacity-50 transition-all`}
+                  >
+                    {isRecording ? (
+                      // Show a "Stop" icon or a glowing mic when recording
+                      <div className="flex items-center">
+                        <Mic className="h-5 w-5 animate-pulse" />
+                      </div>
+                    ) : (
+                      // Show a normal mic when idle
+                      <Mic className="h-5 w-5" />
+                    )}
+                  </button>
+
+                  {/* Delete Button */}
+                  {conversationHistory.length >= 2 && (
+                    <button
+                      onClick={deleteLastExchange}
+                      className="ml-auto p-2 rounded-full hover:bg-gray-200 transition-all duration-300"
+                      title="Delete last exchange"
+                    >
+                      <Trash2 className="h-5 w-5 text-red-500" />
+                    </button>
                   )}
                 </div>
-                {/* Add Delete Button */}
-                {conversationHistory.length >= 2 && (
-                  <button
-                    onClick={deleteLastExchange}
-                    className="ml-auto p-2 rounded-full hover:bg-gray-200 transition-all"
-                    title="Delete last exchange"
-                  >
-                    <Trash2 className="h-4 w-4 text-gray-500" />{" "}
-                    {/* Import Trash2 from lucide-react */}
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -450,6 +518,50 @@ export default function NewConversationComponent({
           {error && (
             <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-full text-sm shadow-lg">
               {error}
+            </div>
+          )}
+
+          {/* Translation Result Display */}
+          {translationResult && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Translation
+                </h4>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 
+                 transition-colors duration-200"
+              >
+                <div className="flex-1">
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => speakPhrase(translationResult)}
+                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      title="Listen to pronunciation"
+                    >
+                      🔊
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => usePhrase(translationResult)}
+                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      title="Use in conversation"
+                    >
+                      💬
+                    </Button>
+                  </div>
+                  <p className="text-sm font-medium text-purple-600">
+                    {translationResult}
+                  </p>
+                </div>
+              </motion.div>
             </div>
           )}
 

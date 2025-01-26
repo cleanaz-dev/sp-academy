@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import NewConversationComponent from "./NewConversationComponent";
 
-export default function SingleConversationPage({ conversation }) {
+export default function SingleConversationPage({ conversation, id }) {
   return (
     <div className="min-h-screen bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] py-8">
       <div className="container mx-auto px-4">
@@ -58,6 +58,7 @@ export default function SingleConversationPage({ conversation }) {
             vocabulary={conversation.vocabulary}
             dialogue={conversation.dialogue}
             title={conversation.title}
+            id={id}
           />
         </div>
       </div>

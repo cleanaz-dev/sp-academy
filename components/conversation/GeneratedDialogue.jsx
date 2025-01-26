@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Info } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation"
 
 export default function GeneratedDialogue({ scenario, level, focusArea }) {
   const [activePhrase, setActivePhrase] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { user } = useUser();
+  const router = useRouter();
 
   // Parse the scenario data (assuming it comes in a structured format)
   const { introduction, vocabulary, phrases, characters, dialogue, title } =
@@ -56,7 +58,10 @@ export default function GeneratedDialogue({ scenario, level, focusArea }) {
         console.error("Failed to save scenario:", error);
         setError(error.message || "An unexpected error occurred.");
       } finally {
-        setIsLoading(false); // Ensure loading state is cleared
+        setIsLoading(false);
+        
+        router.push("/conversation");
+
       }
     };
     

@@ -4,9 +4,10 @@ import SingleConversationPage from '@/components/conversation/SingleConversation
 
 export default async function page({params}) {
   const conversation = await getConversationById(params.id)
+  const id = await params.id; 
   return (
     <div>
-      <SingleConversationPage conversation={conversation} />
+      <SingleConversationPage conversation={conversation} id={id} />
     </div>
   )
 }

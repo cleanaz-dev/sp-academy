@@ -1,17 +1,19 @@
 // app/api/conversation/route.js
 
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { message, history, title, vocabulary, dialogue } = data
-    
+    const { message, history, title, vocabulary, dialogue } = data;
 
     if (!message) {
       return NextResponse.json(
-        { error: 'Message is required' },
+        { error: "Message is required" },
         { status: 400 }
       );
     }
@@ -25,23 +27,25 @@ export async function POST(req) {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
         },
       });
-    
-        // Improved prompt for Claude
-        const prompt = {
-          prompt: `\n\nHuman: You are a French language conversation partner. Let me provide you with the context and parameters for our interaction:
+
+      // Improved prompt for Claude
+      const prompt = {
+        prompt: `\n\nHuman: You are a French language conversation partner. Let me provide you with the context and parameters for our interaction:
   
   Topic: "${title}"
   
   Original Dialogue Scenario:
-  ${dialogue.map(d => `${d.speaker}: ${d.french} (${d.english})`).join('\n')}
+  ${dialogue.map((d) => `${d.speaker}: ${d.french} (${d.english})`).join("\n")}
   
   Relevant Vocabulary:
-  ${vocabulary.map(v => `${v.french} - ${v.english}`).join('\n')}
+  ${vocabulary.map((v) => `${v.french} - ${v.english}`).join("\n")}
   
   Previous conversation:
-  ${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+  ${history.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
   
   User's latest message: "${message}"
+
+  User French Level: Beginner
   
   Instructions:
   - Respond as if you are the vendor/staff member from the dialogue
@@ -54,30 +58,30 @@ export async function POST(req) {
   Please provide your response now.
   
   \n\nAssistant:`,
-          max_tokens_to_sample: 200,
-          temperature: 0.7,
-          top_p: 0.9,
-          top_k: 250,
-        };
-      
-        const command = new InvokeModelCommand({
-          modelId: "anthropic.claude-v2:1",
-          body: JSON.stringify(prompt),
-          contentType: "application/json",
-        });
-      
-        const response = await client.send(command);
-        return JSON.parse(new TextDecoder().decode(response.body));
+        max_tokens_to_sample: 200,
+        temperature: 0.7,
+        top_p: 0.9,
+        top_k: 250,
       };
+
+      const command = new InvokeModelCommand({
+        modelId: "anthropic.claude-v2:1",
+        body: JSON.stringify(prompt),
+        contentType: "application/json",
+      });
+
+      const response = await client.send(command);
+      return JSON.parse(new TextDecoder().decode(response.body));
+    };
     // Get TTS Function
     const getTextToSpeech = async (text) => {
       const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}/stream`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'xi-api-key': process.env.ELEVENLABS_API_KEY,
+            "Content-Type": "application/json",
+            "xi-api-key": process.env.ELEVENLABS_API_KEY,
           },
           body: JSON.stringify({
             text,
@@ -86,15 +90,15 @@ export async function POST(req) {
               stability: 0.5,
               similarity_boost: 0.5,
               language: "fr",
-              use_speaker_boost: true
+              use_speaker_boost: true,
             },
-            optimize_streaming_latency: 3
+            optimize_streaming_latency: 3,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error('TTS failed');
+        throw new Error("TTS failed");
       }
 
       return response;
@@ -114,13 +118,12 @@ export async function POST(req) {
 
     return NextResponse.json({
       text: aiResponse,
-      audio: Buffer.from(audioData).toString('base64'),
+      audio: Buffer.from(audioData).toString("base64"),
     });
-
   } catch (error) {
-    console.error('Conversation error:', error);
+    console.error("Conversation error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

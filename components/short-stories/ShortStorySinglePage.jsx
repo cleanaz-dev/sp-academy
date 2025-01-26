@@ -249,8 +249,6 @@ const conversationSection = (
         <TabsContent value="pronunciation">
           <div>
             <h2 className="text-xl font-bold mb-4">Practice Pronunciation:</h2>
-            <ConversationComponent />
-            {/* {conversationSection} */}
             <PronunciationAssessment
               userId={story.user.id}
               storyText={story.frenchText}

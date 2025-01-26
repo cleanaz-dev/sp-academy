@@ -11,7 +11,7 @@ export default function CreateConversationCard() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md cursor-pointer transition-shadow duration-300 overflow-hidden">
           <div className="relative h-48 w-full bg-gradient-to-r from-sky-400 via-amber-400 to-emerald-400 flex items-center justify-center group">
             {/* Icon with Hover Effect */}
-            <div className="flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform group-hover:scale-110">
+            <div className="flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg transition-transform group-hover:scale-110 duration-700">
               <PlusCircle className="h-10 w-10 text-sky-400 group-hover:text-emerald-400 transition-colors" />
             </div>
           </div>
