@@ -1,12 +1,14 @@
 // app/api/conversation-claude/route.js
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { message, history, title, vocabulary, dialogue } = data;
+    const { message, history, title, vocabulary, dialogue, voiceGender, tutorLanguage } = data;
+    console.log("Gender from API:", voiceGender);
+    console.log("Tutor Language:", tutorLanguage);
 
     if (!message) {
       return NextResponse.json(
@@ -23,8 +25,10 @@ export async function POST(req) {
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
 
-      const systemPrompt = `IMPORTANT: YOU MUST ONLY RESPOND IN FRENCH, NO ENGLISH TRANSLATIONS.
-You are a French language conversation partner. Let me provide you with the context and parameters for our interaction. ONLY REPLY in FRENCH:
+      const systemPrompt = `
+      You are a French language conversation partner. Respond in the following format:
+FRENCH: [Your French response]
+ENGLISH: [English translation]
 
 Topic: "${title}"
 
@@ -55,23 +59,37 @@ Instructions:
         max_tokens: 150,
         temperature: 0.3,
         system: systemPrompt,
-        messages: [
-          { role: "user", content: message }
-        ]
+        messages: [{ role: "user", content: message }],
       });
 
       const endTime = performance.now();
       const responseTime = (endTime - startTime) / 1000;
-    
+
       console.log(`AI Response Time: ${responseTime}s`);
 
-      return response.content[0].text;
+      const responseText = response.content[0].text;
+
+      // Parse the response to separate French and English
+      const frenchText = responseText.match(/FRENCH:\s*(.*?)(?=ENGLISH:|$)/s);
+      const englishText = responseText.match(/ENGLISH:\s*(.*?)$/s);
+
+      return {
+        french: frenchText ? frenchText[1].trim() : responseText,
+        english: englishText ? englishText[1].trim() : "",
+      };
     };
 
     // Get TTS Function
     const getTextToSpeech = async (text) => {
+      let voiceId;
+      if (voiceGender === "male") {
+        voiceId = process.env.ELEVENLABS_FRENCH_MALE_VOICE_ID;
+      } else {
+        voiceId = process.env.ELEVENLABS_FRENCH_FEMALE_VOICE_ID;
+      }
+
       const response = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}/stream`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
         {
           method: "POST",
           headers: {
@@ -91,7 +109,6 @@ Instructions:
           }),
         }
       );
-
       if (!response.ok) {
         throw new Error("TTS failed");
       }
@@ -106,11 +123,15 @@ Instructions:
     ]);
 
     // Get TTS stream
-    const ttsResponse = await getTextToSpeech(aiResponse);
+    const ttsResponse = await getTextToSpeech(aiResponse.french);
     const audioData = await ttsResponse.arrayBuffer();
 
+    console.log("French translation:", aiResponse.french);
+    console.log("English translation:", aiResponse.english);
+
     return NextResponse.json({
-      text: aiResponse,
+      french: aiResponse.french,
+      english: aiResponse.english,
       audio: Buffer.from(audioData).toString("base64"),
     });
   } catch (error) {

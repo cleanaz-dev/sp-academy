@@ -5,17 +5,18 @@ import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Mic, MicOff, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Mic, Loader2 } from "lucide-react";
 import { RefreshCw } from "lucide-react";
-import { Lightbulb } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { Send } from "lucide-react";
+import { Switch } from "@/components/ui/switch-voice";
 
 export default function NewConversationComponent({
   vocabulary,
   dialogue,
   title,
   id,
+  tutorLangauge,
 }) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -33,6 +34,7 @@ export default function NewConversationComponent({
   const [isTranslating, setIsTranslating] = useState(false);
   const [textInput, setTextInput] = useState("");
   const [translationResult, setTranslationResult] = useState("");
+  const [voiceGender, setVoiceGender] = useState("female");
 
   const localStorageKey = `conversationHistory-${id}`;
 
@@ -45,6 +47,31 @@ export default function NewConversationComponent({
 
   const usePhrase = (phrase) => {
     handleConversation(phrase);
+  };
+
+  const textToSpeech = async (text) => {
+    try {
+      const response = await fetch(`/api/conversation/text-to-speech`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Extract the base64-encoded audio from the API response
+      const audioBase64 = data.audio;
+
+      // Play the audio using the helper function
+      await handleAudioPlayback(audioBase64);
+    } catch (error) {
+      console.error("Error in text-to-speech:", error);
+      alert("Failed to process text-to-speech. Please try again.");
+    }
   };
 
   // Initialize speech recognition
@@ -86,7 +113,7 @@ export default function NewConversationComponent({
         setError("Speech recognition not supported in this browser");
       }
     }
-  }, []);
+  }, [voiceGender]);
 
   useEffect(() => {
     const savedHistory = JSON.parse(
@@ -98,6 +125,7 @@ export default function NewConversationComponent({
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
+    console.log("Processing user message:", message);
 
     try {
       // Get the existing conversation history for the current id
@@ -119,19 +147,26 @@ export default function NewConversationComponent({
           title,
           vocabulary,
           dialogue,
+          voiceGender,
+          tutorLangauge,
         }),
       });
 
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      const aiMessage = { role: "assistant", content: data.text };
+      const aiMessage = {
+        role: "assistant",
+        content: data.french,
+        translation: data.english,
+      };
+
       const finalHistory = [...updatedHistory, aiMessage];
 
       // Save the updated history in state and localStorage
       setConversationHistory(finalHistory);
       localStorage.setItem(localStorageKey, JSON.stringify(finalHistory));
-      setAiResponse(data.text);
+      setAiResponse(data.french)
 
       // Handle audio playback
       setIsGeneratingAudio(true);
@@ -376,8 +411,15 @@ export default function NewConversationComponent({
     }
   };
 
+  const toggleVoiceGender = (checked) => {
+    const newGender = checked ? "male" : "female";
+    setVoiceGender(newGender);
+    console.log("Voice gender toggled to: ", newGender);
+  };
+
+
   return (
-    <div className="flex h-[calc(100vh-2rem)] gap-4 w-full">
+    <div className="flex container mx-auto h-[calc(75vh-2rem)] max-w-4xl gap-4">
       {/* Main Conversation Area */}
       <div
         className={`transition-all duration-300 ${
@@ -387,9 +429,35 @@ export default function NewConversationComponent({
         {/* Your existing conversation UI */}
         <div className="bg-white rounded-lg shadow p-4 h-full flex flex-col">
           <div className="flex items-center justify-between p-2">
-            <h3 className="text-lg font-semibold">
-              Practice Conversation ✌🏼✌🏼✌🏼
-            </h3>
+            <header>
+              <div>
+                <h3 className="text-lg font-semibold">
+                  Practice Conversation ✌🏼✌🏼✌🏼
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    Voice:
+                  </span>
+                  <Switch
+                    defaultChecked
+                    checked={voiceGender === "male"}
+                    onCheckedChange={toggleVoiceGender}
+                    className="relative transition-colors"
+                  >
+                    <span
+                      className={`${
+                        voiceGender === "male"
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
+                    />
+                 </Switch>
+                  <span className="text-2xl">
+                    {voiceGender === "male" ? "🚹" : "🚺"}
+                  </span>
+                </div>
+              </div>
+            </header>
           </div>
 
           {/* Conversation History */}
@@ -408,6 +476,11 @@ export default function NewConversationComponent({
                     {message.role === "user" ? "You:" : "AI:"}
                   </p>
                   <p>{message.content}</p>
+                  {message.translation && (
+                    <p className="mt-1 text-gray-600 italic text-xs">
+                      {message.translation}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -428,37 +501,56 @@ export default function NewConversationComponent({
           <div className="border-t bg-white/80 backdrop-blur-sm p-4">
             <div className="max-w-4xl mx-auto flex flex-col gap-4">
               {/* Status Indicators */}
-              <div className="flex items-center justify-center h-8">
-                {!isRecording && !isProcessing && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 border border-gray-200 w-full justify-center transition-opacity duration-300 ease-in-out">
-                    <span className="text-sm font-medium text-gray-600">
-                      Ready to start! 🚀
-                    </span>
+              <div className="relative h-8 w-full">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                      !isRecording && !isProcessing
+                        ? "opacity-100"
+                        : "opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="px-4 py-2 rounded-full w-full flex justify-center">
+                      <span className="text-sm font-medium text-gray-600">
+                        Ready to start! 🚀
+                      </span>
+                    </div>
                   </div>
-                )}
 
-                {isRecording && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 border border-red-200 w-full justify-center transition-opacity duration-300 ease-in-out">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                    <span className="text-sm font-medium text-red-600">
-                      Recording
-                    </span>
+                  <div
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                      isRecording
+                        ? "opacity-100"
+                        : "opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                      </span>
+                      <span className="text-sm font-medium text-red-600">
+                        Recording
+                      </span>
+                    </div>
                   </div>
-                )}
 
-                {isProcessing && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200 w-full justify-center transition-opacity duration-300 ease-in-out">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                    <span className="text-sm font-medium text-blue-600">
-                      Processing
-                    </span>
+                  <div
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                      isProcessing
+                        ? "opacity-100"
+                        : "opacity-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                      <span className="text-sm font-medium text-blue-600">
+                        Processing
+                      </span>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
-
               {/* Input Controls */}
               <div className="flex items-center gap-4">
                 <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center">
@@ -503,7 +595,7 @@ export default function NewConversationComponent({
                   {conversationHistory.length >= 2 && (
                     <button
                       onClick={deleteLastExchange}
-                      className="ml-auto p-2 rounded-full hover:bg-gray-200 transition-all duration-300"
+                      className="group ml-2 p-2 rounded-full hover:bg-gray-200 transition-all duration-300"
                       title="Delete last exchange"
                     >
                       <Trash2 className="h-5 w-5 text-red-500" />
@@ -637,11 +729,16 @@ export default function NewConversationComponent({
                       transition={{ delay: index * 0.1 }}
                       className="p-3 border rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-purple-600">
-                          {item.french}
-                        </span>
-                        <div className="flex gap-2">
+                      <div className="flex justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-semibold text-purple-600">
+                            {item.french}
+                          </span>
+                          <span className="text-gray-600  text-[14px]">
+                            {item.english}
+                          </span>
+                        </div>
+                        <div className="flex gap-2 ">
                           <Button
                             size="icon"
                             variant="ghost"
@@ -662,9 +759,9 @@ export default function NewConversationComponent({
                           </Button>
                         </div>
                       </div>
-                      <p className="text-gray-600 -mt-1">{item.english}</p>
-                      <p className="text-sm text-gray-500 mt-1 italic">
-                        {item.example}
+
+                      <p className="text-[13px] text-gray-500 mt-1 italic">
+                        "{item.example}"
                       </p>
                     </motion.div>
                   ))}
@@ -684,14 +781,14 @@ export default function NewConversationComponent({
                       className="p-3 border rounded-lg hover:bg-gray-50"
                     >
                       <div className="flex justify-between items-center">
-                        <div className="font-medium text-purple-600">
+                        <div className="font-medium text-purple-600 text-sm">
                           {line.speaker}
                         </div>
                         <div className="flex gap-2">
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => speakPhrase(line.french)}
+                            onClick={() => textToSpeech(line.french)}
                             className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                             title="Listen to pronunciation"
                           >

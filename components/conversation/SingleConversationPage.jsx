@@ -21,7 +21,9 @@ export default function SingleConversationPage({ conversation, id }) {
               src={conversation.imageUrl}
               alt={conversation.title}
               fill
+              sizes="object-cover"
               className="object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6">
@@ -52,15 +54,13 @@ export default function SingleConversationPage({ conversation, id }) {
             </div>
           </motion.div>
         </motion.div>
-       
-        <div className="w-full">
           <NewConversationComponent
             vocabulary={conversation.vocabulary}
             dialogue={conversation.dialogue}
             title={conversation.title}
             id={id}
+            tutorLangauge={conversation.tutorLanguage}
           />
-        </div>
       </div>
     </div>
   );

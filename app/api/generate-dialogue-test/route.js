@@ -1,18 +1,21 @@
 //api/generate-dialogue-test/route.js
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-
-    // console.log("Scenario Context:", data.scenario.context);
-
-    // console.log("Level Requirements:", data.level.requirements);
-
-    
-
-    const { 
-      scenario: { type: scenarioType, context },
+    const {
+      languages,
+      scenario: {
+        type: scenarioType,
+        context,
+        keyPhrases,
+        vocabulary,
+        culturalNotes,
+      },
       level: { type: levelType, requirements },
       focus: { type: focusType, objectives },
     } = await req.json();
@@ -26,51 +29,90 @@ export async function POST(req) {
     });
 
     const prompt = {
-      prompt: `\n\nHuman: You are a French language learning assistant. Create a structured dialogue scenario for learning French. Always follow the RULES: 1.Provide at least 10 vocabulary words 2. Provide a at least 6 dialogue responses. Please provide the response in the following JSON format:
-
-{
-  "introduction": {
-    "french": "A brief introduction to the scenario in French",
-    "english": "The same introduction in English"
-  },
-  "vocabulary": [
+      prompt: `\n\nHuman: You are a language learning assistant. Create a structured dialogue scenario for learning ${languages.target}. The learner's native language is ${languages.native}.
+    
+    CRITICAL REQUIREMENTS:
+    *** YOU MUST PROVIDE EXACTLY 10 VOCABULARY WORDS - NO MORE, NO LESS ***
+    
+    RULES:
+    1. YOU MUST INCLUDE EXACTLY 10 VOCABULARY WORDS that are:
+       - Relevant to the scenario
+       - Appropriate for the level
+       - Each with translation and example sentence
+       - This is a strict requirement
+    2. Provide 6 dialogue exchanges with at least 2 characters
+    3. Provide a cultural context note
+    4. Match the specified level requirements
+    
+    Output Format:
     {
-      "french": "French word or phrase",
-      "english": "English translation",
-      "example": "An example sentence using the word"
+      "introduction": {
+        "${languages.target}": "Brief introduction",
+        "${languages.native}": "Translation"
+      },
+      "culturalNotes": [
+        {
+          "note": "Cultural insight",
+          "explanation": "Detailed explanation"
+        }
+      ],
+      "vocabulary": [ // MUST CONTAIN EXACTLY 10 ITEMS
+        {
+          "${languages.target}": "Word/phrase",
+          "${languages.native}": "Translation",
+          "context": "Usage context",
+          "example": {
+            "${languages.target}": "Example sentence",
+            "${languages.native}": "Translation"
+          }
+        }
+        // ... continue until exactly 10 vocabulary items are listed
+      ],
+      "characters": [
+        {
+          "role": "Character role",
+          "description": "Description"
+        }
+      ],
+      "dialogue": [  // MUST CONTAIN EXACTLY 6 EXCHANGES
+        {
+          "speaker": "Character",
+          "${languages.target}": "Dialogue line",
+          "${languages.native}": "Translation",
+          "notes": "Optional notes"
+        }
+          // ... continue until exactly 6 dialogue exchanges are listed
+      ]
     }
-  ],
-  "characters": [
-    {
-      "role": "Character role (e.g., waiter, customer)",
-      "description": "Brief character description"
-    }
-  ],
-  "dialogue": [
-    {
-      "speaker": "Character name",
-      "french": "French dialogue line",
-      "english": "English translation"
-    }
-  ]
-}
-
-Create this content based on:
-
-SCENARIO: ${scenarioType}
-CONTEXT: Location - ${context.location}, Roles - ${context.roles.join(', ')}
-LEVEL: ${levelType} (Vocabulary range: ${requirements.vocabulary} words)
-FOCUS: ${focusType}
-LEARNING OBJECTIVES: ${objectives.join(', ')}
-
-
-\n\nAssistant:`,
-      max_tokens_to_sample: 2000,
+    
+    SCENARIO DETAILS:
+    - SCENARIO: ${scenarioType}
+    - CONTEXT: ${context.situation}
+    - LOCATION: ${context.location}
+    - ROLES: ${context.roles.join(", ")}
+    - LEVEL: ${levelType}
+    - LEVEL REQUIREMENTS:
+      - Grammar Focus: ${requirements.grammarTopics.join(", ")}
+      - Expected Fluency: ${requirements.expectedFluency}
+      - Conversation Goals: ${requirements.conversationGoals.join(", ")}
+    - FOCUS: ${focusType}
+    - LEARNING OBJECTIVES: ${objectives.join(", ")}
+    - CULTURAL NOTES TO INCORPORATE: ${culturalNotes.join(", ")}
+    
+    REQUIRED ELEMENTS TO INCLUDE:
+    KEY PHRASES: ${JSON.stringify(keyPhrases)}
+    VOCABULARY: ${JSON.stringify(vocabulary)}
+    
+    REMEMBER: The response MUST include EXACTLY 10 vocabulary items with full details for each.
+    
+    \n\nAssistant:`,
+      max_tokens_to_sample: 2500,
       temperature: 0.7,
       top_p: 0.9,
       top_k: 250,
       stop_sequences: ["\n\nHuman:"],
     };
+    
 
     const command = new InvokeModelCommand({
       modelId: "anthropic.claude-v2:1",
@@ -81,10 +123,8 @@ LEARNING OBJECTIVES: ${objectives.join(', ')}
     const response = await client.send(command);
     const responseData = JSON.parse(new TextDecoder().decode(response.body));
 
-    // // Parse the completion to get the JSON structure
     let scenarioContent;
     try {
-      // The completion might include markdown or other text before/after the JSON
       const jsonMatch = responseData.completion.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         scenarioContent = JSON.parse(jsonMatch[0]);
@@ -92,22 +132,19 @@ LEARNING OBJECTIVES: ${objectives.join(', ')}
         throw new Error("No valid JSON found in response");
       }
     } catch (parseError) {
-      console.error('Error parsing scenario content:', parseError);
-      // Fallback structure if parsing fails
+      console.error("Error parsing scenario content:", parseError);
       scenarioContent = {
         introduction: {
-          french: "Une erreur s'est produite.",
-          english: "An error occurred."
+          [languages.target]: "Une erreur s'est produite.",
+          [languages.native]: "An error occurred.",
         },
+        culturalNotes: [],
         vocabulary: [],
         characters: [],
         dialogue: [],
       };
     }
 
-
-
-    // Add metadata to the response
     const enhancedResponse = {
       scenario: {
         ...scenarioContent,
@@ -115,52 +152,35 @@ LEARNING OBJECTIVES: ${objectives.join(', ')}
           generatedAt: new Date().toISOString(),
           level: levelType,
           focusArea: focusType,
-          scenarioType: scenarioType
-        }
+          scenarioType: scenarioType,
+          languages: {
+            native: languages.native,
+            target: languages.target,
+          },
+        },
       },
     };
 
-    return NextResponse.json(enhancedResponse, { 
+    return NextResponse.json(enhancedResponse, {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-  } catch (error) {
-    console.error('Error generating dialogue:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate dialogue scenario',
-        details: error.message,
-        timestamp: new Date().toISOString()
+        "Content-Type": "application/json",
       },
-      { 
+    });
+  } catch (error) {
+    console.error("Error generating dialogue:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to generate dialogue scenario",
+        details: error.message,
+        timestamp: new Date().toISOString(),
+      },
+      {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
   }
-}
-
-// Optional: Add input validation middleware
-export async function validateInput(req) {
-  const requiredFields = ['scenario', 'level', 'focus', 'userProgress'];
-  const body = await req.json();
-
-  for (const field of requiredFields) {
-    if (!body[field]) {
-      return {
-        isValid: false,
-        error: `Missing required field: ${field}`
-      };
-    }
-  }
-
-  return {
-    isValid: true,
-    data: body
-  };
 }

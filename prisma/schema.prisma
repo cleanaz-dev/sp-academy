@@ -34,6 +34,20 @@ model User {
   LearningProgress      LearningProgress[]
   ConversationRecord    ConversationRecord[]
   Exercise              Exercise[]
+  AccountSettings       AccountSettings?
+}
+
+model AccountSettings {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  user              User            @relation(fields: [userId], references: [id])
+  userId            String          @unique @db.ObjectId
+  language          Languages       @default(ENGLISH)
+  displayName       String?
+  avatarUrl         String?
+  aiVoicePreference VoicePreference @default(MALE)
+  billingPlan       Billing         @default(FREE)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model Student {
@@ -298,18 +312,21 @@ model Dialogue {
 }
 
 model Conversation {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  title        String
-  introduction Json
-  vocabulary   Json[]
-  characters   Json[]
-  dialogue     Json[]
-  userId       String   @db.ObjectId
-  user         User     @relation(fields: [userId], references: [id])
-  messages     Json?
-  imageUrl     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  nativeLanguage Languages?
+  tutorLanguage  Languages?
+  level          Level?
+  introduction   Json
+  vocabulary     Json[]
+  characters     Json[]
+  dialogue       Json[]
+  userId         String     @db.ObjectId
+  user           User       @relation(fields: [userId], references: [id])
+  messages       Json?
+  imageUrl       String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
 
 model LearningProgress {
@@ -367,13 +384,22 @@ enum ReportStatus {
 enum Languages {
   ENGLISH
   FRENCH
-  GERMAN
   SPANISH
-  PORTUGUESE
-  ITALIAN
-  JAPANESE
-  KOREAN
-  CHINESE
-  RUSSIAN
-  VIETNAMESE
+}
+
+enum VoicePreference {
+  MALE
+  FEMALE
+}
+
+enum Billing {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
 }

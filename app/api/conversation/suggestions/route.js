@@ -17,7 +17,7 @@ export async function POST(req) {
       console.log("Formatted history:", formattedHistory);
 
       const message = await anthropic.messages.create({
-        model: "claude-3-5-haiku-latest",
+        model: "claude-3-opus-latest",
         max_tokens: 150,
         temperature: 0.7,
         system: `You are a French language tutor for beginners. Based on the conversation history, suggest exactly 2 natural French responses that the student could use to continue the conversation. Each suggestion must be in the format 'French|English', with no additional text or introductions. Separate the suggestions with newlines. Do not include any explanations or extra information.`,

@@ -13,8 +13,10 @@ export default function ConversationCard({ conversation }) {
             <Image
               src={conversation.imageUrl}
               alt={conversation.title}
+              sizes="object-fit-cover"
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
@@ -29,16 +31,16 @@ export default function ConversationCard({ conversation }) {
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 rounded-full text-sm">
-                French
+                {(conversation.tutorLanguage).toLowerCase()}
               </span>
-              <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full text-sm">
+              {/* <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full text-sm">
                 Vocabulary Words
-              </span>
+              </span> */}
               <span className="px-3 py-1 bg-emerald-100 dark:bg-blue-900 text-emerald-600 dark:text-blue-300 rounded-full text-sm">
-                Beginner
+                {(conversation.level).toLowerCase()}
               </span>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 text-sm italic">
+            <p className="text-gray-600 dark:text-gray-300 text-sm italic min-h-20">
               {conversation.introduction.french}
             </p>
           </div>

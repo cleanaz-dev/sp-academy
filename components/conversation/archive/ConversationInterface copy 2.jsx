@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Mic, MicOff, Loader2, Volume2, VolumeX, RefreshCw } from 'lucide-react';
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 export default function ConversationInterface({ scenarioContext }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -33,6 +33,14 @@ export default function ConversationInterface({ scenarioContext }) {
       return null;
     }
   };
+
+  // Initialize scenario parsing
+  useEffect(() => {
+    if (scenarioContext) {
+      const parsed = parseScenarioContext(scenarioContext);
+      setParsedScenario(parsed);
+    }
+  }, [scenarioContext]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -92,21 +100,9 @@ export default function ConversationInterface({ scenarioContext }) {
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
-  
-    // Log current state for debugging
-    console.log('Current conversation history:', conversationHistory);
-  
-    // Create updated history by adding user message first
-    const updatedHistory = [
-      ...conversationHistory,
-      { role: 'user', content: message }
-    ];
-  
-    // Update the state with the new history immediately
-    setConversationHistory(updatedHistory);
-  
+
     try {
-      const response = await fetch('/api/conversation-test', {
+      const response = await fetch('/api/conversation-test', { // Changed this line
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,28 +110,27 @@ export default function ConversationInterface({ scenarioContext }) {
         body: JSON.stringify({
           message,
           context: parsedScenario,
-          history: updatedHistory // Send updated history including the user message
+          history: conversationHistory
         }),
       });
-  
+
       const data = await response.json();
       
       if (data.error) throw new Error(data.error);
-  
-      // Log API response for debugging
-      console.log('API Response:', data);
-  
-      // Set AI response and update history with assistant's reply
+
       setAiResponse(data.text);
       setIsGeneratingAudio(true);
-  
-      // Add assistant's reply to history after receiving it
-      setConversationHistory(prev => [...prev, { role: 'assistant', content: data.text }]);
-  
+
+      // Update conversation history
+      setConversationHistory(prev => [...prev, 
+        { role: 'user', content: message },
+        { role: 'assistant', content: data.text }
+      ]);
+
       if (!isMuted) {
         await handleAudioPlayback(data.audio);
       }
-  
+
     } catch (error) {
       console.error('Error:', error);
       setError('Failed to process conversation');
@@ -144,21 +139,6 @@ export default function ConversationInterface({ scenarioContext }) {
       setIsGeneratingAudio(false);
     }
   };
-  
-
-  // Add useEffect to monitor conversation history changes
-useEffect(() => {
-  console.log('Conversation history updated:', conversationHistory);
-}, [conversationHistory]);
-
-// Add useEffect to monitor scenario parsing
-useEffect(() => {
-  if (scenarioContext) {
-    const parsed = parseScenarioContext(scenarioContext);
-    console.log('Parsed scenario:', parsed);
-    setParsedScenario(parsed);
-  }
-}, [scenarioContext]);
 
   const handleAudioPlayback = async (audioBase64) => {
     try {

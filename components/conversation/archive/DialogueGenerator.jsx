@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import ConversationInterface from "./ConversationInterface";
-import { Label } from "../ui/label";
+import { Label } from "../../ui/label";
 import {
   Select,
   SelectContent,
@@ -12,8 +12,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Button } from "../ui/button";
+} from "../../ui/select";
+import { Button } from "../../ui/button";
 
 const scenarios = [
   { id: "doctor", label: "At the Doctor's Office" },
@@ -40,47 +40,6 @@ const focusAreas = [
   { id: "fluency", label: "Conversation Fluency" },
 ];
 
-const LEARNING_CONTENT = {
-  scenarios: [
-    {
-      id: "doctor",
-      label: "At the Doctor's Office",
-      context: {
-        location: "medical_clinic",
-        roles: ["patient", "doctor"],
-        commonPhrases: ["Je ne me sens pas bien", "Ou avez-vous mal?"],
-        vocabulary: {
-          beginner: ["docteur", "malade", "medicament"],
-          intermediate: ["ordonnance", "symptômes", "traitement"],
-        }
-      }
-    }
-  ],
-  levels: [
-    {
-      id: "beginner",
-      label: "Beginner (A1)",
-      requirements: {
-        vocabulary: 500,
-        grammarTopics: ["present tense", "basic questions"],
-        expectedFluency: "basic phrases"
-      }
-    },
-  ],
-  focusAreas: [
-    {
-      id: "vocabulary",
-      label: "Vocabulary Building",
-      learningObjectives: [
-        "Learn new contextual words",
-        "Practice word families",
-        "Master common phrases"
-      ],
-      assessmentMethods: ["word recognition", "usage in context"]
-    },
-    // ... other focus areas
-  ]
-}
 
 export default function DialogueGenerator() {
   const [selectedScenario, setSelectedScenario] = useState("");
@@ -90,65 +49,6 @@ export default function DialogueGenerator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showConversation, setShowConversation] = useState(false);
-  const [learningProgress, setLearningProgress] = useState({
-    completedPhrases: 0,
-    accuracyRate: 0,
-    vocabularyLearned: [],
-  });
-
-  const generateLearningContent = async () => {
-    if (!selectedScenario || !selectedLevel || !selectedFocus) {
-      setError("Please select all options");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/generate-dialogue", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          scenario: {
-            type: selectedScenario,
-            context: LEARNING_CONTENT.scenarios.find(s => s.id === selectedScenario).context
-          },
-          level: {
-            type: selectedLevel,
-            requirements: LEARNING_CONTENT.levels.find(l => l.id === selectedLevel).requirements
-          },
-          focus: {
-            type: selectedFocus,
-            objectives: LEARNING_CONTENT.focusAreas.find(f => f.id === selectedFocus).learningObjectives
-          },
-          userProgress: learningProgress
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setGeneratedScenario(data.scenario);
-        setShowConversation(true);
-        updateLearningProgress(data.progress);
-      } else {
-        throw new Error(data.error || "Failed to generate scenario");
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateLearningProgress = (progress) => {
-    setLearningProgress(prev => ({
-      ...prev,
-      ...progress
-    }));
-  };
 
   const handleGenerate = async () => {
     if (!selectedScenario || !selectedLevel || !selectedFocus) {
