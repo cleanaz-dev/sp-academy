@@ -1,4 +1,4 @@
-//api/generate-dialogue-test/route.js
+//api/generate-dialogue-test-copy/route.js
 import {
   BedrockRuntimeClient,
   InvokeModelCommand,
@@ -19,6 +19,19 @@ export async function POST(req) {
       level: { type: levelType, requirements },
       focus: { type: focusType, objectives },
     } = await req.json();
+
+    console.log("Request Data:", {
+      languages,
+      scenarioType,
+      context,
+      keyPhrases,
+      vocabulary,
+      culturalNotes,
+      levelType,
+      requirements,
+      focusType,
+      objectives,
+    });
 
     const client = new BedrockRuntimeClient({
       region: process.env.AWS_REGION,
@@ -47,8 +60,8 @@ export async function POST(req) {
     Output Format:
     {
       "introduction": {
-        "${languages.target}": "Brief introduction",
-        "${languages.native}": "Translation"
+        "targetLanguage": "Brief introduction",
+        "nativeLanguage": "Translation"
       },
       "culturalNotes": [
         {
@@ -58,12 +71,12 @@ export async function POST(req) {
       ],
       "vocabulary": [ // MUST CONTAIN EXACTLY 10 ITEMS
         {
-          "${languages.target}": "Word/phrase",
-          "${languages.native}": "Translation",
+          "targetLanguage": "Word/phrase",
+          "nativeLanguage": "Translation",
           "context": "Usage context",
           "example": {
-            "${languages.target}": "Example sentence",
-            "${languages.native}": "Translation"
+            "targetLanguage": "Example sentence",
+            "nativeLanguage": "Translation"
           }
         }
         // ... continue until exactly 10 vocabulary items are listed
@@ -77,11 +90,11 @@ export async function POST(req) {
       "dialogue": [  // MUST CONTAIN EXACTLY 6 EXCHANGES
         {
           "speaker": "Character",
-          "${languages.target}": "Dialogue line",
-          "${languages.native}": "Translation",
+          "targetLanguage": "Dialogue line",
+          "nativeLanguage": "Translation",
           "notes": "Optional notes"
         }
-          // ... continue until exactly 6 dialogue exchanges are listed
+        // ... continue until exactly 6 dialogue exchanges are listed
       ]
     }
     
@@ -114,6 +127,8 @@ export async function POST(req) {
     };
     
 
+    console.log("Prompt:", prompt);
+
     const command = new InvokeModelCommand({
       modelId: "anthropic.claude-v2:1",
       body: JSON.stringify(prompt),
@@ -122,6 +137,8 @@ export async function POST(req) {
 
     const response = await client.send(command);
     const responseData = JSON.parse(new TextDecoder().decode(response.body));
+
+    console.log("Response Data:", responseData);
 
     let scenarioContent;
     try {
@@ -145,6 +162,8 @@ export async function POST(req) {
       };
     }
 
+    console.log("Scenario Content:", scenarioContent);
+
     const enhancedResponse = {
       scenario: {
         ...scenarioContent,
@@ -160,6 +179,8 @@ export async function POST(req) {
         },
       },
     };
+
+    console.log("Enhanced Response:", enhancedResponse);
 
     return NextResponse.json(enhancedResponse, {
       status: 200,

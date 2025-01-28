@@ -1,12 +1,11 @@
-// app/(dashboard)/conversation/[id]/page.jsx
 "use client";
 
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import NewConversationComponent from "./NewConversationComponent";
+import NewConversationComponentCopy from "./NewConversationComponent-copy";
 
-export default function SingleConversationPage({ conversation, id }) {
+export default function SingleConversationPageCopy({ conversation, id }) {
   return (
     <div className="min-h-screen bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] py-8">
       <div className="container mx-auto px-4">
@@ -31,7 +30,7 @@ export default function SingleConversationPage({ conversation, id }) {
                 {conversation.title}
               </h1>
               <p className="text-gray-200">
-                {conversation.introduction.english}
+                {conversation.introduction.nativeLanguage}
               </p>
             </div>
           </div>
@@ -46,21 +45,26 @@ export default function SingleConversationPage({ conversation, id }) {
             <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
             <div className="space-y-2">
               <p className="text-gray-700 dark:text-gray-300">
-                {conversation.introduction.french}
+                {conversation.introduction.targetLanguage}
               </p>
               <p className="text-gray-600 dark:text-gray-400 italic">
-                {conversation.introduction.english}
+                {conversation.introduction.nativeLanguage}
               </p>
             </div>
           </motion.div>
         </motion.div>
-          <NewConversationComponent
-            vocabulary={conversation.vocabulary}
-            dialogue={conversation.dialogue}
-            title={conversation.title}
-            id={id}
-            tutorLanguage={conversation.tutorLanguage}
-          />
+
+        {/* Pass the language information to NewConversationComponent */}
+        <NewConversationComponentCopy
+          vocabulary={conversation.vocabulary}
+          dialogue={conversation.dialogue}
+          title={conversation.title}
+          id={id}
+          tutorLanguage={conversation.tutorLanguage}
+          // Add these new props
+          targetLanguage={conversation.metadata?.languages?.target || 'fr'} // default to 'fr' if not specified
+          nativeLanguage={conversation.metadata?.languages?.native || 'en'} // default to 'en' if not specified
+        />
       </div>
     </div>
   );

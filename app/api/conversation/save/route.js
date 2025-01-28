@@ -6,6 +6,7 @@ export async function POST(request) {
   try {
     const data = await request.json();
     console.log("Received data:", data);
+   
 
     // Prepare image prompt
     const imagePrompt = `Image representing: Title: ${data.title} with a 9:16 aspect ratio`;

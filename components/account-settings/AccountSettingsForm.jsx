@@ -33,12 +33,11 @@ export function AccountSettingsForm({ initialSettings, userId }) {
     }
   };
 
-  console.log("Account Settings:", initialSettings);
-
+ 
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-6 md:grid-cols-2 mt-6"
+      className="grid grid-cols-1 gap-6 md:grid-cols-2 mt-6 max-w-3xl"
     >
       <input type="hidden" name="userId" value={userId} />
       <div className="space-y-2">

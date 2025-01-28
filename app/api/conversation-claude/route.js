@@ -6,9 +6,22 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const data = await req.json();
-    const { message, history, title, vocabulary, dialogue, voiceGender, tutorLanguage } = data;
+    console.log("data from Claude API:", data);
+    const {
+      message,
+      history,
+      title,
+      vocabulary,
+      dialogue,
+      voiceGender,
+
+      targetLanguage = "fr", // default to French
+      nativeLanguage = "en", // default to English
+    } = data;
+
     console.log("Gender from API:", voiceGender);
-    console.log("Tutor Language:", tutorLanguage);
+    console.log("Target Language:", targetLanguage);
+    console.log("Native Language:", nativeLanguage);
 
     if (!message) {
       return NextResponse.json(
@@ -26,37 +39,43 @@ export async function POST(req) {
       });
 
       const systemPrompt = `
-      You are a French language conversation partner. Respond in the following format:
-FRENCH: [Your French response]
-ENGLISH: [English translation]
-
-Topic: "${title}"
-
-Original Dialogue Scenario:
-${dialogue.map((d) => `${d.speaker}: ${d.french} (${d.english})`).join("\n")}
-
-Relevant Vocabulary:
-${vocabulary.map((v) => `${v.french} - ${v.english}`).join("\n")}
-
-Previous conversation:
-${history.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
-
-User's latest message: "${message}"
-
-User French Level: Beginner
-
-Instructions:
-- Respond as if you are the vendor/staff member from the dialogue
-- Only Reply in French
-- Limit to 1-2 short sentences
-- Use vocabulary from the provided list when appropriate
-- Stay strictly within the context of ${title} and the original dialogue scenario
-- Maintain a natural, conversational tone
-- Try to keep conversation flowing by asking questions`;
+      You are a ${targetLanguage} language conversation partner. 
+      
+      Respond using EXACTLY this format with these symbols:
+      ➤ [Your response in ${targetLanguage}]
+      ⟿ [Translation in ${nativeLanguage}]
+      
+      Topic: "${title}"
+      
+      Original Dialogue Scenario:
+      ${dialogue
+        .map((d) => `${d.speaker}: ${d.targetLanguage} (${d.nativeLanguage})`)
+        .join("\n")}
+      
+      Relevant Vocabulary:
+      ${vocabulary
+        .map((v) => `${v.targetLanguage} - ${v.nativeLanguage}`)
+        .join("\n")}
+      
+      Previous conversation:
+      ${history.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
+      
+      User's latest message: "${message}"
+      
+      User Language Level: Beginner
+      
+      Instructions:
+      - Respond as if you are the vendor/staff member from the dialogue
+      - Use EXACTLY the symbols ➤ and ⟿ to separate languages
+      - Limit to 1-2 short sentences
+      - Use vocabulary from the provided list when appropriate
+      - Stay strictly within the context of ${title}
+      - Maintain a natural, conversational tone
+      - Try to keep conversation flowing by asking questions`;
 
       const response = await anthropic.messages.create({
-        model: "claude-3-5-haiku-latest",
-        max_tokens: 150,
+        model: "claude-3-haiku-20240307",
+        max_tokens: 250,
         temperature: 0.3,
         system: systemPrompt,
         messages: [{ role: "user", content: message }],
@@ -64,29 +83,38 @@ Instructions:
 
       const endTime = performance.now();
       const responseTime = (endTime - startTime) / 1000;
-
       console.log(`AI Response Time: ${responseTime}s`);
 
       const responseText = response.content[0].text;
 
-      // Parse the response to separate French and English
-      const frenchText = responseText.match(/FRENCH:\s*(.*?)(?=ENGLISH:|$)/s);
-      const englishText = responseText.match(/ENGLISH:\s*(.*?)$/s);
+      // Parse the response to separate target and native language
+      // Parse using symbols
+      const targetText = responseText.match(/➤\s*(.*?)(?=⟿|$)/s);
+      const nativeText = responseText.match(/⟿\s*(.*?)$/s);
 
       return {
-        french: frenchText ? frenchText[1].trim() : responseText,
-        english: englishText ? englishText[1].trim() : "",
+        targetLanguage: targetText ? targetText[1].trim() : responseText,
+        nativeLanguage: nativeText ? nativeText[1].trim() : "",
       };
     };
 
-    // Get TTS Function
+    // Get TTS Function with language-specific voices
     const getTextToSpeech = async (text) => {
-      let voiceId;
-      if (voiceGender === "male") {
-        voiceId = process.env.ELEVENLABS_FRENCH_MALE_VOICE_ID;
-      } else {
-        voiceId = process.env.ELEVENLABS_FRENCH_FEMALE_VOICE_ID;
-      }
+      // Voice mapping object
+      const voices = {
+        fr: {
+          male: process.env.ELEVENLABS_FRENCH_MALE_VOICE_ID,
+          female: process.env.ELEVENLABS_FRENCH_FEMALE_VOICE_ID,
+        },
+        es: {
+          male: process.env.ELEVENLABS_SPANISH_MALE_VOICE_ID,
+          female: process.env.ELEVENLABS_SPANISH_FEMALE_VOICE_ID,
+        },
+        // Add more languages as needed
+      };
+
+      const voiceId =
+        voices[targetLanguage]?.[voiceGender] || voices.fr[voiceGender]; // fallback to French
 
       const response = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
@@ -102,13 +130,14 @@ Instructions:
             voice_settings: {
               stability: 0.5,
               similarity_boost: 0.5,
-              language: "fr",
+              language: targetLanguage,
               use_speaker_boost: true,
             },
             optimize_streaming_latency: 3,
           }),
         }
       );
+
       if (!response.ok) {
         throw new Error("TTS failed");
       }
@@ -123,15 +152,15 @@ Instructions:
     ]);
 
     // Get TTS stream
-    const ttsResponse = await getTextToSpeech(aiResponse.french);
+    const ttsResponse = await getTextToSpeech(aiResponse.targetLanguage);
     const audioData = await ttsResponse.arrayBuffer();
 
-    console.log("French translation:", aiResponse.french);
-    console.log("English translation:", aiResponse.english);
+    console.log("Target language response:", aiResponse.targetLanguage);
+    console.log("Native language translation:", aiResponse.nativeLanguage);
 
     return NextResponse.json({
-      french: aiResponse.french,
-      english: aiResponse.english,
+      targetLanguage: aiResponse.targetLanguage,
+      nativeLanguage: aiResponse.nativeLanguage,
       audio: Buffer.from(audioData).toString("base64"),
     });
   } catch (error) {

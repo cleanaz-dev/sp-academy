@@ -314,6 +314,7 @@ model Dialogue {
 model Conversation {
   id             String     @id @default(auto()) @map("_id") @db.ObjectId
   title          String
+  metadata       Json?
   nativeLanguage Languages?
   tutorLanguage  Languages?
   level          Level?

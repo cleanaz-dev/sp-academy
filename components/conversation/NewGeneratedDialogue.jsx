@@ -15,6 +15,7 @@ export default function NewGeneratedDialogue({
   focusArea,
   nativeLanguage = "en",
   targetLanguage = "fr",
+  title,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -36,6 +37,7 @@ export default function NewGeneratedDialogue({
 
     try {
       const scenarioData = {
+        title,
         introduction,
         vocabulary,
         characters,
@@ -104,7 +106,7 @@ export default function NewGeneratedDialogue({
                   {nativeLanguage.toUpperCase()}
                 </h4>
                 <p className="text-gray-700 text-sm md:text-base bg-slate-100 p-2 rounded-md">
-                  {introduction[nativeLanguage]}
+                  {introduction.nativeLanguage}
                 </p>
               </div>
               <div>
@@ -112,7 +114,7 @@ export default function NewGeneratedDialogue({
                   {targetLanguage.toUpperCase()}
                 </h4>
                 <p className="text-gray-700 text-sm md:text-base bg-slate-100 p-2 rounded-md">
-                  {introduction[targetLanguage]}
+                  {introduction.targetLanguage}
                 </p>
               </div>
             </div>
@@ -161,9 +163,9 @@ export default function NewGeneratedDialogue({
                   >
                     <div className="flex flex-col">
                       <h4 className="font-bold text-lg text-sky-600">
-                        {word[targetLanguage]} /{" "}
+                        {word.targetLanguage} /{" "}
                         <span className="text-slate-500 font-normal">
-                          {word[nativeLanguage]}
+                          {word.nativeLanguage}
                         </span>
                       </h4>
                       <p className="text-sm text-gray-600">
@@ -172,10 +174,10 @@ export default function NewGeneratedDialogue({
                       {word.example && (
                         <div className="mt-2 text-xs">
                           <p className="text-sky-600">
-                            {word.example[targetLanguage]}
+                            {word.example.targetLanguage}
                           </p>
                           <p className="text-gray-600">
-                            {word.example[nativeLanguage]}
+                            {word.example.nativeLanguage}
                           </p>
                         </div>
                       )}
@@ -200,10 +202,10 @@ export default function NewGeneratedDialogue({
                   <div className="flex items-start gap-3">
                     <div className="flex-1">
                       <p className="font-bold text-xs md:text-base">
-                        {exchange[targetLanguage]}
+                        {exchange.targetLanguage}
                       </p>
                       <p className="text-xs text-gray-700">
-                        {exchange[nativeLanguage]}
+                        {exchange.nativeLanguage}
                       </p>
                       {exchange.notes && (
                         <p className="text-xs text-gray-500 mt-1 italic">

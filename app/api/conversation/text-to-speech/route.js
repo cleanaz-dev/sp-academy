@@ -1,5 +1,4 @@
 //api/conversation/text-to-speech/route.js
-
 import { NextResponse } from "next/server";
 
 export async function POST(request) {
@@ -7,7 +6,7 @@ export async function POST(request) {
     const data = await request.json();
     console.log("Received Data:", data);
 
-    const { text } = data;
+    const { text, voiceGender, targetLanguage } = data; // Fixed typo in targetLanguage
 
     // Validate input
     if (!text || typeof text !== "string") {
@@ -17,9 +16,30 @@ export async function POST(request) {
       );
     }
 
-    // Make Text-to-Speech request
-    const ttsResponse = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}/stream`,
+    // Log the received language and gender
+    console.log("Target Language:", targetLanguage);
+    console.log("Voice Gender:", voiceGender);
+
+    const voices = {
+      fr: {
+        male: process.env.ELEVENLABS_FRENCH_MALE_VOICE_ID,
+        female: process.env.ELEVENLABS_FRENCH_FEMALE_VOICE_ID,
+      },
+      es: {
+        male: process.env.ELEVENLABS_SPANISH_MALE_VOICE_ID,
+        female: process.env.ELEVENLABS_SPANISH_FEMALE_VOICE_ID,
+      },
+      // Add more languages as needed
+    };
+
+    // Get voice ID with better error handling
+    const selectedVoices = voices[targetLanguage] || voices.fr; // fallback to French
+    const voiceId = selectedVoices[voiceGender] || selectedVoices.female; // fallback to female
+
+    console.log("Selected Voice ID:", voiceId);
+
+    const ttsResponse = await fetch( // Changed variable name from response to ttsResponse
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
       {
         method: "POST",
         headers: {
@@ -32,7 +52,7 @@ export async function POST(request) {
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.5,
-            language: "fr",
+            language: targetLanguage || 'fr', // Use the target language here
             use_speaker_boost: true,
           },
           optimize_streaming_latency: 3,

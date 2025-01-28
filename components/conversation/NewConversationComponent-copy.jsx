@@ -1,4 +1,4 @@
-//app/component/conversation/NewConversationComponent.jsx
+//app/component/conversation/NewConversationComponent-copy.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -11,12 +11,13 @@ import { Trash2 } from "lucide-react";
 import { Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch-voice";
 
-export default function NewConversationComponent({
+export default function NewConversationComponentCopy({
   vocabulary,
   dialogue,
   title,
   id,
-  tutorLanguage,
+  targetLanguage,
+  nativeLanguage,
 }) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -38,10 +39,24 @@ export default function NewConversationComponent({
 
   const localStorageKey = `conversationHistory-${id}`;
 
-  // Add these functions at the top of your component:
-  const speakPhrase = (text, lang = "fr-FR") => {
+    // Helper function to convert language codes
+    const getFullLanguageCode = (lang) => {
+      const languageMap = {
+        'fr': 'fr-FR',
+        'es': 'es-ES',
+        'en': 'en-US',
+        // Add more mappings as needed
+      };
+      return languageMap[lang] || lang;
+    };
+  
+
+  // Simplified speakPhrase function
+  const speakPhrase = (text) => {
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang;
+    const fullLangCode = getFullLanguageCode(targetLanguage);
+    console.log("Speaking in language:", fullLangCode);
+    utterance.lang = fullLangCode;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -54,7 +69,11 @@ export default function NewConversationComponent({
       const response = await fetch(`/api/conversation/text-to-speech`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ 
+          text,
+          voiceGender,
+          targetLanguage 
+        }),
       });
 
       if (!response.ok) {
@@ -79,41 +98,43 @@ export default function NewConversationComponent({
     if (typeof window !== "undefined") {
       const SpeechRecognition =
         window.SpeechRecognition || window.webkitSpeechRecognition;
+      
       if (SpeechRecognition) {
         const recognitionInstance = new SpeechRecognition();
         recognitionInstance.continuous = false;
         recognitionInstance.interimResults = false;
-        recognitionInstance.lang = "fr-FR"; // Set to French
-
+        
+        // Use the target language for speech recognition
+        const fullLangCode = getFullLanguageCode(targetLanguage);
+        
+        recognitionInstance.lang = fullLangCode;
+  
         recognitionInstance.onstart = () => {
-          console.log("Recording started");
           setIsRecording(true);
         };
-
+  
         recognitionInstance.onend = () => {
-          console.log("Recording stopped");
           setIsRecording(false);
         };
-
+  
         recognitionInstance.onresult = async (event) => {
           const transcript = event.results[0][0].transcript;
-          console.log("Transcript:", transcript);
           setUserMessage(transcript);
           await handleConversation(transcript);
         };
-
+  
         recognitionInstance.onerror = (event) => {
           console.error("Speech recognition error:", event.error);
           setError(`Speech recognition error: ${event.error}`);
           setIsRecording(false);
         };
-
+  
         setRecognition(recognitionInstance);
       } else {
         setError("Speech recognition not supported in this browser");
       }
     }
-  }, [voiceGender]);
+  }, [targetLanguage, voiceGender]);
 
   useEffect(() => {
     const savedHistory = JSON.parse(
@@ -122,13 +143,18 @@ export default function NewConversationComponent({
     setConversationHistory(savedHistory);
   }, [localStorageKey]);
 
+  useEffect(() => {
+    console.log("Language values updated:", {
+      targetLanguage,
+      nativeLanguage,
+      timestamp: new Date().toISOString()
+    });
+  }, [targetLanguage, nativeLanguage]);
+
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
-    console.log("Processing user message:", message);
-
     try {
-      // Get the existing conversation history for the current id
       const storedHistory = JSON.parse(
         localStorage.getItem(localStorageKey) || "[]"
       );
@@ -148,7 +174,8 @@ export default function NewConversationComponent({
           vocabulary,
           dialogue,
           voiceGender,
-          tutorLanguage,
+          targetLanguage,
+          nativeLanguage,
         }),
       });
 
@@ -157,18 +184,16 @@ export default function NewConversationComponent({
 
       const aiMessage = {
         role: "assistant",
-        content: data.french,
-        translation: data.english,
+        content: data.targetLanguage,
+        translation: data.nativeLanguage,
       };
 
       const finalHistory = [...updatedHistory, aiMessage];
 
-      // Save the updated history in state and localStorage
       setConversationHistory(finalHistory);
       localStorage.setItem(localStorageKey, JSON.stringify(finalHistory));
-      setAiResponse(data.french);
+      setAiResponse(data.targetLanguage);
 
-      // Handle audio playback
       setIsGeneratingAudio(true);
       if (!isMuted) {
         await handleAudioPlayback(data.audio);
@@ -179,7 +204,7 @@ export default function NewConversationComponent({
     } finally {
       setIsProcessing(false);
       setIsGeneratingAudio(false);
-      setSuggestions([]); // Clear suggestions when starting a new conversation
+      setSuggestions([]);
     }
   };
 
@@ -238,10 +263,13 @@ export default function NewConversationComponent({
         },
         body: JSON.stringify({
           history: recentMessages,
+          targetLanguage,
+          nativeLanguage,
         }),
       });
 
       const data = await response.json();
+      console.log("Data from suggestions API:", data);
       setSuggestions(data.suggestions);
     } catch (error) {
       console.error("Error getting suggestions:", error);
@@ -254,15 +282,14 @@ export default function NewConversationComponent({
   const SuggestionsPanel = () => (
     <div className="mt-4 space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-700">
-          Suggested Responses
-        </h4>
+        <h4 className="text-sm font-medium text-gray-700">Suggested Responses</h4>
         <Button
           size="sm"
           variant="outline"
           onClick={getSuggestions}
           disabled={isLoadingSuggestions || conversationHistory.length === 0}
           className="flex items-center gap-2"
+          aria-label="Get Suggestions"
         >
           {isLoadingSuggestions ? (
             <>
@@ -277,51 +304,71 @@ export default function NewConversationComponent({
           )}
         </Button>
       </div>
-
-      <div className="grid grid-cols-1 gap-2">
-        {suggestions.map((suggestion, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 
-                       transition-colors duration-200"
+  
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error:</strong>
+          <span className="block sm:inline">{error}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={getSuggestions}
+            className="absolute top-2 right-2"
+            aria-label="Retry getting suggestions"
           >
-            <div className="flex-1">
-              <div>
-                {" "}
+            Retry
+          </Button>
+        </div>
+      )}
+  
+      {suggestions.length > 0 ? (
+        <div className="grid grid-cols-1 gap-2">
+          {suggestions.map((suggestion, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors duration-200"
+            >
+              <div className="flex-1">
                 <div className="flex gap-2">
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => speakPhrase(suggestion.french)}
+                    onClick={() => speakPhrase(suggestion.targetLanguage)}
                     className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                     title="Listen to pronunciation"
+                    aria-label={`Listen to ${suggestion.targetLanguage}`}
                   >
                     🔊
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => usePhrase(suggestion.french)}
+                    onClick={() => usePhrase(suggestion.targetLanguage)}
                     className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                     title="Use in conversation"
+                    aria-label={`Use ${suggestion.targetLanguage} in conversation`}
                   >
                     💬
                   </Button>
                 </div>
+                <p className="text-sm font-medium text-purple-600">
+                  {suggestion.targetLanguage}
+                </p>
+                <p className="text-xs text-gray-600 italic mt-1">
+                  {suggestion.nativeLanguage}
+                </p>
               </div>
-              <p className="text-sm font-medium text-purple-600">
-                {suggestion.french}
-              </p>
-              <p className="text-xs text-gray-600 italic mt-1">
-                {suggestion.english}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center text-gray-500 py-4">
+          {isLoadingSuggestions ? "Loading suggestions..." : "No suggestions available."}
+        </div>
+      )}
     </div>
   );
 
@@ -414,11 +461,10 @@ export default function NewConversationComponent({
   const toggleVoiceGender = (checked) => {
     const newGender = checked ? "male" : "female";
     setVoiceGender(newGender);
-    console.log("Voice gender toggled to: ", newGender);
   };
 
   return (
-    <div className="flex container mx-auto h-[calc(75vh-2rem)] max-w-4xl gap-4">
+    <div className="flex container mx-auto h-[calc(95vh-2rem)] max-w-4xl gap-4">
       {/* Main Conversation Area */}
       <div
         className={`transition-all duration-300 ${
@@ -720,17 +766,17 @@ export default function NewConversationComponent({
                       <div className="flex justify-between">
                         <div className="flex flex-col">
                           <span className="text-[14px] font-semibold text-purple-600">
-                            {item.es}
+                            {item.targetLanguage}
                           </span>
                           <span className="text-gray-600  text-[14px]">
-                            {item.en}
+                            {item.nativeLanguage}
                           </span>
                         </div>
                         <div className="flex gap-2 ">
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => speakPhrase(item.es)}
+                            onClick={() => speakPhrase(item.targetLanguage)}
                             className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                             title="Listen to pronunciation"
                           >
@@ -739,7 +785,7 @@ export default function NewConversationComponent({
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => usePhrase(item.es)}
+                            onClick={() => usePhrase(item.targetLanguage)}
                             className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                             title="Use in conversation"
                           >
@@ -750,12 +796,10 @@ export default function NewConversationComponent({
 
                       <div className="mt-2">
                         <p className="text-[13px] text-purple-500 italic flex items-center">
-                          
-                          "{item.example.es}"
+                          "{item.example.targetLanguage}"
                         </p>
                         <p className="text-[13px] text-gray-500 italic flex items-center">
-                         
-                          "{item.example.en}"
+                          "{item.example.nativeLanguage}"
                         </p>
                       </div>
                     </motion.div>
@@ -783,7 +827,7 @@ export default function NewConversationComponent({
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => textToSpeech(line.french)}
+                            onClick={() => textToSpeech(line.targetLanguage)}
                             className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                             title="Listen to pronunciation"
                           >
@@ -792,7 +836,7 @@ export default function NewConversationComponent({
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => usePhrase(line.french)}
+                            onClick={() => usePhrase(line.targetLanguage)}
                             className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
                             title="Use in conversation"
                           >
@@ -800,9 +844,9 @@ export default function NewConversationComponent({
                           </Button>
                         </div>
                       </div>
-                      <p className="mb-1 text-[13px]">{line.french}</p>
+                      <p className="mb-1 text-[13px]">{line.targetLanguage}</p>
                       <p className="text-[12px] text-gray-600 italic">
-                        {line.english}
+                        {line.nativeLanguage}
                       </p>
                     </motion.div>
                   ))}

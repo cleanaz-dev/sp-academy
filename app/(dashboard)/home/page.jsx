@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, BookOpen, LogOut, Star, User } from "lucide-react";
 import { currentUser } from "@clerk/nextjs/server";
-import { testApiRoute } from "@/lib/actions";
 
 import React from "react";
 import {
@@ -36,14 +35,6 @@ export default async function DashboardHome() {
               <LogOut className="h-5 w-5" />
             </Button> */}
           </div>
-          <form action={testApiRoute}>
-          <input type="hidden" name="name" value="Test API" />
-          <Button
-            type="submit"
-          >
-            Test API Route
-          </Button>
-          </form>
         </header>
 
         {/* Dashboard Content */}
