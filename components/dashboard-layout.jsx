@@ -42,6 +42,7 @@ const dynaPuff = DynaPuff({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"]
 });
+
 const navItems = [
   {
     label: "Home",
@@ -129,8 +130,8 @@ const navItems = [
 
 const settingItems = [
   {
-    label: "Account Settings",
-    href: "/account-settings",
+    label: "Account",
+    href: "/account",
     icon: (
       <Settings
         size={24}
@@ -161,7 +162,7 @@ const SidebarContent = ({
   notifications,
 }) => (
   <div className="flex flex-col h-full relative z-10">
-    <div className="absolute right-0 top-0 h-full w-[1px] bg-gradient-to-r from-amber-400 via-purple-500 to-pink-500 blur- bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] z-0 opacity-20"></div>
+    
 
     <div className="flex px-4 py-2 items-center justify-between">
       <div className="flex gap-2 items-center text-white">
@@ -396,7 +397,7 @@ export default function DashboardLayout({ children }) {
         <ScrollArea className="h-full w-full">
           {" "}
           {/* Ensure full height for ScrollArea */}
-          <div className="flex-grow h-full  bg-white overflow-auto px-4">
+          <div className="flex-grow h-full bg-white overflow-auto ">
             {children}
           </div>
         </ScrollArea>

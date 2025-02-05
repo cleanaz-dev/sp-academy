@@ -1,13 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import ShortStoryQuestionsModal from "@/components/short-stories/ShortStoryQuestionModal";
 import PronunciationAssessment from "@/components/short-stories/PronunciationAssessment";
 import Image from "next/image";
 import InteractiveExercises from "./InteractiveExercises";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Eye, Mic, MicOff } from "lucide-react";
-import ConversationComponent from "../conversation/ConversationComponent";
+import { Badge } from "../ui/badge";
 
 export default function ShortStorySinglePage({ story }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,170 +13,10 @@ export default function ShortStorySinglePage({ story }) {
   const [recognition, setRecognition] = useState(null);
   const [error, setError] = useState(null);
 
-// Initialize speech recognition
-   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition();
-        recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = false;
-        recognitionInstance.lang = 'fr-FR'; // Set to French
 
-        recognitionInstance.onstart = () => {
-          console.log('Recording started');
-          setIsRecording(true);
-        };
-
-        recognitionInstance.onend = () => {
-          console.log('Recording stopped');
-          setIsRecording(false);
-        };
-
-        recognitionInstance.onresult = async (event) => {
-          const transcript = event.results[0][0].transcript;
-          console.log('Transcript:', transcript);
-          setUserMessage(transcript);
-          try {
-            await handleConversation(transcript);
-          } catch (err) {
-            setError('Failed to process speech');
-            console.error(err);
-          }
-        };
-
-        recognitionInstance.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          setError(`Speech recognition error: ${event.error}`);
-          setIsRecording(false);
-        };
-
-        setRecognition(recognitionInstance);
-      } else {
-        setError('Speech recognition not supported in this browser');
-      }
-    }
-  }, []);
-
-  const startRecording = () => {
-    try {
-      if (recognition) {
-        recognition.start();
-        setError(null);
-      }
-    } catch (err) {
-      console.error('Error starting recording:', err);
-      setError('Error starting recording');
-    }
-  };
-
-  const stopRecording = () => {
-    try {
-      if (recognition) {
-        recognition.stop();
-      }
-    } catch (err) {
-      console.error('Error stopping recording:', err);
-      setError('Error stopping recording');
-    }
-  };
-
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
-
-
-  const handleConversation = async (message) => {
-    try {
-      const response = await fetch('/api/conversation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response from server');
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // Convert base64 audio to blob
-      const audioBlob = new Blob(
-        [Buffer.from(data.audio, 'base64')],
-        { type: 'audio/mpeg' }
-      );
-      const audioUrl = URL.createObjectURL(audioBlob);
-      
-      // Play the audio
-      const audio = new Audio(audioUrl);
-      await audio.play();
-
-      setAiResponse(data.text);
-      return data.text;
-    } catch (error) {
-      console.error('Conversation error:', error);
-      setError('Failed to process conversation');
-      throw error;
-    }
-  };
-// Add this inside your TabsContent for "pronunciation"
-const conversationSection = (
-  <div className="mt-4 p-4 bg-white rounded-lg shadow">
-    <div className="flex flex-col space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Practice Conversation</h3>
-        <button
-          onClick={toggleRecording}
-          className={`p-3 rounded-full ${
-            isRecording ? 'bg-red-500' : 'bg-blue-500'
-          } text-white transition-colors duration-200`}
-          disabled={!recognition}
-        >
-          {isRecording ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-
-      {isRecording && (
-        <div className="text-center text-green-600 animate-pulse">
-          Recording...
-        </div>
-      )}
-
-      {userMessage && (
-        <div className="bg-gray-100 p-3 rounded">
-          <p className="font-semibold">You:</p>
-          <p>{userMessage}</p>
-        </div>
-      )}
-
-      {aiResponse && (
-        <div className="bg-blue-50 p-3 rounded">
-          <p className="font-semibold">AI:</p>
-          <p>{aiResponse}</p>
-        </div>
-      )}
-    </div>
-  </div>
-)
 
   return (
-    <div className="max-w-4xl p-4">
+    <div className="max-w-4xl p-4 mx-auto w-full">
       <div className="mb-6">
         <h1 className="header-title">{story.title}</h1>
 
@@ -192,25 +29,26 @@ const conversationSection = (
           priority
         />
         <div className="mt-2 flex gap-2 text-sm">
-          <span className="px-2 py-1 bg-blue-100 rounded">{story.genre}</span>
-          <span className="px-2 py-1 bg-green-100 rounded">
+          <Badge className="bg-sky-500 text-white">{story.language}</Badge>
+          <Badge className="bg-emerald-500 text-white">{story.genre}</Badge>
+          <Badge className="bg-pink-500 text-white">
             {story.difficulty}
-          </span>
-          <span className="px-2 py-1 bg-purple-100 rounded">
+          </Badge>
+          <Badge className="bg-amber-500 text-white">
             {story.grammar}
-          </span>
+          </Badge>
         </div>
       </div>
 
-      <Tabs defaultValue="story">
-        <TabsList>
+      <Tabs defaultValue="story" className="w-full">
+      <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full max-w-xl mx-auto mb-10 md:mb-auto">
           <TabsTrigger value="story">Story</TabsTrigger>
           <TabsTrigger value="pronunciation">Pronunciation</TabsTrigger>
           <TabsTrigger value="grammar-vocab">Grammar & Vocab</TabsTrigger>
           <TabsTrigger value="exercises">Exercises</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="story">
+        <TabsContent value="story" className="px-2 sm:px-0">
           <div className="space-y-6">
             {/* Add Audio Player prominently near the top */}
             {story.audioUrl && (
@@ -235,12 +73,12 @@ const conversationSection = (
 
             <div>
               <h2 className="text-xl font-bold">French Story:</h2>
-              <p className="mt-2 p-4 bg-gray-50 rounded">{story.frenchText}</p>
+              <p className="mt-2 p-4 bg-gray-50 rounded text-xs md:text-base leading-relaxed">{story.frenchText}</p>
             </div>
 
             <div>
               <h2 className="text-xl font-bold">English Translation:</h2>
-              <p className="mt-2 p-4 bg-gray-50 rounded">{story.englishText}</p>
+              <p className="mt-2 p-4 bg-gray-50 rounded text-xs md:text-base leading-relaxed">{story.englishText}</p>
             </div>
           </div>
 

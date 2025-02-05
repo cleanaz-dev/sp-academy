@@ -72,6 +72,7 @@ export default function EditReadingLog({ log }) {
               onChange={handleChange}
               placeholder="Enter new short summary...."
               required
+              className="h-32"
             />
           </div>
           <div className="mt-4">

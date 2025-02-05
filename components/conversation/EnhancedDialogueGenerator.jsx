@@ -90,7 +90,72 @@ const LEARNING_CONTENT = {
         },
       },
     },
-
+    {
+      id: "fast_food_order",
+      category: "Food",
+      context: {
+        label: "Fast Food Order",
+        location: "fast_food_restaurant",
+        roles: ["customer", "cashier"],
+        situation: "A customer orders food at a fast food restaurant",
+        culturalNotes: [
+          "In many countries, tipping is not expected at fast food restaurants.",
+          "Menus often include combos or meal deals, which can be more affordable.",
+        ],
+        keyPhrases: {
+          beginner: [
+            { phrase: "I'd like a burger, please", usage: "Placing a simple order" },
+            { phrase: "Can I get fries with that?", usage: "Requesting additional items" },
+            { phrase: "What do you recommend?", usage: "Asking for suggestions" },
+          ],
+          intermediate: [
+            {
+              phrase: "Do you have any vegetarian options?",
+              usage: "Asking about dietary preferences",
+            },
+            {
+              phrase: "Can I have that without onions?",
+              usage: "Making a modification to the order",
+            },
+            {
+              phrase: "I'd like to upgrade to a larger size",
+              usage: "Changing the portion size",
+            },
+          ],
+          advanced: [
+            {
+              phrase: "Could I have extra condiments on the side?",
+              usage: "Requesting additional items",
+            },
+            {
+              phrase: "I'd like to substitute the drink with a milkshake",
+              usage: "Customizing the order with a substitution",
+            },
+            {
+              phrase: "Do you have any gluten-free options?",
+              usage: "Inquiring about specific dietary needs",
+            },
+          ],
+        },
+        vocabulary: {
+          beginner: [
+            { word: "burger", context: "a type of sandwich with a meat patty" },
+            { word: "fries", context: "fried potato slices, often served as a side" },
+            { word: "combo", context: "a meal that includes a main item and side" },
+          ],
+          intermediate: [
+            { word: "vegetarian", context: "a person who does not eat meat" },
+            { word: "onion", context: "a common vegetable often used in fast food" },
+            { word: "upgrade", context: "to increase the size or quality of something" },
+          ],
+          advanced: [
+            { word: "condiments", context: "sauces or seasonings used with food" },
+            { word: "milkshake", context: "a sweet, cold beverage made with milk and ice cream" },
+            { word: "gluten-free", context: "food that does not contain gluten, suitable for people with celiac disease" },
+          ],
+        },
+      },
+    },
     {
       id: "dentist_visit",
       category: "Health",
@@ -234,7 +299,7 @@ const LEARNING_CONTENT = {
     },
     {
       id: "restaurant_dining",
-      category: "Leisure",
+      category: "Food",
       context: {
         label: "Restaurant Dining",
         location: "restaurant",
@@ -1079,6 +1144,20 @@ export default function EnhancedDialogueGenerator() {
                   </SelectLabel>
                   {LEARNING_CONTENT.scenarios
                     .filter((scenario) => scenario.category === "Leisure")
+                    .map((scenario) => (
+                      <SelectItem key={scenario.id} value={scenario.id}>
+                        {scenario.context.label[targetLanguage] ||
+                          scenario.context.label}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+
+                <SelectGroup>
+                  <SelectLabel>
+                    <span className="font-bold text-lg">Food</span>
+                  </SelectLabel>
+                  {LEARNING_CONTENT.scenarios
+                    .filter((scenario) => scenario.category === "Food")
                     .map((scenario) => (
                       <SelectItem key={scenario.id} value={scenario.id}>
                         {scenario.context.label[targetLanguage] ||

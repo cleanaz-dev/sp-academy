@@ -18,7 +18,7 @@ export async function POST(request) {
 
     // Call Claude for translation
     const response = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
+      model: "claude-3-haiku-20240307",
       max_tokens: 1024,
       messages: [
         {
@@ -34,7 +34,7 @@ export async function POST(request) {
     return NextResponse.json(
       { 
         translatedText,
-        original: text,
+        originalText: text,
         fromLanguage: from,
         toLanguage: to 
       },

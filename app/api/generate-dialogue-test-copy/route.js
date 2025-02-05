@@ -24,7 +24,7 @@ export async function POST(req) {
     const systemPrompt = `You are a language learning assistant. Create a structured dialogue scenario for learning ${languages.target}. The learner's native language is ${languages.native}.`;
 
     const message = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307", // Using haiku as it's cheaper
+      model: "claude-3-opus-latest", // Using haiku as it's cheaper
       max_tokens: 2500,
       temperature: 0.7,
       system: systemPrompt,

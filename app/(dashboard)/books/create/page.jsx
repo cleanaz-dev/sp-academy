@@ -101,12 +101,12 @@ export default function CreateBookReportPage() {
   }
 
   return (
-    <div className=" max-w-2xl pt-2 pb-8">
+    <div className="max-w-2xl pt-2 pb-8 px-4 sm:px-6 mx-auto">
       <header className="pb-4">
         <h1 className="header-title">Create </h1>
       </header>
 
-      <Card className="mx-auto relative overflow-hidden">
+      <Card className="relative overflow-hidden w-full max-w-lg mx-auto">
         {/* Decorative rings inside the card */}
         <div className="absolute -top-6 left-24 w-10 h-10 border-4 border-sky-400 rounded-full z-0"></div>
         <div className="absolute bottom-36 -right-12 w-16 h-16 border-4 border-emerald-400 rounded-full z-0"></div>
@@ -250,7 +250,7 @@ export default function CreateBookReportPage() {
                 onChange={(e) =>
                   setBookData({ ...bookData, description: e.target.value })
                 }
-                rows={8}
+                rows={6}
                 required
               />
             </div>

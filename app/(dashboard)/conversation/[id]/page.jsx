@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { getConversationById } from '@/lib/actions'
-import SingleConversationPage from '@/components/conversation/SingleConversationPage'
+import SingleConversationPage from '@/components/conversation/archive/SingleConversationPage'
 import SingleConversationPageCopy from '@/components/conversation/SingleConversationPage-copy';
 
 export default async function page({params}) {
@@ -10,8 +10,8 @@ export default async function page({params}) {
   const id = await params.id; 
   
   return (
-    <div>
+    <>
       <SingleConversationPageCopy conversation={conversation} id={id} />
-    </div>
+    </>
   )
 }

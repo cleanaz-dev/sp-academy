@@ -1,9 +1,8 @@
+
 import localFont from "next/font/local";
 import "./globals.css";
-import "rsuite/dist/rsuite-no-reset.min.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Roboto, Comfortaa, Nunito } from "next/font/google";
-import { CustomProvider } from "rsuite";
 import { Toaster } from "sonner";
 
 const geistSans = localFont({
@@ -62,14 +61,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <CustomProvider>
         <html lang="en">
           <body className={nunito.className}>
             {children}
             <Toaster position="bottom-right" richColors theme="system"/>
           </body>
         </html>
-      </CustomProvider>
     </ClerkProvider>
   );
 }

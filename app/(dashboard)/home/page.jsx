@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, BookOpen, LogOut, Star, User } from "lucide-react";
 import { currentUser } from "@clerk/nextjs/server";
+import ReplicateButton from "@/components/test/ReplicateButton";
 
 import React from "react";
 import {
@@ -18,6 +19,8 @@ export default async function DashboardHome() {
   const user = await currentUser();
 
 
+
+
   return (
     <div className="bg-white ">
       <main className="flex-1 overflow-y-auto">
@@ -28,12 +31,7 @@ export default async function DashboardHome() {
             Hi {user?.firstName}!
           </h1>
           <div className="flex items-center space-x-4">
-            {/* <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <LogOut className="h-5 w-5" />
-            </Button> */}
+        <ReplicateButton />
           </div>
         </header>
 

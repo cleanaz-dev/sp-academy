@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from "../ui/dialog";
+} from "../../ui/dialog";
 import {
   ChevronLeft,
   ChevronRight,
@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { MdRecordVoiceOver } from "react-icons/md";
 import { Switch } from "@/components/ui/switch-voice";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
@@ -52,7 +52,6 @@ export default function NewConversationComponentCopy({
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState(null);
@@ -71,43 +70,13 @@ export default function NewConversationComponentCopy({
   const [userReponseScore, setUserResponseScore] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [conversationStarted, setConversationStarted] = useState(false);
-  const [conversationRecordId, setConversationRecordId] = useState(null);
   const scrollRef = useRef(null);
   const messagesEndRef = useRef(null);
   const { user } = useUser();
 
-  // Add a function to load conversation history
   const scrollToBottom = () => {
-    if (conversationHistory.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Add this useEffect to fetch initial history
-  useEffect(() => {
-    console.log("conversationRecordId:", conversationRecordId); // Add this line
-
-    if (conversationRecordId === null) return;
-
-    const fetchConversationHistory = async () => {
-      try {
-        const response = await fetch(
-          `/api/conversation/${conversationRecordId}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch conversation history");
-        }
-
-        const data = await response.json();
-        setConversationHistory(data.messages || []);
-      } catch (error) {
-        console.error("Error fetching conversation history:", error);
-      }
-    };
-
-    fetchConversationHistory();
-  }, [conversationRecordId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -120,6 +89,8 @@ export default function NewConversationComponentCopy({
       }, 100);
     }
   }, [conversationHistory]);
+
+  const localStorageKey = `conversationHistory-${id}`;
 
   // Helper function to convert language codes
   const getFullLanguageCode = (lang) => {
@@ -174,6 +145,7 @@ export default function NewConversationComponentCopy({
     }
   };
 
+  // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
@@ -214,7 +186,14 @@ export default function NewConversationComponentCopy({
         setError("Speech recognition not supported in this browser");
       }
     }
-  }, [targetLanguage, voiceGender, conversationRecordId, conversationHistory]);
+  }, [targetLanguage, voiceGender]);
+
+  useEffect(() => {
+    const savedHistory = JSON.parse(
+      localStorage.getItem(localStorageKey) || "[]"
+    );
+    setConversationHistory(savedHistory);
+  }, [localStorageKey]);
 
   useEffect(() => {
     console.log("Language values updated:", {
@@ -228,25 +207,20 @@ export default function NewConversationComponentCopy({
     setIsProcessing(true);
     setError(null);
     try {
-      if (!conversationRecordId) {
-        throw new Error("No active conversation record");
-      }
+      const storedHistory = JSON.parse(
+        localStorage.getItem(localStorageKey) || "[]"
+      );
 
-      // Create user message with initial data
-      const newUserMessage = {
-        role: "user",
-        content: message,
-      };
-
-      // Optimistically update local state
-      const updatedHistory = [...conversationHistory, newUserMessage];
+      // Initially add user message without translation
+      const tempUserMessage = { role: "user", content: message };
+      const updatedHistory = [...storedHistory, tempUserMessage];
 
       const response = await fetch("/api/conversation-claude", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
-          history: updatedHistory, // Pass existing state, not the temp update
+          history: updatedHistory,
           title,
           vocabulary,
           dialogue,
@@ -260,10 +234,14 @@ export default function NewConversationComponentCopy({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
+
       if (data.error) throw new Error(data.error);
 
-      // Create full user message with additional details
-      const fullUserMessage = {
+      // Remove the temporary user message
+      const historyWithoutTemp = updatedHistory.slice(0, -1);
+
+      // Create user message with translation included
+      const newUserMessage = {
         role: "user",
         content: message,
         translation: data.messageTranslation,
@@ -279,24 +257,10 @@ export default function NewConversationComponentCopy({
         translation: data.nativeLanguage,
       };
 
-      // Send messages to database and get updated history
-      const updateResponse = await fetch("/api/conversation/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationRecordId,
-          messages: [fullUserMessage, aiMessage], // Send only new messages
-        }),
-      });
-
-      if (!updateResponse.ok)
-        throw new Error("Failed to save conversation to database");
-
-      const { messages: savedMessages } = await updateResponse.json();
-
-      // Update state with messages from the DB
-      setConversationHistory(savedMessages);
-
+      // Create final history with both messages
+      const finalHistory = [...historyWithoutTemp, newUserMessage, aiMessage];
+      setConversationHistory(finalHistory);
+      localStorage.setItem(localStorageKey, JSON.stringify(finalHistory));
       setAiResponse(data.targetLanguage);
 
       setIsGeneratingAudio(true);
@@ -306,46 +270,11 @@ export default function NewConversationComponentCopy({
     } catch (error) {
       console.error("Error:", error);
       setError("Failed to process conversation");
-
-      // Revert last optimistic update if error occurs
-      setConversationHistory((prevHistory) => prevHistory.slice(0, -1));
     } finally {
       setIsProcessing(false);
       setIsGeneratingAudio(false);
       setSuggestions([]);
     }
-  };
-
-  const handleStartConversation = async () => {
-    try {
-      const response = await fetch("/api/conversation/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationId: id,
-          userId: user.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to start conversation");
-      }
-
-      const data = await response.json();
-      setConversationRecordId(data.conversationRecordId); // Store in state
-      console.log("Conversation Record ID:", data.conversationRecordId);
-      setConversationStarted(true);
-    } catch (error) {
-      console.error("Error starting conversation:", error);
-      setError("Failed to start conversation");
-    }
-  };
-
-  // Optional: Clear the stored ID when needed (e.g., when conversation ends)
-  const endConversation = () => {
-    localStorage.removeItem("currentConversationRecordId");
-    setConversationRecordId(null);
-    setConversationStarted(false);
   };
 
   const handleAudioPlayback = async (audioBase64) => {
@@ -480,7 +409,7 @@ export default function NewConversationComponentCopy({
                 <div className="flex justify-between items-start">
                   {/* Text Container */}
                   <div className="flex-1">
-                    <p className="text-xs md:text-sm font-medium text-purple-600">
+                    <p className="text-sm font-medium text-purple-600">
                       {suggestion.targetLanguage}
                     </p>
                     <p className="text-xs text-gray-600 italic">
@@ -514,7 +443,7 @@ export default function NewConversationComponentCopy({
                 </div>
               </div>
 
-          
+              {/* Buttons on Right */}
             </motion.div>
           ))}
         </div>
@@ -691,10 +620,18 @@ export default function NewConversationComponentCopy({
     );
   };
 
+  const handleStartConversation = () => {
+    setConversationStarted(true)
+  }
+
   return (
-    <div className="flex container mx-auto  max-w-4xl gap-4">
+    <div className="flex container mx-auto h-[calc(95vh-2rem)] max-w-4xl gap-4">
       {/* Main Conversation Area */}
-      <div className="w-full">
+      <div
+        className={`transition-all duration-300 ${
+          isPanelOpen ? "w-[60%]" : "w-[100%]"
+        }`}
+      >
         {/* Your existing conversation UI */}
         <div className="bg-white rounded-lg shadow p-4 h-full flex flex-col">
           <div className="flex items-center justify-between p-2">
@@ -730,7 +667,7 @@ export default function NewConversationComponentCopy({
           </div>
 
           {/* Conversation History */}
-          <ScrollArea className="flex-1 min-h-[100px] p-4 bg-gray-100/80 rounded-lg shadow-inner ">
+          <ScrollArea className="flex-1 h-[500px] p-4 bg-gray-100/80 rounded-lg shadow-inner">
             <div className="flex flex-col space-y-4 ">
               {conversationHistory.map((message, index) => (
                 <div
@@ -758,7 +695,7 @@ export default function NewConversationComponentCopy({
 
                   <div
                     className={cn(
-                      "relative md:max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-md transition-all duration-300",
+                      "relative max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-md transition-all duration-300",
                       message.role === "user"
                         ? "bg-gradient-to-br from-blue-500 to-indigo-500 text-white self-end rounded-br-none min-w-32"
                         : "bg-white text-gray-900 self-start rounded-bl-none"
@@ -835,7 +772,11 @@ export default function NewConversationComponentCopy({
                     }`}
                   >
                     <div className="px-4 py-2 rounded-full w-full flex justify-center">
-                      <Button variant="ghost" onClick={handleStartConversation}>
+                      <Button
+                        variant="ghost"
+                        onClick={handleStartConversation}
+
+                      >
                         <span className="text-sm font-medium text-gray-600">
                           Ready to start! 🚀
                         </span>
@@ -878,60 +819,57 @@ export default function NewConversationComponentCopy({
                 </div>
               </div>
               {/* Input Controls */}
-              {conversationStarted && conversationRecordId && (
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center drop-shadow-sm shadow-inner w-full sm:w-1/2">
-                    {/* Text Input */}
-                    <input
-                      type="text"
-                      value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                      placeholder="Type something to translate..."
-                      className="flex-1 bg-transparent outline-none px-3 text-sm w-full sm:w-24"
-                    />
+              <div className="flex items-center gap-4">
+                <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center drop-shadow-sm shadow-inner">
+                  {/* Text Input */}
+                  <input
+                    type="text"
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    placeholder="Type something to translate..."
+                    className="flex-1 bg-transparent outline-none px-3 text-sm"
+                  />
 
-                    {/* Conditionally render Send or Mic button */}
-                    {textInput.trim() ? (
-                      // When there's text, show the Send button
-                      <button
-                        onClick={() => handleTranslation(textInput)}
-                        disabled={isProcessing || !textInput.trim()}
-                        className="p-2 rounded-full hover:bg-emerald-500 hover:text-white text-emerald-500 disabled:opacity-50 transition-all  mr-1 shadow-inner duration-500"
-                      >
-                        <Send className="h-4 w-4 md:h-5 md:w-5" />
-                      </button>
+                  {/* Send Button */}
+                  <button
+                    onClick={() => handleTranslation(textInput)}
+                    disabled={isProcessing || !textInput.trim()}
+                    className="p-2 rounded-full hover:bg-emerald-500 hover:text-white text-emerald-500 disabled:opacity-50 transition-all mr-2 shadow-inner duration-300"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+
+                  {/* Voice Recording Button */}
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isProcessing}
+                    className={`p-2 rounded-full hover:bg-blue-500 hover:text-white duration-300 shadow-inner ${
+                      isRecording ? "bg-red-500 text-white" : ""
+                    } text-blue-500 disabled:opacity-50 transition-all`}
+                  >
+                    {isRecording ? (
+                      // Show a "Stop" icon or a glowing mic when recording
+                      <div className="flex items-center">
+                        <Mic className="h-5 w-5 animate-pulse" />
+                      </div>
                     ) : (
-                      // When no text, show the Mic button
-                      <button
-                        onClick={toggleRecording}
-                        disabled={isProcessing}
-                        className={`p-2 rounded-full hover:bg-blue-500 hover:text-white duration-300 shadow-inner ${
-                          isRecording ? "bg-red-500 text-white" : ""
-                        } text-blue-500 disabled:opacity-50 transition-all`}
-                      >
-                        {isRecording ? (
-                          // Glowing mic when recording
-                          <Mic className="h-4 w-4 md:h-5 md:w-5 animate-pulse" />
-                        ) : (
-                          // Normal mic when idle
-                          <Mic className="h-4 w-4 md:h-5 md:w-5" />
-                        )}
-                      </button>
+                      // Show a normal mic when idle
+                      <Mic className="h-5 w-5" />
                     )}
+                  </button>
 
-                    {/* Delete Button */}
-                    {/* {conversationHistory.length >= 2 && (
-                      <button
-                        onClick={deleteLastExchange}
-                        className="ml-2 p-2 rounded-full hover:bg-red-500 text-red-500 hover:text-white transition-all duration-300 shadow-inner"
-                        title="Delete last exchange"
-                      >
-                        <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
-                      </button>
-                    )} */}
-                  </div>
+                  {/* Delete Button */}
+                  {conversationHistory.length >= 2 && (
+                    <button
+                      onClick={deleteLastExchange}
+                      className="ml-2 p-2 rounded-full hover:bg-red-500 text-red-500 hover:text-white transition-all duration-300 shadow-inner"
+                      title="Delete last exchange"
+                    >
+                      <Trash2 className="h-5 w-5 " />
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -1029,17 +967,17 @@ export default function NewConversationComponentCopy({
       </div>
 
       {/* Toggle Button */}
-      {/* <Button
+      <Button
         variant="ghost"
         size="icon"
         className="absolute right-0 top-1/2 transform -translate-y-1/2"
         onClick={() => setIsPanelOpen(!isPanelOpen)}
       >
         {isPanelOpen ? <ChevronRight /> : <ChevronLeft />}
-      </Button> */}
+      </Button>
 
       {/* Reference Panel */}
-      {/* <motion.div
+      <motion.div
         initial={{ width: "40%" }}
         animate={{
           width: isPanelOpen ? "40%" : "0%",
@@ -1157,7 +1095,7 @@ export default function NewConversationComponentCopy({
             </TabsContent>
           </Tabs>
         )}
-      </motion.div> */}
+      </motion.div>
     </div>
   );
 }

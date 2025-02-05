@@ -1,4 +1,3 @@
-// app/api/conversation/suggestions/route.js
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -11,48 +10,63 @@ export async function POST(req) {
     const { history, targetLanguage, nativeLanguage } = await req.json();
 
     const formattedHistory = history
-      .map(msg => `${msg.role === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`)
-      .join('\n');
+      .map(
+        (msg) =>
+          `${msg.role === "user" ? "Human" : "Assistant"}: ${msg.content}`
+      )
+      .join("\n");
 
-    console.log("Formatted history:", formattedHistory);
-    console.log("Target language:", targetLanguage);
-    console.log("Native language:", nativeLanguage);
+    const systemPrompt = `You are a ${targetLanguage} language tutor.
+      Provide EXACTLY 2 natural responses as the USER/HUMAN ONLY.
 
-    const systemPrompt = `You are a ${targetLanguage} language tutor for beginners. Based on the conversation history, suggest exactly 2 natural ${targetLanguage} responses that the student could use to continue the conversation. Each suggestion must be in the format '${targetLanguage} text ||| ${nativeLanguage} translation', with no additional text or introductions. Separate the suggestions with newlines. Do not include any explanations or extra information.`;
+      REQUIRED FORMAT (exactly 2 lines):
+      First response in ${targetLanguage} ||| Translation in ${nativeLanguage}
+      Second response in ${targetLanguage} ||| Translation in ${nativeLanguage}
+
+
+      EXAMPLE (THIS IS AN EXAMPLE, USE CONTEXT FOR ACTUAL RESPONSE):
+      Assistant: Hello! Do you want to eat something?
+      Oui, j'aimerais une pizza, s'il vous plaît. ||| Yes, I would like a pizza, please.
+      Une pizza avec du fromage et du jambon, merci ! ||| A pizza with cheese and ham, thank you!
+
+      RULES:
+      - Return EXACTLY 2 lines, no more, no less.
+      - Each line MUST use the ||| separator.
+      - One response should be simple, one more creative.
+      - Do not include any explanations or extra text or .
+      - Focus on user responses, not assistant replies.`;
 
     const message = await anthropic.messages.create({
-      model: "claude-3-opus-latest",
-      max_tokens: 150,
+      model: "claude-3-haiku-20240307",
+      max_tokens: 500,
       temperature: 0.7,
       system: systemPrompt,
       messages: [
         {
           role: "user",
-          content: `Here's the conversation history:\n${formattedHistory}\n\n`
-        }
-      ]
+          content: `Based on this conversation, provide exactly 2 responses that the user could respond with:\n${formattedHistory}`,
+        },
+      ],
     });
 
-    console.log("Message content:", message.content[0].text);
-
-    // Parse the response using ||| as separator
     const suggestions = message.content[0].text
-      .split('\n')
-      .filter(suggestion => suggestion.trim())
+      .trim()
+      .split("\n")
+      .filter((line) => line.includes("|||"))
       .slice(0, 2)
-      .map(suggestion => {
-        const [targetText, nativeText] = suggestion.split('|||').map(s => s.trim());
+      .map((suggestion) => {
+        const [targetText, nativeText] = suggestion.split(/\s*\|\|\|\s*/);
         return {
-          targetLanguage: targetText,
-          nativeLanguage: nativeText
+          targetLanguage: targetText?.trim() || "",
+          nativeLanguage: nativeText?.trim() || "",
         };
       });
 
     return NextResponse.json({ suggestions });
   } catch (error) {
-    console.error('Suggestions API Error:', error);
+    console.error("Suggestions API Error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate suggestions' },
+      { error: "Failed to generate suggestions" },
       { status: 500 }
     );
   }

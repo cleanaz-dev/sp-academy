@@ -29,6 +29,7 @@ export default function NewGeneratedDialogue({
     dialogue,
     culturalNotes,
     metadata,
+
   } = scenario;
 
   const handleSaveScenario = async () => {
@@ -48,6 +49,7 @@ export default function NewGeneratedDialogue({
           userId: user.id,
           savedAt: new Date().toISOString(),
         },
+        level
       };
 
       const response = await fetch("/api/conversation/save", {
@@ -168,9 +170,9 @@ export default function NewGeneratedDialogue({
                           {word.nativeLanguage}
                         </span>
                       </h4>
-                      <p className="text-sm text-gray-600">
+                      {/* <p className="text-sm text-gray-600">
                         Context: {word.context}
-                      </p>
+                      </p> */}
                       {word.example && (
                         <div className="mt-2 text-xs">
                           <p className="text-sky-600">
