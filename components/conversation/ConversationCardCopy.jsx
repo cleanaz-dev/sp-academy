@@ -14,6 +14,7 @@ export default function ConversationCardCopy({ conversation }) {
           src={conversation.imageUrl}
           alt={conversation.title}
           fill
+          sizes="33vw"
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           priority
         />

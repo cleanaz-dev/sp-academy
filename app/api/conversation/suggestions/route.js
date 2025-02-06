@@ -9,6 +9,8 @@ export async function POST(req) {
   try {
     const { history, targetLanguage, nativeLanguage } = await req.json();
 
+   
+
     const formattedHistory = history
       .map(
         (msg) =>
@@ -37,7 +39,7 @@ export async function POST(req) {
       - Focus on user responses, not assistant replies.`;
 
     const message = await anthropic.messages.create({
-      model: "claude-3-haiku-20240307",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 500,
       temperature: 0.7,
       system: systemPrompt,

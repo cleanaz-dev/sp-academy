@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
+  DialogHeader,
 } from "../ui/dialog";
 import {
   ChevronLeft,
@@ -27,6 +28,10 @@ import {
   MessageSquareQuote,
   ThumbsUp,
   ArrowRight,
+  BookOpen,
+  Edit3,
+  Type,
+  AlertCircle,
 } from "lucide-react";
 import { MdRecordVoiceOver } from "react-icons/md";
 import { Switch } from "@/components/ui/switch-voice";
@@ -37,6 +42,13 @@ import { Info } from "lucide-react";
 import { Volume2 } from "lucide-react";
 import { RiKakaoTalkFill } from "react-icons/ri";
 import { useUser } from "@clerk/nextjs";
+import { Check } from "lucide-react";
+import { CircleCheck } from "lucide-react";
+import { InfoIcon } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import { GraduationCap } from "lucide-react";
+import { Book } from "lucide-react";
+import { PenTool } from "lucide-react";
 
 export default function NewConversationComponentCopy({
   vocabulary,
@@ -50,6 +62,7 @@ export default function NewConversationComponentCopy({
   aiAvatarFemaleUrl,
 }) {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,8 +98,6 @@ export default function NewConversationComponentCopy({
 
   // Add this useEffect to fetch initial history
   useEffect(() => {
-    console.log("conversationRecordId:", conversationRecordId); // Add this line
-
     if (conversationRecordId === null) return;
 
     const fetchConversationHistory = async () => {
@@ -214,7 +225,7 @@ export default function NewConversationComponentCopy({
         setError("Speech recognition not supported in this browser");
       }
     }
-  }, [targetLanguage, voiceGender, conversationRecordId, conversationHistory]);
+  }, [targetLanguage, voiceGender, conversationRecordId, conversationHistory, translationResult]);
 
   useEffect(() => {
     console.log("Language values updated:", {
@@ -270,6 +281,7 @@ export default function NewConversationComponentCopy({
         score: data.score,
         label: data.label,
         improvedResponse: data.improvedResponse,
+        corrections: data.corrections,
       };
 
       // AI response
@@ -313,6 +325,7 @@ export default function NewConversationComponentCopy({
       setIsProcessing(false);
       setIsGeneratingAudio(false);
       setSuggestions([]);
+      setTranslationResult("");
     }
   };
 
@@ -363,7 +376,7 @@ export default function NewConversationComponentCopy({
   };
 
   const toggleRecording = () => {
-    setTranslationResult("");
+    
     try {
       if (isRecording) {
         recognition?.stop();
@@ -378,16 +391,36 @@ export default function NewConversationComponentCopy({
     }
   };
 
-  const clearConversationHistory = () => {
-    // Clear the conversation history state
-    setConversationHistory([]);
-    setUserMessage("");
-    setAiResponse("");
-    setError(null);
-
-    // Clear the conversation history from localStorage
-    localStorage.clear();
+  const clearConversationHistory = async (conversationHistory) => {
+    setIsDeleting(true);
+    try {  
+      // Make the DELETE request to the API (no need for a body)
+      const response = await fetch(`/api/conversation/${conversationRecordId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" }
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to clear conversation history");
+      }
+  
+      console.log("Conversation history cleared");
+  
+      // After successfully deleting, clear the local state and localStorage
+      setConversationHistory([]);
+      setUserMessage("");
+      setAiResponse("");
+      setError(null);
+      localStorage.clear();
+    } catch (error) {
+      console.error("Error clearing conversation history:", error);
+      setError("Failed to clear conversation history");
+    } finally {
+      setIsDeleting(false);
+      setConversationStarted(false)
+    }
   };
+  
 
   const getSuggestions = async () => {
     setIsLoadingSuggestions(true);
@@ -513,8 +546,6 @@ export default function NewConversationComponentCopy({
                   </div>
                 </div>
               </div>
-
-          
             </motion.div>
           ))}
         </div>
@@ -624,7 +655,50 @@ export default function NewConversationComponentCopy({
   const capitalizeFirstLetter = (text) =>
     text.charAt(0).toUpperCase() + text.slice(1);
 
-  const ImprovementTooltip = ({ improvedResponse, originalText }) => {
+
+  const ImprovementTooltip = ({
+    improvedResponse,
+    originalText,
+    corrections,
+  }) => {
+    console.log("Full corrections object:", corrections); // Let's see what we're getting
+
+    // Modified render function to handle different correction formats
+    const renderCorrectionCategory = (title, correction, icon) => {
+      if (!correction) return null;
+
+      // Log the specific correction to see its structure
+      console.log(`${title} correction:`, correction);
+
+      return (
+        <div className="mb-3 pl-2">
+          <div className="text-sm text-slate-300 mb-1 flex items-center gap-2">
+            {icon}
+            {title}:
+          </div>
+          <div className="pl-6 space-y-1">
+            {/* Handle the correction text */}
+            <div className="text-white">
+              {typeof correction === "object"
+                ? correction.correction
+                : correction}
+            </div>
+            {/* Handle the reason */}
+            {correction.reason && (
+              <div className="text-emerald-400 text-xs italic">
+                Why: {correction.reason}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+    // Debug section to check what corrections are available
+    console.log("Gender Agreement:", corrections?.genderAgreement);
+    console.log("Vocabulary:", corrections?.vocabulary);
+    console.log("Article:", corrections?.article);
+    console.log("Additional Notes:", corrections?.additionalNotes);
+
     return (
       <Dialog>
         <DialogTrigger asChild>
@@ -633,59 +707,91 @@ export default function NewConversationComponentCopy({
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-4/5 p-6 bg-gradient-to-r from-indigo-600/70 to-purple-700/70 text-white shadow-xl rounded-lg backdrop-blur-md border-none">
-          <div className="flex items-center justify-between mb-4">
+        <DialogContent className="max-w-2xl p-6 bg-gradient-to-r from-indigo-600/70 to-purple-700/70 text-white shadow-xl rounded-lg backdrop-blur-md border-none">
+          <DialogHeader>
             <DialogTitle className="font-semibold text-2xl text-white flex items-center gap-2">
               <Sparkles className="w-6 h-6" />
-              Better Way to Say This
+              <span>Better Way to Say This</span>
             </DialogTitle>
-          </div>
+            <DialogDescription>
+              <span className="text-white/50 text-xs">
+                Please review information below
+              </span>
+            </DialogDescription>
+          </DialogHeader>
 
-          <DialogDescription className="text-sm text-slate-100">
-            <div className="space-y-4">
-              {/* Original Text Section */}
-              <div className="p-3 bg-white/5 rounded-lg">
-                <div className="text-xs text-slate-300 mb-2 flex items-center gap-2">
-                  <MessageSquareQuote className="w-4 h-4" />
-                  Original phrase:
-                </div>
-                <p className="text-slate-200">
-                  {capitalizeFirstLetter(originalText)}
-                </p>
-              </div>
+          <div className="text-sm text-slate-100 space-y-4">
+            {/* Original Text Section */}
+            <p className="p-3 bg-white/5 rounded-lg">
+              <span className="text-xs text-slate-300 mb-2 flex items-center gap-2">
+                <MessageSquareQuote className="w-4 h-4" />
+                Original phrase:
+              </span>
+              <span className="block text-slate-200 pl-6">
+                {capitalizeFirstLetter(originalText)}
+              </span>
+            </p>
 
-              {/* Improved Text Section */}
-              <div className="p-3 bg-white/10 rounded-lg border border-white/10">
-                <div className="text-xs text-emerald-300 mb-2 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Improved version:
-                </div>
-                <p className="font-medium text-white mb-4">
-                  {improvedResponse.replace(/^"|"$/g, "")}
-                </p>
+            {/* Corrections Section */}
+            <div className="p-3 bg-white/5 rounded-lg">
+              <span className="text-xs mb-2 flex items-center gap-2">
+                <CircleCheck className="w-4 h-4 text-green-600" />
+                <span className="text-slate-300">Corrections:</span>
+              </span>
 
-                {/* Listen Button Positioned to the Right */}
-                <div className="flex justify-end border-t border-white/10 pt-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => speakPhrase(improvedResponse)}
-                    className="flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    Listen
-                  </Button>
-                </div>
-              </div>
+              {corrections?.genderAgreement &&
+                renderCorrectionCategory(
+                  "Gender Agreement",
+                  corrections.genderAgreement,
+                  <GraduationCap className="w-4 h-4" />
+                )}
+
+              {corrections?.vocabulary &&
+                renderCorrectionCategory(
+                  "Vocabulary",
+                  corrections.vocabulary,
+                  <Book className="w-4 h-4" />
+                )}
+
+              {corrections?.article &&
+                renderCorrectionCategory(
+                  "Article",
+                  corrections.article,
+                  <PenTool className="w-4 h-4" />
+                )}
+
             </div>
-          </DialogDescription>
 
-          <div className="mt-4 text-xs text-slate-200 flex items-center gap-2">
-            <Info className="w-4 h-4 text-sky-300" />
-            <span>
-              Pro tip: This phrasing sounds more natural in conversation
-            </span>
+            {/* Improved Text Section */}
+            <div className="p-3 bg-white/10 rounded-lg border border-white/10">
+              <span className="text-xs text-emerald-300 mb-2 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Improved version:
+              </span>
+              <span className="block font-medium text-white mb-4 pl-6">
+                {improvedResponse.replace(/^"|"$/g, "")}
+              </span>
+
+              <span className="flex justify-end border-t border-white/10 pt-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => speakPhrase(improvedResponse)}
+                  className="flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Listen
+                </Button>
+              </span>
+            </div>
           </div>
+
+          {corrections?.finalNotes && (
+            <p className="mt-4 text-xs text-slate-200 flex items-center gap-2">
+              <Info className="w-4 h-4 text-sky-300" />
+              <span>{corrections.finalNotes}</span>
+            </p>
+          )}
         </DialogContent>
       </Dialog>
     );
@@ -797,6 +903,7 @@ export default function NewConversationComponentCopy({
                           <ImprovementTooltip
                             improvedResponse={message.improvedResponse}
                             originalText={message.content}
+                            corrections={message.corrections}
                           />
                         )}
                       </div>
@@ -1000,10 +1107,10 @@ export default function NewConversationComponentCopy({
           {conversationHistory.length > 0 && (
             <div className="flex gap-2 mt-4">
               <button
-                onClick={clearConversationHistory}
+                onClick={() => clearConversationHistory(conversationHistory)}
                 className="w-1/2 p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
               >
-                Clear Conversation
+                {isDeleting ? "Clearing Conversation..." : "Clear Conversation"}
               </button>
               <button
                 onClick={analyzeAndSaveConversation}

@@ -429,6 +429,55 @@ const LEARNING_CONTENT = {
         },
       },
     },
+    {
+      id: "electronics_shopping",
+      category: "Leisure",
+      context: {
+        label: "Shopping for Electronics",
+        location: "electronics_store",
+        roles: ["customer", "sales_assistant"],
+        situation: "Shopping for electronic gadgets and interacting with store staff",
+        culturalNotes: [
+          "Warranty policies vary by product and region",
+          "Some countries may have restrictions on the sale of certain electronics",
+          "Customer support practices differ by region",
+        ],
+        keyPhrases: {
+          beginner: [
+            { phrase: "I'm looking for...", usage: "Starting search" },
+            { phrase: "What features does this have?", usage: "Asking about product features" },
+            { phrase: "How much is this?", usage: "Asking price" },
+          ],
+          intermediate: [
+            { phrase: "Can I see the specs?", usage: "Requesting product details" },
+            { phrase: "Do you have this in stock?", usage: "Inquiring about availability" },
+            { phrase: "Is this on sale?", usage: "Asking about discounts" },
+          ],
+          advanced: [
+            { phrase: "Does this come with an extended warranty?", usage: "Warranty inquiry" },
+            { phrase: "What are the return policies for this?", usage: "Asking about returns" },
+            { phrase: "How does this compare with other models?", usage: "Comparison request" },
+          ],
+        },
+        vocabulary: {
+          beginner: [
+            { word: "electronics", context: "devices or gadgets" },
+            { word: "price", context: "cost of item" },
+            { word: "warranty", context: "product protection" },
+          ],
+          intermediate: [
+            { word: "specs", context: "technical details of a product" },
+            { word: "stock", context: "availability of product" },
+            { word: "sale", context: "discounted price" },
+          ],
+          advanced: [
+            { word: "extended warranty", context: "additional product coverage" },
+            { word: "return policy", context: "guidelines for returning products" },
+            { word: "comparison", context: "evaluating different models" },
+          ],
+        },
+      },
+    },
 
     {
       id: "classroom_interaction",

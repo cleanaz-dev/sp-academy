@@ -108,22 +108,14 @@ export function AccountSettingsForm({ initialSettings, userId }) {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="avatarUrl">Avatar URL</Label>
-          <Input
-            type="text"
-            name="avatarUrl"
-            value={settings.avatarUrl || ""}
-            onChange={(e) =>
-              setSettings({ ...settings, avatarUrl: e.target.value })
-            }
-          />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="emailNotifications">Email Notifications</Label>
+          <p className="text-sm text-muted-foreground">
+            Select which email updates you'd like to receive.
+          </p>
           <div className="flex justify-between pt-2">
             <div className="flex gap-2 items-center">
               <Switch
-                id="dailyEmails"  
+                id="dailyEmails"
                 checked={settings.dailyEmails}
                 onCheckedChange={(checked) =>
                   setSettings({
@@ -131,23 +123,60 @@ export function AccountSettingsForm({ initialSettings, userId }) {
                     dailyEmails: checked,
                   })
                 }
-              />{" "}
+              />
               <p className="text-sm">Daily Emails</p>
             </div>
             <div className="flex gap-2 items-center">
               <Switch
-                id="weeklyEmails" 
+                id="weeklyEmails"
                 checked={settings.weeklyEmails}
                 onCheckedChange={(checked) =>
                   setSettings({
-                   ...settings,
+                    ...settings,
                     weeklyEmails: checked,
                   })
                 }
-              /> <p className="text-sm">Weekly Emails</p>
+              />
+              <p className="text-sm">Weekly Emails</p>
             </div>
           </div>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sharingSettings">Sharing Preferences</Label>
+          <p className="text-sm text-muted-foreground">
+            Choose what activity you'd like to share with other users.
+          </p>
+          <div className="flex justify-between pt-2">
+            <div className="flex gap-2 items-center">
+              <Switch
+                id="readingLogs"
+                checked={settings.shareReadingLogs}
+                onCheckedChange={(checked) =>
+                  setSettings({
+                    ...settings,
+                    shareReadingLogs: checked, // Fixed incorrect key
+                  })
+                }
+              />
+              <p className="text-sm">Share Reading Logs</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Switch
+                id="conversationsActivity"
+                checked={settings.shareConversationActivity}
+                onCheckedChange={(checked) =>
+                  setSettings({
+                    ...settings,
+                    shareConversationActivity: checked, // Fixed incorrect key
+                  })
+                }
+              />
+              <p className="text-sm">Share Conversations</p>
+            </div>
+          </div>
+        </div>
+
         <div className="flex w-full">
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Saving..." : "Save Account Changes"}
