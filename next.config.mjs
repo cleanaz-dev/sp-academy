@@ -20,6 +20,12 @@ const nextConfig = {
         port: '',
         pathname: '/story-images/**', // Adjust the pathname as needed
       },
+      {
+        protocol: 'https',
+        hostname: 'sfaudiourlbucket.s3.us-east-1.amazonaws.com',
+        port: '',
+        pathname: '/achievement-badge/**', // Adjust the pathname as needed
+      },
     ],
   },
 };

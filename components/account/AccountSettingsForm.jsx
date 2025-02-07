@@ -159,7 +159,7 @@ export function AccountSettingsForm({ initialSettings, userId }) {
                   })
                 }
               />
-              <p className="text-sm">Share Reading Logs</p>
+              <p className="text-sm">Reading Logs</p>
             </div>
             <div className="flex gap-2 items-center">
               <Switch
@@ -172,7 +172,20 @@ export function AccountSettingsForm({ initialSettings, userId }) {
                   })
                 }
               />
-              <p className="text-sm">Share Conversations</p>
+              <p className="text-sm">Conversations</p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Switch
+                id="conversationsActivity"
+                checked={settings.shareAchievements}
+                onCheckedChange={(checked) =>
+                  setSettings({
+                    ...settings,
+                    shareAchievements: checked, // Fixed incorrect key
+                  })
+                }
+              />
+              <p className="text-sm">Achievements</p>
             </div>
           </div>
         </div>

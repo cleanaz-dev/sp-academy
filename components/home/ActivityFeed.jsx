@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { format,formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { Heart } from "lucide-react";
 
 function Avatar({ user }) {
@@ -29,21 +29,36 @@ function Avatar({ user }) {
 }
 
 function LikeButton({ item }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(item.liked || false);
   const [likes, setLikes] = useState(item.likes || 0);
 
   const handleLike = async () => {
-    setLiked(!liked);
-    setLikes(liked ? likes - 1 : likes + 1);
+    const newLiked = !liked;
+    const newLikes = newLiked ? likes + 1 : likes - 1;
+
+    // Optimistically update UI
+    setLiked(newLiked);
+    setLikes(newLikes);
 
     try {
-      await fetch(`/api/like-activity`, {
+      const response = await fetch(`/api/shared-activity/like`, {
         method: "POST",
-        body: JSON.stringify({ id: item.id, liked: !liked }),
+        body: JSON.stringify({ id: item.id, liked: newLiked, type: item.type }),
         headers: { "Content-Type": "application/json" },
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to update like");
+      }
+
+      // (Optional) You could get the latest like count from the response and update state
+      const data = await response.json();
+      setLikes(data.likes); // Assuming the API returns the updated like count
     } catch (error) {
       console.error("Error liking activity:", error);
+      // Rollback UI state in case of failure
+      setLiked(!newLiked);
+      setLikes(likes);
     }
   };
 
@@ -52,20 +67,35 @@ function LikeButton({ item }) {
       onClick={handleLike}
       className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition"
     >
-      <Heart className={`w-5 h-5 ${liked ? "fill-red-500 stroke-red-500" : "stroke-gray-500"}`} />
+      <Heart
+        className={`w-5 h-5 ${
+          liked ? "fill-red-500 stroke-red-500" : "stroke-gray-500"
+        }`}
+      />
       <span className="text-sm">{likes}</span>
     </button>
   );
 }
 
+
 function ActivityItem({ item }) {
-  const timeAgo = formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
+  const timeAgo = formatDistanceToNow(new Date(item.createdAt), {
+    addSuffix: true,
+  });
 
   return (
     <div className="bg-white hover:bg-gray-50 rounded-xl p-4 transition-all duration-300">
       {/* User section */}
       <div className="flex items-center space-x-3">
-        <Avatar user={"pagesRead" in item ? item.bookReport.user : item.user} />
+        <Avatar
+          user={
+            "pagesRead" in item
+              ? item.bookReport.user
+              : "achievement" in item
+              ? item.user
+              : item.user
+          }
+        />
         <p className="text-sm font-medium text-gray-700">
           {("pagesRead" in item ? item.bookReport.user : item.user).name}
         </p>
@@ -81,16 +111,47 @@ function ActivityItem({ item }) {
                 alt={item.bookReport.book.title}
                 width={60}
                 height={90}
-                className="rounded-lg shadow-sm transform group-hover:scale-105 transition-transform duration-300"
+                className="rounded-lg shadow-sm transform group-hover:scale-105 transition-transform duration-300 w-auto h-auto"
               />
             </div>
           )}
           <div className="flex-1">
             <p className="text-sm text-gray-700 leading-relaxed">
-              Read <span className="font-semibold text-blue-600">{item.pagesRead} pages</span> from
+              Read{" "} 
+              <span className="font-semibold text-blue-600">
+                {item.pagesRead} pages
+              </span>{" "}
+              from
             </p>
-            <p className="font-semibold text-gray-800 text-lg mt-1">"{item.bookReport.book.title}"</p>
-            <p className="text-gray-500 text-sm mt-1">by {item.bookReport.book.author}</p>
+            <p className="font-semibold text-gray-800 text-lg mt-1">
+              "{item.bookReport.book.title}"
+            </p>
+            <p className="text-gray-500 text-sm mt-1">
+              by {item.bookReport.book.author}
+            </p>
+          </div>
+        </div>
+      ) : "achievement" in item ? (
+        <div className="mt-4 flex gap-5 items-center">
+          {item.achievement.imageUrl && (
+            <div className="relative group">
+              <Image
+                src={item.achievement.imageUrl}
+                alt={item.achievement.name}
+                width={60}
+                height={60}
+                className="rounded-lg shadow-sm transform group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm text-gray-700">Unlocked achievement:</p>
+            <p className="font-semibold text-gray-800 text-lg mt-1">
+              "{item.achievement.name}"
+            </p>
+            <p className="text-gray-500 text-sm mt-1">
+              {item.achievement.description}
+            </p>
           </div>
         </div>
       ) : (
@@ -108,7 +169,9 @@ function ActivityItem({ item }) {
           )}
           <div className="flex-1">
             <p className="text-sm text-gray-700">Had a conversation:</p>
-            <p className="font-semibold text-gray-800 text-lg mt-1">"{item.conversation.title}"</p>
+            <p className="font-semibold text-gray-800 text-lg mt-1">
+              "{item.conversation.title}"
+            </p>
             {(item.conversation.tutorLanguage || item.conversation.level) && (
               <div className="flex gap-2 mt-2">
                 {item.conversation.tutorLanguage && (
@@ -150,10 +213,11 @@ export default function ActivityFeed() {
           throw new Error("Failed to fetch activities");
         }
         const data = await response.json();
-
-        const combined = [...data.readingLogs, ...data.conversations].sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        );
+        const combined = [
+          ...data.readingLogs.map(item => ({ ...item, type: "ReadingLog" })),
+          ...data.conversations.map(item => ({ ...item, type: "Conversations" })),
+          ...data.achievements.map(item => ({ ...item, type: "Achievements" })),
+        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         setActivities(combined);
       } catch (err) {
@@ -170,17 +234,22 @@ export default function ActivityFeed() {
   }, []);
 
   if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (error) return <div className="p-4 bg-red-100 text-red-600 rounded-lg">Error: {error}</div>;
+  if (error)
+    return (
+      <div className="p-4 bg-red-100 text-red-600 rounded-lg">
+        Error: {error}
+      </div>
+    );
 
   return (
     <div className="space-y-4">
-    {activities.map((activity, index) => (
-      <ActivityItem 
-        key={index} 
-        item={activity} 
-        className="hover:bg-gray-50 rounded-xl transition-all duration-300"
-      />
-    ))}
-  </div>
+      {activities.map((activity, index) => (
+        <ActivityItem
+          key={index}
+          item={activity}
+          className="hover:bg-gray-50 rounded-xl transition-all duration-300"
+        />
+      ))}
+    </div>
   );
 }

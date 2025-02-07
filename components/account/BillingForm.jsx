@@ -55,7 +55,7 @@ export function BillingForm({ currentBillingPlan }) {
   };
 
   return (
-    <main className="max-w-3xl">
+    <main className="max-w-4xl">
       <h1 className="font-semibold text-2xl mb-4">Billing Information</h1>
       <form onSubmit={handleSubscribe} className="space-y-4">
         <div className="space-y-2">

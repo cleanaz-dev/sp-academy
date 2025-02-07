@@ -20,12 +20,15 @@ import { useUser } from "@clerk/nextjs";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import ReadingLogs from "./ReadingLogs";
 import { AddReadingLog } from "../SubmitButton";
+import { Button } from "../ui/button";
+import { Shapes } from "lucide-react";
 
 export default function SingleBookReportPage({ bookReport }) {
   const router = useRouter();
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [previousSummary, setPreviousSummary] = useState("");
   const ReadingLogSchema = z
     .object({
       startPage: z.number().min(1, "Start page must be at least 1"),
@@ -48,7 +51,7 @@ export default function SingleBookReportPage({ bookReport }) {
     resolver: zodResolver(ReadingLogSchema),
     defaultValues: {
       startPage: 1,
-      endPage: 2, // Initialize as startPage + 1
+      endPage: 2, 
       summary: "",
       bookId: bookReport.bookId,
       userId: user.id,
@@ -83,6 +86,29 @@ export default function SingleBookReportPage({ bookReport }) {
     }
   }
 
+  async function handleSummarizeSummary() {
+    const summary = form.getValues("summary")
+    setPreviousSummary(summary); // Access the current summary from the form
+    setIsSummarizing(true);
+    try {
+      const summaryResponse = await fetch(`/api/books/summarize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: summary }),
+      });
+      if (!summaryResponse.ok) {
+        throw new Error("Failed to summarize text");
+      }
+      const summaryData = await summaryResponse.json();
+      form.setValue("summary", summaryData.summary);
+    } catch (error) {
+      console.error("Failed to summarize text:", error.message);
+    } finally {
+      setIsSummarizing(false);
+    }
+  }
   return (
     <div className="py-8 h-full">
       <Card className="max-w-3xl ">
@@ -131,7 +157,7 @@ export default function SingleBookReportPage({ bookReport }) {
                 <Label htmlFor="summary">Short Summary</Label>
                 <Textarea
                   {...form.register("summary")}
-                  rows={4}
+                  rows={10}
                   placeholder="Write a brief summary of what you've read today..."
                 />
                 {form.formState.errors.summary && (
@@ -142,10 +168,41 @@ export default function SingleBookReportPage({ bookReport }) {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="flex gap-6 mt-6">
               <AddReadingLog isSubmitting={isSubmitting} />
+              <Button
+                type="button"
+                onClick={handleSummarizeSummary}
+                className="group hover:bg-emerald-400 transition-colors duration-500"
+              >
+                {isSummarizing ? (
+                  <>Summarizing...</>
+                ) : (
+                  <>
+                    Summarize
+                    <Shapes className="size-4 ml-2 group-hover:rotate-90 transition-all duration-500 ease-in-out" />
+                  </>
+                )}
+              </Button>
+
+              {previousSummary && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    form.setValue("summary", previousSummary); 
+                    setPreviousSummary("")}
+                  }
+                  disabled={isSummarizing}
+                >
+                  Revert to previous summary
+                  <Shapes
+                    className="size-4 ml-2 group-hover:rotate-90 transition-all duration-500 ease-in-out"
+                  />
+                </Button>
+              )}
             </div>
           </form>
+
           <ReadingLogs data={bookReport.readingLogs} />
         </CardContent>
       </Card>

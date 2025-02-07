@@ -13,10 +13,40 @@ import {
 import SpoonLogo from "@/components/SpoonLogo";
 import { currentUser } from "@clerk/nextjs/server";
 import ActivityFeed from "@/components/home/ActivityFeed";
+import AchievementCard from "@/components/home/AchievementCard";
 
 export default async function DashboardHome() {
   const user = await currentUser();
-
+  const achievements = [
+    {
+      name: "Reading Master",
+      description: "Read 10 books in a month",
+      imageUrl: "/path-to-image.png",
+      isUnlocked: false,
+      progress: 70
+    },
+    {
+      name: "Vocabulary Expert",
+      description: "Learn 500 new words",
+      imageUrl: "/path-to-image.png",
+      isUnlocked: true,
+      progress: 100
+    },
+    {
+      name: "Grammar Guru",
+      description: "Complete all grammar lessons",
+      imageUrl: "/path-to-image.png",
+      isUnlocked: false,
+      progress: 45
+    },
+    {
+      name: "Conversation Pro",
+      description: "Complete 50 conversations",
+      imageUrl: "/path-to-image.png",
+      isUnlocked: false,
+      progress: 30
+    },
+  ];
   return (
     <div className="bg-gray-50 min-h-screen">
       <main className="flex-1 overflow-y-auto">
@@ -155,7 +185,7 @@ export default async function DashboardHome() {
             </Card>
 
             {/* Achievements */}
-            <Card className="hover:shadow-lg transition-shadow">
+            {/* <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="border-b bg-gray-50">
                 <CardTitle className="text-lg font-semibold">
                   Recent Achievements
@@ -189,7 +219,9 @@ export default async function DashboardHome() {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
+
+            <AchievementCard achievements={achievements} />
 
             {/* Current Reading */}
             <Card className="hover:shadow-lg transition-shadow">

@@ -36,6 +36,8 @@ model User {
   Exercise              Exercise[]
   AccountSettings       AccountSettings?
   BillingInformation    BillingInformation?
+  UserProgress          UserProgress[]
+  Like                  Like[]
 }
 
 model BillingInformation {
@@ -68,6 +70,7 @@ model AccountSettings {
   weeklyEmails              Boolean?        @default(true)
   shareReadingLogs          Boolean         @default(false)
   shareConversationActivity Boolean         @default(false)
+  shareAchievements         Boolean         @default(false)
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
 }
@@ -369,17 +372,62 @@ model LearningProgress {
 }
 
 model Exercise {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String  @db.ObjectId
-  user        User    @relation(fields: [userId], references: [id])
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
   title       String
   description String?
   content     Json?
-  completed   Boolean @default(false)
+  completed   Boolean  @default(false)
   score       Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Achievement {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String?
+  category     Category       @relation(fields: [categoryId], references: [id])
+  criteria     Json
+  imageUrl     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  categoryId   String         @db.ObjectId
+  UserProgress UserProgress[] 
+}
+
+model UserProgress {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String      @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade) // Cascade delete
+  achievementId String      @db.ObjectId
+  progress      Json?
+  unlockedAt    DateTime?
+  isUnlocked    Boolean?    @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Category {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  achievements Achievement[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Like {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  activityId String   @db.ObjectId
+  type       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, activityId, type])
 }
 
 enum PracticeStatus {

@@ -9,7 +9,7 @@ export default async function AccountSettings() {
   const settings = await getAccountSettingsByUserId(userId);
 
   return (
-    <main className="max-w-3xl space-y-4">
+    <main className="max-w-4xl space-y-4">
       <header>
         <h1 className="header-title">Account Settings</h1>
       </header>
