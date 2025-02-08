@@ -1,6 +1,6 @@
 // app/api/achievements/check-achievements/user/route.js
 import { NextResponse } from 'next/server';
-import { checkAchievements } from '@/lib/checkAchievementsCron';
+import { checkAchievements } from '@/lib/checkAchievements';
 import { auth } from '@clerk/nextjs';
 
 export async function POST(request) {
