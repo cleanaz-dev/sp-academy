@@ -35,10 +35,10 @@ export async function GET() {
     const [readingLogs, conversations, achievements] = await Promise.all([
       prisma.readingLog.findMany({
         where: {
-          bookReport: { userId: { in: sharedUserIds } }
+          book: { userId: { in: sharedUserIds } }
         },
         include: {
-          bookReport: {
+          book: {
             include: {
               user: {
                 select: {
@@ -49,13 +49,6 @@ export async function GET() {
                       avatarUrl: true,
                     }
                   }
-                }
-              },
-              book: {
-                select: {
-                  title: true,
-                  author: true,
-                  coverUrl: true,
                 }
               }
             }
@@ -159,7 +152,7 @@ export async function GET() {
       }
     });
 
-    // Transform function
+    // Transform function with updated structure
     const transformData = (items, type) => items.map(item => ({
       ...item,
       type,

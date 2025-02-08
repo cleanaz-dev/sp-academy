@@ -12,24 +12,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { Edit } from "lucide-react";
-import { Trash2 } from "lucide-react";
 import EditReadingLog from "./EditReadingLog";
 import DeleteReadingDialog from "./DeleteReadingLog";
+import { CalendarDays } from "lucide-react";
+import { BookOpenText } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function ReadingLogs({ data }) {
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const logsPerPage = 5;
 
-  const filteredLogs = data.filter((log) =>
+  const filteredLogs = data.readingLogs?.filter((log) =>
     log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+  
+  const sortedLogs = [...filteredLogs].sort(
+    (a, b) => new Date(b.dateRead) - new Date(a.dateRead)
   );
-
+  
+  // Pagination
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstLog, indexOfLastLog);
-
+  const currentLogs = sortedLogs.slice(indexOfFirstLog, indexOfLastLog);
+  
   const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
 
   return (
@@ -52,10 +59,30 @@ export default function ReadingLogs({ data }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date Read</TableHead>
-              <TableHead className="w-24">Pages</TableHead>
-              <TableHead>Summary</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>
+                <span className="flex items-center gap-2">
+                  <CalendarDays className="size-4" />
+                  Date
+                </span>
+              </TableHead>
+              <TableHead className="w-24">
+                <span className="flex items-center gap-2">
+                  <BookOpenText className="size-4" />
+                  Pages
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="flex items-center gap-2">
+                  <Info className="size-4" />
+                  Summary
+                </span>
+              </TableHead>
+              <TableHead>
+                <span className="flex items-center gap-2">
+                 
+                 Action
+                </span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -71,7 +98,7 @@ export default function ReadingLogs({ data }) {
                   <span className="line-clamp-3">{log.shortSummary}</span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2 justify-end ">
+                  <div className="flex gap-2 justify-end">
                     <EditReadingLog log={log} />
                     <DeleteReadingDialog log={log} />
                   </div>

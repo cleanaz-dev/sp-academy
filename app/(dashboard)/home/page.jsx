@@ -14,37 +14,44 @@ import SpoonLogo from "@/components/SpoonLogo";
 import { currentUser } from "@clerk/nextjs/server";
 import ActivityFeed from "@/components/home/ActivityFeed";
 import AchievementCard from "@/components/home/AchievementCard";
+import { getUserDataByUserId, updateAllBooksProgress } from "@/lib/actions";
+import Image from "next/image";
 
 export default async function DashboardHome() {
   const user = await currentUser();
+  const userData = await getUserDataByUserId(user.id);
+  const books = userData.Book;
+
+  await updateAllBooksProgress();
+
   const achievements = [
     {
       name: "Reading Master",
       description: "Read 10 books in a month",
       imageUrl: "/path-to-image.png",
       isUnlocked: false,
-      progress: 70
+      progress: 70,
     },
     {
       name: "Vocabulary Expert",
       description: "Learn 500 new words",
       imageUrl: "/path-to-image.png",
       isUnlocked: true,
-      progress: 100
+      progress: 100,
     },
     {
       name: "Grammar Guru",
       description: "Complete all grammar lessons",
       imageUrl: "/path-to-image.png",
       isUnlocked: false,
-      progress: 45
+      progress: 45,
     },
     {
       name: "Conversation Pro",
       description: "Complete 50 conversations",
       imageUrl: "/path-to-image.png",
       isUnlocked: false,
-      progress: 30
+      progress: 30,
     },
   ];
   return (
@@ -227,26 +234,51 @@ export default async function DashboardHome() {
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="border-b bg-gray-50">
                 <CardTitle className="text-lg font-semibold">
-                  Current Reading
+                  Currently Reading
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {[
-                    { title: "The Great Gatsby", progress: 75 },
-                    { title: "To Kill a Mockingbird", progress: 30 },
-                  ].map((book, index) => (
-                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium">{book.title}</span>
-                        <span className="text-sm text-gray-500">
-                          {book.progress}%
-                        </span>
+                  {books.map((book, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 p-4 rounded-lg shadow-sm border"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Image
+                          src={book.coverUrl || "/default-cover.png"}
+                          alt={book.title || "Book cover"}
+                          width="50"
+                          height="50"
+                          className="object-cover rounded-md"
+                        />
+                        <div className="flex w-full flex-col relative ">
+                          {" "}
+                          {/* Added relative positioning */}
+                          <div>
+                            <span className="font-medium leading-tight">
+                              {book.title}
+                            </span>
+                            <span className="block text-muted-foreground text-sm leading-tight">
+                              {book.author}
+                            </span>
+                            <span className="text-xs text-muted-foreground leading-tight">
+                              Current Page: {book.currentPage}
+                            </span>
+                          </div>
+                          <span className="absolute bottom-0 right-0 text-sm text-gray-500">
+                            {/* Positioned absolutely */}
+                            {book.readingProgress}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
+                      <div
+                        className="h-2 bg-gray-200 rounded-full mt-1"
+                        aria-label={`Reading progress: ${book.readingProgress}%`}
+                      >
                         <div
-                          className="h-full bg-blue-500 rounded-full"
-                          style={{ width: `${book.progress}%` }}
+                          className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                          style={{ width: `${book.readingProgress}%` }}
                         />
                       </div>
                     </div>

@@ -90,25 +90,25 @@ function ActivityItem({ item }) {
         <Avatar
           user={
             "pagesRead" in item
-              ? item.bookReport.user
+              ? item.book.user // Changed from item.bookReport.user
               : "achievement" in item
               ? item.user
               : item.user
           }
         />
         <p className="text-sm font-medium text-gray-700">
-          {("pagesRead" in item ? item.bookReport.user : item.user).name}
+          {("pagesRead" in item ? item.book.user : item.user).name}
         </p>
       </div>
 
       {/* Content section */}
       {"pagesRead" in item ? (
         <div className="mt-4 flex gap-5 items-center">
-          {item.bookReport.book.coverUrl && (
+          {item.book.coverUrl && ( // Changed from item.bookReport.book.coverUrl
             <div className="relative group">
               <Image
-                src={item.bookReport.book.coverUrl}
-                alt={item.bookReport.book.title}
+                src={item.book.coverUrl}
+                alt={item.book.title}
                 width={60}
                 height={90}
                 className="rounded-lg shadow-sm transform group-hover:scale-105 transition-transform duration-300 w-auto h-auto"
@@ -124,10 +124,10 @@ function ActivityItem({ item }) {
               from
             </p>
             <p className="font-semibold text-gray-800 text-lg mt-1">
-              "{item.bookReport.book.title}"
+              "{item.book.title}" {/* Changed from item.bookReport.book.title */}
             </p>
             <p className="text-gray-500 text-sm mt-1">
-              by {item.bookReport.book.author}
+              by {item.book.author} {/* Changed from item.bookReport.book.author */}
             </p>
           </div>
         </div>
