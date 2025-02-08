@@ -23,6 +23,8 @@ import { AddReadingLog } from "../SubmitButton";
 import { Button } from "../ui/button";
 import { Shapes } from "lucide-react";
 import { toast } from "sonner";
+import { Undo } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 export default function SingleBookReportPage({
   readingLogs
@@ -220,6 +222,7 @@ export default function SingleBookReportPage({
                 type="button"
                 onClick={handleSummarizeSummary}
                 className="group hover:bg-emerald-400 transition-colors duration-500"
+                disabled={isSummarizing}
               >
                 {isSummarizing ? (
                   <>Summarizing...</>
@@ -239,9 +242,10 @@ export default function SingleBookReportPage({
                     setPreviousSummary("");
                   }}
                   disabled={isSummarizing}
+                  className="group bg-sky-400 transition-colors duration-500 hover:bg-emerald-400"
                 >
-                  Revert to previous summary
-                  <Shapes className="size-4 ml-2 group-hover:rotate-90 transition-all duration-500 ease-in-out" />
+                  Bring back previous summary!
+                  <RotateCcw className="size-4 ml-2 group-hover:-rotate-180  transition-all duration-500 ease-in-out" />
                 </Button>
               )}
             </div>
