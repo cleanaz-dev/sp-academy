@@ -33,6 +33,7 @@ export async function GET() {
     const sharedUserIds = sharedUsers.map(user => user.userId);
 
     const [readingLogs, conversations, achievements] = await Promise.all([
+      // Reading Logs Query
       prisma.readingLog.findMany({
         where: {
           book: { userId: { in: sharedUserIds } }
@@ -59,6 +60,8 @@ export async function GET() {
         },
         take: 20
       }),
+
+      // Conversations Query
       prisma.conversationRecord.findMany({
         where: {
           userId: { in: sharedUserIds }
@@ -89,10 +92,13 @@ export async function GET() {
         },
         take: 20
       }),
+
+      // Achievements Query
       prisma.userProgress.findMany({
         where: {
           userId: { in: sharedUserIds },
-          isUnlocked: true
+          isUnlocked: true,
+          unlockedAt: { not: null }
         },
         include: {
           user: {
@@ -111,11 +117,12 @@ export async function GET() {
               name: true,
               description: true,
               imageUrl: true,
+              criteria: true
             }
           }
         },
         orderBy: {
-          createdAt: 'desc'
+          unlockedAt: 'desc'
         },
         take: 20
       })
@@ -156,9 +163,12 @@ export async function GET() {
     const transformData = (items, type) => items.map(item => ({
       ...item,
       type,
+      createdAt: type === 'Achievement' ? item.unlockedAt : item.createdAt,
       liked: likes.some(like => like.activityId === item.id),
       likes: likeCounts.find(count => count.activityId === item.id)?._count._all || 0
     }));
+
+
 
     return NextResponse.json({
       readingLogs: transformData(readingLogs, 'ReadingLog'),

@@ -49,38 +49,46 @@ export default async function BookCard({ book }) {
 
   function calculateReadingStreak(readingLogs) {
     if (!readingLogs || readingLogs.length === 0) return 0;
-
-    // Sort logs by date to ensure chronological order
+  
+    // Get user's current time zone
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+    // Sort logs by date in ascending order
     const sortedLogs = readingLogs.sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-
+  
     let maxStreak = 0;
     let currentStreak = 1;
-
+  
+    // Convert UTC date to user's local date
+    function getLocalDateString(utcDate) {
+      return new Date(utcDate).toLocaleDateString("en-US", {
+        timeZone: userTimeZone,
+      });
+    }
+  
     for (let i = 1; i < sortedLogs.length; i++) {
-      const prevDate = new Date(sortedLogs[i - 1].createdAt);
-      const currentDate = new Date(sortedLogs[i].createdAt);
-
-      // Calculate difference in days
-      const daysDifference = Math.floor(
-        (currentDate.getTime() - prevDate.getTime()) / (1000 * 3600 * 24)
-      );
-
+      const prevDate = getLocalDateString(sortedLogs[i - 1].createdAt);
+      const currentDate = getLocalDateString(sortedLogs[i].createdAt);
+  
+      // Convert to Date objects for comparison
+      const prev = new Date(prevDate);
+      const curr = new Date(currentDate);
+      const daysDifference = (curr - prev) / (1000 * 3600 * 24);
+  
       if (daysDifference === 1) {
-        // Consecutive day reading
         currentStreak++;
         maxStreak = Math.max(maxStreak, currentStreak);
       } else if (daysDifference > 1) {
-        // Reset streak if gap is more than one day
         currentStreak = 1;
       }
     }
-
+  
     return Math.max(maxStreak, currentStreak);
   }
-
+  
+    
   // Usage
   const streak = calculateReadingStreak(readingLogs);
 
@@ -156,6 +164,8 @@ export default async function BookCard({ book }) {
                     ? "text-gray-300"
                     : streak > 3
                     ? "text-orange-500 fill-current"
+                    : streak > 5
+                    ? "text-red-500 fill-current"
                     : "text-amber-400 fill-current"
                 }`}
               />

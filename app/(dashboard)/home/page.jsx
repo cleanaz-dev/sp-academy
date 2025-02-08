@@ -21,39 +21,11 @@ export default async function DashboardHome() {
   const user = await currentUser();
   const userData = await getUserDataByUserId(user.id);
   const books = userData.Book;
+  const achievements = userData.UserProgress;
+  // console.log("user data:", userData.UserProgress);
 
   await updateAllBooksProgress();
 
-  const achievements = [
-    {
-      name: "Reading Master",
-      description: "Read 10 books in a month",
-      imageUrl: "/path-to-image.png",
-      isUnlocked: false,
-      progress: 70,
-    },
-    {
-      name: "Vocabulary Expert",
-      description: "Learn 500 new words",
-      imageUrl: "/path-to-image.png",
-      isUnlocked: true,
-      progress: 100,
-    },
-    {
-      name: "Grammar Guru",
-      description: "Complete all grammar lessons",
-      imageUrl: "/path-to-image.png",
-      isUnlocked: false,
-      progress: 45,
-    },
-    {
-      name: "Conversation Pro",
-      description: "Complete 50 conversations",
-      imageUrl: "/path-to-image.png",
-      isUnlocked: false,
-      progress: 30,
-    },
-  ];
   return (
     <div className="bg-gray-50 min-h-screen">
       <main className="flex-1 overflow-y-auto">

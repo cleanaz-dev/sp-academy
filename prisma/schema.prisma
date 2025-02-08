@@ -410,7 +410,7 @@ model UserProgress {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   userId        String      @db.ObjectId
   user          User        @relation(fields: [userId], references: [id])
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade) // Cascade delete
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
   achievementId String      @db.ObjectId
   progress      Json?
   unlockedAt    DateTime?
