@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { format, formatDistanceToNow } from "date-fns";
 import { Heart } from "lucide-react";
+import { ScrollArea } from "../ui/scroll-area";
 
 function Avatar({ user }) {
   const userName = user.AccountSettings?.displayName || user.name;
@@ -90,21 +91,31 @@ function ActivityItem({ item }) {
         <Avatar
           user={
             "pagesRead" in item
-              ? item.book.user // Changed from item.bookReport.user
+              ? item.book.user
               : "achievement" in item
+              ? item.user
+              : "course" in item
+              ? item.user
+              : "lesson" in item
               ? item.user
               : item.user
           }
         />
         <p className="text-sm font-medium text-gray-700">
-          {("pagesRead" in item ? item.book.user : item.user).name}
+          {("pagesRead" in item 
+            ? item.book.user 
+            : "course" in item
+            ? item.user
+            : "lesson" in item
+            ? item.user
+            : item.user).name}
         </p>
       </div>
 
       {/* Content section */}
       {"pagesRead" in item ? (
         <div className="mt-4 flex gap-5 items-center">
-          {item.book.coverUrl && ( // Changed from item.bookReport.book.coverUrl
+          {item.book.coverUrl && (
             <div className="relative group">
               <Image
                 src={item.book.coverUrl}
@@ -117,17 +128,17 @@ function ActivityItem({ item }) {
           )}
           <div className="flex-1">
             <p className="text-sm text-gray-700 leading-relaxed">
-              Read{" "} 
+              Read{" "}
               <span className="font-semibold text-blue-600">
                 {item.pagesRead} pages
               </span>{" "}
               from
             </p>
             <p className="font-semibold text-gray-800 text-lg mt-1">
-              "{item.book.title}" {/* Changed from item.bookReport.book.title */}
+              "{item.book.title}"
             </p>
             <p className="text-gray-500 text-sm mt-1">
-              by {item.book.author} {/* Changed from item.bookReport.book.author */}
+              by {item.book.author}
             </p>
           </div>
         </div>
@@ -152,6 +163,51 @@ function ActivityItem({ item }) {
             <p className="text-gray-500 text-sm mt-1">
               {item.achievement.description}
             </p>
+          </div>
+        </div>
+      ) : "course" in item ? (
+        <div className="mt-4 flex gap-5 items-center">
+          {item.course.coverUrl && (
+            <div className="relative group">
+              <Image
+                src={item.course.coverUrl}
+                alt={item.course.title}
+                width={60}
+                height={60}
+                className="rounded-lg shadow-sm transform group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm text-gray-700">Enrolled in course:</p>
+            <p className="font-semibold text-gray-800 text-lg mt-1">
+              "{item.course.title}"
+            </p>
+       
+            {item.course.description && (
+              <p className="text-gray-500 text-sm mt-1">
+                {item.course.description}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : "lesson" in item ? (
+        <div className="mt-4 flex gap-5 items-center">
+          <div className="flex-1">
+            <p className="text-sm text-gray-700">Completed lesson:</p>
+            <p className="font-semibold text-gray-800 text-lg mt-1">
+              "{item.lesson.title}"
+            </p>
+            {item.lesson.course && (
+              <p className="text-gray-600 text-sm mt-1">
+                in course: {item.lesson.course.title}
+              </p>
+            )}
+            {item.lesson.level && (
+              <span className="px-2 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium mt-2 inline-block">
+                Level {item.lesson.level}
+              </span>
+            )}
           </div>
         </div>
       ) : (
@@ -217,6 +273,8 @@ export default function ActivityFeed() {
           ...data.readingLogs.map(item => ({ ...item, type: "ReadingLog" })),
           ...data.conversations.map(item => ({ ...item, type: "Conversations" })),
           ...data.achievements.map(item => ({ ...item, type: "Achievements" })),
+          ...data.enrollments.map(item => ({ ...item, type: "CourseEnrollment" })),
+          ...data.completedLessons.map(item => ({ ...item, type: "CompletedLesson" })),
         ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         setActivities(combined);
@@ -243,13 +301,15 @@ export default function ActivityFeed() {
 
   return (
     <div className="space-y-4">
-      {activities.map((activity, index) => (
-        <ActivityItem
-          key={index}
-          item={activity}
-          className="hover:bg-gray-50 rounded-xl transition-all duration-300"
-        />
-      ))}
+      <ScrollArea className="h-[600px]">
+        {activities.map((activity, index) => (
+          <ActivityItem
+            key={index}
+            item={activity}
+            className="hover:bg-gray-50 rounded-xl transition-all duration-300"
+          />
+        ))}
+      </ScrollArea>
     </div>
   );
 }

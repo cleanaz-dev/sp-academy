@@ -16,25 +16,31 @@ import ActivityFeed from "@/components/home/ActivityFeed";
 import AchievementCard from "@/components/home/AchievementCard";
 import { getUserDataByUserId, updateAllBooksProgress } from "@/lib/actions";
 import Image from "next/image";
+import TestButton from "@/components/test/TestButton";
+import WeeklySchedule from "@/components/home/WeeklySchedule";
+import RecentLessons from "@/components/home/RecentLessons";
 
 export default async function DashboardHome() {
   const user = await currentUser();
   const userData = await getUserDataByUserId(user.id);
   const books = userData.Book;
   const achievements = userData.UserProgress;
-  // console.log("user data:", userData.UserProgress);
+  const progress = userData.Progress
+  // console.log("user data:", userData);
+   
+  // await updateAllBooksProgress();
 
-  await updateAllBooksProgress();
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <main className="flex-1 overflow-y-auto">
         {/* Top Bar */}
+        <SpoonLogo />
         <header className="bg-white border-b p-6 mb-6">
           <div className="max-w-7xl mx-auto">
-            <SpoonLogo />
+           
             <h1 className="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl font-bold">
-              Welcome back, {user?.firstName}!
+              Welcome back, {user?.firstName}! <TestButton />
             </h1>
           </div>
         </header>
@@ -71,7 +77,7 @@ export default async function DashboardHome() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="hover:shadow-lg transition-shadow gdri">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-purple-100 rounded-full">
@@ -79,7 +85,7 @@ export default async function DashboardHome() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Achievements</p>
-                    <h3 className="text-2xl font-bold">12</h3>
+                    <h3 className="text-2xl font-bold">{achievements.filter((a) => a.isUnlocked).length}</h3>
                   </div>
                 </div>
               </CardContent>
@@ -88,117 +94,11 @@ export default async function DashboardHome() {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
             {/* Recent Lessons */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg font-semibold">
-                  Recent Lessons
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ul className="space-y-4">
-                  {[
-                    {
-                      title: "Introduction to Algebra",
-                      status: "Continue",
-                      color: "blue",
-                    },
-                    {
-                      title: "World History: Ancient Civilizations",
-                      status: "Start",
-                      color: "green",
-                    },
-                    {
-                      title: "Biology: Cellular Structure",
-                      status: "Review",
-                      color: "purple",
-                    },
-                  ].map((lesson, index) => (
-                    <li
-                      key={index}
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <span className="font-medium">{lesson.title}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={`text-${lesson.color}-600 border-${lesson.color}-600 hover:bg-${lesson.color}-50`}
-                      >
-                        {lesson.status}
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
+            <RecentLessons progress={progress} />        
             {/* Weekly Schedule */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg font-semibold">
-                  Weekly Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-7 gap-3">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                    (day, index) => (
-                      <div key={day} className="text-center">
-                        <div className="text-sm font-medium text-gray-600">
-                          {day}
-                        </div>
-                        <div
-                          className={`mt-2 h-16 rounded-lg flex items-center justify-center ${
-                            index === new Date().getDay() - 1
-                              ? "bg-blue-100 text-blue-600"
-                              : "bg-gray-50"
-                          }`}
-                        >
-                          <p className="text-xs font-medium">2</p>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Achievements */}
-            {/* <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg font-semibold">
-                  Recent Achievements
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex justify-around">
-                  {[
-                    {
-                      icon: Star,
-                      label: "Math Whiz",
-                      color: "text-yellow-500",
-                    },
-                    {
-                      icon: BookOpen,
-                      label: "Bookworm",
-                      color: "text-blue-500",
-                    },
-                    {
-                      icon: Calendar,
-                      label: "Consistent",
-                      color: "text-green-500",
-                    },
-                  ].map(({ icon: Icon, label, color }, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div className="p-3 bg-gray-100 rounded-full mb-2">
-                        <Icon className={`h-6 w-6 ${color}`} />
-                      </div>
-                      <span className="text-sm font-medium">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card> */}
+            <WeeklySchedule />
 
             <AchievementCard achievements={achievements} />
 
@@ -261,7 +161,7 @@ export default async function DashboardHome() {
           </div>
 
           {/* Activity Feed Section */}
-          <div className="mt-6">
+          <div className="mt-6 pb-6">
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader className="border-b bg-gray-50 flex flex-row justify-between items-center">
                 <CardTitle className="text-lg font-semibold">

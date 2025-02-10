@@ -22,8 +22,10 @@ import {
   Book,
   Bookmark,
   BookmarkCircle,
-  UserSpeak
+  UserSpeak,
 } from "solar-icon-set";
+
+import { Diploma } from "solar-icon-set/school";
 import {
   Sheet,
   SheetContent,
@@ -126,6 +128,18 @@ const navItems = [
       />
     ),
   },
+  {
+    label: "Learning Hub",
+    href: "/learning-hub",
+    icon: (
+      <Diploma
+        color="#802b73"
+        size={24}
+        iconStyle="BoldDuotone"
+        svgProps={{ width: "24px", height: "24px" }}
+      />
+    ),
+  }
 ];
 
 const settingItems = [
@@ -140,17 +154,17 @@ const settingItems = [
       />
     ),
   },
-  {
-    label: "Profile",
-    href: "/profile",
-    icon: (
-      <UserCheck
-        size={24}
-        iconStyle="BoldDuotone"
-        svgProps={{ width: "24px", height: "24px" }}
-      />
-    ),
-  },
+  // {
+  //   label: "Profile",
+  //   href: "/profile",
+  //   icon: (
+  //     <UserCheck
+  //       size={24}
+  //       iconStyle="BoldDuotone"
+  //       svgProps={{ width: "24px", height: "24px" }}
+  //     />
+  //   ),
+  // },
 ];
 
 const barNavItems = [...navItems];

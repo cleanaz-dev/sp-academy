@@ -312,9 +312,9 @@ export default function CreateAchievement() {
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={handleGenerateBadges}>
-                Generate Badges 🎨🖼️🖌️
-                {loadingBadges && (
-                  <span className="flex ml-2 text-xs text-gray-400">
+               
+                {!loadingBadges ? "Generate Badges 🎨🖼️🖌️" : (
+                  <span className=" text-gray-400">
                     Generating badges...
                   </span>
                 )}

@@ -1,4 +1,4 @@
-//components/book-report/BookReportCard
+//components/books/BooksCard
 
 import {
   Card,
@@ -47,50 +47,51 @@ export default async function BookCard({ book }) {
       })}`
     : "Not started yet";
 
-  function calculateReadingStreak(readingLogs) {
-    if (!readingLogs || readingLogs.length === 0) return 0;
+    function calculateCurrentStreak(readingLogs) {
+      if (!readingLogs || readingLogs.length === 0) return 0;
   
-    // Get user's current time zone
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      // Get user's current time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   
-    // Sort logs by date in ascending order
-    const sortedLogs = readingLogs.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+      // Sort logs by date in descending order (most recent first)
+      const sortedLogs = readingLogs.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   
-    let maxStreak = 0;
-    let currentStreak = 1;
+      let currentStreak = 0;
   
-    // Convert UTC date to user's local date
-    function getLocalDateString(utcDate) {
-      return new Date(utcDate).toLocaleDateString("en-US", {
-        timeZone: userTimeZone,
-      });
-    }
-  
-    for (let i = 1; i < sortedLogs.length; i++) {
-      const prevDate = getLocalDateString(sortedLogs[i - 1].createdAt);
-      const currentDate = getLocalDateString(sortedLogs[i].createdAt);
-  
-      // Convert to Date objects for comparison
-      const prev = new Date(prevDate);
-      const curr = new Date(currentDate);
-      const daysDifference = (curr - prev) / (1000 * 3600 * 24);
-  
-      if (daysDifference === 1) {
-        currentStreak++;
-        maxStreak = Math.max(maxStreak, currentStreak);
-      } else if (daysDifference > 1) {
-        currentStreak = 1;
+      // Convert UTC date to user's local date
+      function getLocalDateString(utcDate) {
+          return new Date(utcDate).toLocaleDateString("en-US", {
+              timeZone: userTimeZone,
+          });
       }
-    }
   
-    return Math.max(maxStreak, currentStreak);
+      // Start from the most recent log and work backward
+      for (let i = 0; i < sortedLogs.length - 1; i++) {
+          const currentDate = getLocalDateString(sortedLogs[i].createdAt);
+          const nextDate = getLocalDateString(sortedLogs[i + 1].createdAt);
+  
+          // Convert to Date objects for comparison
+          const curr = new Date(currentDate);
+          const next = new Date(nextDate);
+          const daysDifference = (curr - next) / (1000 * 3600 * 24);
+  
+          if (daysDifference === 1) {
+              currentStreak++;
+          } else if (daysDifference > 1) {
+              // If there's a gap, stop counting
+              break;
+          }
+      }
+  
+      // Add 1 for the most recent log (since we started counting from the second log)
+      return currentStreak + 1;
   }
   
     
   // Usage
-  const streak = calculateReadingStreak(readingLogs);
+  const streak = calculateCurrentStreak(readingLogs);
 
   return (
     <Card className="group relative w-full max-w-sm flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl">

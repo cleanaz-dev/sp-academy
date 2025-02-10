@@ -21,8 +21,6 @@ model User {
   role                  Role                    @default(USER)
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
-  student               Student?
-  teacher               Teacher?
   Journal               Journal[]
   StoryQuestions        StoryQuestions[]
   PronunciationSession  PronunciationSession[]
@@ -38,6 +36,58 @@ model User {
   BillingInformation    BillingInformation?
   UserProgress          UserProgress[]
   Like                  Like[]
+  Course                Course[]
+  Enrollment            Enrollment[]
+  Progress              Progress[]
+  Teacher               Teacher?
+  QuizResult            QuizResult[]
+  Resource              Resource[]
+  AIGeneratedContent    AIGeneratedContent[]
+}
+
+model Course {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  teacherId   String?      @db.ObjectId
+  teacher     User?        @relation(fields: [teacherId], references: [id])
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  level       Level
+  coverUrl    String?
+  status      CourseStatus // Renamed to be more specific
+  duration    String? // Total course duration
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Enrollment {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String           @db.ObjectId
+  courseId       String           @db.ObjectId
+  user           User             @relation(fields: [userId], references: [id])
+  course         Course           @relation(fields: [courseId], references: [id])
+  status         EnrollmentStatus
+  progress       Float // Percentage of completion
+  lastAccessedAt DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String    @db.ObjectId
+  lessonId    String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
+  lesson      Lesson    @relation(fields: [lessonId], references: [id])
+  status      Status
+  score       Int?
+  completedAt DateTime? // Add this field
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model BillingInformation {
@@ -71,15 +121,9 @@ model AccountSettings {
   shareReadingLogs          Boolean         @default(false)
   shareConversationActivity Boolean         @default(false)
   shareAchievements         Boolean         @default(false)
+  shareLessonsAndCourses    Boolean         @default(false)
   createdAt                 DateTime        @default(now())
   updatedAt                 DateTime        @updatedAt
-}
-
-model Student {
-  id      String          @id @default(auto()) @map("_id") @db.ObjectId
-  user    User            @relation(fields: [userId], references: [id])
-  userId  String          @unique @db.ObjectId
-  lessons StudentLesson[]
 }
 
 model Teacher {
@@ -91,36 +135,55 @@ model Teacher {
 }
 
 model Lesson {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   subject     String?
   description String?
   duration    String?
   level       Int?
   content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  teacher   Teacher?        @relation(fields: [teacherId], references: [id])
-  teacherId String?         @db.ObjectId
-  students  StudentLesson[]
-  quiz      Quiz?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  type        LessonType?
+  coverUrl    String?
+  topics      Json?
+  teacher     Teacher?    @relation(fields: [teacherId], references: [id])
+  teacherId   String?     @db.ObjectId
+  quiz        Quiz?
+  course      Course?     @relation(fields: [courseId], references: [id])
+  courseId    String?     @db.ObjectId
+  Progress    Progress[]
+  orderIndex  Int? // Add this to maintain lesson order in course
 }
 
-model StudentLesson {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  student   Student @relation(fields: [studentId], references: [id])
-  studentId String  @db.ObjectId
-  lesson    Lesson  @relation(fields: [lessonId], references: [id])
-  lessonId  String  @db.ObjectId
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+}
+
+enum LessonType {
+  Lesson
+  Lecture
+  Conversation
+  Visual
+  Exercise
 }
 
 model Quiz {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  questions Question[]
-  lessonId  String     @unique @db.ObjectId
-  lesson    Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  questions  Question[]
+  lessonId   String       @unique @db.ObjectId
+  lesson     Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  quizResult QuizResult[]
 }
 
 model Question {
@@ -130,6 +193,17 @@ model Question {
   text    String
   options String[]
   answer  String
+}
+
+model QuizResult {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  quizId      String   @db.ObjectId
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  score       Float
+  attempts    Int      @default(1)
+  completedAt DateTime @default(now())
 }
 
 model Journal {
@@ -393,6 +467,29 @@ model Exercise {
   updatedAt   DateTime @updatedAt
 }
 
+model Resource {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  type      String // e.g., "DOCUMENT", "VIDEO", "LINK"
+  content   String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AIGeneratedContent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  type      String // e.g., "EXERCISE", "EXPLANATION", "QUIZ"
+  content   Json
+  context   String? // Store the conversation context that generated this
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Achievement {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
   name         String
@@ -492,4 +589,10 @@ enum PaymentStatus {
   UNPAID
   PAST_DUE
   CANCELED
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }

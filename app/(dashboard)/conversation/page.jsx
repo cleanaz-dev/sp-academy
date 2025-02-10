@@ -4,6 +4,7 @@ import ConversationCard from "@/components/conversation/archive/ConversationCard
 import ConversationCardCopy from "@/components/conversation/ConversationCardCopy";
 import CreateConversationCard from "@/components/conversation/CreateConversationCard";
 import { getAllConversations } from "@/lib/actions";
+import { MessagesSquare } from "lucide-react";
 
 export default async function Page() {
   const conversations = await getAllConversations();
@@ -11,8 +12,15 @@ export default async function Page() {
 
   return (
     <main className="">
-      <header className="pb-8">
-        <h1 className="header-title">Conversation 😄😶😏🙄</h1>
+       <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16 mb-8">
+        <div className="max-w-7xl mx-auto px-6">
+          <h1 className="flex items-center gap-4 text-4xl font-bold mb-4">
+            Conversations <MessagesSquare strokeWidth={1.5} className="size-10 drop-shadow-xl" />
+          </h1>
+          <p className="text-xl opacity-90">
+          Practice and improve your language skills through engaging conversations with our AI. Explore new vocabulary and gain confidence in expressing yourself!
+          </p>
+        </div>
       </header>
       {/* <ConvAi />     */}
 

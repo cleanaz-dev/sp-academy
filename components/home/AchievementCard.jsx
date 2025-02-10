@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
@@ -16,19 +16,22 @@ export default function AchievementCard({ achievements }) {
 
     try {
       setIsChecking(true);
-      const response = await fetch('/api/achievements/check-achievements/user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // You could pass user-specific data if needed
-        body: JSON.stringify({
-          userId: user.id
-        })
-      });
+      const response = await fetch(
+        "/api/achievements/check-achievements/user",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          // You could pass user-specific data if needed
+          body: JSON.stringify({
+            userId: user.id,
+          }),
+        }
+      );
 
       const data = await response.json();
-      
+
       if (data.success) {
         // Optionally refresh the achievements list
         // You might want to pass a refresh function from the parent
@@ -36,30 +39,36 @@ export default function AchievementCard({ achievements }) {
         window.location.reload(); // Simple refresh for now
       }
     } catch (error) {
-      console.error('Failed to check achievements:', error);
+      console.error("Failed to check achievements:", error);
     } finally {
       setIsChecking(false);
     }
   };
   return (
     <Card className="hover:shadow-lg transition-shadow">
-    <CardHeader className="border-b bg-gray-50">
-      <div className="flex justify-between items-center">
-        <CardTitle className="text-lg font-semibold">Achievements</CardTitle>
-        <Button
-          onClick={checkAchievements}
-          disabled={isChecking}
-          variant="outline"
-          size="sm"
-        >
-          {isChecking ? "Checking..." : "Check Achievements"}
-        </Button>
-      </div>
-    </CardHeader>
+      <CardHeader className="border-b bg-gray-50">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-semibold">Achievements</CardTitle>
+          <Button
+            onClick={checkAchievements}
+            disabled={isChecking}
+            variant="outline"
+            size="sm"
+          >
+            {isChecking ? "Checking..." : "Check Achievements"}
+          </Button>
+        </div>
+      </CardHeader>
       <CardContent className="p-6">
         <ScrollArea className="h-72">
           <div className="grid grid-cols-1 gap-4">
             {achievements
+              .sort((a, b) => {
+                if (a.isUnlocked !== b.isUnlocked) {
+                  return b.isUnlocked - a.isUnlocked; // Unlocked first
+                }
+                return b.progress - a.progress; // Then sort by progress
+              })
               .map(({ achievement, isUnlocked, progress, id }) => (
                 <div
                   key={id}
