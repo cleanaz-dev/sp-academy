@@ -40,6 +40,7 @@ export async function GET() {
       achievements,
       enrollments,
       completedLessons,
+      completedBooks
     ] = await Promise.all([
       // Reading Logs Query
       prisma.readingLog.findMany({
@@ -51,6 +52,7 @@ export async function GET() {
             include: {
               user: {
                 select: {
+                  id: true,
                   name: true,
                   AccountSettings: {
                     select: {
@@ -77,6 +79,7 @@ export async function GET() {
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               AccountSettings: {
                 select: {
@@ -111,6 +114,7 @@ export async function GET() {
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               AccountSettings: {
                 select: {
@@ -122,6 +126,7 @@ export async function GET() {
           },
           achievement: {
             select: {
+              id: true,
               name: true,
               description: true,
               imageUrl: true,
@@ -144,6 +149,7 @@ export async function GET() {
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               AccountSettings: {
                 select: {
@@ -178,6 +184,7 @@ export async function GET() {
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               AccountSettings: {
                 select: {
@@ -194,7 +201,8 @@ export async function GET() {
               level: true,
               course: {
                 select: {
-                  title: true
+                  title: true,
+                  coverUrl: true
                 }
               }
             }
@@ -204,8 +212,35 @@ export async function GET() {
           updatedAt: 'desc' // Changed from completedAt to updatedAt since that's what we have
         },
         take: 20
-      })
+      }),
+
+      prisma.book.findMany({
+        where: {
+          userId: { in: sharedUserIds },
+          isCompleted: true, // Only fetch completed books
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              AccountSettings: {
+                select: {
+                  displayName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: "desc", // Sort by when the book was marked as completed
+        },
+        take: 20,
+      }),
     ]);
+
+    
 
      // Get all likes in one query (updated to include new activity types)
      const likes = await prisma.like.findMany({
@@ -217,7 +252,8 @@ export async function GET() {
             ...conversations.map(c => c.id),
             ...achievements.map(a => a.id),
             ...enrollments.map(e => e.id),
-            ...completedLessons.map(l => l.id)
+            ...completedLessons.map(l => l.id),
+            ...completedBooks.map(b => b.id)
           ]
         }
       }
@@ -236,20 +272,26 @@ export async function GET() {
           ...conversations.map(c => c.id),
           ...achievements.map(a => a.id),
           ...enrollments.map(e => e.id),
-          ...completedLessons.map(l => l.id)
+          ...completedLessons.map(l => l.id),
+          ...completedBooks.map(b => b.id)
         ]
       }
     }
   });
 
-  const transformData = (items, type) => items.map(item => ({
+ // Transform data function (updated to handle completedBooks)
+const transformData = (items, type) =>
+  items.map((item) => ({
     ...item,
     type,
-    createdAt: type === 'Achievement' ? item.unlockedAt : 
-               type === 'CompletedLesson' ? item.updatedAt : // Changed from completedAt to updatedAt
-               item.createdAt,
-    liked: likes.some(like => like.activityId === item.id),
-    likes: likeCounts.find(count => count.activityId === item.id)?._count._all || 0
+    createdAt:
+      type === "Achievement"
+        ? item.unlockedAt
+        : type === "CompletedLesson" || type === "CompletedBook" // Handle completedBooks
+        ? item.updatedAt
+        : item.createdAt,
+    liked: likes.some((like) => like.activityId === item.id),
+    likes: likeCounts.find((count) => count.activityId === item.id)?._count._all || 0,
   }));
 
     return NextResponse.json({
@@ -257,7 +299,8 @@ export async function GET() {
       conversations: transformData(conversations, 'Conversation'),
       achievements: transformData(achievements, 'Achievement'),
       enrollments: transformData(enrollments, 'CourseEnrollment'),
-      completedLessons: transformData(completedLessons, 'CompletedLesson')
+      completedLessons: transformData(completedLessons, 'CompletedLesson'),
+      completedBooks: transformData(completedBooks, 'CompletedBook'),
     });
 
   } catch (error) {
@@ -265,3 +308,4 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch shared activity' }, { status: 500 });
   }
 }
+

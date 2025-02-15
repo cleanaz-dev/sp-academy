@@ -1,4 +1,3 @@
-
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -23,13 +22,13 @@ const roboto = Roboto({
 
 const comfortaa = Comfortaa({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700" ],
-})
+  weight: ["300", "400", "500", "600", "700"],
+});
 
 const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "600", "700", "800", "900" ],
-})
+  weight: ["200", "300", "400", "600", "700", "800", "900"],
+});
 
 export const metadata = {
   title: "Spoon Fed Academy - Revolutionizing Learning with AI",
@@ -57,16 +56,20 @@ export const metadata = {
   },
 };
 
-
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-        <html lang="en">
-          <body className={nunito.className}>
+      <html lang="en">
+        <body className={nunito.className}>
             {children}
-            <Toaster position="bottom-right" richColors theme="system"/>
-          </body>
-        </html>
+            <Toaster
+              position="bottom-right"
+              richColors
+              theme="system"
+              closeButton
+            />
+        </body>
+      </html>
     </ClerkProvider>
   );
 }

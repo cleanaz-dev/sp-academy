@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 export async function POST(request) {
   try {
     const { courseId, userId } = await request.json();
-    console.log("Course ID: ", courseId, "User ID: ", userId);
+    // console.log("Course ID: ", courseId, "User ID: ", userId);
 
     // Validate input
     if (!courseId || !userId) {

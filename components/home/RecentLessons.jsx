@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 
 export default function RecentLessons({ progress }) {
-  console.log("progress: ", progress);
+  // console.log("progress: ", progress);
   // Transform the progress data into the desired format for rendering
   const formattedProgress = progress.map((item) => ({
     title: item.lesson.title,

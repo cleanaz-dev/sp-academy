@@ -1,6 +1,7 @@
 "use client";
 
-import DashboardLayout from "../../components/dashboard-layout";
+
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -13,7 +14,7 @@ export default function Layout({ children }) {
     <div>
       <DashboardLayout>
         <Elements stripe={stripePromise}>{children}</Elements>
-      </DashboardLayout>
+        </DashboardLayout>
     </div>
   );
 }

@@ -20,7 +20,9 @@ const extractImageUrls = (content) => {
 };
 
 export async function POST(request) {
-  const { title, content, subject, type, level } = await request.json();
+  const { title, content, subject, type, level, courseId } =
+    await request.json();
+  console.log("content:", content);
 
   try {
     // Step 1: Generate newTitle, newDescription, and newTopics using Claude API
@@ -44,11 +46,13 @@ ${content}
     // Call the Claude API using the SDK
     const response = await anthropic.messages.create({
       messages: [{ role: "user", content: claudePrompt }],
-      model: "claude-3-haiku-20240307",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: 4000,
-    })
+    });
     // Parse the response into JSON
-    const { newTitle, newDescription, newTopics } = JSON.parse(response.content[0].text);
+    const { newTitle, newDescription, newTopics } = JSON.parse(
+      response.content[0].text
+    );
 
     // Step 2: Extract image URLs from the content
     const imageUrls = extractImageUrls(content);
@@ -75,12 +79,30 @@ ${content}
         duration: "30",
         level: parseInt(level, 10),
         topics: newTopics,
+        course: { connect: { id: courseId } },
+      },
+    });
+    // Step 6: Count the number of lessons in the course to determine the next orderIndex
+    const lessonCount = await prisma.lesson.count({
+      where: {
+        courseId: courseId, // Filter by the course ID
+      },
+    });
+
+    // Step 7: Update the orderIndex of the newly created lesson
+    await prisma.lesson.update({
+      where: { id: lesson.id },
+      data: {
+        orderIndex: lessonCount, // The new lesson gets the next available index
       },
     });
 
     return NextResponse.json({ id: lesson.id }, { status: 201 });
   } catch (error) {
     console.error("Error creating lesson:", error);
-    return NextResponse.json({ error: "Error creating lesson" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error creating lesson" },
+      { status: 500 }
+    );
   }
 }

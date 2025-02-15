@@ -17,7 +17,7 @@ export default function AchievementCard({ achievements }) {
     try {
       setIsChecking(true);
       const response = await fetch(
-        "/api/achievements/check-achievements/user",
+        "/api/achievements/check-achievements/",
         {
           method: "POST",
           headers: {

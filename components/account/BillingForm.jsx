@@ -1,17 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner"; // Assuming you're using sonner for toasts
 import { loadStripe } from "@stripe/stripe-js";
+import { CheckCircle, XCircle } from "lucide-react";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -21,11 +16,64 @@ export function BillingForm({ currentBillingPlan }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const planDetails = {
-    FREE: { name: "Free Plan", price: 0 },
-    BASIC_MONTHLY: { name: "Basic Monthly", price: 9.99, savings: 0 },
-    BASIC_ANNUALLY: { name: "Basic Annually", price: 99.99, savings: 19.89 },
-    PREMIUM_MONTHLY: { name: "Premium Monthly", price: 19.99, savings: 0 },
-    PREMIUM_ANNUALLY: { name: "Premium Annually", price: 199.99, savings: 39.89 },
+    FREE: {
+      name: "Free Plan",
+      price: 0,
+      features: [
+        { text: "Access to basic features", included: true },
+        { text: "Limited AI conversations", included: true },
+        { text: "Basic reading logs", included: true },
+        { text: "Priority support", included: false },
+        { text: "Advanced analytics", included: false },
+      ],
+    },
+    BASIC_MONTHLY: {
+      name: "Basic Monthly",
+      price: 9.99,
+      savings: 0,
+      features: [
+        { text: "Unlimited AI conversations", included: true },
+        { text: "Advanced reading logs", included: true },
+        { text: "Priority support", included: true },
+        { text: "Advanced analytics", included: false },
+        { text: "Custom AI voices", included: false },
+      ],
+    },
+    BASIC_ANNUALLY: {
+      name: "Basic Annually",
+      price: 99.99,
+      savings: 19.89,
+      features: [
+        { text: "Unlimited AI conversations", included: true },
+        { text: "Advanced reading logs", included: true },
+        { text: "Priority support", included: true },
+        { text: "Advanced analytics", included: false },
+        { text: "Custom AI voices", included: false },
+      ],
+    },
+    PREMIUM_MONTHLY: {
+      name: "Premium Monthly",
+      price: 19.99,
+      features: [
+        { text: "Unlimited AI conversations", included: true },
+        { text: "Advanced reading logs", included: true },
+        { text: "Priority support", included: true },
+        { text: "Advanced analytics", included: true },
+        { text: "Custom AI voices", included: true },
+      ],
+    },
+    PREMIUM_ANNUALLY: {
+      name: "Premium Annually",
+      price: 199.99,
+      savings: 39.89,
+      features: [
+        { text: "Unlimited AI conversations", included: true },
+        { text: "Advanced reading logs", included: true },
+        { text: "Priority support", included: true },
+        { text: "Advanced analytics", included: true },
+        { text: "Custom AI voices", included: true },
+      ],
+    },
   };
 
   const handleSubscribe = async (e) => {
@@ -54,10 +102,14 @@ export function BillingForm({ currentBillingPlan }) {
     }
   };
 
+  const plansToShow = billingInterval === "monthly"
+    ? ["FREE", "BASIC_MONTHLY", "PREMIUM_MONTHLY"]
+    : ["FREE", "BASIC_ANNUALLY", "PREMIUM_ANNUALLY"];
+
   return (
     <main className="max-w-4xl">
       <h1 className="font-semibold text-2xl mb-4">Billing Information</h1>
-      <form onSubmit={handleSubscribe} className="space-y-4">
+      <form onSubmit={handleSubscribe} className="space-y-6">
         <div className="space-y-2">
           <Label>Billing Interval</Label>
           <div className="flex gap-2">
@@ -78,46 +130,50 @@ export function BillingForm({ currentBillingPlan }) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="billingPlan">Subscription Plan</Label>
-          <Select value={billingPlan} onValueChange={(value) => setBillingPlan(value)}>
-            <SelectTrigger id="billingPlan">
-              <SelectValue placeholder="Select a subscription plan" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="FREE">Free Plan (No Credit Card Required)</SelectItem>
-              {billingInterval === "monthly" ? (
-                <>
-                  <SelectItem value="BASIC_MONTHLY">
-                    Basic Monthly - ${planDetails.BASIC_MONTHLY.price}/mo
-                  </SelectItem>
-                  <SelectItem value="PREMIUM_MONTHLY">
-                    Premium Monthly - ${planDetails.PREMIUM_MONTHLY.price}/mo
-                  </SelectItem>
-                </>
-              ) : (
-                <>
-                  <SelectItem value="BASIC_ANNUALLY">
-                    Basic Annually - ${planDetails.BASIC_ANNUALLY.price}/yr (Save ${planDetails.BASIC_ANNUALLY.savings})
-                  </SelectItem>
-                  <SelectItem value="PREMIUM_ANNUALLY">
-                    Premium Annually - ${planDetails.PREMIUM_ANNUALLY.price}/yr (Save ${planDetails.PREMIUM_ANNUALLY.savings})
-                  </SelectItem>
-                </>
-              )}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {plansToShow.map((plan) => (
+            <Card
+              key={plan}
+              className={`p-6 cursor-pointer transition-all ${
+                billingPlan === plan
+                  ? "border-2 border-primary shadow-lg"
+                  : "hover:border-primary/50"
+              }`}
+              onClick={() => setBillingPlan(plan)}
+            >
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">
+                  {planDetails[plan].name}
+                </h2>
+                <p className="text-2xl font-bold">
+                  ${planDetails[plan].price}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    /{billingInterval === "monthly" ? "month" : "year"}
+                  </span>
+                </p>
+                {planDetails[plan].savings > 0 && (
+                  <p className="text-sm text-green-600">
+                    Save ${planDetails[plan].savings}
+                  </p>
+                )}
+                <ul className="space-y-2">
+                  {planDetails[plan].features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      {feature.included ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm">{feature.text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Card>
+          ))}
         </div>
 
-        <div className="bg-muted p-3 rounded-md">
-          <p className="font-semibold">Selected Plan: {planDetails[billingPlan]?.name || "No Plan Selected"}</p>
-          <p>Price: ${planDetails[billingPlan]?.price || 0}{billingInterval === "monthly" ? "/month" : "/year"}</p>
-          {planDetails[billingPlan]?.savings > 0 && (
-            <p className="text-green-600">You save ${planDetails[billingPlan].savings}</p>
-          )}
-        </div>
-
-        <Button type="submit" disabled={isLoading} className="w-full">
+        <Button type="submit" disabled={isLoading} className="">
           {isLoading ? "Processing..." : "Continue to Checkout"}
         </Button>
       </form>

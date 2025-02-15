@@ -468,164 +468,146 @@ export default function LearningHubPage({ courses, userId }) {
               {/* Course Catalog */}
               {/* Course Catalog */}
               <div className="grid gap-8">
-                {filterContent(courses, "courses").length > 0 ? (
-                  filterContent(courses, "courses").map((course) => (
-                    <div key={course.id}>
-                      <Card
-                        className={`cursor-pointer hover:shadow-lg transition-shadow ${
-                          isUserEnrolled(course)
-                            ? "border-l-4 border-l-green-500"
-                            : ""
-                        }`}
-                        onClick={() => handleCourseClick(course)}
-                      >
-                        <CardHeader className="flex flex-row items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <CardTitle className="text-xl">
-                                {course.title}
-                              </CardTitle>
-                              {isUserEnrolled(course) && (
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-green-100 text-green-800"
-                                >
-                                  {/* <CheckCircle className="w-3 h-3 mr-1" /> */}
-                                  {getEnrollmentStatus(course) === "NOT_STARTED"
-                                    ? "Enrolled"
-                                    : "In Progress"}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 mt-2">
-                              <Badge variant="secondary">{course.level}</Badge>
-                              <div className="flex items-center text-sm text-gray-500">
-                                <Clock className="w-4 h-4 mr-1" />
-                                <span>2 weeks</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-500">
-                                <BookOpen className="w-4 h-4 mr-1" />
-                                <span>{course.lessons.length} lessons</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-500">
-                                <Users className="w-4 h-4 mr-1" />
-                                <span>{course.enrollments.length} Users Enrolled</span>
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronDown
-                            className={`w-6 h-6 transition-transform ${
-                              expandedCourse === course.id ? "rotate-180" : ""
-                            }`}
-                          />
-                        </CardHeader>
-                      </Card>
-
-                      <AnimatePresence>
-                        {expandedCourse === course.id && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="overflow-hidden"
-                          >
-                            <Card className="mt-4 border-t-0">
-                              <CardContent className="p-6">
-                                <div className="prose max-w-none">
-                                  <h3 className="text-lg font-semibold mb-4">
-                                    Course Overview
-                                  </h3>
-                                  <p className="text-gray-600 mb-6">
-                                    {course.description}
-                                  </p>
-
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">
-                                      Course Content
-                                    </h4>
-                                    {course.lessons
-                                      .sort(
-                                        (a, b) => a.orderIndex - b.orderIndex
-                                      )
-                                      .map((lesson, index) => (
-                                        <div
-                                          key={lesson.id}
-                                          className="flex items-center p-4 bg-gray-50 rounded-lg"
-                                        >
-                                          <span className="mr-4 text-gray-400">
-                                            {index + 1}
-                                          </span>
-                                          <span className="flex-1">
-                                            Lesson {index + 1}: {lesson.title}
-                                          </span>
-                                          <div className="flex gap-2">
-                                            <Badge
-                                              variant="outline"
-                                              className="text-xs"
-                                            >
-                                              {lesson.type}
-                                            </Badge>
-                                          </div>
-                                        </div>
-                                      ))}
-                                  </div>
-                                </div>
-                                <div className="mt-6 flex justify-end">
-                                  {isUserEnrolled(course) ? (
-                                    <div className="flex items-center gap-2">
-                                      <Link href={`/courses/${course.id}`}>
-                                        <Button
-                                          variant="outline"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                          }}
-                                        >
-                                          {getEnrollmentStatus(course) ===
-                                          "NOT_STARTED"
-                                            ? "View Course"
-                                            : "Continue Learning"}
-                                        </Button>
-                                      </Link>
-                                    </div>
-                                  ) : (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowEnrollDialog(true);
-                                      }}
-                                    >
-                                      Enroll in Course
-                                    </Button>
-                                  )}
-
-                                  <EnrollmentDialog
-                                    course={course}
-                                    isOpen={showEnrollDialog}
-                                    onClose={() => setShowEnrollDialog(false)}
-                                  />
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                      <SearchX className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No courses found
-                    </h3>
-                    <p className="text-gray-500">
-                      Try adjusting your search terms or browse all courses
-                    </p>
+  {filterContent(courses, "courses").length > 0 ? (
+    filterContent(courses, "courses")
+      .sort((a, b) => b.enrollments.length - a.enrollments.length) // Sort courses by number of enrollments
+      .map((course) => (
+        <div key={course.id}>
+          <Card
+            className={`cursor-pointer hover:shadow-lg transition-shadow ${
+              isUserEnrolled(course) ? "border-l-4 border-l-green-500" : ""
+            }`}
+            onClick={() => handleCourseClick(course)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl">{course.title}</CardTitle>
+                  {isUserEnrolled(course) && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-800"
+                    >
+                      {getEnrollmentStatus(course) === "NOT_STARTED"
+                        ? "Enrolled"
+                        : "In Progress"}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 mt-2">
+                  <Badge variant="secondary">{course.level}</Badge>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>2 weeks</span>
                   </div>
-                )}
+                  <div className="flex items-center text-sm text-gray-500">
+                    <BookOpen className="w-4 h-4 mr-1" />
+                    <span>{course.lessons.length} lessons</span>
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span>{course.enrollments.length} Users Enrolled</span>
+                  </div>
+                </div>
               </div>
+              <ChevronDown
+                className={`w-6 h-6 transition-transform ${
+                  expandedCourse === course.id ? "rotate-180" : ""
+                }`}
+              />
+            </CardHeader>
+          </Card>
+
+          <AnimatePresence>
+            {expandedCourse === course.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <Card className="mt-4 border-t-0">
+                  <CardContent className="p-6">
+                    <div className="prose max-w-none">
+                      <h3 className="text-lg font-semibold mb-4">Course Overview</h3>
+                      <p className="text-gray-600 mb-6">{course.description}</p>
+
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Course Content</h4>
+                        {course.lessons
+                          .sort((a, b) => a.orderIndex - b.orderIndex)
+                          .map((lesson, index) => (
+                            <div
+                              key={lesson.id}
+                              className="flex items-center p-4 bg-gray-50 rounded-lg"
+                            >
+                              <span className="mr-4 text-gray-400">{index + 1}</span>
+                              <span className="flex-1">
+                                Lesson {index + 1}: {lesson.title}
+                              </span>
+                              <div className="flex gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {lesson.type}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    <div className="mt-6 flex justify-end">
+                      {isUserEnrolled(course) ? (
+                        <div className="flex items-center gap-2">
+                          <Link href={`/courses/${course.id}`}>
+                            <Button
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              {getEnrollmentStatus(course) === "NOT_STARTED"
+                                ? "View Course"
+                                : "Continue Learning"}
+                            </Button>
+                          </Link>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEnrollDialog(true);
+                          }}
+                        >
+                          Enroll in Course
+                        </Button>
+                      )}
+
+                      <EnrollmentDialog
+                        course={course}
+                        isOpen={showEnrollDialog}
+                        onClose={() => setShowEnrollDialog(false)}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))
+  ) : (
+    <div className="text-center py-8">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+        <SearchX className="h-8 w-8 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
+      <p className="text-gray-500">
+        Try adjusting your search terms or browse all courses
+      </p>
+    </div>
+  )}
+</div>
+
             </motion.div>
           )}
 

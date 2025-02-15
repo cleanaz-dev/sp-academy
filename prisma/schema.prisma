@@ -31,7 +31,6 @@ model User {
   Conversation          Conversation[]
   LearningProgress      LearningProgress[]
   ConversationRecord    ConversationRecord[]
-  Exercise              Exercise[]
   AccountSettings       AccountSettings?
   BillingInformation    BillingInformation?
   UserProgress          UserProgress[]
@@ -43,6 +42,7 @@ model User {
   QuizResult            QuizResult[]
   Resource              Resource[]
   AIGeneratedContent    AIGeneratedContent[]
+  notifications         Notification[]
 }
 
 model Course {
@@ -71,6 +71,7 @@ model Enrollment {
   progress       Float // Percentage of completion
   lastAccessedAt DateTime?
   completedAt    DateTime?
+  lessonProgress Progress[] // Track individual lesson progress
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -78,16 +79,20 @@ model Enrollment {
 }
 
 model Progress {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String    @db.ObjectId
-  lessonId    String    @db.ObjectId
-  user        User      @relation(fields: [userId], references: [id])
-  lesson      Lesson    @relation(fields: [lessonId], references: [id])
-  status      Status
-  score       Int?
-  completedAt DateTime? // Add this field
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String      @db.ObjectId
+  lessonId     String      @db.ObjectId
+  user         User        @relation(fields: [userId], references: [id])
+  lesson       Lesson      @relation(fields: [lessonId], references: [id])
+  status       Status
+  score        Int?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String?     @db.ObjectId
+  completedAt  DateTime? // Add this field
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, lessonId])
 }
 
 model BillingInformation {
@@ -141,9 +146,7 @@ model Lesson {
   description String?
   duration    String?
   level       Int?
-  content     String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  content     String      @db.String
   type        LessonType?
   coverUrl    String?
   topics      Json?
@@ -154,6 +157,41 @@ model Lesson {
   courseId    String?     @db.ObjectId
   Progress    Progress[]
   orderIndex  Int? // Add this to maintain lesson order in course
+  exercise    Exercise[]
+  Lecture     Lecture[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Lecture {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  content     String?
+  coverUrl    String?
+  Lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId    String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Exercise {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  lesson         Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId       String?  @db.ObjectId
+  title          String
+  type           String // Exercise type identifier
+  question       String // Main prompt/instruction
+  correctAnswer  String?
+  correct_answer String? // Flexible answer storage
+  additionalData Json? // All type-specific data
+  objectives     Json?
+  order          Int? // For sorting within lesson
+  completed      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([lessonId, order])
 }
 
 enum CourseStatus {
@@ -202,7 +240,7 @@ model QuizResult {
   user        User     @relation(fields: [userId], references: [id])
   userId      String   @db.ObjectId
   score       Float
-  attempts    Int      @default(1)
+  attempts    Int      @default(0)
   completedAt DateTime @default(now())
 }
 
@@ -384,6 +422,7 @@ model Book {
   isReading       Boolean @default(false)
   currentPage     Int     @default(0)
   readingProgress Int     @default(0)
+  isCompleted     Boolean @default(false)
 
   // Optional
   coverUrl    String?
@@ -454,19 +493,6 @@ model LearningProgress {
   lastActivity       DateTime
 }
 
-model Exercise {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
-  title       String
-  description String?
-  content     Json?
-  completed   Boolean  @default(false)
-  score       Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
 model Resource {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
@@ -533,7 +559,26 @@ model Like {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([userId, activityId, type])
+  @@unique([userId, activityId])
+}
+
+model Notification {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  toUserId      String   @db.ObjectId
+  fromUserId    String   @db.ObjectId
+  activityId    String
+  activityType  String
+  activityTitle String
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, activityId, fromUserId])
+  @@index([userId, isRead]) // For fetching unread notifications
+  @@index([activityId, type]) // For activity-specific notifications
 }
 
 enum PracticeStatus {

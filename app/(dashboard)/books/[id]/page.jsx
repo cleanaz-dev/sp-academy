@@ -1,6 +1,6 @@
 import React from 'react'
 import { getReadingLogsByBookId } from '@/lib/actions'
-import SingleBookReportPage from '@/components/books/SingleBookReportPage'
+import SingleBookReportPage from '@/components/books/SingleBookPage'
 
 export default async function page({ params }) {
   const readingLogs = await getReadingLogsByBookId(params.id)

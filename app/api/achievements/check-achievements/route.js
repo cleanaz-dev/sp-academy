@@ -1,7 +1,7 @@
-// app/api/achievements/check-achievements/user/route.js
+// app/api/achievements/check-achievements/route.js
 import { NextResponse } from 'next/server';
 import { checkAchievements } from '@/lib/checkAchievements';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request) {
   try {
@@ -17,9 +17,9 @@ export async function POST(request) {
 
     // Get the user ID from the request body
     const body = await request.json();
-    
+
     // You might want to modify checkAchievements to check only for specific user
-    const result = await checkAchievements(body.userId); // You'll need to modify this function
+    const result = await checkAchievements(body); // You'll need to modify this function
 
     return NextResponse.json(result);
   } catch (error) {

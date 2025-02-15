@@ -31,6 +31,12 @@ const nextConfig = {
         hostname: 'sfaudiourlbucket.s3.us-east-1.amazonaws.com',
         port: '',
         pathname: '/lessons/**', // Adjust the pathname as needed
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**', // Adjust the pathname as needed
       }
     ],
   },

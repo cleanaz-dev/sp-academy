@@ -148,7 +148,7 @@ export default function StoryGenerator() {
       const imageDescription = formData.get("topic");
       setImageLoading(true);
       try {
-        const imagePrompt = `Image of a book cover for kids story. Title: I like ${imageDescription} with a 9:16 aspect ratio`;
+        const imagePrompt = `Image of a book cover for kids story. Title: I like ${imageDescription} with a 16:9 aspect ratio`;
 
         const imageResponse = await fetch("/api/generate-image", {
           method: "POST",

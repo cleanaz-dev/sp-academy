@@ -19,6 +19,7 @@ import Image from "next/image";
 import TestButton from "@/components/test/TestButton";
 import WeeklySchedule from "@/components/home/WeeklySchedule";
 import RecentLessons from "@/components/home/RecentLessons";
+import CurrentlyReading from "@/components/home/CurrentlyReading";
 
 export default async function DashboardHome() {
   const user = await currentUser();
@@ -26,8 +27,7 @@ export default async function DashboardHome() {
   const books = userData.Book;
   const achievements = userData.UserProgress;
   const progress = userData.Progress
-  // console.log("user data:", userData);
-   
+    
   // await updateAllBooksProgress();
 
 
@@ -40,7 +40,7 @@ export default async function DashboardHome() {
           <div className="max-w-7xl mx-auto">
            
             <h1 className="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl font-bold">
-              Welcome back, {user?.firstName}! <TestButton />
+              Welcome back, {user?.firstName}! 
             </h1>
           </div>
         </header>
@@ -103,61 +103,7 @@ export default async function DashboardHome() {
             <AchievementCard achievements={achievements} />
 
             {/* Current Reading */}
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b bg-gray-50">
-                <CardTitle className="text-lg font-semibold">
-                  Currently Reading
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {books.map((book, index) => (
-                    <div
-                      key={index}
-                      className="bg-gray-50 p-4 rounded-lg shadow-sm border"
-                    >
-                      <div className="flex items-center gap-4">
-                        <Image
-                          src={book.coverUrl || "/default-cover.png"}
-                          alt={book.title || "Book cover"}
-                          width="50"
-                          height="50"
-                          className="object-cover rounded-md"
-                        />
-                        <div className="flex w-full flex-col relative ">
-                          {" "}
-                          {/* Added relative positioning */}
-                          <div>
-                            <span className="font-medium leading-tight">
-                              {book.title}
-                            </span>
-                            <span className="block text-muted-foreground text-sm leading-tight">
-                              {book.author}
-                            </span>
-                            <span className="text-xs text-muted-foreground leading-tight">
-                              Current Page: {book.currentPage}
-                            </span>
-                          </div>
-                          <span className="absolute bottom-0 right-0 text-sm text-gray-500">
-                            {/* Positioned absolutely */}
-                            {book.readingProgress}%
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        className="h-2 bg-gray-200 rounded-full mt-1"
-                        aria-label={`Reading progress: ${book.readingProgress}%`}
-                      >
-                        <div
-                          className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                          style={{ width: `${book.readingProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <CurrentlyReading books={books} />
           </div>
 
           {/* Activity Feed Section */}
