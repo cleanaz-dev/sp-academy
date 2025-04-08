@@ -1,5 +1,5 @@
 // app/api/generate-story/route.js
-import { Anthropic } from '@anthropic-ai/sdk';
+import { Anthropic } from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -11,28 +11,37 @@ export async function POST(request) {
 
     // Validate inputs
     if (!topic || !difficulty || !paragraphs) {
-      return Response.json({ 
-        success: false, 
-        error: 'Missing required fields' 
-      }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: "Missing required fields",
+        },
+        { status: 400 },
+      );
     }
 
     // Validate difficulty
-    const validDifficulties = ['beginner', 'intermediate', 'advanced'];
+    const validDifficulties = ["beginner", "intermediate", "advanced"];
     if (!validDifficulties.includes(difficulty.toLowerCase())) {
-      return Response.json({ 
-        success: false, 
-        error: 'Invalid difficulty level' 
-      }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: "Invalid difficulty level",
+        },
+        { status: 400 },
+      );
     }
 
     // Validate paragraphs
     const numParagraphs = parseInt(paragraphs);
     if (isNaN(numParagraphs) || numParagraphs < 1 || numParagraphs > 5) {
-      return Response.json({ 
-        success: false, 
-        error: 'Paragraphs must be between 1 and 5' 
-      }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: "Paragraphs must be between 1 and 5",
+        },
+        { status: 400 },
+      );
     }
 
     const prompt = `Generate a short story in French with exactly ${paragraphs} paragraphs for grade ${difficulty} level students about ${topic}. And create a title for it in French.
@@ -53,30 +62,35 @@ export async function POST(request) {
     }`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: "claude-3-5-haiku-latest",
       max_tokens: 4000,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }],
-      temperature: 0.7
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
     });
 
     // Extract the JSON string from the response
     const jsonString = response.content[0].text.trim();
-    
+
     // Parse the JSON
     const storyData = JSON.parse(jsonString);
 
-    return Response.json({ 
-      success: true, 
-      data: storyData
+    return Response.json({
+      success: true,
+      data: storyData,
     });
   } catch (error) {
-    console.error('Story generation error:', error);
-    return Response.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    console.error("Story generation error:", error);
+    return Response.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 },
+    );
   }
 }

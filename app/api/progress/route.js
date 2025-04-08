@@ -8,7 +8,10 @@ export async function POST(request) {
 
     const { lessonId, courseId, status } = await request.json();
     if (!lessonId || !courseId) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const user = await prisma.user.findFirst({ where: { userId } });
@@ -20,23 +23,22 @@ export async function POST(request) {
       userId: user.id,
       lessonId,
       courseId,
-      status
+      status,
     });
 
     if (!progressUpdate.success) {
       return NextResponse.json(
-        { message: "Failed to update progress" }, 
-        { status: 500 }
+        { message: "Failed to update progress" },
+        { status: 500 },
       );
     }
 
     return NextResponse.json(progressUpdate);
-
   } catch (error) {
     console.error("Error updating progress:", error);
     return NextResponse.json(
-      { message: "Internal server error" }, 
-      { status: 500 }
+      { message: "Internal server error" },
+      { status: 500 },
     );
   }
 }

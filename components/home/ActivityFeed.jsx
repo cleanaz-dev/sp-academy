@@ -80,20 +80,20 @@ const Avatar = ({ user }) => {
   const avatarUrl = user.AccountSettings?.avatarUrl;
 
   return (
-    <div className="flex items-center gap-3 group">
+    <div className="group flex items-center gap-3">
       {avatarUrl ? (
         <div className="relative">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur opacity-0 group-hover:opacity-15 transition duration-300"></div>
+          <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 blur transition duration-300 group-hover:opacity-15"></div>
           <Image
             src={avatarUrl}
             alt={userName}
             width={40}
             height={40}
-            className="rounded-full border-2 border-white shadow-sm transform group-hover:scale-105 transition-all duration-300"
+            className="transform rounded-full border-2 border-white shadow-sm transition-all duration-300 group-hover:scale-105"
           />
         </div>
       ) : (
-        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 flex items-center justify-center text-gray-700 font-semibold shadow-sm transform group-hover:scale-105 transition-all duration-300">
+        <div className="flex h-10 w-10 transform items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100 font-semibold text-gray-700 shadow-sm transition-all duration-300 group-hover:scale-105">
           {userName?.[0] || "?"}
         </div>
       )}
@@ -134,8 +134,8 @@ const ActivityImage = ({ src, alt, content }) => {
   const dimensions = getImageDimensions();
 
   return (
-    <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-0 group-hover:opacity-15 transition duration-300"></div>
+    <div className="group relative">
+      <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 blur transition duration-300 group-hover:opacity-15"></div>
       <Image src={src} alt={alt} {...dimensions} />
     </div>
   );
@@ -188,10 +188,10 @@ const LikeButton = ({ item }) => {
   return (
     <button
       onClick={handleLike}
-      className="flex items-center gap-1.5 text-gray-500 hover:text-red-500 transition-colors duration-300 group"
+      className="group flex items-center gap-1.5 text-gray-500 transition-colors duration-300 hover:text-red-500"
     >
       <Heart
-        className={`w-5 h-5 transition-all duration-300 ${
+        className={`h-5 w-5 transition-all duration-300 ${
           liked
             ? "fill-red-500 stroke-red-500"
             : "stroke-gray-500 group-hover:stroke-red-500"
@@ -207,14 +207,14 @@ const ActivityContent = ({ content }) => {
   if (!content) return null;
 
   return (
-    <div className="mt-4 flex gap-5 items-center">
+    <div className="mt-4 flex items-center gap-5">
       <ActivityImage
         src={content.image}
         alt={content.title}
         content={content}
       />
       <div className="flex-1">
-        <p className="text-sm text-gray-700 leading-relaxed">
+        <p className="text-sm leading-relaxed text-gray-700">
           {content.subtitle}{" "}
           {content.pagesRead && (
             <>
@@ -225,29 +225,29 @@ const ActivityContent = ({ content }) => {
             </>
           )}
         </p>
-        <p className="font-semibold text-gray-800 text-lg mt-1">
+        <p className="mt-1 text-lg font-semibold text-gray-800">
           "{content.title}"
         </p>
         {content.author && (
-          <p className="text-gray-500 text-sm mt-1">by {content.author}</p>
+          <p className="mt-1 text-sm text-gray-500">by {content.author}</p>
         )}
         {content.description && (
-          <p className="text-gray-500 text-sm mt-1">{content.description}</p>
+          <p className="mt-1 text-sm text-gray-500">{content.description}</p>
         )}
         {content.courseName && (
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="mt-1 text-sm text-gray-600">
             in course: {content.courseName}
           </p>
         )}
         {(content.tutorLanguage || content.level) && (
-          <div className="flex gap-2 mt-2">
+          <div className="mt-2 flex gap-2">
             {content.tutorLanguage && (
-              <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">
+              <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600">
                 {content.tutorLanguage}
               </span>
             )}
             {content.level && (
-              <span className="px-2 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium">
+              <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-600">
                 {content.level}
               </span>
             )}
@@ -267,7 +267,7 @@ const ActivityItem = ({ item }) => {
   const content = getActivityTypeContent(item);
 
   return (
-    <div className="bg-white hover:bg-gray-50 rounded-xl p-4 transition-all duration-300">
+    <div className="rounded-xl bg-white p-4 transition-all duration-300 hover:bg-gray-50">
       <div className="flex items-center space-x-3">
         <Avatar user={user} />
         <p className="text-sm font-medium text-gray-700">{user.name}</p>
@@ -275,9 +275,9 @@ const ActivityItem = ({ item }) => {
 
       <ActivityContent content={content} />
 
-      <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
         <p className="text-xs text-gray-500">{timeAgo}</p>
-        <div className="transform hover:scale-105 transition-transform duration-300">
+        <div className="transform transition-transform duration-300 hover:scale-105">
           <LikeButton item={item} />
         </div>
       </div>
@@ -287,20 +287,20 @@ const ActivityItem = ({ item }) => {
 
 // Loading skeleton
 const ActivitySkeleton = () => (
-  <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm animate-pulse">
+  <div className="animate-pulse rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
     <div className="flex items-center space-x-3">
-      <div className="w-10 h-10 bg-gray-200 rounded-full" />
+      <div className="h-10 w-10 rounded-full bg-gray-200" />
       <div className="space-y-2">
-        <div className="h-4 w-24 bg-gray-200 rounded" />
-        <div className="h-3 w-16 bg-gray-200 rounded" />
+        <div className="h-4 w-24 rounded bg-gray-200" />
+        <div className="h-3 w-16 rounded bg-gray-200" />
       </div>
     </div>
     <div className="mt-4 flex gap-5">
-      <div className="w-[60px] h-[90px] bg-gray-200 rounded-lg" />
+      <div className="h-[90px] w-[60px] rounded-lg bg-gray-200" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 w-3/4 bg-gray-200 rounded" />
-        <div className="h-6 w-full bg-gray-200 rounded" />
-        <div className="h-4 w-1/2 bg-gray-200 rounded" />
+        <div className="h-4 w-3/4 rounded bg-gray-200" />
+        <div className="h-6 w-full rounded bg-gray-200" />
+        <div className="h-4 w-1/2 rounded bg-gray-200" />
       </div>
     </div>
   </div>
@@ -369,8 +369,6 @@ const ActivityFeed = () => {
 
   useEffect(() => {
     fetchActivities();
-    const intervalId = setInterval(fetchActivities, 60000); // Fetch every minute
-    return () => clearInterval(intervalId);
   }, []);
 
   if (loading)
@@ -384,7 +382,7 @@ const ActivityFeed = () => {
 
   if (error)
     return (
-      <div className="p-4 bg-red-100 text-red-600 rounded-lg">
+      <div className="rounded-lg bg-red-100 p-4 text-red-600">
         Error: {error}
       </div>
     );
@@ -396,7 +394,7 @@ const ActivityFeed = () => {
           <ActivityItem
             key={`${activity.id}-${index}`}
             item={activity}
-            className="hover:bg-gray-50 rounded-xl transition-all duration-300"
+            className="rounded-xl transition-all duration-300 hover:bg-gray-50"
           />
         ))}
       </ScrollArea>

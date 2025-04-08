@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Confetti from 'react-confetti'; // Import the Confetti component
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Confetti from "react-confetti"; // Import the Confetti component
 
 export default function Quiz({ params }) {
   const [quiz, setQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [selectedAnswer, setSelectedAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth); // Track window width
@@ -21,7 +21,7 @@ export default function Quiz({ params }) {
         const data = await response.json();
         setQuiz(data);
       } else {
-        console.error('Failed to fetch quiz');
+        console.error("Failed to fetch quiz");
       }
     };
 
@@ -39,7 +39,7 @@ export default function Quiz({ params }) {
 
     if (currentQuestion + 1 < quiz.questions.length) {
       setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer('');
+      setSelectedAnswer("");
     } else {
       setQuizCompleted(true);
     }
@@ -56,9 +56,9 @@ export default function Quiz({ params }) {
       setWindowHeight(window.innerHeight);
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
@@ -67,10 +67,16 @@ export default function Quiz({ params }) {
   if (quizCompleted) {
     return (
       <div className="container mx-auto p-4">
-        <Confetti width={windowWidth} height={windowHeight} /> {/* Render Confetti */}
-        <h1 className="text-2xl font-bold mb-4">Quiz Completed</h1>
-        <p className="mb-4">Your score: {score} out of {quiz.questions.length}</p>
-        <button onClick={handleReturnToLesson} className="bg-blue-500 text-white px-4 py-2 rounded">
+        <Confetti width={windowWidth} height={windowHeight} />{" "}
+        {/* Render Confetti */}
+        <h1 className="mb-4 text-2xl font-bold">Quiz Completed</h1>
+        <p className="mb-4">
+          Your score: {score} out of {quiz.questions.length}
+        </p>
+        <button
+          onClick={handleReturnToLesson}
+          className="rounded bg-blue-500 px-4 py-2 text-white"
+        >
           Return to Lesson
         </button>
       </div>
@@ -81,16 +87,20 @@ export default function Quiz({ params }) {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">{quiz.title}</h1>
-      <p className="mb-4">Question {currentQuestion + 1} of {quiz.questions.length}</p>
+      <h1 className="mb-4 text-2xl font-bold">{quiz.title}</h1>
+      <p className="mb-4">
+        Question {currentQuestion + 1} of {quiz.questions.length}
+      </p>
       <p className="mb-4">{question.text}</p>
       <ul className="mb-4">
         {question.options.map((option, index) => (
           <li key={index} className="mb-2">
             <button
               onClick={() => handleAnswerSelect(option)}
-              className={`px-4 py-2 rounded ${
-                selectedAnswer === option ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              className={`rounded px-4 py-2 ${
+                selectedAnswer === option
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200"
               }`}
             >
               {option}
@@ -101,9 +111,9 @@ export default function Quiz({ params }) {
       <button
         onClick={handleNextQuestion}
         disabled={!selectedAnswer}
-        className="bg-green-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
+        className="rounded bg-green-500 px-4 py-2 text-white disabled:bg-gray-400"
       >
-        {currentQuestion + 1 === quiz.questions.length ? 'Finish' : 'Next'}
+        {currentQuestion + 1 === quiz.questions.length ? "Finish" : "Next"}
       </button>
     </div>
   );

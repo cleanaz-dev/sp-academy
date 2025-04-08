@@ -1,5 +1,5 @@
 // EnrollmentDialog.jsx
-"use client"
+"use client";
 import {
   Dialog,
   DialogContent,
@@ -36,15 +36,17 @@ export function EnrollmentDialog({ course, isOpen, onClose }) {
           userId: user.id,
           courseId: course.id,
         }),
-      })
+      });
       if (!response.ok) {
         throw new Error("Failed to enroll in course");
       }
-     
+
       router.push(`/courses/${course.id}`);
     } catch (error) {
       console.error("Enrollment failed:", error);
-      toast.error("Failed to enroll in course contact your instructor or administrator.");
+      toast.error(
+        "Failed to enroll in course contact your instructor or administrator.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +54,7 @@ export function EnrollmentDialog({ course, isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] md:max-w-[600px] bg-white">
+      <DialogContent className="bg-white sm:max-w-[425px] md:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Enroll in {course.title}</DialogTitle>
           <DialogDescription>
@@ -64,7 +66,7 @@ export function EnrollmentDialog({ course, isOpen, onClose }) {
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <h4 className="font-medium">Course Includes:</h4>
-            <ul className="text-sm text-gray-500 space-y-1">
+            <ul className="space-y-1 text-sm text-gray-500">
               <li> {course.lessons.length} Lessons</li>
               <li> Hands-on Exercises</li>
               <li> Certificate upon completion</li>

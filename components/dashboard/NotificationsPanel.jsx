@@ -2,13 +2,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationCard from "../notifications/NotificationCard";
 
-
-
 export const NotificationsPanel = ({
   showNotifications,
   setShowNotifications,
 }) => {
-
   return (
     <AnimatePresence>
       {showNotifications && (
@@ -31,7 +28,7 @@ export const NotificationsPanel = ({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-            className="fixed right-0 top-0 h-screen w-[350px] overflow-y-hidden bg-white shadow-lg rounded-l-lg z-50"
+            className="fixed right-0 top-0 z-50 h-screen w-[350px] overflow-y-hidden rounded-l-lg bg-white shadow-lg"
           >
             <NotificationCard
               handleNotificationClick={() => setShowNotifications(false)}

@@ -2,14 +2,14 @@
 import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { getAllCoursesByUserId } from "@/lib/actions";
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { motion } from "framer-motion";
+import Link from "next/link";
 import CoursesGrid from "@/components/courses/CourseGrid";
 
 export default function page() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useUser()
+  const { user } = useUser();
   const userId = user?.id;
 
   useEffect(() => {
@@ -29,12 +29,12 @@ export default function page() {
     }
   }, [userId]);
 
-  console.log("courses:", courses)
+  // console.log("courses:", courses)
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
       </div>
     );
   }
@@ -44,11 +44,11 @@ export default function page() {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16"
+        className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white"
       >
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.h1 
-            className="text-4xl font-bold mb-4"
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.h1
+            className="mb-4 text-4xl font-bold"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -56,25 +56,26 @@ export default function page() {
             Courses
           </motion.h1>
           <motion.p
-            className="text-xl opacity-90 mt-2"
+            className="mt-2 text-xl opacity-90"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            Knowledge is the key to success. Learn and grow, unlocking new possibilities. 🔑
+            Knowledge is the key to success. Learn and grow, unlocking new
+            possibilities. 🔑
           </motion.p>
         </div>
       </motion.header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
           className="py-12"
         >
-          <div className="text-center mb-8">
-            <h2 className="text-xl text-muted-foreground font-medium">
+          <div className="mb-8 text-center">
+            <h2 className="text-xl font-medium text-muted-foreground">
               Your enrolled courses
             </h2>
           </div>
@@ -85,14 +86,14 @@ export default function page() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="py-12 text-center"
             >
-              <div className="text-gray-500 mb-4">
+              <div className="mb-4 text-gray-500">
                 You're not enrolled in any courses yet.
               </div>
               <Link
                 href="/courses"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Browse Available Courses
               </Link>

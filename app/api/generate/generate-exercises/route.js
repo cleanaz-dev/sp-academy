@@ -1,5 +1,8 @@
 // app/api/generate-exercises/route.js
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 
 export async function POST(request) {
   try {
@@ -15,7 +18,7 @@ export async function POST(request) {
 
     const command = new InvokeModelCommand({
       modelId: "anthropic.claude-v2",
-      
+
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
@@ -23,7 +26,7 @@ export async function POST(request) {
         max_tokens_to_sample: 2048, // Changed from max_tokens
         temperature: 0.7,
         top_p: 0.9,
-        stop_sequences: ["\n\nHuman:"]
+        stop_sequences: ["\n\nHuman:"],
       }),
     });
 
@@ -41,16 +44,16 @@ export async function POST(request) {
       exercises = {
         exercises: [
           // Add default exercise structure if parsing fails
-        ]
+        ],
       };
     }
 
     return Response.json({ success: true, exercises: exercises.exercises });
   } catch (error) {
-    console.error('Exercise generation error:', error);
+    console.error("Exercise generation error:", error);
     return Response.json(
-      { success: false, error: 'Failed to generate exercises' }, 
-      { status: 500 }
+      { success: false, error: "Failed to generate exercises" },
+      { status: 500 },
     );
   }
 }

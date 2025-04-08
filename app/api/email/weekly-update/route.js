@@ -7,13 +7,13 @@ export async function POST(request) {
     console.log("Data received from the Improvement API: ", data);
     return NextResponse.json(
       { message: "Data processed successfully!" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error processing data:", error.message);
     return NextResponse.json(
       { error: "An error occurred while processing data." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

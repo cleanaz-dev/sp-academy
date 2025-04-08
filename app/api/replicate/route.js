@@ -1,7 +1,7 @@
 // app/api/replicate/route.js
 
-import { NextResponse } from 'next/server';
-import Replicate from 'replicate';
+import { NextResponse } from "next/server";
+import Replicate from "replicate";
 
 export async function POST(request) {
   try {
@@ -17,17 +17,15 @@ export async function POST(request) {
       input: { prompt },
     });
 
-
     // Wait for the prediction to finish
     const finishedPrediction = await replicate.wait(prediction);
 
     return NextResponse.json(finishedPrediction.output[0], { status: 200 });
-
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

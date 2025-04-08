@@ -16,7 +16,8 @@ export async function GET(request) {
 
   try {
     const user = await prisma.user.findFirst({ where: { userId } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     // Check if the user has already liked this item
     const userLike = await prisma.like.findFirst({
@@ -28,9 +29,15 @@ export async function GET(request) {
       where: { activityId: id, type },
     });
 
-    return NextResponse.json({ liked: !!userLike, likes: likeCount }, { status: 200 });
+    return NextResponse.json(
+      { liked: !!userLike, likes: likeCount },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error fetching like status:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

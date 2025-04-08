@@ -1,5 +1,8 @@
 //appi/generate-dialogue/route.js
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -47,14 +50,13 @@ Format your response using markdown for clear sections.
 
     return NextResponse.json(
       { scenario: responseData.completion },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate dialogue scenario' },
-      { status: 500 }
+      { error: "Failed to generate dialogue scenario" },
+      { status: 500 },
     );
   }
 }

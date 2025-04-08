@@ -1,6 +1,6 @@
 // exercises/MatchingPairs.jsx
-"use client"
-import { useState, useEffect } from 'react';
+"use client";
+import { useState, useEffect } from "react";
 
 const MatchingPairs = ({ exercise, onComplete }) => {
   const [pairs, setPairs] = useState([]);
@@ -12,32 +12,32 @@ const MatchingPairs = ({ exercise, onComplete }) => {
   // Initialize pairs
   useEffect(() => {
     const correctPairs = JSON.parse(exercise.correctAnswer);
-    
+
     // Create array of left and right items
     const leftItems = Object.keys(correctPairs);
     const rightItems = Object.values(correctPairs);
-    
+
     // Shuffle both arrays
     const shuffledLeft = [...leftItems].sort(() => Math.random() - 0.5);
     const shuffledRight = [...rightItems].sort(() => Math.random() - 0.5);
-    
+
     setPairs({
       left: shuffledLeft.map((item, index) => ({
         id: `left-${index}`,
         text: item,
-        original: item
+        original: item,
       })),
       right: shuffledRight.map((item, index) => ({
         id: `right-${index}`,
         text: item,
-        original: item
-      }))
+        original: item,
+      })),
     });
   }, [exercise.correctAnswer]);
 
   const handleItemClick = (item, side) => {
     const newSelected = [...selectedPair];
-    if (side === 'left') {
+    if (side === "left") {
       newSelected[0] = item;
     } else {
       newSelected[1] = item;
@@ -51,30 +51,30 @@ const MatchingPairs = ({ exercise, onComplete }) => {
   };
 
   const checkPair = (leftItem, rightItem) => {
-    setAttempts(prev => prev + 1);
-    
+    setAttempts((prev) => prev + 1);
+
     const correctPairs = JSON.parse(exercise.correctAnswer);
     const isCorrect = correctPairs[leftItem.original] === rightItem.original;
 
     if (isCorrect) {
-      setMatchedPairs(prev => new Set([...prev, leftItem.id, rightItem.id]));
+      setMatchedPairs((prev) => new Set([...prev, leftItem.id, rightItem.id]));
       setFeedback({
-        message: 'Correct match!',
-        type: 'success'
+        message: "Correct match!",
+        type: "success",
       });
 
       // Check if all pairs are matched
       if (matchedPairs.size + 2 === Object.keys(correctPairs).length * 2) {
         onComplete(exercise.id, {
           completed: true,
-          score: Math.max(100 - (attempts * 5), 0),
-          attempts
+          score: Math.max(100 - attempts * 5, 0),
+          attempts,
         });
       }
     } else {
       setFeedback({
-        message: 'Try again!',
-        type: 'error'
+        message: "Try again!",
+        type: "error",
       });
     }
 
@@ -90,29 +90,33 @@ const MatchingPairs = ({ exercise, onComplete }) => {
     setMatchedPairs(new Set());
     setAttempts(0);
     setFeedback(null);
-    
+
     // Reshuffle pairs
     const correctPairs = JSON.parse(exercise.correctAnswer);
     const leftItems = Object.keys(correctPairs);
     const rightItems = Object.values(correctPairs);
-    
+
     setPairs({
-      left: leftItems.sort(() => Math.random() - 0.5).map((item, index) => ({
-        id: `left-${index}`,
-        text: item,
-        original: item
-      })),
-      right: rightItems.sort(() => Math.random() - 0.5).map((item, index) => ({
-        id: `right-${index}`,
-        text: item,
-        original: item
-      }))
+      left: leftItems
+        .sort(() => Math.random() - 0.5)
+        .map((item, index) => ({
+          id: `left-${index}`,
+          text: item,
+          original: item,
+        })),
+      right: rightItems
+        .sort(() => Math.random() - 0.5)
+        .map((item, index) => ({
+          id: `right-${index}`,
+          text: item,
+          original: item,
+        })),
     });
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h3 className="text-xl font-semibold mb-6">{exercise.question}</h3>
+    <div className="mx-auto max-w-4xl p-6">
+      <h3 className="mb-6 text-xl font-semibold">{exercise.question}</h3>
 
       <div className="flex justify-between gap-8">
         {/* Left Column */}
@@ -120,16 +124,16 @@ const MatchingPairs = ({ exercise, onComplete }) => {
           {pairs.left?.map((item) => (
             <button
               key={item.id}
-              onClick={() => !matchedPairs.has(item.id) && handleItemClick(item, 'left')}
-              className={`w-full p-3 rounded text-left transition-all
-                ${matchedPairs.has(item.id) 
-                  ? 'bg-green-100 cursor-default' 
+              onClick={() =>
+                !matchedPairs.has(item.id) && handleItemClick(item, "left")
+              }
+              className={`w-full rounded p-3 text-left transition-all ${
+                matchedPairs.has(item.id)
+                  ? "cursor-default bg-green-100"
                   : selectedPair[0]?.id === item.id
-                    ? 'bg-blue-100'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }
-                ${matchedPairs.has(item.id) ? 'opacity-50' : 'opacity-100'}
-              `}
+                    ? "bg-blue-100"
+                    : "bg-gray-100 hover:bg-gray-200"
+              } ${matchedPairs.has(item.id) ? "opacity-50" : "opacity-100"} `}
               disabled={matchedPairs.has(item.id)}
             >
               {item.text}
@@ -142,16 +146,16 @@ const MatchingPairs = ({ exercise, onComplete }) => {
           {pairs.right?.map((item) => (
             <button
               key={item.id}
-              onClick={() => !matchedPairs.has(item.id) && handleItemClick(item, 'right')}
-              className={`w-full p-3 rounded text-left transition-all
-                ${matchedPairs.has(item.id) 
-                  ? 'bg-green-100 cursor-default' 
+              onClick={() =>
+                !matchedPairs.has(item.id) && handleItemClick(item, "right")
+              }
+              className={`w-full rounded p-3 text-left transition-all ${
+                matchedPairs.has(item.id)
+                  ? "cursor-default bg-green-100"
                   : selectedPair[1]?.id === item.id
-                    ? 'bg-blue-100'
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }
-                ${matchedPairs.has(item.id) ? 'opacity-50' : 'opacity-100'}
-              `}
+                    ? "bg-blue-100"
+                    : "bg-gray-100 hover:bg-gray-200"
+              } ${matchedPairs.has(item.id) ? "opacity-50" : "opacity-100"} `}
               disabled={matchedPairs.has(item.id)}
             >
               {item.text}
@@ -162,11 +166,13 @@ const MatchingPairs = ({ exercise, onComplete }) => {
 
       {/* Feedback */}
       {feedback && (
-        <div className={`mt-4 p-3 rounded ${
-          feedback.type === 'success' 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
+        <div
+          className={`mt-4 rounded p-3 ${
+            feedback.type === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
           {feedback.message}
         </div>
       )}
@@ -175,16 +181,17 @@ const MatchingPairs = ({ exercise, onComplete }) => {
       <div className="mt-6 space-y-4">
         <button
           onClick={handleReset}
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+          className="rounded bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600"
         >
           Reset
         </button>
 
         <div className="text-sm text-gray-600">
           <span>Attempts: {attempts}</span>
-          {matchedPairs.size === Object.keys(JSON.parse(exercise.correctAnswer)).length * 2 && (
+          {matchedPairs.size ===
+            Object.keys(JSON.parse(exercise.correctAnswer)).length * 2 && (
             <span className="ml-4">
-              Score: {Math.max(100 - (attempts * 5), 0)}
+              Score: {Math.max(100 - attempts * 5, 0)}
             </span>
           )}
         </div>

@@ -128,11 +128,11 @@ export default function StoryGenerator() {
       //         headers: { 'Content-Type': 'application/json' },
       //         body: JSON.stringify({ prompt: imagePrompt }),
       //       });
-      
+
       //       if (!imageResponse.ok) {
       //         throw new Error('Failed to generate image');
       //       }
-      
+
       //       const imageData = await imageResponse.json();
       //       if (imageData.success) {
       //         exercise.imageUrl = imageData.imageUrl;
@@ -141,7 +141,7 @@ export default function StoryGenerator() {
       //     return exercise;
       //   })
       // );
-      
+
       // setExercises(updatedExercises);
 
       // Generate image
@@ -243,7 +243,7 @@ export default function StoryGenerator() {
         topic: document.querySelector('input[name="topic"]').value,
         difficulty: document.querySelector('select[name="difficulty"]').value,
         paragraphs: parseInt(
-          document.querySelector('input[name="paragraphs"]').value
+          document.querySelector('input[name="paragraphs"]').value,
         ),
         genre: document.querySelector('select[name="genre"]').value,
         grammar: document.querySelector('select[name="grammar"]').value,
@@ -266,7 +266,7 @@ export default function StoryGenerator() {
   };
 
   return (
-    <div className="p-4 ">
+    <div className="p-4">
       <form action={handleGenerateStory}>
         <div>
           <header>
@@ -403,17 +403,17 @@ export default function StoryGenerator() {
       </form>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded">
+        <div className="mt-4 rounded bg-red-100 p-4 text-red-700">
           Error: {error}
         </div>
       )}
 
       {imageLoading && (
         <div className="mt-4">
-          <div className="animate-pulse flex space-x-4">
-            <div className="rounded-xl bg-slate-200 h-48 w-full"></div>
+          <div className="flex animate-pulse space-x-4">
+            <div className="h-48 w-full rounded-xl bg-slate-200"></div>
           </div>
-          <p className="text-center mt-2">Generating illustration...</p>
+          <p className="mt-2 text-center">Generating illustration...</p>
         </div>
       )}
 
@@ -422,38 +422,38 @@ export default function StoryGenerator() {
           {storyImage && (
             <div>
               <h2 className="text-xl font-bold">Story Illustration:</h2>
-              <div className="mt-2 p-4 bg-gray-50 rounded">
+              <div className="mt-2 rounded bg-gray-50 p-4">
                 <img
                   src={storyImage}
                   alt="Story illustration"
-                  className="max-w-full h-auto rounded"
+                  className="h-auto max-w-full rounded"
                 />
               </div>
             </div>
           )}
           <div>
             <h2 className="text-xl font-bold">French Story:</h2>
-            <p className="mt-2 p-4 bg-gray-50 rounded">{story.frenchText}</p>
+            <p className="mt-2 rounded bg-gray-50 p-4">{story.frenchText}</p>
           </div>
 
           <div>
             <h2 className="text-xl font-bold">English Translation:</h2>
-            <p className="mt-2 p-4 bg-gray-50 rounded">{story.englishText}</p>
+            <p className="mt-2 rounded bg-gray-50 p-4">{story.englishText}</p>
           </div>
 
           {story.grammarHighlights && (
             <div>
               <h2 className="text-xl font-bold">Grammar Highlights:</h2>
-              <div className="mt-2 p-4 bg-gray-50 rounded">
+              <div className="mt-2 rounded bg-gray-50 p-4">
                 {story.grammarHighlights.map((highlight, index) => (
                   <div
                     key={index}
-                    className="mb-3 p-3 border-l-4 border-blue-500"
+                    className="mb-3 border-l-4 border-blue-500 p-3"
                   >
                     <p className="font-semibold text-blue-600">
                       {highlight.expression}
                     </p>
-                    <p className="text-gray-600 mt-1">
+                    <p className="mt-1 text-gray-600">
                       {highlight.explanation}
                     </p>
                   </div>
@@ -465,19 +465,19 @@ export default function StoryGenerator() {
           {story.vocabulary && (
             <div>
               <h2 className="text-xl font-bold">Vocabulary:</h2>
-              <ul className="mt-2 p-4 bg-gray-50 rounded grid grid-cols-1 md:grid-cols-2 gap-3">
+              <ul className="mt-2 grid grid-cols-1 gap-3 rounded bg-gray-50 p-4 md:grid-cols-2">
                 {story.vocabulary.map((word, index) => (
                   <li
                     key={index}
-                    className="mb-2 p-2 border border-gray-200 rounded"
+                    className="mb-2 rounded border border-gray-200 p-2"
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div>
                         <strong className="text-blue-600">{word.french}</strong>
                         <span className="mx-2">→</span>
                         <span>{word.english}</span>
                       </div>
-                      <span className="text-sm text-gray-500 italic">
+                      <span className="text-sm italic text-gray-500">
                         {word.grammarType}
                       </span>
                     </div>
@@ -490,7 +490,7 @@ export default function StoryGenerator() {
           {audio && (
             <div>
               <h2 className="text-xl font-bold">Listen:</h2>
-              <div className="mt-2 p-4 bg-gray-50 rounded">
+              <div className="mt-2 rounded bg-gray-50 p-4">
                 <audio
                   controls
                   src={audio}

@@ -1,6 +1,6 @@
 // app/api/upload-story-image/route.js
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request) {
   const formData = await request.formData();
@@ -28,8 +28,8 @@ export async function POST(request) {
         Key: filename,
         Body: Buffer.from(buffer),
         ContentType: "image/png",
-        ACL: 'public-read',
-      })
+        ACL: "public-read",
+      }),
     );
 
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${filename}`;

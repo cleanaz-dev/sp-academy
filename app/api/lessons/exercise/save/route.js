@@ -12,7 +12,7 @@ function normalizeCorrectAnswer(exercise) {
       return JSON.stringify(
         Array.isArray(exercise.correct_answer)
           ? exercise.correct_answer
-          : [exercise.correct_answer]
+          : [exercise.correct_answer],
       );
 
     case "drag_and_drop":
@@ -25,7 +25,7 @@ function normalizeCorrectAnswer(exercise) {
         exercise.pairs.reduce((acc, pair) => {
           acc[pair.word] = pair.match;
           return acc;
-        }, {})
+        }, {}),
       );
 
     case "audio_based":
@@ -135,8 +135,8 @@ export async function POST(request) {
               lessonId: savedLesson.id,
               objectives: lessonData.objectives,
             },
-          })
-        )
+          }),
+        ),
       );
     }
 

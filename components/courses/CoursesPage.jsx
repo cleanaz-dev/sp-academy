@@ -27,17 +27,17 @@ export default function CoursePage({
   const userEnrollment = course?.enrollments?.[0];
 
   // Calculate progress based on completed lessons
-  const completedLessonsCount = course?.lessons?.filter(lesson => 
-    isLessonCompleted(lesson.id)
-  ).length || 0;
-  
+  const completedLessonsCount =
+    course?.lessons?.filter((lesson) => isLessonCompleted(lesson.id)).length ||
+    0;
+
   const totalLessons = course?.lessons?.length || 0;
   const progress = (completedLessonsCount / totalLessons) * 100;
 
   return (
-    <div className="p-6 overflow-hidden">
+    <div className="overflow-hidden p-6">
       {!course ? (
-        <div className="flex items-center justify-center ">
+        <div className="flex items-center justify-center">
           <p className="text-gray-500">Course not found</p>
         </div>
       ) : (
@@ -50,7 +50,7 @@ export default function CoursePage({
             className="mb-8"
           >
             {course.coverUrl && (
-              <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
+              <div className="relative mb-6 aspect-video overflow-hidden rounded-lg">
                 <Image
                   src={course.coverUrl}
                   alt={course.title}
@@ -61,18 +61,18 @@ export default function CoursePage({
               </div>
             )}
 
-            <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
-            <div className="flex items-center gap-2 mb-2">
+            <h1 className="mb-4 text-3xl font-bold">{course.title}</h1>
+            <div className="mb-2 flex items-center gap-2">
               <span className="text-sm text-gray-500">
                 Progress: {Math.round(progress)}%
               </span>
             </div>
-            <div className="bg-gray-100 rounded-full h-4 mb-4">
+            <div className="mb-4 h-4 rounded-full bg-gray-100">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 1 }}
-                className="bg-gradient-to-r from-blue-600 to-violet-600 h-full rounded-full"
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 to-violet-600"
               />
             </div>
 
@@ -80,10 +80,10 @@ export default function CoursePage({
             <div className="mb-6 text-gray-600">
               <p className="mb-2">{course.description}</p>
               <div className="flex gap-4 text-sm">
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-800">
                   {course.level}
                 </span>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
+                <span className="rounded-full bg-green-100 px-3 py-1 text-green-800">
                   {course.lessons.length} Lessons
                 </span>
               </div>
@@ -109,7 +109,7 @@ export default function CoursePage({
                     delay: index * 0.1,
                   }}
                   layout
-                  className={`border rounded-lg ${
+                  className={`rounded-lg border ${
                     isUnlocked ? "bg-white hover:border-blue-200" : "bg-gray-50"
                   }`}
                 >
@@ -142,8 +142,8 @@ export default function CoursePage({
                           {isCompleted
                             ? "Continue" // or "Review" depending on your preference
                             : isUnlocked
-                            ? "Start Lesson"
-                            : "Locked"}
+                              ? "Start Lesson"
+                              : "Locked"}
                         </Button>
                         <motion.button
                           initial={false}
@@ -152,9 +152,9 @@ export default function CoursePage({
                           onClick={() =>
                             setExpandedLesson(isExpanded ? null : lesson.id)
                           }
-                          className="p-2 hover:bg-gray-100 rounded-full"
+                          className="rounded-full p-2 hover:bg-gray-100"
                         >
-                          <ChevronDown className="w-5 h-5" />
+                          <ChevronDown className="h-5 w-5" />
                         </motion.button>
                       </div>
                     </div>
@@ -169,20 +169,20 @@ export default function CoursePage({
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pt-2 border-t">
-                          <div className="text-sm text-gray-600 space-y-3">
+                        <div className="border-t px-4 pb-4 pt-2">
+                          <div className="space-y-3 text-sm text-gray-600">
                             <div>
-                              <h4 className="font-semibold mb-1">
+                              <h4 className="mb-1 font-semibold">
                                 Description:
                               </h4>
                               <p>{lesson.description}</p>
                             </div>
                             {lesson.topics && (
                               <div>
-                                <h4 className="font-semibold mb-1">
+                                <h4 className="mb-1 font-semibold">
                                   Topics covered:
                                 </h4>
-                                <ul className="list-none list-inside space-y-2">
+                                <ul className="list-inside list-none space-y-2">
                                   {lesson.topics.map((topic, i) => (
                                     <li
                                       key={i}
@@ -208,7 +208,6 @@ export default function CoursePage({
       )}
       {/* Footer with useRef */}
       <div ref={bottomRef} />
-
     </div>
   );
 }

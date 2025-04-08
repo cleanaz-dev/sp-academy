@@ -58,16 +58,16 @@ export default function ConversationDialogModal() {
 
             <input type="hidden" name="name" value={user?.firstName} />
             <input type="hidden" name="userId" value={user?.id} />
-            <div className="my-4 p-1 space-y-2">
+            <div className="my-4 space-y-2 p-1">
               <Label>Phone Number</Label>
               <Input
                 type="tel"
                 placeholder="Your phone number"
                 name="phoneNumber"
                 required
-                className="bg-white max-w-md"
+                className="max-w-md bg-white"
               />
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
                 {" "}
                 <Toggle
                   color="green"

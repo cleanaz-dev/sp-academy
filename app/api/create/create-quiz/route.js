@@ -11,7 +11,7 @@ export async function POST(request) {
     if (!isMultipleChoice) {
       return NextResponse.json(
         { error: "Only multiple-choice quizzes are supported" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -78,7 +78,7 @@ export async function POST(request) {
     console.error("Error in create-quiz API:", error);
     return NextResponse.json(
       { error: "Failed to create quiz" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

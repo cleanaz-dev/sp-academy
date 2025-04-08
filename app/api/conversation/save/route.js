@@ -1,18 +1,21 @@
 //api/conversation/save/route.js
 import { NextResponse } from "next/server";
 import { saveConversationDialogue } from "@/lib/actions";
-import { createAiAvatar } from "@/lib/replicate";  // Importing the avatar function
+import { createAiAvatar } from "@/lib/replicate"; // Importing the avatar function
 
 // Shared function to generate and upload an image
 const generateAndUploadImage = async (prompt) => {
   console.log("Starting generateAndUploadImage with prompt:", prompt);
 
   try {
-    const imageResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/generate-image`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
+    const imageResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/generate-image`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      },
+    );
 
     if (!imageResponse.ok) {
       throw new Error(`Failed to generate image: ${imageResponse.statusText}`);
@@ -26,17 +29,22 @@ const generateAndUploadImage = async (prompt) => {
     }
 
     // Convert base64 to Blob
-    const base64Response = await fetch(`data:image/png;base64,${imageData.imageUrl}`);
+    const base64Response = await fetch(
+      `data:image/png;base64,${imageData.imageUrl}`,
+    );
     const imageBlob = await base64Response.blob();
 
     // Upload Image
     const imageFormData = new FormData();
     imageFormData.append("image", imageBlob);
 
-    const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload-story-image`, {
-      method: "POST",
-      body: imageFormData,
-    });
+    const uploadResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/upload-story-image`,
+      {
+        method: "POST",
+        body: imageFormData,
+      },
+    );
 
     const uploadResult = await uploadResponse.json();
     console.log("Upload result:", uploadResult);
@@ -83,16 +91,22 @@ export async function POST(request) {
     console.log("Female AI Avatar URL generated:", femaleAiAvatarUrl);
 
     // Save to database with the generated images
-    const newData = { ...data, imageUrl: storyImageUrl, aiAvatarUrl, maleAiAvatarUrl, femaleAiAvatarUrl };
+    const newData = {
+      ...data,
+      imageUrl: storyImageUrl,
+      aiAvatarUrl,
+      maleAiAvatarUrl,
+      femaleAiAvatarUrl,
+    };
     await saveConversationDialogue(newData);
 
     return NextResponse.json(
-      { 
-        message: "Data saved successfully!", 
-        imageUrl: storyImageUrl, 
-        aiAvatarUrl 
+      {
+        message: "Data saved successfully!",
+        imageUrl: storyImageUrl,
+        aiAvatarUrl,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error saving data:", {
@@ -101,7 +115,7 @@ export async function POST(request) {
     });
     return NextResponse.json(
       { error: "An error occurred while saving data: " + error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

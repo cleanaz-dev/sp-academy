@@ -1,6 +1,6 @@
 // app/api/pronunciation-assessment/route.js
-import { NextResponse } from 'next/server';
-import * as sdk from 'microsoft-cognitiveservices-speech-sdk';
+import { NextResponse } from "next/server";
+import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 export async function POST(request) {
   let recognizer = null;
@@ -10,14 +10,14 @@ export async function POST(request) {
 
   try {
     const formData = await request.formData();
-    const audioFile = formData.get('audio');
-    const referenceText = formData.get('referenceText');
-    const language = formData.get('language') || 'en-US';
+    const audioFile = formData.get("audio");
+    const referenceText = formData.get("referenceText");
+    const language = formData.get("language") || "en-US";
 
     if (!audioFile || !referenceText) {
       return NextResponse.json(
-        { error: 'Missing audio or reference text' },
-        { status: 400 }
+        { error: "Missing audio or reference text" },
+        { status: 400 },
       );
     }
 
@@ -27,18 +27,21 @@ export async function POST(request) {
     // Initialize Speech SDK configurations
     speechConfig = sdk.SpeechConfig.fromSubscription(
       process.env.AZURE_SPEECH_KEY,
-      process.env.AZURE_SPEECH_REGION
+      process.env.AZURE_SPEECH_REGION,
     );
-    
+
     speechConfig.speechRecognitionLanguage = language;
 
     // Create and configure audio stream
     pushStream = sdk.AudioInputStream.createPushStream();
-    
+
     // Write audio data in chunks
     const chunkSize = 32000;
     for (let i = 0; i < audioData.length; i += chunkSize) {
-      const chunk = audioData.slice(i, Math.min(i + chunkSize, audioData.length));
+      const chunk = audioData.slice(
+        i,
+        Math.min(i + chunkSize, audioData.length),
+      );
       pushStream.write(chunk);
     }
     pushStream.close();
@@ -50,7 +53,7 @@ export async function POST(request) {
       referenceText,
       sdk.PronunciationAssessmentGradingSystem.HundredMark,
       sdk.PronunciationAssessmentGranularity.Phoneme,
-      true
+      true,
     );
 
     pronunciationAssessmentConfig.enableProsodyAssessment = true;
@@ -79,55 +82,65 @@ export async function POST(request) {
       recognizer.recognized = (s, e) => {
         if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
           resultReceived = true;
-          const pronunciationResult = sdk.PronunciationAssessmentResult.fromResult(e.result);
-          
+          const pronunciationResult =
+            sdk.PronunciationAssessmentResult.fromResult(e.result);
+
           // Calculate speaking rate
           const durationInSeconds = e.result.duration / 10000000; // Convert ticks to seconds
           const wordCount = pronunciationResult.detailResult.Words.length;
           const wordsPerMinute = (wordCount / durationInSeconds) * 60;
-          
-          const speakingRate = 
-            wordsPerMinute < 100 ? 'slow' :
-            wordsPerMinute > 160 ? 'fast' :
-            'optimal';
+
+          const speakingRate =
+            wordsPerMinute < 100
+              ? "slow"
+              : wordsPerMinute > 160
+                ? "fast"
+                : "optimal";
 
           // Extract word-level details with syllables
-          const words = pronunciationResult.detailResult.Words.map(word => ({
+          const words = pronunciationResult.detailResult.Words.map((word) => ({
             word: word.Word,
             accuracyScore: word.PronunciationAssessment.AccuracyScore,
             errorType: word.PronunciationAssessment.ErrorType,
             duration: word.Duration,
             offset: word.Offset,
-            syllables: word.Syllables?.map(s => ({
+            syllables: word.Syllables?.map((s) => ({
               syllable: s.Syllable,
               accuracyScore: s.PronunciationAssessment?.AccuracyScore,
-              duration: s.Duration
-            }))
+              duration: s.Duration,
+            })),
           }));
 
           recognizer.stopContinuousRecognitionAsync(
             () => {
               cleanup();
-              resolve(NextResponse.json({
-                recognizedText: e.result.text,
-                accuracyScore: pronunciationResult.accuracyScore,
-                pronunciationScore: pronunciationResult.pronunciationScore,
-                completenessScore: pronunciationResult.completenessScore,
-                fluencyScore: pronunciationResult.fluencyScore,
-                prosodyScore: pronunciationResult.prosodyScore,
-                words: words,
-                speakingRate: speakingRate,
-                duration: durationInSeconds,
-                wordsPerMinute
-              }));
+              resolve(
+                NextResponse.json({
+                  recognizedText: e.result.text,
+                  accuracyScore: pronunciationResult.accuracyScore,
+                  pronunciationScore: pronunciationResult.pronunciationScore,
+                  completenessScore: pronunciationResult.completenessScore,
+                  fluencyScore: pronunciationResult.fluencyScore,
+                  prosodyScore: pronunciationResult.prosodyScore,
+                  words: words,
+                  speakingRate: speakingRate,
+                  duration: durationInSeconds,
+                  wordsPerMinute,
+                }),
+              );
             },
             (err) => {
-              console.error('Error stopping recognition:', err);
+              console.error("Error stopping recognition:", err);
               cleanup();
-              resolve(NextResponse.json({
-                error: 'Error stopping recognition'
-              }, { status: 500 }));
-            }
+              resolve(
+                NextResponse.json(
+                  {
+                    error: "Error stopping recognition",
+                  },
+                  { status: 500 },
+                ),
+              );
+            },
           );
         }
       };
@@ -136,9 +149,14 @@ export async function POST(request) {
       recognizer.canceled = (s, e) => {
         if (!resultReceived) {
           cleanup();
-          resolve(NextResponse.json({
-            error: e.errorDetails || 'No speech recognized'
-          }, { status: 400 }));
+          resolve(
+            NextResponse.json(
+              {
+                error: e.errorDetails || "No speech recognized",
+              },
+              { status: 400 },
+            ),
+          );
         }
       };
 
@@ -155,9 +173,14 @@ export async function POST(request) {
         console.log("\nSession stopped event.");
         if (!resultReceived) {
           cleanup();
-          resolve(NextResponse.json({
-            error: 'Session stopped without results'
-          }, { status: 408 }));
+          resolve(
+            NextResponse.json(
+              {
+                error: "Session stopped without results",
+              },
+              { status: 408 },
+            ),
+          );
         }
       };
 
@@ -169,28 +192,43 @@ export async function POST(request) {
               recognizer.stopContinuousRecognitionAsync(
                 () => {
                   cleanup();
-                  resolve(NextResponse.json({
-                    error: 'Recognition timeout'
-                  }, { status: 408 }));
+                  resolve(
+                    NextResponse.json(
+                      {
+                        error: "Recognition timeout",
+                      },
+                      { status: 408 },
+                    ),
+                  );
                 },
                 (err) => {
-                  console.error('Error stopping recognition:', err);
+                  console.error("Error stopping recognition:", err);
                   cleanup();
-                  resolve(NextResponse.json({
-                    error: 'Error stopping recognition after timeout'
-                  }, { status: 500 }));
-                }
+                  resolve(
+                    NextResponse.json(
+                      {
+                        error: "Error stopping recognition after timeout",
+                      },
+                      { status: 500 },
+                    ),
+                  );
+                },
               );
             }
           }, 300000); // 5 minutes timeout
         },
         (error) => {
-          console.error('Error starting recognition:', error);
+          console.error("Error starting recognition:", error);
           cleanup();
-          reject(NextResponse.json({
-            error: 'Error starting recognition'
-          }, { status: 500 }));
-        }
+          reject(
+            NextResponse.json(
+              {
+                error: "Error starting recognition",
+              },
+              { status: 500 },
+            ),
+          );
+        },
       );
     });
   } catch (error) {
@@ -201,10 +239,10 @@ export async function POST(request) {
     if (pushStream) {
       pushStream.close();
     }
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

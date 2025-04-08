@@ -26,10 +26,7 @@ import { toast } from "sonner";
 import { Undo } from "lucide-react";
 import { RotateCcw } from "lucide-react";
 
-export default function SingleReportPage({
-  readingLogs
-}) {
-
+export default function SingleReportPage({ readingLogs }) {
   const { title, author, totalPages, id, readingLogs: logs } = readingLogs;
 
   const router = useRouter();
@@ -39,21 +36,23 @@ export default function SingleReportPage({
   const [isSaving, setIsSaving] = useState(false);
   const [previousSummary, setPreviousSummary] = useState("");
   const ReadingLogSchema = z
-  .object({
-    startPage: z.number().min(1, "Start page must be at least 1"),
-    endPage: z.number().min(1, "End page must be at least 1"),
-    summary: z.string().min(50, "Summary must be at least 50 characters long"), // Changed this line
-    bookId: z.string(),
-    userId: z.string(),
-  })
-  .refine((data) => data.startPage <= data.endPage, {
-    message: "Start page must be less than or equal to end page",
-    path: ["startPage"],
-  })
-  .refine((data) => data.endPage <= totalPages, {
-    message: `End page cannot exceed total pages (${totalPages})`,
-    path: ["endPage"],
-  });
+    .object({
+      startPage: z.number().min(1, "Start page must be at least 1"),
+      endPage: z.number().min(1, "End page must be at least 1"),
+      summary: z
+        .string()
+        .min(50, "Summary must be at least 50 characters long"), // Changed this line
+      bookId: z.string(),
+      userId: z.string(),
+    })
+    .refine((data) => data.startPage <= data.endPage, {
+      message: "Start page must be less than or equal to end page",
+      path: ["startPage"],
+    })
+    .refine((data) => data.endPage <= totalPages, {
+      message: `End page cannot exceed total pages (${totalPages})`,
+      path: ["endPage"],
+    });
 
   const form = useForm({
     resolver: zodResolver(ReadingLogSchema),
@@ -66,27 +65,27 @@ export default function SingleReportPage({
     },
   });
 
-   // Add new state for draft summary
-   const LOCAL_STORAGE_KEY = `reading-log-draft-${id}`; // unique key per book
+  // Add new state for draft summary
+  const LOCAL_STORAGE_KEY = `reading-log-draft-${id}`; // unique key per book
 
-   // Load draft from localStorage on initial render
-   useEffect(() => {
-     const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY);
-     if (savedDraft) {
-       form.setValue("summary", savedDraft);
-     }
-   }, []);
- 
-   // Save to localStorage whenever summary changes
-   useEffect(() => {
-     const subscription = form.watch((value, { name }) => {
-       if (name === "summary") {
-         localStorage.setItem(LOCAL_STORAGE_KEY, value.summary || "");
-       }
-     });
- 
-     return () => subscription.unsubscribe();
-   }, [form.watch]);
+  // Load draft from localStorage on initial render
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedDraft) {
+      form.setValue("summary", savedDraft);
+    }
+  }, []);
+
+  // Save to localStorage whenever summary changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "summary") {
+        localStorage.setItem(LOCAL_STORAGE_KEY, value.summary || "");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
 
   // Update both startPage and endPage when lastPage changes
   useEffect(() => {
@@ -127,10 +126,10 @@ export default function SingleReportPage({
     }
 
     // Check if the summary meets the minimum character count
-  if (summary.trim().length < 50) {
-    toast.error("Summary must be at least 100 characters long");
-    return;
-  }
+    if (summary.trim().length < 50) {
+      toast.error("Summary must be at least 100 characters long");
+      return;
+    }
 
     setPreviousSummary(summary); // Access the current summary from the form
     setIsSummarizing(true);
@@ -158,8 +157,8 @@ export default function SingleReportPage({
   }
 
   return (
-    <div className="py-8 h-full">
-      <Card className="max-w-3xl ">
+    <div className="h-full py-8">
+      <Card className="max-w-3xl">
         <CardHeader>
           <CardTitle>
             <span className="text-4xl">{title}</span>
@@ -180,7 +179,7 @@ export default function SingleReportPage({
                     className="w-20"
                   />
                   {form.formState.errors.startPage && (
-                    <span className="text-red-500 text-xs">
+                    <span className="text-xs text-red-500">
                       {form.formState.errors.startPage.message}
                     </span>
                   )}
@@ -195,7 +194,7 @@ export default function SingleReportPage({
                     className="w-20"
                   />
                   {form.formState.errors.endPage && (
-                    <span className="text-red-500 text-xs">
+                    <span className="text-xs text-red-500">
                       {form.formState.errors.endPage.message}
                     </span>
                   )}
@@ -209,19 +208,19 @@ export default function SingleReportPage({
                   placeholder="Write a brief summary of what you've read today..."
                 />
                 {form.formState.errors.summary && (
-                  <span className="text-red-500 text-xs">
+                  <span className="text-xs text-red-500">
                     {form.formState.errors.summary.message}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex gap-6 mt-6">
+            <div className="mt-6 flex gap-6">
               <AddReadingLog isSubmitting={isSubmitting} />
               <Button
                 type="button"
                 onClick={handleSummarizeSummary}
-                className="group hover:bg-emerald-400 transition-colors duration-500"
+                className="group transition-colors duration-500 hover:bg-emerald-400"
                 disabled={isSummarizing}
               >
                 {isSummarizing ? (
@@ -229,7 +228,7 @@ export default function SingleReportPage({
                 ) : (
                   <>
                     Summarize
-                    <Shapes className="size-4 ml-2 group-hover:rotate-90 transition-all duration-500 ease-in-out" />
+                    <Shapes className="ml-2 size-4 transition-all duration-500 ease-in-out group-hover:rotate-90" />
                   </>
                 )}
               </Button>
@@ -245,7 +244,7 @@ export default function SingleReportPage({
                   className="group bg-sky-400 transition-colors duration-500 hover:bg-emerald-400"
                 >
                   Bring back previous summary!
-                  <RotateCcw className="size-4 ml-2 group-hover:-rotate-180  transition-all duration-500 ease-in-out" />
+                  <RotateCcw className="ml-2 size-4 transition-all duration-500 ease-in-out group-hover:-rotate-180" />
                 </Button>
               )}
             </div>

@@ -9,12 +9,16 @@ import { navItems } from "./NavLinks";
 import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 import { getReadNotificationsByUserId } from "@/lib/actions";
+import { PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 
 export const Topbar = ({
   sidebarOpen,
   setSidebarOpen,
   pathname,
   handleNotificationClick,
+  desktopSidebarOpen,
+  setDesktopSidebarOpen,
 }) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // Track if there are unread notifications
   const { user } = useUser();
@@ -36,61 +40,76 @@ export const Topbar = ({
   }, [user?.id]);
 
   return (
-    <div className="h-[55px] w-full flex items-center px-4 justify-between">
+    <div className="flex h-[55px] w-full items-center justify-between px-4">
       <div className="flex items-center">
-        {/* Logo and menu for small screens */}
-        <div className="flex lg:hidden -ml-3 gap-2 items-center text-white">
-          <Link href="/home">
-            <Image
-              src="/logo1.png"
-              height={100}
-              width={100}
-              alt="logo"
-              priority
-              style={{ width: "auto", height: "auto" }}
-              className="ml-2"
-            />
-          </Link>
+        {/* Logo for small screens */}
+        <div className="-ml-3 flex items-center gap-2 text-white">
+          {!desktopSidebarOpen && (
+            <Link href="/home">
+              <Image
+                src="/logo1.png"
+                height={100}
+                width={100}
+                alt="logo"
+                priority
+                style={{ width: "auto", height: "auto" }}
+                className="ml-2"
+              />
+            </Link>
+          )}
         </div>
 
-        {/* Logo and menu for large screens */}
-        {!sidebarOpen && (
-          <div className="hidden lg:flex gap-2 items-center text-white">
-            <Image
-              src="/logo1.png"
-              height={100}
-              width={100}
-              alt="logo"
-              priority
-              style={{ width: "auto", height: "auto" }}
-              className="-ml-2"
-            />
-            {/* Menu to open sidebar */}
-            <button
-              className="text-slate-800 ml-2 mt-1"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <MenuDots
-                className="animate-pulse"
-                svgProps={{ width: "24px", height: "24px" }}
-              />
-            </button>
-          </div>
-        )}
+        {/* MenuDots should always be visible */}
 
-        {/* Top Menu Bar */}
-        <div className="gap-4 text-slate-500 cursor-pointer hidden md:flex ml-4">
+        <div className="mt-2 hidden lg:block">
+          <button
+            className="ml-2 mt-1 text-slate-800"
+            onClick={() => setDesktopSidebarOpen(!desktopSidebarOpen)}
+          >
+            {!desktopSidebarOpen ? (
+              <PanelLeftOpen
+                className="mb-1 animate-pulse text-blue-400"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <PanelLeftClose
+                className="mb-1 animate-pulse text-blue-400"
+                strokeWidth={1.5}
+              />
+            )}
+          </button>
+        </div>
+
+        <div className="mt-2 block lg:hidden">
+          <button
+            className="ml-2 mt-1 text-slate-800"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {!desktopSidebarOpen ? (
+              <PanelLeftOpen
+                className="mb-1 animate-pulse text-blue-400"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <PanelLeftClose
+                className="mb-1 animate-pulse text-blue-400"
+                strokeWidth={1.5}
+              />
+            )}
+          </button>
+        </div>
+
+        {/* Top Menu Bar for larger screens */}
+        <div className="ml-4 hidden cursor-pointer gap-4 text-slate-500 md:flex">
           {navItems.map((item, index) => (
             <Link
               key={index}
               href={item.href}
-              className={`text-sm rounded-md px-2 py-1 
-              ${
+              className={`rounded-md px-2 py-1 text-sm ${
                 pathname.includes(item.href)
-                  ? "text-white bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold"
+                  ? "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold text-white"
                   : "text-blue-500"
-              } 
-              hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+              } hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
             >
               {item.label}
             </Link>
@@ -98,7 +117,7 @@ export const Topbar = ({
         </div>
       </div>
 
-      <div className="flex gap-2 items-center relative">
+      <div className="relative flex items-center gap-2">
         {/* Notification Button with Ping Circle */}
         <Button
           type="button"
@@ -110,9 +129,9 @@ export const Topbar = ({
           <Bell className="size-5" strokeWidth={1.5} />
           {/* Ping Circle */}
           {hasUnreadNotifications && (
-            <span className="absolute top-0 right-0 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            <span className="absolute right-0 top-0 flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
             </span>
           )}
         </Button>

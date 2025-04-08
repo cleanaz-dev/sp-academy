@@ -43,6 +43,8 @@ model User {
   Resource              Resource[]
   AIGeneratedContent    AIGeneratedContent[]
   notifications         Notification[]
+  GameScore             GameScore[]
+  UserSchedule          UserSchedule[]
 }
 
 model Course {
@@ -123,6 +125,7 @@ model AccountSettings {
   level                     Level?          @default(BEGINNER)
   dailyEmails               Boolean?        @default(true)
   weeklyEmails              Boolean?        @default(true)
+  promotionEmails           Boolean?        @default(true)
   shareReadingLogs          Boolean         @default(false)
   shareConversationActivity Boolean         @default(false)
   shareAchievements         Boolean         @default(false)
@@ -579,6 +582,140 @@ model Notification {
   @@unique([userId, activityId, fromUserId])
   @@index([userId, isRead]) // For fetching unread notifications
   @@index([activityId, type]) // For activity-specific notifications
+}
+
+model Game {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  description      String?
+  rules            String
+  imageUrl         String?
+  language         Languages          @default(ENGLISH)
+  difficulty       Int                @default(1)
+  type             GameType
+  theme            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  GameScore        GameScore[]
+  gameData         Json[]
+  GameSoundEffects GameSoundEffects[]
+  GameVariation    GameVariation[]
+}
+
+model GameScore {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id])
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+}
+
+model GameSoundEffects {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameId        String   @db.ObjectId
+  game          Game     @relation(fields: [gameId], references: [id])
+  correctAnswer String
+  wrongAnswer   String?
+  timerBepp     String?
+  streakStart   String?
+  streakEnd     String?
+  gameStart     String?
+  gameEnd       String?
+  otherSounds   Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model GameVariation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id])
+  variation String   @default("default") // Unique identifier for this variation
+  gameData  Json[] // Store structured game content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, variation]) // Ensure each variation is unique per game
+}
+
+model EmailTemplate {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  templateName   String
+  subject        String
+  content        String
+  designHtml     String
+  handlebarsType HandlebarsType
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  EmailSchedule  EmailSchedule[]
+}
+
+enum HandlebarsType {
+  Lesson
+  Course
+  Book
+  Exercise
+}
+
+model EmailSchedule {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleName String
+  templateId   String         @db.ObjectId
+  status       ScheduleStatus @default(ACTIVE)
+  frequency    String // DAILY, WEEKLY, MONTHLY
+  startDate    DateTime       @default(now())
+  endDate      DateTime? // Optional end date
+  timeOfDay    String // Time to send (HH:mm format)
+  daysOfWeek   String? // Comma-separated days (e.g., "MON,WED,FRI")
+  timeZone     String         @default("UTC")
+  lastRun      DateTime? // Track last execution
+  nextRun      DateTime? // Calculate next run time
+  recipients   String[] // Array of email addresses
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  template      EmailTemplate          @relation(fields: [templateId], references: [id])
+  executionLogs ScheduleExecutionLog[]
+
+  UserSchedule UserSchedule[]
+}
+
+model UserSchedule {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String        @db.ObjectId
+  schedule   EmailSchedule @relation(fields: [scheduleId], references: [id])
+  scheduleId String        @db.ObjectId
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([userId, scheduleId])
+}
+
+model ScheduleExecutionLog {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleId String        @db.ObjectId
+  runAt      DateTime      @default(now())
+  status     String // success, failure
+  details    String? // Additional details or error message
+  schedule   EmailSchedule @relation(fields: [scheduleId], references: [id])
+}
+
+enum ScheduleStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum GameType {
+  Verbal
+  Visual
+  Acoustic
 }
 
 enum PracticeStatus {

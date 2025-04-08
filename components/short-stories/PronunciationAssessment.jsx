@@ -45,7 +45,11 @@ const SUPPORTED_LANGUAGES = {
   "it-IT": "Italian",
 };
 
-export default function PronunciationAssessment({ userId, storyText, storyId }) {
+export default function PronunciationAssessment({
+  userId,
+  storyText,
+  storyId,
+}) {
   const [isRecording, setIsRecording] = useState(false);
   const [referenceText, setReferenceText] = useState(storyText);
   const [result, setResult] = useState(null);
@@ -93,7 +97,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
         }
         return acc;
       },
-      { excellent: [], good: [], needsWork: [], mispronounced: [] }
+      { excellent: [], good: [], needsWork: [], mispronounced: [] },
     );
   };
 
@@ -116,7 +120,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
 
   const isMobileDevice = () => {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
   };
 
@@ -200,7 +204,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
       }
     } catch (error) {
       setError(
-        "Error accessing microphone. Please ensure you have granted permission."
+        "Error accessing microphone. Please ensure you have granted permission.",
       );
       console.error("Error accessing microphone:", error);
     }
@@ -210,9 +214,8 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
     try {
       const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
       const arrayBuffer = await audioBlob.arrayBuffer();
-      const audioBuffer = await audioContext.current.decodeAudioData(
-        arrayBuffer
-      );
+      const audioBuffer =
+        await audioContext.current.decodeAudioData(arrayBuffer);
       const wavBuffer = await convertToWav(audioBuffer);
       const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
 
@@ -254,7 +257,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
       view.setInt16(
         offset,
         sample < 0 ? sample * 0x8000 : sample * 0x7fff,
-        true
+        true,
       );
       offset += 2;
     }
@@ -327,8 +330,8 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
             {score >= 80
               ? "Excellent!"
               : score >= 60
-              ? "Good, but could be improved."
-              : "Needs practice."}
+                ? "Good, but could be improved."
+                : "Needs practice."}
           </p>
           <Progress value={score} className="h-2" />
         </div>
@@ -350,9 +353,9 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
             <HoverCard key={`${word.word}-${index}`}>
               <HoverCardTrigger asChild>
                 <div
-                  className={`p-2 rounded-lg border cursor-pointer hover:bg-gray-50`}
+                  className={`cursor-pointer rounded-lg border p-2 hover:bg-gray-50`}
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span>{word.word}</span>
                     <Button
                       variant="ghost"
@@ -392,7 +395,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
       ...groupedWords.needsWork,
       ...groupedWords.mispronounced,
     ];
-    console.log("StoryID:",storyId)
+    console.log("StoryID:", storyId);
     try {
       const response = await fetch("/api/practice-vocabulary", {
         method: "POST",
@@ -403,7 +406,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
           words: wordsForPractice,
           language: language,
           timestamp: new Date().toISOString(),
-          storyId: storyId || "No story ID available"
+          storyId: storyId || "No story ID available",
         }),
       });
 
@@ -421,7 +424,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
   };
 
   return (
-    <div className="max-w-4xl mx-auto pt-6">
+    <div className="mx-auto max-w-4xl pt-6">
       <Card>
         <CardHeader>
           <CardTitle>Pronunciation Assessment</CardTitle>
@@ -455,7 +458,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
                 </Select>
 
                 <Card
-                  className="h-auto max-h-full resize-none overflow-auto p-2 whitespace-pre-wrap"
+                  className="h-auto max-h-full resize-none overflow-auto whitespace-pre-wrap p-2"
                   contentEditable={false}
                   disabled={isRecording || isLoading}
                 >
@@ -487,7 +490,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
                   <Card>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900" />
                       </div>
                     </CardContent>
                   </Card>
@@ -539,7 +542,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
                           <div className="flex items-center">
                             <span
                               className={getScoreColor(
-                                result.pronunciationScore
+                                result.pronunciationScore,
                               )}
                             >
                               {result.pronunciationScore?.toFixed(2)}%
@@ -569,7 +572,7 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
                           <div className="flex items-center">
                             <span
                               className={getScoreColor(
-                                result.completenessScore
+                                result.completenessScore,
                               )}
                             >
                               {result.completenessScore?.toFixed(2)}%
@@ -653,19 +656,19 @@ export default function PronunciationAssessment({ userId, storyText, storyId }) 
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <h4 className="text-sm font-medium mb-2">
+                        <h4 className="mb-2 text-sm font-medium">
                           Reference Text
                         </h4>
-                        <p className="p-3 bg-blue-50 rounded-lg">
+                        <p className="rounded-lg bg-blue-50 p-3">
                           {referenceText}
                         </p>
                       </div>
                       <Separator />
                       <div>
-                        <h4 className="text-sm font-medium mb-2">
+                        <h4 className="mb-2 text-sm font-medium">
                           Recognized Text
                         </h4>
-                        <p className="p-3 bg-gray-50 rounded-lg">
+                        <p className="rounded-lg bg-gray-50 p-3">
                           {result.recognizedText}
                         </p>
                       </div>

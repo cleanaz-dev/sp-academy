@@ -20,13 +20,14 @@ export default function ReviewForm({ courseData, onPublish }) {
     if (!courseData.basicInfo.description)
       issues.push("Course description is required");
     if (!courseData.basicInfo.subject) issues.push("Subject is required");
-    if (!courseData.basicInfo.gradeLevel) issues.push("Grade level is required");
+    if (!courseData.basicInfo.gradeLevel)
+      issues.push("Grade level is required");
 
     // Check lessons
-    if (courseData.lessons.length === 0) issues.push("At least one lesson is required");
+    if (courseData.lessons.length === 0)
+      issues.push("At least one lesson is required");
     courseData.lessons.forEach((lesson, index) => {
-      if (!lesson.title)
-        issues.push(`Lesson ${index + 1} title is required`);
+      if (!lesson.title) issues.push(`Lesson ${index + 1} title is required`);
       if (!lesson.description)
         issues.push(`Lesson ${index + 1} description is required`);
     });
@@ -55,7 +56,7 @@ export default function ReviewForm({ courseData, onPublish }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Course Review</h3>
         {issues.length === 0 ? (
           <Badge variant="success" className="flex items-center gap-1">
@@ -72,7 +73,7 @@ export default function ReviewForm({ courseData, onPublish }) {
 
       {/* Basic Information */}
       <Card className="p-6">
-        <h4 className="font-medium mb-4">Basic Information</h4>
+        <h4 className="mb-4 font-medium">Basic Information</h4>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-sm text-gray-500">Title</label>
@@ -84,7 +85,9 @@ export default function ReviewForm({ courseData, onPublish }) {
           </div>
           <div>
             <label className="text-sm text-gray-500">Grade Level</label>
-            <p className="font-medium">{courseData.basicInfo.gradeLevel || "—"}</p>
+            <p className="font-medium">
+              {courseData.basicInfo.gradeLevel || "—"}
+            </p>
           </div>
           <div>
             <label className="text-sm text-gray-500">Duration</label>
@@ -102,7 +105,7 @@ export default function ReviewForm({ courseData, onPublish }) {
         <div className="mt-4">
           <label className="text-sm text-gray-500">Learning Outcomes</label>
           {courseData.basicInfo.learningOutcomes?.length > 0 ? (
-            <ul className="list-disc list-inside mt-1">
+            <ul className="mt-1 list-inside list-disc">
               {courseData.basicInfo.learningOutcomes.map((outcome, index) => (
                 <li key={index}>{outcome}</li>
               ))}
@@ -115,20 +118,17 @@ export default function ReviewForm({ courseData, onPublish }) {
 
       {/* Lessons */}
       <Card className="p-6">
-        <h4 className="font-medium mb-4">Lesson Sequence</h4>
+        <h4 className="mb-4 font-medium">Lesson Sequence</h4>
         {courseData.lessons.length > 0 ? (
           <div className="space-y-4">
             {courseData.lessons.map((lesson, index) => (
-              <div
-                key={index}
-                className="border rounded-lg p-4 bg-gray-50"
-              >
-                <div className="flex justify-between items-start">
+              <div key={index} className="rounded-lg border bg-gray-50 p-4">
+                <div className="flex items-start justify-between">
                   <div>
                     <h5 className="font-medium">
                       Lesson {index + 1}: {lesson.title}
                     </h5>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="mt-1 text-sm text-gray-600">
                       {lesson.description}
                     </p>
                   </div>
@@ -142,7 +142,7 @@ export default function ReviewForm({ courseData, onPublish }) {
                 {lesson.objectives?.length > 0 && (
                   <div className="mt-2">
                     <span className="text-sm text-gray-500">Objectives:</span>
-                    <ul className="list-disc list-inside mt-1">
+                    <ul className="mt-1 list-inside list-disc">
                       {lesson.objectives.map((objective, i) => (
                         <li key={i} className="text-sm">
                           {objective}
@@ -161,7 +161,7 @@ export default function ReviewForm({ courseData, onPublish }) {
 
       {/* Materials */}
       <Card className="p-6">
-        <h4 className="font-medium mb-4">Course Materials</h4>
+        <h4 className="mb-4 font-medium">Course Materials</h4>
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-500">Overview</label>
@@ -170,22 +170,22 @@ export default function ReviewForm({ courseData, onPublish }) {
           <div>
             <label className="text-sm text-gray-500">Resources</label>
             {courseData.materials.resources?.length > 0 ? (
-              <div className="space-y-2 mt-2">
+              <div className="mt-2 space-y-2">
                 {courseData.materials.resources.map((resource) => (
                   <div
                     key={resource.id}
-                    className="flex items-center gap-2 bg-gray-50 p-2 rounded"
+                    className="flex items-center gap-2 rounded bg-gray-50 p-2"
                   >
                     {getResourceIcon(resource.type)}
                     <span className="font-medium">{resource.title}</span>
-                    <span className="text-sm text-gray-500 truncate">
+                    <span className="truncate text-sm text-gray-500">
                       {resource.url}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 mt-1">No resources added</p>
+              <p className="mt-1 text-gray-500">No resources added</p>
             )}
           </div>
         </div>
@@ -193,11 +193,11 @@ export default function ReviewForm({ courseData, onPublish }) {
 
       {/* Validation Issues */}
       {issues.length > 0 && (
-        <Card className="p-6 border-red-200 bg-red-50">
-          <h4 className="font-medium text-red-700 mb-2">
+        <Card className="border-red-200 bg-red-50 p-6">
+          <h4 className="mb-2 font-medium text-red-700">
             Please address the following issues:
           </h4>
-          <ul className="list-disc list-inside space-y-1">
+          <ul className="list-inside list-disc space-y-1">
             {issues.map((issue, index) => (
               <li key={index} className="text-red-600">
                 {issue}

@@ -125,7 +125,6 @@ export async function POST(req) {
       top_k: 250,
       stop_sequences: ["\n\nHuman:"],
     };
-    
 
     console.log("Prompt:", prompt);
 
@@ -201,7 +200,7 @@ export async function POST(req) {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 }

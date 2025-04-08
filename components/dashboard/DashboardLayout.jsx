@@ -7,47 +7,80 @@ import { useUser } from "@clerk/nextjs";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { NotificationsPanel } from "./NotificationsPanel";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function DashboardLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true); // For desktop sidebar
+  const [isSheetSidebarOpen, setIsSheetSidebarOpen] = useState(false); // For mobile sheet sidebar
   const [showNotifications, setShowNotifications] = useState(false);
   const { isLoaded } = useUser();
   const pathname = usePathname();
 
-  if (!isLoaded) return <div>Loading...</div>;
+  // Show loading until everything is ready
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-screen h-screen flex overflow-hidden">
+    <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar for large screens */}
       <div
-        className={`${
-          sidebarOpen ? "w-48" : "w-0"
-        } bg-white flex-shrink-0 h-full transition-[width] duration-300 overflow-hidden hidden lg:block`}
+        className={`hidden lg:block ${
+          isDesktopSidebarOpen ? "w-48" : "w-0"
+        } h-full flex-shrink-0 bg-white transition-all duration-300`}
       >
-        <div
-          className={`h-full w-48 overflow-y-auto ${
-            sidebarOpen ? "opacity-100" : "opacity-0"
-          } transition-opacity duration-300`}
-        >
-          <Sidebar
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-            pathname={pathname}
-          />
-        </div>
+        <Sidebar
+          sidebarOpen={isDesktopSidebarOpen}
+          setSidebarOpen={setIsDesktopSidebarOpen}
+          pathname={pathname}
+        />
       </div>
 
+      {/* Sheet for small/medium screens */}
+      <Sheet open={isSheetSidebarOpen} onOpenChange={setIsSheetSidebarOpen}>
+        <SheetContent side="left" className="w-48 bg-white p-0 lg:hidden">
+          <VisuallyHidden>
+            <SheetTitle>Navigation</SheetTitle>
+            <SheetDescription>Menu</SheetDescription>
+          </VisuallyHidden>
+          <Sidebar
+            sidebarOpen={isSheetSidebarOpen}
+            setSidebarOpen={setIsSheetSidebarOpen}
+            pathname={pathname}
+          />
+        </SheetContent>
+      </Sheet>
+
       {/* Main content area */}
-      <div className="flex flex-col flex-grow h-full transition-all duration-300 w-full lg:w-[calc(100%-15rem)]">
+      <div
+        className={`flex h-full w-full flex-grow flex-col transition-all duration-300 ${
+          isDesktopSidebarOpen ? "lg:w-[calc(100%-12rem)]" : "lg:w-full"
+        }`}
+      >
         <Topbar
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
+          sidebarOpen={isSheetSidebarOpen} // Mobile toggle affects sheet
+          setSidebarOpen={setIsSheetSidebarOpen} // Mobile toggle updates sheet state
+          desktopSidebarOpen={isDesktopSidebarOpen} // Pass desktop state to Topbar
+          setDesktopSidebarOpen={setIsDesktopSidebarOpen} // Pass setter for desktop
           pathname={pathname}
-          handleNotificationClick={() => setShowNotifications(!showNotifications)}
+          handleNotificationClick={() =>
+            setShowNotifications(!showNotifications)
+          }
         />
 
         <ScrollArea className="h-full w-full">
-          <div className="flex-grow h-full bg-white overflow-auto">
+          <div className="h-full flex-grow overflow-auto bg-white">
             {children}
           </div>
         </ScrollArea>

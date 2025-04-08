@@ -6,7 +6,6 @@ import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request) {
   try {
-
     const { userId } = auth(request); // Ensure request is passed
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -26,4 +25,3 @@ export async function GET(request) {
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
-

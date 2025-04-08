@@ -20,24 +20,28 @@ export default async function Home() {
 
   return (
     <main className="mx-auto">
-      <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16 mb-8">
-        <div className="max-w-7xl mx-auto px-6">
-        <h1 className="flex items-center gap-4 text-4xl font-bold mb-4">
-            Short Stories <BookOpenText strokeWidth={1.5} className="size-10 drop-shadow-xl" />
+      <header className="mb-8 animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
+            Short Stories{" "}
+            <BookOpenText
+              strokeWidth={1.5}
+              className="size-10 drop-shadow-xl"
+            />
           </h1>
           <p className="text-xl opacity-90">
             Immerse yourself in a world of enchanting stories, inspired by you.
           </p>
         </div>
       </header>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+      <div className="grid grid-cols-1 gap-8 px-4 md:grid-cols-2 lg:grid-cols-3">
         {stories.map((story) => (
           <Card
             key={story.id}
-            className="flex flex-col justify-between h-full shadow-md rounded-2xl overflow-hidden bg-white dark:bg-gray-800 hover:shadow-lg"
+            className="flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-md hover:shadow-lg dark:bg-gray-800"
           >
             <div>
-              <div className="relative h-48 w-full group overflow-hidden">
+              <div className="group relative h-48 w-full overflow-hidden">
                 {story.imageUrl && (
                   <Image
                     src={story.imageUrl}
@@ -54,7 +58,7 @@ export default async function Home() {
                     {story.title}
                   </h2>
                 </CardTitle>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                <CardDescription className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                   {story.teaser}
                 </CardDescription>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -73,10 +77,10 @@ export default async function Home() {
                 </div>
               </CardHeader>
             </div>
-            <CardFooter className="p-4 mt-auto">
+            <CardFooter className="mt-auto p-4">
               <Button
                 asChild
-                className="w-full bg-gradient-to-br from-blue-600 to-violet-600 hover:animate-pulse text-white font-medium rounded-md py-2"
+                className="w-full rounded-md bg-gradient-to-br from-blue-600 to-violet-600 py-2 font-medium text-white hover:animate-pulse"
               >
                 <Link href={`/short-story/${story.id}`}>Read 🤓</Link>
               </Button>

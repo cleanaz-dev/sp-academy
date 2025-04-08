@@ -14,7 +14,7 @@ export async function POST(req) {
     if (!message) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,7 +94,7 @@ export async function POST(req) {
             },
             optimize_streaming_latency: 3,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -124,7 +124,7 @@ export async function POST(req) {
     console.error("Conversation error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

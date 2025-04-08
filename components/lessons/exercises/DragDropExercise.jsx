@@ -148,14 +148,14 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
       <motion.div
         ref={ref}
         layout
-        className={`px-4 py-2 border rounded-md cursor-move transition-all duration-200 shadow-sm ${
+        className={`cursor-move rounded-md border px-4 py-2 shadow-sm transition-all duration-200 ${
           isDragging
             ? "bg-gray-300 opacity-60"
             : submitted
-            ? isWordCorrect(word, index)
-              ? "bg-green-100 border-green-500"
-              : "bg-red-100 border-red-500"
-            : "bg-white border-gray-300"
+              ? isWordCorrect(word, index)
+                ? "border-green-500 bg-green-100"
+                : "border-red-500 bg-red-100"
+              : "border-gray-300 bg-white"
         }`}
       >
         {word}
@@ -169,17 +169,17 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
 
   return (
     <div
-      className={`relative p-4 rounded-lg border-2 ${
+      className={`relative rounded-lg border-2 p-4 ${
         isCompleted ? "border-green-200 bg-green-50" : "border-gray-200"
       }`}
     >
       {isCompleted && (
-        <div className="absolute top-2 right-2 text-green-500">✓</div>
+        <div className="absolute right-2 top-2 text-green-500">✓</div>
       )}
       <DndProvider backend={HTML5Backend}>
-        <div className="mx-auto p-6 space-y-6 bg-white shadow-lg rounded-lg">
-          <div className="flex items-center gap-4 mb-10">
-            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-sm font-medium text-white">
+        <div className="mx-auto space-y-6 rounded-lg bg-white p-6 shadow-lg">
+          <div className="mb-10 flex items-center gap-4">
+            <span className="flex h-8 w-8 animate-[gradient_6s_ease_infinite] items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] text-sm font-medium text-white">
               {exercise.order + 1}
             </span>
             <p className="font-medium text-muted-foreground">
@@ -189,7 +189,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
 
           {/* Draggable Words Container */}
           <div
-            className={`flex flex-wrap gap-2 p-4 min-h-[80px] rounded-md transition-colors duration-300 ${
+            className={`flex min-h-[80px] flex-wrap gap-2 rounded-md p-4 transition-colors duration-300 ${
               submitted && isCorrect ? "bg-green-50" : "bg-gray-50"
             } ${animateWrong ? "animate-shake" : ""}`}
           >
@@ -207,7 +207,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
           {!submitted ? (
             <button
               onClick={handleSubmit}
-              className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              className="w-full rounded-md bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
             >
               Check Answer
             </button>
@@ -215,7 +215,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
             !isCorrect && (
               <button
                 onClick={handleTryAgain}
-                className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                className="w-full rounded-md bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
               >
                 Try Again
               </button>
@@ -225,7 +225,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
           {/* Feedback Message */}
           {showFeedback && (
             <div
-              className={`p-3 rounded-md transition-all duration-300 ${
+              className={`rounded-md p-3 transition-all duration-300 ${
                 isCorrect
                   ? "bg-green-50 text-green-700"
                   : "bg-red-50 text-red-600"

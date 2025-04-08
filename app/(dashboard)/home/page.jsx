@@ -26,33 +26,34 @@ export default async function DashboardHome() {
   const userData = await getUserDataByUserId(user.id);
   const books = userData.Book;
   const achievements = userData.UserProgress;
-  const progress = userData.Progress
-    
-  // await updateAllBooksProgress();
+  const progress = userData.Progress;
 
+  // await updateAllBooksProgress();
+  if (!user) {
+    null;
+  }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <main className="flex-1 overflow-y-auto">
         {/* Top Bar */}
         <SpoonLogo />
-        <header className="bg-white border-b p-6 mb-6">
-          <div className="max-w-7xl mx-auto">
-           
-            <h1 className="mt-4 bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 inline-block text-transparent bg-clip-text text-4xl font-bold">
-              Welcome back, {user?.firstName}! 
+        <header className="mb-6 border-b bg-white p-6">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="mt-4 inline-block bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 bg-clip-text text-4xl font-bold text-transparent">
+              Welcome back, {user?.firstName}!
             </h1>
           </div>
         </header>
 
         {/* Dashboard Content */}
-        <div className="max-w-7xl mx-auto px-6 space-y-6">
+        <div className="mx-auto max-w-7xl space-y-6 px-2.5 md:px-6">
           {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <Card className="hover:shadow-lg transition-shadow">
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <Card className="transition-shadow hover:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-100 rounded-full">
+                  <div className="rounded-full bg-blue-100 p-3">
                     <BookOpenCheck className="h-6 w-6 text-blue-600" />
                   </div>
                   <div>
@@ -63,10 +64,10 @@ export default async function DashboardHome() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow">
+            <Card className="transition-shadow hover:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-green-100 rounded-full">
+                  <div className="rounded-full bg-green-100 p-3">
                     <Clock className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
@@ -77,15 +78,17 @@ export default async function DashboardHome() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow gdri">
+            <Card className="gdri transition-shadow hover:shadow-lg">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-purple-100 rounded-full">
+                  <div className="rounded-full bg-purple-100 p-3">
                     <Trophy className="h-6 w-6 text-purple-600" />
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Achievements</p>
-                    <h3 className="text-2xl font-bold">{achievements.filter((a) => a.isUnlocked).length}</h3>
+                    <h3 className="text-2xl font-bold">
+                      {achievements.filter((a) => a.isUnlocked).length}
+                    </h3>
                   </div>
                 </div>
               </CardContent>
@@ -93,10 +96,9 @@ export default async function DashboardHome() {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Recent Lessons */}
-            <RecentLessons progress={progress} />        
+            <RecentLessons progress={progress} />
             {/* Weekly Schedule */}
             <WeeklySchedule />
 
@@ -108,8 +110,8 @@ export default async function DashboardHome() {
 
           {/* Activity Feed Section */}
           <div className="mt-6 pb-6">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader className="border-b bg-gray-50 flex flex-row justify-between items-center">
+            <Card className="transition-shadow hover:shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between border-b bg-gray-50">
                 <CardTitle className="text-lg font-semibold">
                   Recent Activity
                 </CardTitle>

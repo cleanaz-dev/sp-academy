@@ -5,7 +5,6 @@ import React, { useState, useEffect } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { ScrollArea } from "../../ui/scroll-area";
 
-
 export default function ConversationComponent() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -16,7 +15,6 @@ export default function ConversationComponent() {
   const [error, setError] = useState(null);
   const [recognition, setRecognition] = useState(null);
   const [conversationHistory, setConversationHistory] = useState([]);
-
 
   // Initialize speech recognition
   useEffect(() => {
@@ -60,26 +58,29 @@ export default function ConversationComponent() {
   }, []);
 
   useEffect(() => {
-    const savedHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
+    const savedHistory = JSON.parse(
+      localStorage.getItem("conversationHistory") || "[]",
+    );
     setConversationHistory(savedHistory);
   }, []);
-
 
   const handleConversation = async (message) => {
     setIsProcessing(true);
     setError(null);
-  
+
     try {
       // Load existing conversation history from localStorage
-      const storedHistory = JSON.parse(localStorage.getItem("conversationHistory") || "[]");
-  
+      const storedHistory = JSON.parse(
+        localStorage.getItem("conversationHistory") || "[]",
+      );
+
       // Add the new user message to the history
       const newUserMessage = { role: "user", content: message };
       const updatedHistory = [...storedHistory, newUserMessage];
-  
+
       // // Log the updated history before the API call
       // console.log("Updated Conversation History Before API Call:", updatedHistory);
-  
+
       // Send the entire conversation history in the API request
       const response = await fetch("/api/conversation", {
         method: "POST",
@@ -91,27 +92,30 @@ export default function ConversationComponent() {
           history: updatedHistory,
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (data.error) throw new Error(data.error);
-  
+
       // // Log the response data
       // console.log("API Response Data:", data);
-  
+
       // Add AI's response to the conversation history
       const aiMessage = { role: "assistant", content: data.text };
       const finalHistory = [...updatedHistory, aiMessage];
-  
+
       // Update the conversation history in state and localStorage
       setConversationHistory(finalHistory);
       localStorage.setItem("conversationHistory", JSON.stringify(finalHistory));
-  
+
       // Log the updated history
-      console.log("Updated Conversation History After Adding AI Message:", finalHistory);
-  
+      console.log(
+        "Updated Conversation History After Adding AI Message:",
+        finalHistory,
+      );
+
       setAiResponse(data.text);
-  
+
       // Handle audio playback
       setIsGeneratingAudio(true);
       if (!isMuted) {
@@ -125,8 +129,7 @@ export default function ConversationComponent() {
       setIsGeneratingAudio(false);
     }
   };
-  
-  
+
   const handleAudioPlayback = async (audioBase64) => {
     try {
       const audioBlob = new Blob([Buffer.from(audioBase64, "base64")], {
@@ -156,20 +159,19 @@ export default function ConversationComponent() {
     }
   };
 
-
   const clearConversationHistory = () => {
     // Clear the conversation history state
     setConversationHistory([]);
     setUserMessage("");
     setAiResponse("");
     setError(null);
-  
+
     // Clear the conversation history from localStorage
-    localStorage.clear()
+    localStorage.clear();
   };
 
   return (
-    <div className="mt-4 p-4 bg-white rounded-lg shadow">
+    <div className="mt-4 rounded-lg bg-white p-4 shadow">
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
@@ -179,9 +181,9 @@ export default function ConversationComponent() {
           <button
             onClick={toggleRecording}
             disabled={isProcessing}
-            className={`p-3 rounded-full ${
+            className={`rounded-full p-3 ${
               isRecording ? "bg-red-500" : "bg-blue-500"
-            } text-white disabled:opacity-50 transition-all`}
+            } text-white transition-all disabled:opacity-50`}
           >
             {isProcessing ? (
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -194,13 +196,13 @@ export default function ConversationComponent() {
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             {error}
           </div>
         )}
 
         {isRecording && (
-          <div className="text-center text-red-600 animate-pulse">
+          <div className="animate-pulse text-center text-red-600">
             Recording...
           </div>
         )}
@@ -219,14 +221,13 @@ export default function ConversationComponent() {
 
         {/* Conversation History */}
         <ScrollArea className="h-48 overflow-y-auto">
-        <div className="space-y-4">
-        
+          <div className="space-y-4">
             {" "}
             {/* Ensure ScrollArea is directly applied here */}
             {conversationHistory.map((message, index) => (
               <div
                 key={index}
-                className={`p-3 rounded text-sm ${
+                className={`rounded p-3 text-sm ${
                   message.role === "user" ? "bg-gray-100" : "bg-blue-50"
                 }`}
               >
@@ -236,15 +237,14 @@ export default function ConversationComponent() {
                 <p>{message.content}</p>
               </div>
             ))}
-         
-        </div>
+          </div>
         </ScrollArea>
-        
+
         {/* Clear button at bottom */}
         {conversationHistory.length > 0 && (
           <button
             onClick={clearConversationHistory}
-            className="w-full p-2 mt-4 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
+            className="mt-4 w-full rounded bg-gray-500 p-2 text-white transition-all hover:bg-gray-600"
           >
             Clear Conversation
           </button>

@@ -8,7 +8,9 @@ import { toast } from "sonner"; // Assuming you're using sonner for toasts
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle, XCircle } from "lucide-react";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+);
 
 export function BillingForm({ currentBillingPlan }) {
   const [billingPlan, setBillingPlan] = useState(currentBillingPlan || "FREE");
@@ -102,13 +104,14 @@ export function BillingForm({ currentBillingPlan }) {
     }
   };
 
-  const plansToShow = billingInterval === "monthly"
-    ? ["FREE", "BASIC_MONTHLY", "PREMIUM_MONTHLY"]
-    : ["FREE", "BASIC_ANNUALLY", "PREMIUM_ANNUALLY"];
+  const plansToShow =
+    billingInterval === "monthly"
+      ? ["FREE", "BASIC_MONTHLY", "PREMIUM_MONTHLY"]
+      : ["FREE", "BASIC_ANNUALLY", "PREMIUM_ANNUALLY"];
 
   return (
     <main className="max-w-4xl">
-      <h1 className="font-semibold text-2xl mb-4">Billing Information</h1>
+      <h1 className="mb-4 text-2xl font-semibold">Billing Information</h1>
       <form onSubmit={handleSubscribe} className="space-y-6">
         <div className="space-y-2">
           <Label>Billing Interval</Label>
@@ -130,11 +133,11 @@ export function BillingForm({ currentBillingPlan }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {plansToShow.map((plan) => (
             <Card
               key={plan}
-              className={`p-6 cursor-pointer transition-all ${
+              className={`cursor-pointer p-6 transition-all ${
                 billingPlan === plan
                   ? "border-2 border-primary shadow-lg"
                   : "hover:border-primary/50"

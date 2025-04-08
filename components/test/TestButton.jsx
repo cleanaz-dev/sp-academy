@@ -44,12 +44,10 @@ export default function TestButton() {
   return (
     <div>
       <Button variant="outline" onClick={handleButtonClick}>
-        {loading ? "Testing..." : "Test API Route" }
+        {loading ? "Testing..." : "Test API Route"}
       </Button>
 
-      <div>
-        {text && <p className="text-xs">{text}</p>}
-      </div>
+      <div>{text && <p className="text-xs">{text}</p>}</div>
     </div>
   );
 }

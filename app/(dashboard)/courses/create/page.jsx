@@ -6,8 +6,8 @@ import CreateCoursesPage from "@/components/courses/CreateCoursesPage";
 export default function CreateCourse() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+      <header className="border-b bg-white">
+        <div className="mx-auto max-w-5xl px-6 py-8">
           <h1 className="text-2xl font-semibold text-gray-900">
             Create New Course
           </h1>
@@ -16,7 +16,7 @@ export default function CreateCourse() {
           </p>
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         <CreateCoursesPage />
       </main>
     </div>

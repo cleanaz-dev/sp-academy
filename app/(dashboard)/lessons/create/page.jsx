@@ -250,7 +250,7 @@ export default function CreateLesson() {
 
       if (!lessonResponse.ok) {
         throw new Error(
-          `Failed to create ${lessonOptions.lessonType.toLowerCase()}`
+          `Failed to create ${lessonOptions.lessonType.toLowerCase()}`,
         );
       }
 
@@ -307,17 +307,17 @@ export default function CreateLesson() {
     return (
       <div className="space-y-4">
         {exercises.map((exercise, index) => (
-          <div key={index} className="p-4 border rounded-lg">
+          <div key={index} className="rounded-lg border p-4">
             <h3 className="font-medium">{exercise.type.replace(/_/g, " ")}</h3>
             <p className="text-sm text-gray-600">{exercise.question}</p>
 
             {/* Render image if available */}
             {exercise.additional_data?.image_url && (
-              <div className="relative w-full h-[200px] my-4">
+              <div className="relative my-4 h-[200px] w-full">
                 <img
                   src={exercise.additional_data.image_url}
                   alt="Exercise image"
-                  className="object-contain rounded-lg w-full h-full"
+                  className="h-full w-full rounded-lg object-contain"
                   loading="lazy"
                 />
               </div>
@@ -349,7 +349,7 @@ export default function CreateLesson() {
                 </p>
                 <ul className="text-sm text-gray-600">
                   {Object.entries(
-                    exercise.additional_data.verb_conjugation
+                    exercise.additional_data.verb_conjugation,
                   ).map(([pronoun, conjugation]) => (
                     <li key={pronoun}>
                       <strong>{pronoun}:</strong> {conjugation}
@@ -403,7 +403,7 @@ export default function CreateLesson() {
     return (
       <div className="space-y-4">
         {media.map((item, index) => (
-          <div key={index} className="p-4 border rounded-lg">
+          <div key={index} className="rounded-lg border p-4">
             {item.type === "image" && (
               <img
                 src={item.url}
@@ -541,7 +541,7 @@ export default function CreateLesson() {
 
           if (!quizResponse.ok) {
             console.error(
-              `Failed to create quiz. Status: ${quizResponse.status}`
+              `Failed to create quiz. Status: ${quizResponse.status}`,
             );
             toast.error("Failed to create quiz");
             return;
@@ -598,38 +598,38 @@ export default function CreateLesson() {
         "Students listen to conversation try their best to explain what will happen next.",
     },
   ];
-  const  AudioModule = ({ src }) => {
+  const AudioModule = ({ src }) => {
     return (
-      <div className="my-4 p-4 bg-gray-100 rounded-lg">
+      <div className="my-4 rounded-lg bg-gray-100 p-4">
         <audio controls src={src}>
           Your browser does not support the audio element.
         </audio>
         <div className="mt-2 text-sm text-gray-500">Audio: {src}</div>
       </div>
     );
-  }
+  };
 
   const Flashcard = ({ front, back }) => {
     const [showBack, setShowBack] = useState(false);
-  
+
     return (
-      <div 
-        className="w-64 h-40 mx-auto my-4 cursor-pointer bg-white shadow-lg rounded-lg p-4 flex items-center justify-center text-center transition-colors duration-200 hover:bg-gray-50"
+      <div
+        className="mx-auto my-4 flex h-40 w-64 cursor-pointer items-center justify-center rounded-lg bg-white p-4 text-center shadow-lg transition-colors duration-200 hover:bg-gray-50"
         onClick={() => setShowBack(!showBack)}
       >
         {showBack ? (
-          <div className="text-red-600 font-semibold">{back}</div>
+          <div className="font-semibold text-red-600">{back}</div>
         ) : (
-          <div className="text-blue-600 font-semibold">{front}</div>
+          <div className="font-semibold text-blue-600">{front}</div>
         )}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      <header className="sticky top-0 z-10 border-b bg-white">
+        <div className="mx-auto max-w-5xl px-6 py-8">
           <h1 className="text-2xl font-semibold text-gray-900">
             Create New Lesson
           </h1>
@@ -640,12 +640,12 @@ export default function CreateLesson() {
       </header>
 
       <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="mx-auto max-w-5xl px-6 py-8">
           <Card className="bg-white shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Primary Section */}
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-medium text-gray-900 mb-6">
+              <div className="border-b p-6">
+                <h2 className="mb-6 text-lg font-medium text-gray-900">
                   Course Information
                 </h2>
                 <div className="grid grid-cols-2 gap-6">
@@ -672,7 +672,7 @@ export default function CreateLesson() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex justify-start items-end ">
+                  <div className="flex items-end justify-start">
                     <Button
                       type="button"
                       onClick={() => setIsAddingNewCourse((prev) => !prev)} // Toggle adding new course
@@ -734,8 +734,8 @@ export default function CreateLesson() {
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-medium text-gray-900 mb-6 -mt-4">
+              <div className="border-b p-6">
+                <h2 className="-mt-4 mb-6 text-lg font-medium text-gray-900">
                   Lesson Information
                 </h2>
 
@@ -810,14 +810,14 @@ export default function CreateLesson() {
                   {/* Exercise Options */}
                   {lessonOptions.lessonType === "Exercise" && (
                     <div className="col-span-2">
-                      <h2 className="text-lg font-medium text-gray-900 mb-6">
+                      <h2 className="mb-6 text-lg font-medium text-gray-900">
                         Exercise Options
                       </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {exerciseTypes.map((exercise) => (
                           <div
                             key={exercise.id}
-                            className="p-4 border rounded shadow-sm"
+                            className="rounded border p-4 shadow-sm"
                           >
                             <div className="flex flex-col space-y-2">
                               <div>
@@ -835,7 +835,7 @@ export default function CreateLesson() {
                                   onChange={(e) => {
                                     const value = Math.min(
                                       Number(e.target.value),
-                                      10
+                                      10,
                                     ); // Limit to 10
                                     handleInputChange("exercises", {
                                       ...lessonOptions.exercises,
@@ -856,7 +856,7 @@ export default function CreateLesson() {
                         Total exercises:{" "}
                         {Object.values(lessonOptions.exercises).reduce(
                           (sum, count) => sum + count,
-                          0
+                          0,
                         )}{" "}
                         / 10
                       </div>
@@ -867,7 +867,7 @@ export default function CreateLesson() {
                   <div className="col-span-2">
                     {lessonOptions.objectives?.map((objective, index) => (
                       <div key={index} className="">
-                        <Label className="block my-2">
+                        <Label className="my-2 block">
                           Objective {index + 1}
                         </Label>
                         <div className="flex items-center">
@@ -889,7 +889,7 @@ export default function CreateLesson() {
                             onClick={() => {
                               const newObjectives =
                                 lessonOptions.objectives.filter(
-                                  (_, i) => i !== index
+                                  (_, i) => i !== index,
                                 );
                               handleInputChange("objectives", newObjectives);
                             }}
@@ -902,7 +902,7 @@ export default function CreateLesson() {
                   </div>
 
                   <div className="col-span-2">
-                    <Label className="block mb-1">Learning Objectives</Label>
+                    <Label className="mb-1 block">Learning Objectives</Label>
                     <div className="flex items-center gap-4">
                       <Input
                         type="text"
@@ -922,8 +922,8 @@ export default function CreateLesson() {
                 </div>
               </div>
               {/* Content Generation Sectionb */}
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-medium text-gray-900 mb-6 -mt-4">
+              <div className="border-b p-6">
+                <h2 className="-mt-4 mb-6 text-lg font-medium text-gray-900">
                   Content Creation
                 </h2>
                 <div className="grid grid-cols-3 gap-6">
@@ -965,8 +965,8 @@ export default function CreateLesson() {
                 </div>
               </div>
               {/* Quiz Options */}
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-medium text-gray-900 mb-6 -mt-4">
+              <div className="border-b p-6">
+                <h2 className="-mt-4 mb-6 text-lg font-medium text-gray-900">
                   Quiz Options
                 </h2>
                 <div className="grid grid-cols-2 gap-6">
@@ -1015,8 +1015,8 @@ export default function CreateLesson() {
               </div>
 
               {/* Preview Section */}
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-medium text-gray-900 mb-6 -mt-4">
+              <div className="border-b p-6">
+                <h2 className="-mt-4 mb-6 text-lg font-medium text-gray-900">
                   Preview
                 </h2>
                 <div className="max-h-[800px] overflow-y-auto rounded-lg border p-4">
@@ -1040,13 +1040,13 @@ export default function CreateLesson() {
                             // Custom components for styling
                             h1: ({ node, ...props }) => (
                               <h1
-                                className="text-3xl font-bold text-blue-600 mb-4"
+                                className="mb-4 text-3xl font-bold text-blue-600"
                                 {...props}
                               />
                             ),
                             h2: ({ node, ...props }) => (
                               <h2
-                                className="text-xl font-semibold text-green-600 mt-6 mb-3"
+                                className="mb-3 mt-6 text-xl font-semibold text-green-600"
                                 {...props}
                               />
                             ),
@@ -1055,7 +1055,7 @@ export default function CreateLesson() {
 
                               // Handle color tags (e.g., :::blue:::text::blue::)
                               const colorMatches = content.match(
-                                /:::(\w+):::([\s\S]*?):::\1:::/
+                                /:::(\w+):::([\s\S]*?):::\1:::/,
                               );
                               if (colorMatches) {
                                 const colorMap = {
@@ -1072,7 +1072,7 @@ export default function CreateLesson() {
 
                               // Handle custom components (e.g., :::component::alert:::message)
                               const componentMatch = content.match(
-                                /:::component::(\w+):::([\s\S]*)/
+                                /:::component::(\w+):::([\s\S]*)/,
                               );
                               if (componentMatch) {
                                 const componentName = componentMatch[1];
@@ -1081,28 +1081,30 @@ export default function CreateLesson() {
                                 // Component implementations
                                 const componentMap = {
                                   alert: ({ children }) => (
-                                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                                    <div className="my-4 border-l-4 border-red-500 bg-red-100 p-4 text-red-700">
                                       ⚠️ {children}
                                     </div>
                                   ),
                                   info: ({ children }) => (
-                                    <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 my-4">
+                                    <div className="my-4 border-l-4 border-blue-500 bg-blue-100 p-4 text-blue-700">
                                       ℹ️ {children}
                                     </div>
                                   ),
                                   tip: ({ children }) => (
-                                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                                    <div className="my-4 border-l-4 border-green-500 bg-green-100 p-4 text-green-700">
                                       💡 {children}
                                     </div>
                                   ),
                                   // Simple test component
                                   note: ({ children }) => (
-                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4">
+                                    <div className="my-4 border-l-4 border-yellow-500 bg-yellow-100 p-4 text-yellow-700">
                                       📝 Note: {children}
                                     </div>
                                   ),
                                   audio: ({ src }) => <AudioModule src={src} />,
-                                  flashcard: ({ front, back }) => <Flashcard front={front} back={back} />
+                                  flashcard: ({ front, back }) => (
+                                    <Flashcard front={front} back={back} />
+                                  ),
                                 };
 
                                 const Component = componentMap[componentName];
@@ -1112,7 +1114,9 @@ export default function CreateLesson() {
                                     const props = JSON.parse(componentContent);
                                     return <Component {...props} />;
                                   } catch {
-                                    return <Component>{componentContent}</Component>;
+                                    return (
+                                      <Component>{componentContent}</Component>
+                                    );
                                   }
                                 }
                               }
@@ -1120,7 +1124,7 @@ export default function CreateLesson() {
                               // Handle other styles
                               if (content.startsWith("::border::")) {
                                 return (
-                                  <div className="border-2 border-gray-400 p-4 my-4">
+                                  <div className="my-4 border-2 border-gray-400 p-4">
                                     {content.replace("::border::", "")}
                                   </div>
                                 );
@@ -1136,7 +1140,7 @@ export default function CreateLesson() {
 
                               if (content.startsWith("::bg-blue::")) {
                                 return (
-                                  <div className="bg-blue-100 p-4 rounded">
+                                  <div className="rounded bg-blue-100 p-4">
                                     {content.replace("::bg-blue::", "")}
                                   </div>
                                 );
@@ -1145,34 +1149,45 @@ export default function CreateLesson() {
                               // Default paragraph
                               return (
                                 <p
-                                  className="text-gray-800 mb-3 leading-relaxed"
+                                  className="mb-3 leading-relaxed text-gray-800"
                                   {...props}
                                 />
                               );
                             },
                             strong: ({ node, ...props }) => (
                               <strong
-                                className="text-red-600 font-semibold"
+                                className="font-semibold text-red-600"
                                 {...props}
                               />
                             ),
                             table: ({ node, ...props }) => (
-                              <div className="overflow-x-auto my-4">
+                              <div className="my-4 overflow-x-auto">
                                 <table
                                   className="min-w-full border-collapse border border-gray-200"
                                   {...props}
                                 />
                               </div>
                             ),
-                            img: ({ node, ...props }) => (
-                              <div className="relative w-full h-48 my-4">
-                                <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <span className="text-gray-400">
-                                    Image Placeholder: {props.alt}
-                                  </span>
+                            img: ({ node, ...props }) => {
+                              // Log the props to the console
+                              console.log("Image Props:", props);
+
+                              return (
+                                <div className="relative my-4 w-full">
+                                  <img
+                                    src={props.src} // Use the src attribute from the Markdown
+                                    alt={props.alt} // Use the alt attribute from the Markdown
+                                    className="h-auto w-full rounded-lg" // Add styling as needed
+                                    onError={(e) => {
+                                      // Fallback in case the image fails to load
+                                      e.target.onerror = null;
+                                      e.target.src =
+                                        "path/to/fallback-image.png";
+                                    }}
+                                  />
                                 </div>
-                              </div>
-                            ),
+                              );
+                            },
                           }}
                         >
                           {typeof preview.content === "string"
@@ -1182,8 +1197,8 @@ export default function CreateLesson() {
                       )}
 
                       {preview.type === "exercise" && (
-                        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                          <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                          <h3 className="mb-2 text-lg font-semibold text-yellow-800">
                             Exercise Preview
                           </h3>
                           <pre className="whitespace-pre-wrap font-mono text-sm">
@@ -1192,15 +1207,15 @@ export default function CreateLesson() {
                         </div>
                       )}
                       {preview.type === "story" && (
-                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                          <h3 className="text-lg font-semibold text-purple-800 mb-2">
+                        <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+                          <h3 className="mb-2 text-lg font-semibold text-purple-800">
                             Story Preview
                           </h3>
                           <p className="italic text-gray-700">
                             {preview.content.text}
                           </p>
                           {preview.content.audio && (
-                            <div className="mt-4 p-3 bg-white rounded border">
+                            <div className="mt-4 rounded border bg-white p-3">
                               <span className="text-sm text-gray-500">
                                 Audio placeholder
                               </span>
@@ -1240,9 +1255,9 @@ export default function CreateLesson() {
                 {!preview ? (
                   <Button
                     type="submit"
-                    className={`px-4 py-2 rounded ${
+                    className={`rounded px-4 py-2 ${
                       isLoading
-                        ? "bg-blue-300 cursor-not-allowed"
+                        ? "cursor-not-allowed bg-blue-300"
                         : "bg-blue-500 hover:bg-blue-600"
                     } text-white`}
                     disabled={isLoading}
@@ -1259,9 +1274,9 @@ export default function CreateLesson() {
                 ) : (
                   <Button
                     type="button"
-                    className={`px-4 py-2 rounded ${
+                    className={`rounded px-4 py-2 ${
                       isSaving
-                        ? "bg-blue-300 cursor-not-allowed"
+                        ? "cursor-not-allowed bg-blue-300"
                         : "bg-blue-500 hover:bg-blue-600"
                     } text-white`}
                     disabled={isSaving}

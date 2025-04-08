@@ -5,17 +5,25 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import NewConversationComponentCopy from "./NewConversationComponent-copy";
 
-export default function SingleConversationPageCopy({ conversation, id }) {
+export default function SingleConversationPageCopy({
+  conversation,
+  id,
+  avatarUrl,
+}) {
   return (
-    <div className="min-h-screen bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] py-8">
-      <div className="container mx-auto px-4 w-full max-w-5xl"> {/* Added max-w-5xl and w-full */}
+    <div className="min-h-screen animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-8">
+      <div className="container mx-auto w-full max-w-5xl px-4">
+        {" "}
+        {/* Added max-w-5xl and w-full */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto w-full" // Added w-full
+          className="mx-auto w-full max-w-4xl" // Added w-full
         >
           {/* Header Section */}
-          <div className="relative h-48 md:h-64 rounded-2xl overflow-hidden mb-8 w-full"> {/* Added w-full */}
+          <div className="relative mb-8 h-48 w-full overflow-hidden rounded-2xl md:h-64">
+            {" "}
+            {/* Added w-full */}
             <Image
               src={conversation.imageUrl}
               alt={conversation.title}
@@ -26,7 +34,7 @@ export default function SingleConversationPageCopy({ conversation, id }) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6">
-              <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
+              <h1 className="mb-2 text-2xl font-bold text-white md:text-4xl">
                 {conversation.title}
               </h1>
               <p className="text-gray-200">
@@ -35,11 +43,12 @@ export default function SingleConversationPageCopy({ conversation, id }) {
             </div>
           </div>
         </motion.div>
-
         {/* Pass the language information to NewConversationComponent */}
-        <div className="w-full max-w-5xl mx-auto"> {/* Ensure full width and center */}
+        <div className="mx-auto w-full max-w-5xl">
+          {" "}
+          {/* Ensure full width and center */}
           <NewConversationComponentCopy
-            aiAvatarUrl={conversation.aiAvatarUrl}
+            userAvatarUrl={avatarUrl}
             aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}
             aiAvatarFemaleUrl={conversation.aiAvatarFemaleUrl}
             vocabulary={conversation.vocabulary}

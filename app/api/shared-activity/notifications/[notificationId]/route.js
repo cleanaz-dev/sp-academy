@@ -7,13 +7,13 @@ export async function PUT(request, { params }) {
     // Authenticate the user
     const { userId } = auth();
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     // Extract notification ID from URL parameters
     const { notificationId } = params;
     if (!notificationId) {
-      return new NextResponse('Missing notification ID', { status: 400 });
+      return new NextResponse("Missing notification ID", { status: 400 });
     }
 
     // Mark the notification as read in the database
@@ -23,11 +23,11 @@ export async function PUT(request, { params }) {
     });
 
     return NextResponse.json(
-      { message: 'Notification marked as read' },
-      { status: 200 }
+      { message: "Notification marked as read" },
+      { status: 200 },
     );
   } catch (error) {
-    console.error('Error in PUT /notifications/:id:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error in PUT /notifications/:id:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

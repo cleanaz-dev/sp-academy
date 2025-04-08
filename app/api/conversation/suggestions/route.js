@@ -9,12 +9,10 @@ export async function POST(req) {
   try {
     const { history, targetLanguage, nativeLanguage } = await req.json();
 
-   
-
     const formattedHistory = history
       .map(
         (msg) =>
-          `${msg.role === "user" ? "Human" : "Assistant"}: ${msg.content}`
+          `${msg.role === "user" ? "Human" : "Assistant"}: ${msg.content}`,
       )
       .join("\n");
 
@@ -69,7 +67,7 @@ export async function POST(req) {
     console.error("Suggestions API Error:", error);
     return NextResponse.json(
       { error: "Failed to generate suggestions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

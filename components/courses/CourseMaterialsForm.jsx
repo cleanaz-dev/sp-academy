@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/select";
 import { Plus, Minus, Link, FileText, Video, Image } from "lucide-react";
 
-export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) {
+export default function CourseMaterialsForm({
+  courseData,
+  onUpdateCourseData,
+}) {
   const [newResourceUrl, setNewResourceUrl] = useState("");
   const [newResourceType, setNewResourceType] = useState("link");
 
@@ -56,7 +59,7 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
       materials: {
         ...courseData.materials,
         resources: courseData.materials.resources.filter(
-          (resource) => resource.id !== resourceId
+          (resource) => resource.id !== resourceId,
         ),
       },
     });
@@ -70,7 +73,7 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
         resources: courseData.materials.resources.map((resource) =>
           resource.id === resourceId
             ? { ...resource, title: newTitle }
-            : resource
+            : resource,
         ),
       },
     });
@@ -103,7 +106,7 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
 
       <div>
         <Label>Course Resources</Label>
-        <Card className="p-6 mt-2">
+        <Card className="mt-2 p-6">
           <div className="space-y-4">
             {/* Add new resource */}
             <div className="flex gap-2">
@@ -128,7 +131,7 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
                 className="flex-1"
               />
               <Button onClick={addResource} disabled={!newResourceUrl.trim()}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Add
               </Button>
             </div>
@@ -136,14 +139,14 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
             {/* Resource list */}
             <div className="space-y-2">
               {courseData.materials.resources.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
+                <div className="py-4 text-center text-gray-500">
                   No resources added yet
                 </div>
               ) : (
                 courseData.materials.resources.map((resource) => (
                   <div
                     key={resource.id}
-                    className="flex items-center gap-2 bg-gray-50 p-3 rounded-md"
+                    className="flex items-center gap-2 rounded-md bg-gray-50 p-3"
                   >
                     {getResourceIcon(resource.type)}
                     <Input
@@ -153,7 +156,7 @@ export default function CourseMaterialsForm({ courseData, onUpdateCourseData }) 
                       }
                       className="flex-1"
                     />
-                    <div className="text-sm text-gray-500 truncate max-w-[200px]">
+                    <div className="max-w-[200px] truncate text-sm text-gray-500">
                       {resource.url}
                     </div>
                     <Button

@@ -16,14 +16,14 @@ export async function PUT(request) {
     }
     await prisma.notification.updateMany({
       where: { userId: user.id },
-      data: { isRead: true }
-    })
+      data: { isRead: true },
+    });
     return NextResponse.json({ message: "Activity updated successfully" });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -23,20 +23,20 @@ export default function WeeklySchedule() {
 
   return (
     <div className="grid gap-4">
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="transition-shadow hover:shadow-lg">
         <CardHeader className="border-b bg-gray-50">
-          <CardTitle className="text-lg font-semibold flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between text-lg font-semibold">
             <span>Weekly Schedule</span>
             <div className="flex items-center space-x-4 text-xs text-gray-500">
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-blue-100"></span>{" "}
+                <span className="h-3 w-3 rounded-full bg-blue-100"></span>{" "}
                 Lessons
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-red-100"></span> Quiz
+                <span className="h-3 w-3 rounded-full bg-red-100"></span> Quiz
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded-full bg-green-100"></span>{" "}
+                <span className="h-3 w-3 rounded-full bg-green-100"></span>{" "}
                 Exercise
               </span>
             </div>
@@ -67,7 +67,7 @@ export default function WeeklySchedule() {
                   </div>
                   <div className="text-xs text-gray-500">{formattedDate}</div>
                   <div
-                    className={`mt-2 h-16 w-full rounded-lg flex flex-col items-center justify-center p-2 space-y-1 cursor-pointer transition-all ${
+                    className={`mt-2 flex h-16 w-full cursor-pointer flex-col items-center justify-center space-y-1 rounded-lg p-2 transition-all ${
                       isToday ? "bg-blue-100 text-blue-600" : "bg-gray-50"
                     } ${
                       isSelected ? "ring-2 ring-blue-400" : ""
@@ -96,7 +96,7 @@ export default function WeeklySchedule() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="h-full flex flex-col items-center justify-center text-gray-500"
+                className="flex h-full flex-col items-center justify-center text-gray-500"
               >
                 <p className="text-lg font-medium">
                   Select a day to view details
@@ -131,14 +131,16 @@ export default function WeeklySchedule() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="flex items-center p-3 bg-blue-50 rounded-lg"
+                      className="flex items-center rounded-lg bg-blue-50 p-3"
                     >
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
                         📚
                       </div>
                       <div>
-                        <p className="text-sm md:text-base font-medium">Lessons</p>
-                        <p className="text-xs md:text-sm text-gray-600">
+                        <p className="text-sm font-medium md:text-base">
+                          Lessons
+                        </p>
+                        <p className="text-xs text-gray-600 md:text-sm">
                           {dummySchedule[selectedDay].lessons} scheduled
                         </p>
                       </div>
@@ -150,14 +152,16 @@ export default function WeeklySchedule() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="flex items-center p-3 bg-red-50 rounded-lg"
+                      className="flex items-center rounded-lg bg-red-50 p-3"
                     >
-                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
                         📖
                       </div>
                       <div>
-                        <p className="text-sm md:text-base font-medium">Quiz</p>
-                        <p className="text-xs md:text-sm text-gray-600">Today</p>
+                        <p className="text-sm font-medium md:text-base">Quiz</p>
+                        <p className="text-xs text-gray-600 md:text-sm">
+                          Today
+                        </p>
                       </div>
                     </motion.div>
                   )}
@@ -167,14 +171,18 @@ export default function WeeklySchedule() {
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="flex items-center p-3 bg-green-50 rounded-lg"
+                      className="flex items-center rounded-lg bg-green-50 p-3"
                     >
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                      <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
                         📝
                       </div>
                       <div>
-                        <p className="text-sm md:text-base font-medium">Exercise</p>
-                        <p className="text-xs md:text-sm text-gray-600">Available</p>
+                        <p className="text-sm font-medium md:text-base">
+                          Exercise
+                        </p>
+                        <p className="text-xs text-gray-600 md:text-sm">
+                          Available
+                        </p>
                       </div>
                     </motion.div>
                   )}

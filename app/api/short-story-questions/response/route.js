@@ -13,10 +13,10 @@ export async function POST(request) {
     });
 
     if (!user) {
-      return new NextResponse(
-        JSON.stringify({ error: "User not found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new NextResponse(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Check if an entry already exists for this user and story
@@ -70,7 +70,7 @@ export async function POST(request) {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }

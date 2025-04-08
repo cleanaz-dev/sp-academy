@@ -1,5 +1,8 @@
 // app/api/generate-image/route.js
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 
 export async function POST(request) {
   const { prompt } = await request.json();
@@ -19,7 +22,7 @@ export async function POST(request) {
       accept: "application/json",
       body: JSON.stringify({
         textToImageParams: {
-          text: prompt
+          text: prompt,
         },
         taskType: "TEXT_IMAGE",
         imageGenerationConfig: {
@@ -27,8 +30,8 @@ export async function POST(request) {
           seed: 0, // Random seed for variety
           width: 1024,
           height: 1024,
-          numberOfImages: 1 // You can increase this if you want multiple options
-        }
+          numberOfImages: 1, // You can increase this if you want multiple options
+        },
       }),
     };
 
@@ -38,15 +41,15 @@ export async function POST(request) {
 
     // The response structure might be different with Titan
     // You might need to adjust this based on the actual response format
-    return Response.json({ 
-      success: true, 
-      imageUrl: responseBody.images[0] // Adjust based on actual response structure
+    return Response.json({
+      success: true,
+      imageUrl: responseBody.images[0], // Adjust based on actual response structure
     });
   } catch (error) {
-    console.error('Image generation error:', error);
-    return Response.json({ 
-      success: false, 
-      error: 'Failed to generate image' 
+    console.error("Image generation error:", error);
+    return Response.json({
+      success: false,
+      error: "Failed to generate image",
     });
   }
 }

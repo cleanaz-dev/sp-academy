@@ -10,8 +10,8 @@ export async function POST(req) {
     // Validate required fields
     if (!userId || !lessonId || !courseId) {
       return NextResponse.json(
-        { error: "Missing required fields" }, 
-        { status: 400 }
+        { error: "Missing required fields" },
+        { status: 400 },
       );
     }
 
@@ -23,10 +23,7 @@ export async function POST(req) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Use a transaction to ensure data consistency
@@ -44,7 +41,7 @@ export async function POST(req) {
           data: {
             userId: user.id,
             courseId,
-            status: 'IN_PROGRESS',
+            status: "IN_PROGRESS",
             progress: 0,
           },
         });
@@ -73,20 +70,22 @@ export async function POST(req) {
 
       // 3. Calculate new course progress
       const totalLessons = await tx.lesson.count({
-        where: { courseId }
+        where: { courseId },
       });
 
       const completedLessons = await tx.progress.count({
         where: {
           userId: user.id,
           enrollment: {
-            courseId
+            courseId,
           },
-          status: "COMPLETED"
-        }
+          status: "COMPLETED",
+        },
       });
 
-      const overallProgress = Math.round((completedLessons / totalLessons) * 100);
+      const overallProgress = Math.round(
+        (completedLessons / totalLessons) * 100,
+      );
 
       // 4. Update enrollment with new progress
       const updatedEnrollment = await tx.enrollment.update({
@@ -113,21 +112,20 @@ export async function POST(req) {
         enrollment: result.enrollment,
       },
     });
-
   } catch (error) {
     console.error("Error updating progress:", error);
-    
+
     // Handle specific errors
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return NextResponse.json(
-        { error: "Progress already exists" }, 
-        { status: 409 }
+        { error: "Progress already exists" },
+        { status: 409 },
       );
     }
 
     return NextResponse.json(
-      { error: "Internal Server Error" }, 
-      { status: 500 }
+      { error: "Internal Server Error" },
+      { status: 500 },
     );
   }
 }
@@ -135,13 +133,13 @@ export async function POST(req) {
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    const courseId = searchParams.get('courseId');
+    const userId = searchParams.get("userId");
+    const courseId = searchParams.get("courseId");
 
     if (!userId || !courseId) {
       return NextResponse.json(
-        { error: "Missing required parameters" }, 
-        { status: 400 }
+        { error: "Missing required parameters" },
+        { status: 400 },
       );
     }
 
@@ -150,10 +148,7 @@ export async function GET(req) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const enrollment = await prisma.enrollment.findFirst({
@@ -172,12 +167,11 @@ export async function GET(req) {
       progress: enrollment?.progress || 0,
       lessonProgress: enrollment?.lessonProgress || [],
     });
-
   } catch (error) {
     console.error("Error fetching progress:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" }, 
-      { status: 500 }
+      { error: "Internal Server Error" },
+      { status: 500 },
     );
   }
 }

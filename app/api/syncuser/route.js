@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server"
-import prisma from "@/lib/prisma"
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
 export async function POST(request) {
   try {
@@ -13,15 +13,17 @@ export async function POST(request) {
       userId: userId,
       name: name,
       email: email,
-    }
+    };
     const createdUser = await prisma.user.create({
       data: user,
-    })
-    
-    return new NextResponse({ status: 200, body: JSON.stringify(createdUser) }  );
-   
+    });
+
+    return new NextResponse({ status: 200, body: JSON.stringify(createdUser) });
   } catch (error) {
     console.error(error);
-    return new NextResponse({ status: 500, body: JSON.stringify({ error: 'Internal Server Error' }) });
+    return new NextResponse({
+      status: 500,
+      body: JSON.stringify({ error: "Internal Server Error" }),
+    });
   }
 }

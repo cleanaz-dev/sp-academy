@@ -1,6 +1,9 @@
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
-import { getExercisesByEnrolledUser, getEnrolledCourseExercises } from "@/lib/actions";
+import {
+  getExercisesByEnrolledUser,
+  getEnrolledCourseExercises,
+} from "@/lib/actions";
 
 export default async function page({ params }) {
   const { userId } = auth();
@@ -8,10 +11,8 @@ export default async function page({ params }) {
   const { exercises } = await getEnrolledCourseExercises(userId, lessonId);
   console.log("exercises", exercises);
   return (
-  <div>
-    <h1>Exercises</h1>
-    
-
-  </div>
-  )
+    <div>
+      <h1>Exercises</h1>
+    </div>
+  );
 }

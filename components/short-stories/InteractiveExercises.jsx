@@ -20,7 +20,7 @@ const ExerciseFeedback = ({ exercise, userAnswer, isCorrect }) => {
     <div
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
-      className="mt-4 p-4 rounded-lg bg-green-50"
+      className="mt-4 rounded-lg bg-green-50 p-4"
     >
       <div className="flex items-center space-x-2 text-green-600">
         <CheckCircle className="h-5 w-5" />
@@ -31,19 +31,19 @@ const ExerciseFeedback = ({ exercise, userAnswer, isCorrect }) => {
 };
 
 // Separate component for progress and controls
-const ProgressAndControls = ({ 
-  showResults, 
-  currentScore, 
-  totalExercises, 
-  progressPercentage, 
-  onSubmit 
+const ProgressAndControls = ({
+  showResults,
+  currentScore,
+  totalExercises,
+  progressPercentage,
+  onSubmit,
 }) => {
   return (
-    <div className="sticky bottom-4 bg-white p-4 rounded-lg shadow-lg border">
+    <div className="sticky bottom-4 rounded-lg border bg-white p-4 shadow-lg">
       <div className="flex flex-col space-y-4">
         {showResults && (
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Your Progress</span>
               <span className="text-sm font-medium">
                 {Math.round(progressPercentage)}%
@@ -53,7 +53,7 @@ const ProgressAndControls = ({
           </div>
         )}
 
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <Button
             onClick={onSubmit}
             className="w-full bg-purple-600 hover:bg-purple-700"
@@ -66,19 +66,19 @@ const ProgressAndControls = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-center space-x-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg"
+            className="flex items-center justify-center space-x-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-4"
           >
             <Award className="h-8 w-8 text-purple-600" />
             <div>
-              <p className="font-bold text-lg">
+              <p className="text-lg font-bold">
                 Final Score: {currentScore} out of {totalExercises}
               </p>
               <p className="text-sm text-gray-600">
                 {progressPercentage >= 80
                   ? "Excellent work!"
                   : progressPercentage >= 60
-                  ? "Good job!"
-                  : "Keep practicing!"}
+                    ? "Good job!"
+                    : "Keep practicing!"}
               </p>
             </div>
           </motion.div>
@@ -102,24 +102,26 @@ export default function InteractiveExercises({ exercises }) {
       case "multiple-choice":
       case "fill-in-blanks":
         return userAnswer === exercise.correctAnswer;
-        
+
       case "matching":
         const matches = userAnswer || {};
         return exercise.pairs.every(
-          (pair) => matches[pair.left] === pair.right
+          (pair) => matches[pair.left] === pair.right,
         );
-        
+
       case "sentence-order":
-        const currentOrder = userAnswer.map(part => 
-          exercise.parts.indexOf(part)
+        const currentOrder = userAnswer.map((part) =>
+          exercise.parts.indexOf(part),
         );
-        return JSON.stringify(currentOrder) === JSON.stringify(exercise.correctOrder);
-        
+        return (
+          JSON.stringify(currentOrder) === JSON.stringify(exercise.correctOrder)
+        );
+
       case "image-sentence":
-        return exercise.expectedElements.every(element =>
-          userAnswer.toLowerCase().includes(element.toLowerCase())
+        return exercise.expectedElements.every((element) =>
+          userAnswer.toLowerCase().includes(element.toLowerCase()),
         );
-        
+
       default:
         return false;
     }
@@ -130,26 +132,29 @@ export default function InteractiveExercises({ exercises }) {
       // Reset everything for "Try Again"
       setShowResults(false);
       setCurrentScore(0);
-  
+
       // Reset answers for all types of exercises
       setAnswers((prev) => {
         const resetAnswers = {};
         exercises.forEach((exercise) => {
-          if (exercise.type === "multiple-choice" || exercise.type === "fill-in-blanks") {
-            resetAnswers[exercise.id] = "";  // Clear multiple-choice and fill-in-blanks
+          if (
+            exercise.type === "multiple-choice" ||
+            exercise.type === "fill-in-blanks"
+          ) {
+            resetAnswers[exercise.id] = ""; // Clear multiple-choice and fill-in-blanks
           } else if (exercise.type === "matching") {
-            resetAnswers[exercise.id] = {};  // Clear matching answers
+            resetAnswers[exercise.id] = {}; // Clear matching answers
           } else if (exercise.type === "sentence-order") {
-            resetAnswers[exercise.id] = [];  // Clear sentence-order answers
+            resetAnswers[exercise.id] = []; // Clear sentence-order answers
           }
           // Add other exercise types as needed...
         });
         return resetAnswers;
       });
-  
+
       return;
     }
-  
+
     // Check answers and calculate the score
     let score = 0;
     exercises.forEach((exercise) => {
@@ -158,11 +163,10 @@ export default function InteractiveExercises({ exercises }) {
         score++;
       }
     });
-  
+
     setCurrentScore(score);
     setShowResults(true);
   };
-  
 
   const renderExercise = (exercise) => {
     switch (exercise.type) {
@@ -173,7 +177,7 @@ export default function InteractiveExercises({ exercises }) {
               {exercise.question}
             </p>
             <RadioGroup
-              value={answers[exercise.id] || ""}  // Ensure that the value is empty if it's reset
+              value={answers[exercise.id] || ""} // Ensure that the value is empty if it's reset
               onValueChange={(value) =>
                 setAnswers((prev) => ({ ...prev, [exercise.id]: value }))
               }
@@ -182,11 +186,11 @@ export default function InteractiveExercises({ exercises }) {
               {exercise.options.map((option, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors
-                    ${answers[exercise.id] === option
+                  className={`flex items-center space-x-3 rounded-lg border p-3 transition-colors ${
+                    answers[exercise.id] === option
                       ? "border-purple-500 bg-purple-50"
                       : "border-gray-200 hover:border-purple-200"
-                    }`}
+                  }`}
                 >
                   <RadioGroupItem value={option} id={`${exercise.id}-${idx}`} />
                   <Label
@@ -200,29 +204,27 @@ export default function InteractiveExercises({ exercises }) {
             </RadioGroup>
           </div>
         );
-      
 
-        case "fill-in-blanks":
-          return (
-            <div className="space-y-4">
-              <p className="text-lg font-medium text-gray-800">
-                {exercise.question}
-              </p>
-              <Input
-                value={answers[exercise.id] || ""}  // Reset the input value
-                type="text"
-                placeholder="Type your answer here..."
-                className="w-full p-3"
-                onChange={(e) =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [exercise.id]: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          );
-        
+      case "fill-in-blanks":
+        return (
+          <div className="space-y-4">
+            <p className="text-lg font-medium text-gray-800">
+              {exercise.question}
+            </p>
+            <Input
+              value={answers[exercise.id] || ""} // Reset the input value
+              type="text"
+              placeholder="Type your answer here..."
+              className="w-full p-3"
+              onChange={(e) =>
+                setAnswers((prev) => ({
+                  ...prev,
+                  [exercise.id]: e.target.value,
+                }))
+              }
+            />
+          </div>
+        );
 
       case "matching":
         return (
@@ -237,7 +239,7 @@ export default function InteractiveExercises({ exercises }) {
         return (
           <SentenceOrderExercise
             exercise={exercise}
-            onAnswer={(id, answer) => 
+            onAnswer={(id, answer) =>
               setAnswers((prev) => ({ ...prev, [id]: answer }))
             }
             showResults={showResults}
@@ -261,10 +263,10 @@ export default function InteractiveExercises({ exercises }) {
   };
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div className="text-center">
         <h3 className="text-2xl font-bold text-gray-800">Practice Exercises</h3>
-        <p className="text-gray-600 mt-2">
+        <p className="mt-2 text-gray-600">
           Complete these exercises to test your understanding
         </p>
       </div>
@@ -276,11 +278,11 @@ export default function InteractiveExercises({ exercises }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="shadow-lg transition-shadow hover:shadow-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full">
+                  <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
                     {exercise.type.replace("-", " ").toUpperCase()}
                   </span>
                   <span className="text-gray-500">Question {index + 1}</span>
@@ -291,8 +293,8 @@ export default function InteractiveExercises({ exercises }) {
               {renderExercise(exercise)}
 
               {showResults && (
-                <ExerciseFeedback 
-                  exercise={exercise} 
+                <ExerciseFeedback
+                  exercise={exercise}
                   userAnswer={answers[exercise.id]}
                   isCorrect={checkAnswer(exercise, answers[exercise.id])}
                 />
@@ -302,7 +304,7 @@ export default function InteractiveExercises({ exercises }) {
         </motion.div>
       ))}
 
-      <ProgressAndControls 
+      <ProgressAndControls
         showResults={showResults}
         currentScore={currentScore}
         totalExercises={exercises.length}

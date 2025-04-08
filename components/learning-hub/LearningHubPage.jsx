@@ -314,13 +314,13 @@ export default function LearningHubPage({ courses, userId }) {
   // Helper function to check if specific user is enrolled
   const isUserEnrolled = (course) => {
     return course.enrollments?.some(
-      (enrollment) => enrollment.userId === userId
+      (enrollment) => enrollment.userId === userId,
     );
   };
 
   const getEnrollmentStatus = (course) => {
     const enrollment = course.enrollments?.find(
-      (enrollment) => enrollment.userId === userId
+      (enrollment) => enrollment.userId === userId,
     );
     return enrollment?.status || null;
   };
@@ -372,8 +372,8 @@ export default function LearningHubPage({ courses, userId }) {
           course.description.toLowerCase().includes(query) ||
           course.level.toLowerCase().includes(query) ||
           course.lessons.some((lesson) =>
-            lesson.title.toLowerCase().includes(query)
-          )
+            lesson.title.toLowerCase().includes(query),
+          ),
       );
     }
 
@@ -384,7 +384,7 @@ export default function LearningHubPage({ courses, userId }) {
           item.description.toLowerCase().includes(query) ||
           item.type.toLowerCase().includes(query) ||
           item.difficulty.toLowerCase().includes(query) ||
-          item.topics.some((topic) => topic.toLowerCase().includes(query))
+          item.topics.some((topic) => topic.toLowerCase().includes(query)),
       );
     }
 
@@ -392,15 +392,15 @@ export default function LearningHubPage({ courses, userId }) {
   };
 
   const unviewedRecommendations = recommendedContent.filter(
-    (item) => item.isNew
+    (item) => item.isNew,
   ).length;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-4xl font-bold mb-4">Learning Hub</h1>
+      <header className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <h1 className="mb-4 text-4xl font-bold">Learning Hub</h1>
           <p className="text-xl opacity-90">
             Start your learning journey today with our AI generated courses
             🚀🚀🚀
@@ -409,14 +409,14 @@ export default function LearningHubPage({ courses, userId }) {
       </header>
 
       {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-6 pt-8">
-        <div className="flex gap-4 mb-6">
+      <div className="mx-auto max-w-7xl px-6 pt-8">
+        <div className="mb-6 flex gap-4">
           <Button
             variant={activeTab === "courses" ? "default" : "outline"}
             onClick={() => handleTabChange("courses")}
             className="relative"
           >
-            <BookOpen className="w-4 h-4 mr-2" />
+            <BookOpen className="mr-2 h-4 w-4" />
             Courses
           </Button>
           <Button
@@ -424,30 +424,30 @@ export default function LearningHubPage({ courses, userId }) {
             onClick={() => handleTabChange("recommended")}
             className="relative"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Sparkles className="mr-2 h-4 w-4" />
             Recommended
             {!viewedRecommendations && unviewedRecommendations > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              <span className="absolute -right-2 -top-2 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs text-white">
                 {unviewedRecommendations}
               </span>
             )}
           </Button>
         </div>
         {/* Search  */}
-        <div className="w-full max-w-md mb-4">
+        <div className="mb-4 w-full max-w-md">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-500" />
             <input
               type="text"
               placeholder="Search courses, topics, skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border-none rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-md border-none py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-500 hover:text-gray-700"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -468,146 +468,170 @@ export default function LearningHubPage({ courses, userId }) {
               {/* Course Catalog */}
               {/* Course Catalog */}
               <div className="grid gap-8">
-  {filterContent(courses, "courses").length > 0 ? (
-    filterContent(courses, "courses")
-      .sort((a, b) => b.enrollments.length - a.enrollments.length) // Sort courses by number of enrollments
-      .map((course) => (
-        <div key={course.id}>
-          <Card
-            className={`cursor-pointer hover:shadow-lg transition-shadow ${
-              isUserEnrolled(course) ? "border-l-4 border-l-green-500" : ""
-            }`}
-            onClick={() => handleCourseClick(course)}
-          >
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-xl">{course.title}</CardTitle>
-                  {isUserEnrolled(course) && (
-                    <Badge
-                      variant="secondary"
-                      className="bg-green-100 text-green-800"
-                    >
-                      {getEnrollmentStatus(course) === "NOT_STARTED"
-                        ? "Enrolled"
-                        : "In Progress"}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <Badge variant="secondary">{course.level}</Badge>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>2 weeks</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <BookOpen className="w-4 h-4 mr-1" />
-                    <span>{course.lessons.length} lessons</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Users className="w-4 h-4 mr-1" />
-                    <span>{course.enrollments.length} Users Enrolled</span>
-                  </div>
-                </div>
-              </div>
-              <ChevronDown
-                className={`w-6 h-6 transition-transform ${
-                  expandedCourse === course.id ? "rotate-180" : ""
-                }`}
-              />
-            </CardHeader>
-          </Card>
-
-          <AnimatePresence>
-            {expandedCourse === course.id && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <Card className="mt-4 border-t-0">
-                  <CardContent className="p-6">
-                    <div className="prose max-w-none">
-                      <h3 className="text-lg font-semibold mb-4">Course Overview</h3>
-                      <p className="text-gray-600 mb-6">{course.description}</p>
-
-                      <div className="space-y-4">
-                        <h4 className="font-medium">Course Content</h4>
-                        {course.lessons
-                          .sort((a, b) => a.orderIndex - b.orderIndex)
-                          .map((lesson, index) => (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center p-4 bg-gray-50 rounded-lg"
-                            >
-                              <span className="mr-4 text-gray-400">{index + 1}</span>
-                              <span className="flex-1">
-                                Lesson {index + 1}: {lesson.title}
-                              </span>
-                              <div className="flex gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {lesson.type}
+                {filterContent(courses, "courses").length > 0 ? (
+                  filterContent(courses, "courses")
+                    .sort((a, b) => b.enrollments.length - a.enrollments.length) // Sort courses by number of enrollments
+                    .map((course) => (
+                      <div key={course.id}>
+                        <Card
+                          className={`cursor-pointer transition-shadow hover:shadow-lg ${
+                            isUserEnrolled(course)
+                              ? "border-l-4 border-l-green-500"
+                              : ""
+                          }`}
+                          onClick={() => handleCourseClick(course)}
+                        >
+                          <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <CardTitle className="text-xl">
+                                  {course.title}
+                                </CardTitle>
+                                {isUserEnrolled(course) && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-green-100 text-green-800"
+                                  >
+                                    {getEnrollmentStatus(course) ===
+                                    "NOT_STARTED"
+                                      ? "Enrolled"
+                                      : "In Progress"}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="mt-2 flex items-center gap-4">
+                                <Badge variant="secondary">
+                                  {course.level}
                                 </Badge>
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <Clock className="mr-1 h-4 w-4" />
+                                  <span>2 weeks</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <BookOpen className="mr-1 h-4 w-4" />
+                                  <span>{course.lessons.length} lessons</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <Users className="mr-1 h-4 w-4" />
+                                  <span>
+                                    {course.enrollments.length} Users Enrolled
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          ))}
-                      </div>
-                    </div>
-                    <div className="mt-6 flex justify-end">
-                      {isUserEnrolled(course) ? (
-                        <div className="flex items-center gap-2">
-                          <Link href={`/courses/${course.id}`}>
-                            <Button
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
+                            <ChevronDown
+                              className={`h-6 w-6 transition-transform ${
+                                expandedCourse === course.id ? "rotate-180" : ""
+                              }`}
+                            />
+                          </CardHeader>
+                        </Card>
+
+                        <AnimatePresence>
+                          {expandedCourse === course.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
                             >
-                              {getEnrollmentStatus(course) === "NOT_STARTED"
-                                ? "View Course"
-                                : "Continue Learning"}
-                            </Button>
-                          </Link>
-                        </div>
-                      ) : (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowEnrollDialog(true);
-                          }}
-                        >
-                          Enroll in Course
-                        </Button>
-                      )}
+                              <Card className="mt-4 border-t-0">
+                                <CardContent className="p-6">
+                                  <div className="prose max-w-none">
+                                    <h3 className="mb-4 text-lg font-semibold">
+                                      Course Overview
+                                    </h3>
+                                    <p className="mb-6 text-gray-600">
+                                      {course.description}
+                                    </p>
 
-                      <EnrollmentDialog
-                        course={course}
-                        isOpen={showEnrollDialog}
-                        onClose={() => setShowEnrollDialog(false)}
-                      />
+                                    <div className="space-y-4">
+                                      <h4 className="font-medium">
+                                        Course Content
+                                      </h4>
+                                      {course.lessons
+                                        .sort(
+                                          (a, b) => a.orderIndex - b.orderIndex,
+                                        )
+                                        .map((lesson, index) => (
+                                          <div
+                                            key={lesson.id}
+                                            className="flex items-center rounded-lg bg-gray-50 p-4"
+                                          >
+                                            <span className="mr-4 text-gray-400">
+                                              {index + 1}
+                                            </span>
+                                            <span className="flex-1">
+                                              Lesson {index + 1}: {lesson.title}
+                                            </span>
+                                            <div className="flex gap-2">
+                                              <Badge
+                                                variant="outline"
+                                                className="text-xs"
+                                              >
+                                                {lesson.type}
+                                              </Badge>
+                                            </div>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </div>
+                                  <div className="mt-6 flex justify-end">
+                                    {isUserEnrolled(course) ? (
+                                      <div className="flex items-center gap-2">
+                                        <Link href={`/courses/${course.id}`}>
+                                          <Button
+                                            variant="outline"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                          >
+                                            {getEnrollmentStatus(course) ===
+                                            "NOT_STARTED"
+                                              ? "View Course"
+                                              : "Continue Learning"}
+                                          </Button>
+                                        </Link>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setShowEnrollDialog(true);
+                                        }}
+                                      >
+                                        Enroll in Course
+                                      </Button>
+                                    )}
+
+                                    <EnrollmentDialog
+                                      course={course}
+                                      isOpen={showEnrollDialog}
+                                      onClose={() => setShowEnrollDialog(false)}
+                                    />
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    ))
+                ) : (
+                  <div className="py-8 text-center">
+                    <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                      <SearchX className="h-8 w-8 text-gray-400" />
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      ))
-  ) : (
-    <div className="text-center py-8">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-        <SearchX className="h-8 w-8 text-gray-400" />
-      </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
-      <p className="text-gray-500">
-        Try adjusting your search terms or browse all courses
-      </p>
-    </div>
-  )}
-</div>
-
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">
+                      No courses found
+                    </h3>
+                    <p className="text-gray-500">
+                      Try adjusting your search terms or browse all courses
+                    </p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -624,10 +648,10 @@ export default function LearningHubPage({ courses, userId }) {
                 filterContent(recommendedContent, "recommended").map((item) => (
                   <Card
                     key={item.id}
-                    className="overflow-hidden hover:shadow-lg transition-shadow"
+                    className="overflow-hidden transition-shadow hover:shadow-lg"
                   >
                     <CardHeader>
-                      <div className="flex justify-between items-start">
+                      <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
                             <CardTitle>{item.title}</CardTitle>
@@ -635,7 +659,7 @@ export default function LearningHubPage({ courses, userId }) {
                               <Badge className="bg-green-500">New</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="mt-2 text-sm text-gray-500">
                             {item.description}
                           </p>
                         </div>
@@ -648,7 +672,7 @@ export default function LearningHubPage({ courses, userId }) {
                           <Badge variant="secondary">{item.type}</Badge>
                           <Badge variant="outline">{item.difficulty}</Badge>
                           <div className="flex items-center text-sm text-gray-500">
-                            <Clock className="w-4 h-4 mr-1" />
+                            <Clock className="mr-1 h-4 w-4" />
                             <span>{item.duration}</span>
                           </div>
                         </div>
@@ -687,11 +711,11 @@ export default function LearningHubPage({ courses, userId }) {
                   </Card>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                <div className="py-8 text-center">
+                  <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
                     <SearchX className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <h3 className="mb-2 text-lg font-medium text-gray-900">
                     No recommendations found
                   </h3>
                   <p className="text-gray-500">

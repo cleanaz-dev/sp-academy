@@ -14,13 +14,17 @@ const customComponents = {
         {content.map((child, index) => {
           if (typeof child === "string") {
             // Split lines with translations (↳ symbol)
-            const lines = child.split('\n');
+            const lines = child.split("\n");
             return lines.map((line, lineIndex) => {
-              const [french, english] = line.split(' ↳ ');
+              const [french, english] = line.split(" ↳ ");
               return (
                 <React.Fragment key={lineIndex}>
-                  {french && <strong className="text-gray-800">{french}</strong>}
-                  {english && <em className="text-gray-600 block ml-4">{english}</em>}
+                  {french && (
+                    <strong className="text-gray-800">{french}</strong>
+                  )}
+                  {english && (
+                    <em className="ml-4 block text-gray-600">{english}</em>
+                  )}
                 </React.Fragment>
               );
             });
@@ -36,11 +40,13 @@ const customComponents = {
       <li className="my-2">
         {React.Children.map(children, (child) => {
           if (typeof child === "string") {
-            const [french, english] = child.split(' ↳ ');
+            const [french, english] = child.split(" ↳ ");
             return (
               <>
                 {french && <strong className="text-gray-800">{french}</strong>}
-                {english && <em className="text-gray-600 block ml-4">{english}</em>}
+                {english && (
+                  <em className="ml-4 block text-gray-600">{english}</em>
+                )}
               </>
             );
           }
@@ -52,7 +58,7 @@ const customComponents = {
   // Add bordered sections for highlighted content
   blockquote: ({ node, children }) => {
     return (
-      <div className="border-2 border-amber-400 bg-amber-50 rounded-lg p-4 my-6">
+      <div className="my-6 rounded-lg border-2 border-amber-400 bg-amber-50 p-4">
         {children}
       </div>
     );
@@ -60,7 +66,7 @@ const customComponents = {
   // Style tables with borders
   table: ({ node, children }) => {
     return (
-      <div className="overflow-x-auto my-6">
+      <div className="my-6 overflow-x-auto">
         <table className="w-full border-collapse border-2 border-amber-400">
           {children}
         </table>
@@ -75,11 +81,7 @@ const customComponents = {
     );
   },
   td: ({ node, children }) => {
-    return (
-      <td className="border-2 border-amber-400 px-4 py-2">
-        {children}
-      </td>
-    );
+    return <td className="border-2 border-amber-400 px-4 py-2">{children}</td>;
   },
 };
 
@@ -91,22 +93,19 @@ export default async function SingleLessonsPage({ params }) {
   }
 
   return (
-    <div className="max-w-5xl p-4 flex flex-col bg-white">
-      <h1 className="text-2xl font-bold mb-4 text-black bg-transparent">
+    <div className="flex max-w-5xl flex-col bg-white p-4">
+      <h1 className="mb-4 bg-transparent text-2xl font-bold text-black">
         {lesson.title}
       </h1>
-      <div className="prose prose-lg w-full flex-1 max-w-none dark:prose-invert">
-        <Markdown
-          remarkPlugins={[remarkGfm]}
-          components={customComponents}
-        >
+      <div className="prose prose-lg w-full max-w-none flex-1 dark:prose-invert">
+        <Markdown remarkPlugins={[remarkGfm]} components={customComponents}>
           {lesson.content}
         </Markdown>
         {lesson.quiz && (
           <div className="mt-8">
             <Link
               href={`/courses/${lesson.courseId}/lesson/${lesson.id}/quiz`}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors"
+              className="rounded-lg bg-blue-500 px-6 py-3 text-white transition-colors hover:bg-blue-600"
             >
               Take Quiz
             </Link>

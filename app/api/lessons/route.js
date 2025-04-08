@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; // Assuming you have Prisma set up
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma"; // Assuming you have Prisma set up
 
 export async function POST(request) {
   const { title, content, subject } = await request.json();
@@ -9,12 +9,15 @@ export async function POST(request) {
       data: {
         title,
         content,
-        subject
+        subject,
       },
     });
 
     return NextResponse.json({ id: lesson.id }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Error creating lesson' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error creating lesson" },
+      { status: 500 },
+    );
   }
 }

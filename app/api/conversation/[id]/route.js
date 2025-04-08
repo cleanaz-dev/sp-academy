@@ -10,7 +10,10 @@ export async function GET(request, { params }) {
     });
 
     if (!conversationRecord) {
-      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({
@@ -18,7 +21,10 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error("Error fetching conversation:", error);
-    return NextResponse.json({ error: "Failed to fetch conversation" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch conversation" },
+      { status: 500 },
+    );
   }
 }
 
@@ -29,16 +35,25 @@ export async function DELETE(request, { params }) {
     });
 
     if (!conversationRecord) {
-      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 },
+      );
     }
 
     await prisma.conversationRecord.delete({
       where: { id: params.id },
     });
 
-    return NextResponse.json({ message: "Conversation deleted successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Conversation deleted successfully" },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error deleting conversation:", error);
-    return NextResponse.json({ error: "Failed to delete conversation" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete conversation" },
+      { status: 500 },
+    );
   }
 }

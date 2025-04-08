@@ -1,17 +1,17 @@
 // app/api/achievements/check-achievements/route.js
-import { NextResponse } from 'next/server';
-import { checkAchievements } from '@/lib/checkAchievements';
-import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from "next/server";
+import { checkAchievements } from "@/lib/checkAchievements";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(request) {
   try {
     // Verify authentication
     const { userId } = auth();
-    
+
     if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
       );
     }
 
@@ -23,10 +23,10 @@ export async function POST(request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Achievement check failed:', error);
+    console.error("Achievement check failed:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

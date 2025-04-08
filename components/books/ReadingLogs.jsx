@@ -19,30 +19,30 @@ import { BookOpenText } from "lucide-react";
 import { Info } from "lucide-react";
 
 export default function ReadingLogs({ data }) {
-
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const logsPerPage = 5;
 
-  const filteredLogs = data.readingLogs?.filter((log) =>
-    log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-  
+  const filteredLogs =
+    data.readingLogs?.filter((log) =>
+      log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || [];
+
   const sortedLogs = [...filteredLogs].sort(
-    (a, b) => new Date(b.dateRead) - new Date(a.dateRead)
+    (a, b) => new Date(b.dateRead) - new Date(a.dateRead),
   );
-  
+
   // Pagination
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
   const currentLogs = sortedLogs.slice(indexOfFirstLog, indexOfLastLog);
-  
+
   const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold mb-4">Reading Logs</h1>
+        <h1 className="mb-4 text-2xl font-bold">Reading Logs</h1>
         <div className="flex items-center space-x-2">
           <Input
             type="text"
@@ -51,7 +51,7 @@ export default function ReadingLogs({ data }) {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          <Search className="w-4 h-4 text-gray-500" />
+          <Search className="h-4 w-4 text-gray-500" />
         </div>
       </div>
 
@@ -78,10 +78,7 @@ export default function ReadingLogs({ data }) {
                 </span>
               </TableHead>
               <TableHead>
-                <span className="flex items-center gap-2">
-                 
-                 Action
-                </span>
+                <span className="flex items-center gap-2">Action</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -98,7 +95,7 @@ export default function ReadingLogs({ data }) {
                   <span className="line-clamp-3">{log.shortSummary}</span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2 justify-end">
+                  <div className="flex justify-end gap-2">
                     <EditReadingLog log={log} />
                     <DeleteReadingDialog log={log} />
                   </div>
@@ -109,12 +106,12 @@ export default function ReadingLogs({ data }) {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="mt-4 flex items-center justify-between">
         <Button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
         >
-          <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+          <ChevronLeft className="mr-2 h-4 w-4" /> Previous
         </Button>
         <span>
           Page {currentPage} of {totalPages}
@@ -125,7 +122,7 @@ export default function ReadingLogs({ data }) {
           }
           disabled={currentPage === totalPages}
         >
-          Next <ChevronRight className="w-4 h-4 ml-2" />
+          Next <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>

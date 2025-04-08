@@ -22,12 +22,10 @@ export default function SpoonLogo() {
       </div>
       <div className="text-gray-700 text-sm tracking-wider mt-2">ACADEMY</div> */}
 
-<div className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white text-center p-16  w-full">
+      <div className="w-full animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-16 text-center text-white">
         <h1 className="text-3xl font-bold">Welcome to SPOONFED Academy</h1>
         <p className="mt-2">Learning made simple, spoon-fed for success.</p>
       </div>
-
-
 
       {/* <div className="h-screen flex">
       // Sidebar

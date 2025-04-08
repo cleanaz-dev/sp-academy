@@ -28,11 +28,11 @@ export default function ShortStoryQuestionsModal({ story }) {
       <Button
         size="md"
         onClick={() => handleOpen("md")}
-        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
       >
         {story.StoryQuestions &&
         story.StoryQuestions.some(
-          (question) => question.userId === story.user.userId
+          (question) => question.userId === story.user.userId,
         )
           ? "Practice Again"
           : "Practice Speaking"}
@@ -46,7 +46,7 @@ export default function ShortStoryQuestionsModal({ story }) {
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p className="text-slate-600 text-sm">
+            <p className="text-sm text-slate-600">
               Please go somewhere quiet and not too noisy so we can record.{" "}
               <br />
               Remember to listen carefully and speak clearly.
@@ -56,16 +56,16 @@ export default function ShortStoryQuestionsModal({ story }) {
             <input type="hidden" name="userId" value={user?.id} />
             <input type="hidden" name="storyId" value={story.id} />
             <input type="hidden" name="englishText" value={story.englishText} />
-            <div className="my-4 p-1 space-y-2">
+            <div className="my-4 space-y-2 p-1">
               <Label>Phone Number</Label>
               <Input
                 type="tel"
                 placeholder="Your phone number"
                 name="phoneNumber"
                 required
-                className="bg-white max-w-md"
+                className="max-w-md bg-white"
               />
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
                 {" "}
                 <Toggle
                   color="green"

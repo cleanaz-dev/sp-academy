@@ -2,7 +2,10 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import { conversationDialogPrompt, getUserScorePrompt } from "@/lib/claudePrompts";
+import {
+  conversationDialogPrompt,
+  getUserScorePrompt,
+} from "@/lib/claudePrompts";
 
 export async function POST(req) {
   try {
@@ -29,7 +32,7 @@ export async function POST(req) {
     if (!message) {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,10 +43,18 @@ export async function POST(req) {
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
 
-      const systemPrompt = conversationDialogPrompt({ targetLanguage, nativeLanguage, dialogue, title, vocabulary, history, message });
+      const systemPrompt = conversationDialogPrompt({
+        targetLanguage,
+        nativeLanguage,
+        dialogue,
+        title,
+        vocabulary,
+        history,
+        message,
+      });
 
       const response = await anthropic.messages.create({
-        model: "claude-3-5-haiku-latest",
+        model: "claude-3-5-haiku-20241022",
         max_tokens: 1500,
         temperature: 0.3,
         system: systemPrompt,
@@ -70,7 +81,7 @@ export async function POST(req) {
       history,
       targetLanguage,
       vocabulary,
-      title
+      title,
     ) => {
       const anthropic = new Anthropic({
         apiKey: process.env.ANTHROPIC_API_KEY,
@@ -87,8 +98,7 @@ export async function POST(req) {
         title,
         recentHistory,
         userMessage,
-      })
-
+      });
 
       // New function to extract detailed corrections
       function extractCorrections(responseText) {
@@ -98,42 +108,44 @@ export async function POST(req) {
           article: {},
           finalNotes: "",
         };
-      
+
         // First, split by "Corrections:" to isolate the corrections section
         const [_, correctionsSection] = responseText.split("Corrections:");
         if (correctionsSection) {
           // Split the corrections section by double newlines to separate each correction type
           const corrections = correctionsSection.split(/\n\n/);
-          
+
           corrections.forEach((section) => {
             if (section.includes("Gender Agreement")) {
               const [correctionLine, whyLine] = section.split("\nWhy: ");
               result.genderAgreement = {
-                correction: correctionLine.replace("Gender Agreement:", "").trim(),
-                reason: whyLine ? whyLine.trim() : ""
+                correction: correctionLine
+                  .replace("Gender Agreement:", "")
+                  .trim(),
+                reason: whyLine ? whyLine.trim() : "",
               };
             } else if (section.includes("Vocabulary")) {
               const [correctionLine, whyLine] = section.split("\nWhy: ");
               result.vocabulary = {
                 correction: correctionLine.replace("Vocabulary:", "").trim(),
-                reason: whyLine ? whyLine.trim() : ""
+                reason: whyLine ? whyLine.trim() : "",
               };
             } else if (section.includes("Article")) {
               const [correctionLine, whyLine] = section.split("\nWhy: ");
               result.article = {
                 correction: correctionLine.replace("Article:", "").trim(),
-                reason: whyLine ? whyLine.trim() : ""
+                reason: whyLine ? whyLine.trim() : "",
               };
             }
           });
         }
-      
+
         // Extract final notes if they exist
         const finalNotesMatch = responseText.match(/The student.*$/s);
         if (finalNotesMatch) {
           result.finalNotes = finalNotesMatch[0].trim();
         }
-      
+
         return result;
       }
 
@@ -151,10 +163,10 @@ export async function POST(req) {
       // Extract basic information
       const scoreMatch = responseText.match(/Score:\s*(\d+)/);
       const explanationMatch = responseText.match(
-        /Explanation:\s*(.*?)(?=\n|$)/s
+        /Explanation:\s*(.*?)(?=\n|$)/s,
       );
       const improvedMatch = responseText.match(
-        /Improved Response:\s*(.*?)(?=\n|$)/s
+        /Improved Response:\s*(.*?)(?=\n|$)/s,
       );
 
       const score = scoreMatch ? parseInt(scoreMatch[1], 10) : null;
@@ -180,7 +192,8 @@ export async function POST(req) {
       const shouldSuggest =
         score <= 6 && improvedResponse !== "No improvement needed.";
 
-      const shouldCorrect = score <= 6 && detailedCorrections !== " No improvement needed.";
+      const shouldCorrect =
+        score <= 6 && detailedCorrections !== " No improvement needed.";
 
       return {
         score,
@@ -200,7 +213,7 @@ export async function POST(req) {
         const prompt = `Translate "${message}" into ${nativeLanguage}, output translation only.`;
 
         const response = await anthropic.messages.create({
-          model: "claude-3-haiku-20240307",
+          model: "claude-3-5-haiku-20241022",
           max_tokens: 500,
           messages: [{ role: "user", content: prompt }],
         });
@@ -249,14 +262,14 @@ export async function POST(req) {
             text,
             model_id: "eleven_multilingual_v2",
             voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.5,
+              stability: 0.4,
+              similarity_boost: 0.4,
               language: targetLanguage,
-              use_speaker_boost: true,
+              use_speaker_boost: false,
             },
             optimize_streaming_latency: 3,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -285,7 +298,7 @@ export async function POST(req) {
     console.error("Conversation error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

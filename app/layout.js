@@ -1,29 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Roboto, Comfortaa, Nunito } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { Toaster } from "sonner";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["100", "300", "400", "500", "700", "900"],
-});
-
-const comfortaa = Comfortaa({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -58,16 +37,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider dynamic>
       <html lang="en">
         <body className={nunito.className}>
-            {children}
-            <Toaster
-              position="bottom-right"
-              richColors
-              theme="system"
-              closeButton
-            />
+          {children}
+          <Toaster
+            position="bottom-right"
+            richColors
+            theme="system"
+            closeButton
+          />
         </body>
       </html>
     </ClerkProvider>

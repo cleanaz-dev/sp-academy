@@ -32,20 +32,19 @@ export async function POST(request) {
     const translatedText = response.content[0].text;
 
     return NextResponse.json(
-      { 
+      {
         translatedText,
         originalText: text,
         fromLanguage: from,
-        toLanguage: to 
+        toLanguage: to,
       },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
     console.error("Translation error:", error.message);
     return NextResponse.json(
       { error: "Translation failed. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

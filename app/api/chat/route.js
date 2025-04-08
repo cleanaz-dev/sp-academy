@@ -1,4 +1,7 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -45,14 +48,13 @@ Please respond to: ${message}
 
     return NextResponse.json(
       { response: responseData.completion },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     return NextResponse.json(
-      { error: 'Failed to process request' },
-      { status: 500 }
+      { error: "Failed to process request" },
+      { status: 500 },
     );
   }
 }

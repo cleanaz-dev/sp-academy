@@ -113,7 +113,6 @@ body {
   width: 100% !important;
 }
 
-
 html {
   scroll-behavior: smooth;
 }
@@ -163,27 +162,295 @@ html {
 }
 
 .header-title {
-  font-size: 1.875rem;  /* Corresponds to text-3xl in Tailwind */
-  font-weight: 700;     /* Corresponds to font-bold in Tailwind */
-  color: #1f2937;       /* Corresponds to text-gray-900 in Tailwind */
+  font-size: 1.875rem; /* Corresponds to text-3xl in Tailwind */
+  font-weight: 700; /* Corresponds to font-bold in Tailwind */
+  color: #1f2937; /* Corresponds to text-gray-900 in Tailwind */
   border-left: 4px solid #7c3aed; /* Corresponds to border-violet-500 in Tailwind */
-  padding-left: 0.75rem;  /* Corresponds to pl-3 in Tailwind */
+  padding-left: 0.75rem; /* Corresponds to pl-3 in Tailwind */
 }
 
 /* Add these to your global CSS or as a styled component */
 .form-container {
-  @apply max-w-4xl mx-auto p-6;
+  @apply mx-auto max-w-4xl p-6;
 }
 
 .error-message {
-  @apply text-red-500 text-sm mt-1;
+  @apply mt-1 text-sm text-red-500;
 }
 
 .success-message {
-  @apply text-green-500 text-sm mt-1;
+  @apply mt-1 text-sm text-green-500;
 }
 
 .input-error {
   @apply border-red-500 focus:border-red-500 focus:ring-red-500;
 }
 
+@keyframes scaleCheck {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-scaleCheck {
+  animation: scaleCheck 0.5s ease-in-out;
+}
+
+@keyframes shine {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-shine {
+  animation: shine 1.5s infinite ease-in-out;
+}
+
+@keyframes glimmer {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(100%);
+  }
+  10% {
+    transform: scale(1.15);
+    filter: brightness(160%);
+  }
+  25% {
+    transform: scale(1);
+    filter: brightness(100%);
+  }
+}
+
+.animate-glimmer {
+  animation: glimmer 1.8s infinite ease-in-out;
+}
+
+@keyframes glimmer-effect {
+  0% {
+    background: linear-gradient(
+      45deg,
+      transparent 40%,
+      rgb(189, 179, 87) 50%,
+      transparent 60%
+    );
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+.animate-glimmer-effect {
+  animation: glimmer-effect 2s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.chat-bubble {
+  border-radius: 1rem 1rem 0 1rem; /* Top-left, top-right, bottom-right, bottom-left */
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional shadow */
+}
+
+/* styles.css */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s infinite ease-in-out;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(5px);
+  }
+  50% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-2deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scaleY(0.8);
+  }
+  100% {
+    transform: scaleY(1.2);
+  }
+}

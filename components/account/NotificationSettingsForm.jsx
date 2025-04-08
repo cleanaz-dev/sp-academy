@@ -35,7 +35,7 @@ export function NotificationSettingsForm({ initialSettings, userId }) {
         </p>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Email Notifications</Label>
               <p className="text-sm text-muted-foreground">
@@ -43,14 +43,14 @@ export function NotificationSettingsForm({ initialSettings, userId }) {
               </p>
             </div>
             <Switch
-              checked={settings.emailNotifications}
+              checked={settings.dailyEmails}
               onCheckedChange={(checked) =>
-                setSettings({ ...settings, emailNotifications: checked })
+                setSettings({ ...settings, dailyEmails: checked })
               }
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Weekly Digest</Label>
               <p className="text-sm text-muted-foreground">
@@ -58,14 +58,14 @@ export function NotificationSettingsForm({ initialSettings, userId }) {
               </p>
             </div>
             <Switch
-              checked={settings.weeklyDigest}
+              checked={settings.weeklyEmails}
               onCheckedChange={(checked) =>
-                setSettings({ ...settings, weeklyDigest: checked })
+                setSettings({ ...settings, weeklyEmails: checked })
               }
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Promotional Offers</Label>
               <p className="text-sm text-muted-foreground">
@@ -73,9 +73,9 @@ export function NotificationSettingsForm({ initialSettings, userId }) {
               </p>
             </div>
             <Switch
-              checked={settings.promotionalOffers}
+              checked={settings.promotionEmails}
               onCheckedChange={(checked) =>
-                setSettings({ ...settings, promotionalOffers: checked })
+                setSettings({ ...settings, promotionEmails: checked })
               }
             />
           </div>

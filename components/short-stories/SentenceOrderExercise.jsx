@@ -42,13 +42,11 @@ const SortableItem = ({ id, children }) => {
       style={style}
       {...attributes}
       {...listeners}
-      className={`p-4 mb-2 rounded-lg cursor-move select-none
-        ${
-          isDragging
-            ? "bg-purple-100 shadow-lg"
-            : "bg-white border-2 border-gray-200 hover:border-purple-300"
-        }
-        transition-colors duration-200`}
+      className={`mb-2 cursor-move select-none rounded-lg p-4 ${
+        isDragging
+          ? "bg-purple-100 shadow-lg"
+          : "border-2 border-gray-200 bg-white hover:border-purple-300"
+      } transition-colors duration-200`}
     >
       {children}
     </div>
@@ -67,7 +65,7 @@ export default function SentenceOrderExercise({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event) => {
@@ -78,17 +76,19 @@ export default function SentenceOrderExercise({
         const oldIndex = items.findIndex((item) => item === active.id);
         const newIndex = items.findIndex((item) => item === over.id);
         const newOrder = arrayMove(items, oldIndex, newIndex);
-        
+
         // Check if the order is correct
-        const currentOrder = newOrder.map((part) => 
-          exercise.parts.indexOf(part)
+        const currentOrder = newOrder.map((part) =>
+          exercise.parts.indexOf(part),
         );
-        const correct = JSON.stringify(currentOrder) === JSON.stringify(exercise.correctOrder);
+        const correct =
+          JSON.stringify(currentOrder) ===
+          JSON.stringify(exercise.correctOrder);
         setIsCorrect(correct);
-        
+
         // Send the answer to parent component
         onAnswer(exercise.id, newOrder);
-        
+
         return newOrder;
       });
     }
@@ -97,8 +97,12 @@ export default function SentenceOrderExercise({
   return (
     <div className="space-y-4">
       <div className="mb-4">
-        <h3 className="text-lg font-medium text-gray-800">{exercise.question}</h3>
-        <p className="text-sm text-gray-600">Drag the parts to arrange them in the correct order</p>
+        <h3 className="text-lg font-medium text-gray-800">
+          {exercise.question}
+        </h3>
+        <p className="text-sm text-gray-600">
+          Drag the parts to arrange them in the correct order
+        </p>
       </div>
 
       <DndContext
@@ -119,7 +123,7 @@ export default function SentenceOrderExercise({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className={`mt-4 p-4 rounded-lg ${
+          className={`mt-4 rounded-lg p-4 ${
             isCorrect ? "bg-green-50" : "bg-red-50"
           }`}
         >
@@ -134,7 +138,7 @@ export default function SentenceOrderExercise({
                 <XCircle className="h-5 w-5 text-red-600" />
                 <div className="text-red-600">
                   <p>Not quite right. The correct sentence is:</p>
-                  <p className="font-medium mt-2">{exercise.correctSentence}</p>
+                  <p className="mt-2 font-medium">{exercise.correctSentence}</p>
                 </div>
               </>
             )}

@@ -9,38 +9,32 @@ export async function POST(request) {
     // 1. Method validation
     if (request.method !== "POST") {
       return NextResponse.json(
-        { message: "Method not allowed" }, 
-        { status: 405 }
+        { message: "Method not allowed" },
+        { status: 405 },
       );
     }
 
     // 2. Authentication check
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { message: "Unauthorized" }, 
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     // 3. Request body validation
     const { quizId, score, lessonId } = await request.json();
     if (!quizId || score === undefined || !lessonId) {
       return NextResponse.json(
-        { message: "Missing required fields" }, 
-        { status: 400 }
+        { message: "Missing required fields" },
+        { status: 400 },
       );
     }
 
     // 4. Get user from database
-    const user = await prisma.user.findFirst({ 
-      where: { userId: userId } 
+    const user = await prisma.user.findFirst({
+      where: { userId: userId },
     });
     if (!user) {
-      return NextResponse.json(
-        { message: "User not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // 5. Get quiz details
@@ -49,10 +43,7 @@ export async function POST(request) {
       include: { lesson: true },
     });
     if (!quiz) {
-      return NextResponse.json(
-        { message: "Quiz not found" }, 
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Quiz not found" }, { status: 404 });
     }
 
     // 6. Check for existing attempts (optional)
@@ -69,12 +60,13 @@ export async function POST(request) {
         quizId,
         userId: user.id,
         score,
-        attempts: await prisma.quizResult.count({
-          where: {
-            quizId,
-            userId: user.id,
-          }
-        }) + 1,
+        attempts:
+          (await prisma.quizResult.count({
+            where: {
+              quizId,
+              userId: user.id,
+            },
+          })) + 1,
         completedAt: new Date(),
       },
     });
@@ -82,7 +74,7 @@ export async function POST(request) {
     // If passing score, update progress
     const passingScore = 0.8;
     let progressUpdate = null;
-    
+
     if (score >= passingScore) {
       progressUpdate = await updateLessonAndCourseProgress({
         userId: user.id,
@@ -96,23 +88,22 @@ export async function POST(request) {
       message: "Quiz submitted successfully",
       quizResult,
       lessonCompleted: score >= passingScore,
-      progressUpdate
+      progressUpdate,
     });
-
   } catch (error) {
     console.error("Error submitting quiz:", error);
-    
+
     // 10. Error handling
-    if (error.code === 'P2002') {
+    if (error.code === "P2002") {
       return NextResponse.json(
-        { message: "Duplicate submission" }, 
-        { status: 409 }
+        { message: "Duplicate submission" },
+        { status: 409 },
       );
     }
 
     return NextResponse.json(
-      { message: "Internal server error" }, 
-      { status: 500 }
+      { message: "Internal server error" },
+      { status: 500 },
     );
   }
 }

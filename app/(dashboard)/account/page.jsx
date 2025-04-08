@@ -12,6 +12,7 @@ import { NotificationSettingsForm } from "@/components/account/NotificationSetti
 import { ProfilePictureUploader } from "@/components/account/ProfilePictureUploader";
 import { DangerZone } from "@/components/account/DangerZone";
 import { ProfileCompletion } from "@/components/account/ProfileCompletion";
+import { GeneralSettings } from "@/components/account/GeneralSettings";
 
 export default async function AccountSettings() {
   const { userId } = auth();
@@ -19,10 +20,14 @@ export default async function AccountSettings() {
 
   return (
     <main className="space-y-4 pb-10">
-      <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16 mb-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="flex items-center gap-4 text-4xl font-bold mb-4">
-            Account Settings <Cog strokeWidth={1.5} className="size-10 drop-shadow-xl animate-spin transition-all duration-1000 ease-in-out" />
+      <header className="mb-8 animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
+            Account Settings{" "}
+            <Cog
+              strokeWidth={1.5}
+              className="size-10 animate-spin drop-shadow-xl transition-all duration-1000 ease-in-out"
+            />
           </h1>
           <p className="text-xl opacity-90">
             Manage your account preferences and settings
@@ -30,9 +35,9 @@ export default async function AccountSettings() {
         </div>
       </header>
 
-      <Card className="max-w-5xl mx-auto container p-6">
+      <Card className="container mx-auto max-w-5xl p-6">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-12">
+          <TabsList className="grid h-12 w-full grid-cols-4">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="sharing">Sharing</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -40,9 +45,11 @@ export default async function AccountSettings() {
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
-            <ProfilePictureUploader initialImageUrl={settings.avatarUrl} userId={userId} />
-            <ProfileCompletion completionPercentage={calculateCompletion(settings)} />
-            <AccountSettingsForm initialSettings={settings} userId={userId} />
+            <GeneralSettings
+              initialImageUrl={settings.avatarUrl}
+              initialSettings={settings}
+            />
+
             <DangerZone userId={userId} />
           </TabsContent>
 
@@ -51,7 +58,10 @@ export default async function AccountSettings() {
           </TabsContent>
 
           <TabsContent value="notifications">
-            <NotificationSettingsForm initialSettings={settings} userId={userId} />
+            <NotificationSettingsForm
+              initialSettings={settings}
+              userId={userId}
+            />
           </TabsContent>
 
           <TabsContent value="billing">

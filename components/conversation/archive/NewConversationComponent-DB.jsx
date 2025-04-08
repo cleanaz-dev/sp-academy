@@ -190,7 +190,7 @@ export default function NewConversationComponentCopy({
 
   useEffect(() => {
     const savedHistory = JSON.parse(
-      localStorage.getItem(localStorageKey) || "[]"
+      localStorage.getItem(localStorageKey) || "[]",
     );
     setConversationHistory(savedHistory);
   }, [localStorageKey]);
@@ -208,7 +208,7 @@ export default function NewConversationComponentCopy({
     setError(null);
     try {
       const storedHistory = JSON.parse(
-        localStorage.getItem(localStorageKey) || "[]"
+        localStorage.getItem(localStorageKey) || "[]",
       );
 
       // Initially add user message without translation
@@ -378,7 +378,7 @@ export default function NewConversationComponentCopy({
 
       {error && (
         <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          className="relative rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700"
           role="alert"
         >
           <strong className="font-bold">Error:</strong>
@@ -387,7 +387,7 @@ export default function NewConversationComponentCopy({
             size="sm"
             variant="outline"
             onClick={getSuggestions}
-            className="absolute top-2 right-2"
+            className="absolute right-2 top-2"
             aria-label="Retry getting suggestions"
           >
             Retry
@@ -403,16 +403,16 @@ export default function NewConversationComponentCopy({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex p-3 rounded-lg bg-purple-50 shadow-purple-100 hover:bg-gray-50 transition-colors duration-200 shadow-inner"
+              className="flex rounded-lg bg-purple-50 p-3 shadow-inner shadow-purple-100 transition-colors duration-200 hover:bg-gray-50"
             >
               <div className="flex-1">
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   {/* Text Container */}
                   <div className="flex-1">
                     <p className="text-sm font-medium text-purple-600">
                       {suggestion.targetLanguage}
                     </p>
-                    <p className="text-xs text-gray-600 italic">
+                    <p className="text-xs italic text-gray-600">
                       {suggestion.nativeLanguage}
                     </p>
                   </div>
@@ -423,7 +423,7 @@ export default function NewConversationComponentCopy({
                       size="icon"
                       variant="ghost"
                       onClick={() => speakPhrase(suggestion.targetLanguage)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Listen to pronunciation"
                       aria-label={`Listen to ${suggestion.targetLanguage}`}
                     >
@@ -433,7 +433,7 @@ export default function NewConversationComponentCopy({
                       size="icon"
                       variant="ghost"
                       onClick={() => usePhrase(suggestion.targetLanguage)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Use in conversation"
                       aria-label={`Use ${suggestion.targetLanguage} in conversation`}
                     >
@@ -448,7 +448,7 @@ export default function NewConversationComponentCopy({
           ))}
         </div>
       ) : (
-        <div className="text-center text-gray-500 py-4">
+        <div className="py-4 text-center text-gray-500">
           {isLoadingSuggestions
             ? "Loading suggestions..."
             : "No suggestions available."}
@@ -557,15 +557,15 @@ export default function NewConversationComponentCopy({
     return (
       <Dialog>
         <DialogTrigger asChild>
-          <button className="text-white flex items-center space-x-1 animate-pulse shadow-2xl shadow-white hover:scale-110 transition-transform">
-            <Info className="w-4 h-4" />
+          <button className="flex animate-pulse items-center space-x-1 text-white shadow-2xl shadow-white transition-transform hover:scale-110">
+            <Info className="h-4 w-4" />
           </button>
         </DialogTrigger>
 
-        <DialogContent className="w-4/5 p-6 bg-gradient-to-r from-indigo-600/70 to-purple-700/70 text-white shadow-xl rounded-lg backdrop-blur-md border-none">
-          <div className="flex items-center justify-between mb-4">
-            <DialogTitle className="font-semibold text-2xl text-white flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
+        <DialogContent className="w-4/5 rounded-lg border-none bg-gradient-to-r from-indigo-600/70 to-purple-700/70 p-6 text-white shadow-xl backdrop-blur-md">
+          <div className="mb-4 flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-2xl font-semibold text-white">
+              <Sparkles className="h-6 w-6" />
               Better Way to Say This
             </DialogTitle>
           </div>
@@ -573,9 +573,9 @@ export default function NewConversationComponentCopy({
           <DialogDescription className="text-sm text-slate-100">
             <div className="space-y-4">
               {/* Original Text Section */}
-              <div className="p-3 bg-white/5 rounded-lg">
-                <div className="text-xs text-slate-300 mb-2 flex items-center gap-2">
-                  <MessageSquareQuote className="w-4 h-4" />
+              <div className="rounded-lg bg-white/5 p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs text-slate-300">
+                  <MessageSquareQuote className="h-4 w-4" />
                   Original phrase:
                 </div>
                 <p className="text-slate-200">
@@ -584,12 +584,12 @@ export default function NewConversationComponentCopy({
               </div>
 
               {/* Improved Text Section */}
-              <div className="p-3 bg-white/10 rounded-lg border border-white/10">
-                <div className="text-xs text-emerald-300 mb-2 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
+              <div className="rounded-lg border border-white/10 bg-white/10 p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs text-emerald-300">
+                  <Sparkles className="h-4 w-4" />
                   Improved version:
                 </div>
-                <p className="font-medium text-white mb-4">
+                <p className="mb-4 font-medium text-white">
                   {improvedResponse.replace(/^"|"$/g, "")}
                 </p>
 
@@ -599,9 +599,9 @@ export default function NewConversationComponentCopy({
                     size="sm"
                     variant="ghost"
                     onClick={() => speakPhrase(improvedResponse)}
-                    className="flex items-center gap-2 text-slate-200 hover:text-white hover:bg-white/10"
+                    className="flex items-center gap-2 text-slate-200 hover:bg-white/10 hover:text-white"
                   >
-                    <Volume2 className="w-4 h-4" />
+                    <Volume2 className="h-4 w-4" />
                     Listen
                   </Button>
                 </div>
@@ -609,8 +609,8 @@ export default function NewConversationComponentCopy({
             </div>
           </DialogDescription>
 
-          <div className="mt-4 text-xs text-slate-200 flex items-center gap-2">
-            <Info className="w-4 h-4 text-sky-300" />
+          <div className="mt-4 flex items-center gap-2 text-xs text-slate-200">
+            <Info className="h-4 w-4 text-sky-300" />
             <span>
               Pro tip: This phrasing sounds more natural in conversation
             </span>
@@ -621,11 +621,11 @@ export default function NewConversationComponentCopy({
   };
 
   const handleStartConversation = () => {
-    setConversationStarted(true)
-  }
+    setConversationStarted(true);
+  };
 
   return (
-    <div className="flex container mx-auto h-[calc(95vh-2rem)] max-w-4xl gap-4">
+    <div className="container mx-auto flex h-[calc(95vh-2rem)] max-w-4xl gap-4">
       {/* Main Conversation Area */}
       <div
         className={`transition-all duration-300 ${
@@ -633,7 +633,7 @@ export default function NewConversationComponentCopy({
         }`}
       >
         {/* Your existing conversation UI */}
-        <div className="bg-white rounded-lg shadow p-4 h-full flex flex-col">
+        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow">
           <div className="flex items-center justify-between p-2">
             <header>
               <div>
@@ -655,7 +655,7 @@ export default function NewConversationComponentCopy({
                         voiceGender === "male"
                           ? "translate-x-6"
                           : "translate-x-1"
-                      } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
+                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                     />
                   </Switch>
                   <span className="text-2xl">
@@ -667,25 +667,25 @@ export default function NewConversationComponentCopy({
           </div>
 
           {/* Conversation History */}
-          <ScrollArea className="flex-1 h-[500px] p-4 bg-gray-100/80 rounded-lg shadow-inner">
-            <div className="flex flex-col space-y-4 ">
+          <ScrollArea className="h-[500px] flex-1 rounded-lg bg-gray-100/80 p-4 shadow-inner">
+            <div className="flex flex-col space-y-4">
               {conversationHistory.map((message, index) => (
                 <div
                   key={index}
                   className={cn(
-                    "flex items-end ",
-                    message.role === "user" ? "justify-end" : "justify-start"
+                    "flex items-end",
+                    message.role === "user" ? "justify-end" : "justify-start",
                   )}
                 >
                   {message.role !== "user" && voiceGender === "female" ? (
-                    <Avatar className="w-10 h-10 mr-3 drop-shadow-md transition-all duration-300 ease-in-out transform ">
+                    <Avatar className="mr-3 h-10 w-10 transform drop-shadow-md transition-all duration-300 ease-in-out">
                       <AvatarImage src={aiAvatarFemaleUrl} />
                       <AvatarFallback className="bg-blue-500 text-white">
                         AI
                       </AvatarFallback>
                     </Avatar>
                   ) : message.role !== "user" ? (
-                    <Avatar className="w-10 h-10 mr-3 drop-shadow-md transition-all duration-300 ease-in-out transform ">
+                    <Avatar className="mr-3 h-10 w-10 transform drop-shadow-md transition-all duration-300 ease-in-out">
                       <AvatarImage src={aiAvatarMaleUrl} />
                       <AvatarFallback className="bg-gray-500 text-white">
                         U
@@ -695,10 +695,10 @@ export default function NewConversationComponentCopy({
 
                   <div
                     className={cn(
-                      "relative max-w-[75%] px-4 py-3 rounded-2xl text-sm shadow-md transition-all duration-300",
+                      "relative max-w-[75%] rounded-2xl px-4 py-3 text-sm shadow-md transition-all duration-300",
                       message.role === "user"
-                        ? "bg-gradient-to-br from-blue-500 to-indigo-500 text-white self-end rounded-br-none min-w-32"
-                        : "bg-white text-gray-900 self-start rounded-bl-none"
+                        ? "min-w-32 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white"
+                        : "self-start rounded-bl-none bg-white text-gray-900",
                     )}
                   >
                     <p className="font-medium">
@@ -712,18 +712,18 @@ export default function NewConversationComponentCopy({
                     )}
                     {/* User Score */}
                     {message.label && (
-                      <div className="flex items-center justify-end space-x-2 ">
+                      <div className="flex items-center justify-end space-x-2">
                         <span
                           className={cn(
-                            "flex items-center gap-1 text-xs italic font-bold",
+                            "flex items-center gap-1 text-xs font-bold italic",
                             message.label === "Excellent" ||
                               message.label === "Great"
                               ? "text-emerald-500"
                               : message.label === "Good"
-                              ? "text-green-600"
-                              : message.label === "OK"
-                              ? "text-amber-500"
-                              : "text-red-400"
+                                ? "text-green-600"
+                                : message.label === "OK"
+                                  ? "text-amber-500"
+                                  : "text-red-400",
                           )}
                         >
                           <MdRecordVoiceOver /> {message.label}!
@@ -741,12 +741,12 @@ export default function NewConversationComponentCopy({
 
                     {/* Subtle glow effect for user messages */}
                     {message.role === "user" && (
-                      <span className="absolute -bottom-1 right-2 w-2 h-2 bg-blue-400 rounded-full animate-ping"></span>
+                      <span className="absolute -bottom-1 right-2 h-2 w-2 animate-ping rounded-full bg-blue-400"></span>
                     )}
                   </div>
 
                   {message.role === "user" && (
-                    <Avatar className="w-10 h-10 ml-3 drop-shadow-md">
+                    <Avatar className="ml-3 h-10 w-10 drop-shadow-md">
                       <AvatarFallback className="bg-gray-500 text-white">
                         U
                       </AvatarFallback>
@@ -765,18 +765,14 @@ export default function NewConversationComponentCopy({
               <div className="relative h-8 w-full">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       !isRecording && !isProcessing
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex justify-center">
-                      <Button
-                        variant="ghost"
-                        onClick={handleStartConversation}
-
-                      >
+                    <div className="flex w-full justify-center rounded-full px-4 py-2">
+                      <Button variant="ghost" onClick={handleStartConversation}>
                         <span className="text-sm font-medium text-gray-600">
                           Ready to start! 🚀
                         </span>
@@ -785,16 +781,16 @@ export default function NewConversationComponentCopy({
                   </div>
 
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       isRecording
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2">
                       <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
                       </span>
                       <span className="text-sm font-medium text-red-600">
                         Recording
@@ -803,13 +799,13 @@ export default function NewConversationComponentCopy({
                   </div>
 
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       isProcessing
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2">
                       <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                       <span className="text-sm font-medium text-blue-600">
                         Processing
@@ -820,21 +816,21 @@ export default function NewConversationComponentCopy({
               </div>
               {/* Input Controls */}
               <div className="flex items-center gap-4">
-                <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center drop-shadow-sm shadow-inner">
+                <div className="flex flex-1 items-center rounded-full bg-gray-100 p-2 shadow-inner drop-shadow-sm">
                   {/* Text Input */}
                   <input
                     type="text"
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Type something to translate..."
-                    className="flex-1 bg-transparent outline-none px-3 text-sm"
+                    className="flex-1 bg-transparent px-3 text-sm outline-none"
                   />
 
                   {/* Send Button */}
                   <button
                     onClick={() => handleTranslation(textInput)}
                     disabled={isProcessing || !textInput.trim()}
-                    className="p-2 rounded-full hover:bg-emerald-500 hover:text-white text-emerald-500 disabled:opacity-50 transition-all mr-2 shadow-inner duration-300"
+                    className="mr-2 rounded-full p-2 text-emerald-500 shadow-inner transition-all duration-300 hover:bg-emerald-500 hover:text-white disabled:opacity-50"
                   >
                     <Send className="h-5 w-5" />
                   </button>
@@ -843,9 +839,9 @@ export default function NewConversationComponentCopy({
                   <button
                     onClick={toggleRecording}
                     disabled={isProcessing}
-                    className={`p-2 rounded-full hover:bg-blue-500 hover:text-white duration-300 shadow-inner ${
+                    className={`rounded-full p-2 shadow-inner duration-300 hover:bg-blue-500 hover:text-white ${
                       isRecording ? "bg-red-500 text-white" : ""
-                    } text-blue-500 disabled:opacity-50 transition-all`}
+                    } text-blue-500 transition-all disabled:opacity-50`}
                   >
                     {isRecording ? (
                       // Show a "Stop" icon or a glowing mic when recording
@@ -862,10 +858,10 @@ export default function NewConversationComponentCopy({
                   {conversationHistory.length >= 2 && (
                     <button
                       onClick={deleteLastExchange}
-                      className="ml-2 p-2 rounded-full hover:bg-red-500 text-red-500 hover:text-white transition-all duration-300 shadow-inner"
+                      className="ml-2 rounded-full p-2 text-red-500 shadow-inner transition-all duration-300 hover:bg-red-500 hover:text-white"
                       title="Delete last exchange"
                     >
-                      <Trash2 className="h-5 w-5 " />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   )}
                 </div>
@@ -875,7 +871,7 @@ export default function NewConversationComponentCopy({
 
           {/* Error Messages */}
           {error && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-full text-sm shadow-lg">
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full border border-red-200 bg-red-100 px-4 py-2 text-sm text-red-700 shadow-lg">
               {error}
             </div>
           )}
@@ -892,15 +888,15 @@ export default function NewConversationComponentCopy({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-purple-50 shadow-purple-100 hover:bg-gray-50 transition-colors duration-200 shadow-inner p-3 rounded-lg"
+                className="rounded-lg bg-purple-50 p-3 shadow-inner shadow-purple-100 transition-colors duration-200 hover:bg-gray-50"
               >
-                <div className="flex items-center justify-between w-full">
+                <div className="flex w-full items-center justify-between">
                   {/* Left section for the translation text */}
                   <div>
                     <p className="text-sm font-medium text-purple-600">
                       {translationResult}
                     </p>
-                    <p className="text-xs text-gray-600 italic">
+                    <p className="text-xs italic text-gray-600">
                       {originalText}
                     </p>
                   </div>
@@ -911,7 +907,7 @@ export default function NewConversationComponentCopy({
                       size="icon"
                       variant="ghost"
                       onClick={() => speakPhrase(translationResult)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Listen to pronunciation"
                     >
                       🔊
@@ -920,7 +916,7 @@ export default function NewConversationComponentCopy({
                       size="icon"
                       variant="ghost"
                       onClick={() => usePhrase(translationResult)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Use in conversation"
                     >
                       💬
@@ -936,10 +932,10 @@ export default function NewConversationComponentCopy({
 
           {/* Clear button at bottom */}
           {conversationHistory.length > 0 && (
-            <div className="flex gap-2 mt-4">
+            <div className="mt-4 flex gap-2">
               <button
                 onClick={clearConversationHistory}
-                className="w-1/2 p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
+                className="w-1/2 rounded bg-gray-500 p-2 text-white transition-all hover:bg-gray-600"
               >
                 Clear Conversation
               </button>
@@ -950,7 +946,7 @@ export default function NewConversationComponentCopy({
                   isSaving
                     ? "bg-purple-300"
                     : "bg-purple-500 hover:bg-purple-600"
-                } text-white rounded transition-all flex items-center justify-center gap-2`}
+                } flex items-center justify-center gap-2 rounded text-white transition-all`}
               >
                 {isSaving ? (
                   <>
@@ -970,7 +966,7 @@ export default function NewConversationComponentCopy({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-0 top-1/2 transform -translate-y-1/2"
+        className="absolute right-0 top-1/2 -translate-y-1/2 transform"
         onClick={() => setIsPanelOpen(!isPanelOpen)}
       >
         {isPanelOpen ? <ChevronRight /> : <ChevronLeft />}
@@ -983,10 +979,10 @@ export default function NewConversationComponentCopy({
           width: isPanelOpen ? "40%" : "0%",
           opacity: isPanelOpen ? 1 : 0,
         }}
-        className="bg-white rounded-lg shadow"
+        className="rounded-lg bg-white shadow"
       >
         {isPanelOpen && (
-          <Tabs defaultValue="vocabulary" className="w-full h-full">
+          <Tabs defaultValue="vocabulary" className="h-full w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="vocabulary">Vocabulary</TabsTrigger>
               <TabsTrigger value="dialogue">Dialogue</TabsTrigger>
@@ -1001,23 +997,23 @@ export default function NewConversationComponentCopy({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
+                      className="rounded-lg border p-3 hover:bg-gray-50"
                     >
                       <div className="flex justify-between">
                         <div className="flex flex-col">
                           <span className="text-[14px] font-semibold text-purple-600">
                             {item.targetLanguage}
                           </span>
-                          <span className="text-gray-600  text-[14px]">
+                          <span className="text-[14px] text-gray-600">
                             {item.nativeLanguage}
                           </span>
                         </div>
-                        <div className="flex gap-2 ">
+                        <div className="flex gap-2">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => textToSpeech(item.targetLanguage)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Listen to pronunciation"
                           >
                             🔊
@@ -1026,7 +1022,7 @@ export default function NewConversationComponentCopy({
                             size="icon"
                             variant="ghost"
                             onClick={() => usePhrase(item.targetLanguage)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Use in conversation"
                           >
                             💬
@@ -1035,10 +1031,10 @@ export default function NewConversationComponentCopy({
                       </div>
 
                       <div className="mt-2">
-                        <p className="text-[13px] text-purple-500 italic flex items-center">
+                        <p className="flex items-center text-[13px] italic text-purple-500">
                           "{item.example.targetLanguage}"
                         </p>
-                        <p className="text-[13px] text-gray-500 italic flex items-center">
+                        <p className="flex items-center text-[13px] italic text-gray-500">
                           "{item.example.nativeLanguage}"
                         </p>
                       </div>
@@ -1057,10 +1053,10 @@ export default function NewConversationComponentCopy({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
+                      className="rounded-lg border p-3 hover:bg-gray-50"
                     >
-                      <div className="flex justify-between items-center">
-                        <div className="font-medium text-purple-600 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium text-purple-600">
                           {line.speaker}
                         </div>
                         <div className="flex gap-2">
@@ -1068,7 +1064,7 @@ export default function NewConversationComponentCopy({
                             size="icon"
                             variant="ghost"
                             onClick={() => textToSpeech(line.targetLanguage)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Listen to pronunciation"
                           >
                             🔊
@@ -1077,7 +1073,7 @@ export default function NewConversationComponentCopy({
                             size="icon"
                             variant="ghost"
                             onClick={() => usePhrase(line.targetLanguage)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Use in conversation"
                           >
                             💬
@@ -1085,7 +1081,7 @@ export default function NewConversationComponentCopy({
                         </div>
                       </div>
                       <p className="mb-1 text-[13px]">{line.targetLanguage}</p>
-                      <p className="text-[12px] text-gray-600 italic">
+                      <p className="text-[12px] italic text-gray-600">
                         {line.nativeLanguage}
                       </p>
                     </motion.div>

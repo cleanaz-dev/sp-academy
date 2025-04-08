@@ -18,7 +18,9 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+);
 
 export default function Layout({ children }) {
   return (
@@ -26,14 +28,16 @@ export default function Layout({ children }) {
       <Elements stripe={stripePromise}>
         <div className="flex min-h-screen w-full bg-white">
           <AppSidebar />
-          <SidebarInset className="flex-1 w-full">
+          <SidebarInset className="w-full flex-1">
             <header className="flex h-16 items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
+                    <BreadcrumbLink href="#">
+                      Building Your Application
+                    </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
@@ -42,7 +46,7 @@ export default function Layout({ children }) {
                 </BreadcrumbList>
               </Breadcrumb>
             </header>
-            <main className="flex-1 w-full">{children}</main>
+            <main className="w-full flex-1">{children}</main>
           </SidebarInset>
         </div>
       </Elements>

@@ -1,16 +1,16 @@
 //components/chat-bot/ChatInput.jsx
-"use client"
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 const ChatInput = ({ onSend, disabled }) => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
       onSend(message);
-      setMessage('');
+      setMessage("");
     }
   };
 
@@ -23,12 +23,12 @@ const ChatInput = ({ onSend, disabled }) => {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message..."
           disabled={disabled}
-          className="flex-1 p-2 border rounded"
+          className="flex-1 rounded border p-2"
         />
         <button
           type="submit"
           disabled={disabled || !message.trim()}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+          className="rounded bg-blue-500 px-4 py-2 text-white disabled:bg-gray-300"
         >
           Send
         </button>

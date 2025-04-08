@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { updateAccountSettings } from "@/lib/actions";
 
 export function AccountSettingsForm({ initialSettings, userId }) {
@@ -31,13 +37,15 @@ export function AccountSettingsForm({ initialSettings, userId }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">General Settings</h2>
-        
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="language">Language</Label>
             <Select
               value={settings.language}
-              onValueChange={(value) => setSettings({ ...settings, language: value })}
+              onValueChange={(value) =>
+                setSettings({ ...settings, language: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select language" />
@@ -54,7 +62,9 @@ export function AccountSettingsForm({ initialSettings, userId }) {
             <Label htmlFor="displayName">Display Name</Label>
             <Input
               value={settings.displayName || ""}
-              onChange={(e) => setSettings({ ...settings, displayName: e.target.value })}
+              onChange={(e) =>
+                setSettings({ ...settings, displayName: e.target.value })
+              }
             />
           </div>
 
@@ -62,7 +72,9 @@ export function AccountSettingsForm({ initialSettings, userId }) {
             <Label htmlFor="aiVoice">AI Voice Preference</Label>
             <Select
               value={settings.aiVoicePreference}
-              onValueChange={(value) => setSettings({ ...settings, aiVoicePreference: value })}
+              onValueChange={(value) =>
+                setSettings({ ...settings, aiVoicePreference: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select voice" />
@@ -78,7 +90,9 @@ export function AccountSettingsForm({ initialSettings, userId }) {
             <Label htmlFor="level">Proficiency Level</Label>
             <Select
               value={settings.level}
-              onValueChange={(value) => setSettings({ ...settings, level: value })}
+              onValueChange={(value) =>
+                setSettings({ ...settings, level: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select level" />

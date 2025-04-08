@@ -9,6 +9,8 @@ import {
 import {
   createLecturePrompt,
   createLanguageLecturePrompt,
+  createLanguageLecturePrompt4,
+  createLanguageLecturePrompt5,
 } from "@/lib/claudePrompts";
 
 export async function POST(request) {
@@ -119,7 +121,7 @@ export async function POST(request) {
         const marker = `\\[IMAGE-${index + 1}\\]\\nImage Prompt: ".*?"`;
         updatedText = updatedText.replace(
           new RegExp(marker, "gs"),
-          `![image-${index + 1}](${url})`
+          `![image-${index + 1}](${url})`,
         );
       });
 
@@ -129,7 +131,7 @@ export async function POST(request) {
     // Modified system prompt
     function selectPrompt(data) {
       if (data.subject === "Language") {
-        return createLanguageLecturePrompt();
+        return createLanguageLecturePrompt5();
       } else {
         return createLecturePrompt({});
       }
@@ -138,7 +140,7 @@ export async function POST(request) {
 
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
-      max_tokens: 8000,
+      max_tokens: 5000,
       system: systemPrompt,
       messages: [{ role: "user", content: message }],
       temperature: 0.7,
@@ -163,18 +165,17 @@ export async function POST(request) {
     console.log("Extracted Image Prompts:", imagePrompts);
 
     // Generate images for each prompt
-    const imageUrls = [];
-    for (const [index, { prompt }] of imagePrompts.entries()) {
-      if (index === 0) {
-        // For the first prompt, use the main image function
-        const mainImageUrl = await createMainImageForLecture(prompt);
-        imageUrls.push(mainImageUrl);
-      } else {
-        // For the rest, use the other images function
-        const imageUrl = await createImagesForLecture(prompt);
-        imageUrls.push(imageUrl);
-      }
-    }
+    const imageUrls = await Promise.all(
+      imagePrompts.map(async ({ prompt }, index) => {
+        if (index === 0) {
+          // For the first prompt, use the main image function
+          return await createMainImageForLecture(prompt);
+        } else {
+          // For the rest, use the other images function
+          return await createImagesForLecture(prompt);
+        }
+      }),
+    );
 
     // Replace markers with generated image URLs
     const finalContent = replaceImageMarkers(responseText, imageUrls);

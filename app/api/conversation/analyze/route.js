@@ -1,6 +1,9 @@
 // app/api/conversation/analyze/route.js
 import { NextResponse } from "next/server";
-import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 
@@ -17,7 +20,7 @@ async function getConversationAnalysis(history) {
   const analysisPrompt = {
     prompt: `\n\nHuman: You are a French language tutor. Please analyze this conversation history and provide detailed feedback:
 
-${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+${history.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
 
 Please analyze:
 1. Vocabulary Used Successfully
@@ -50,7 +53,7 @@ NO SAPCES BEFORE RESPONSE.
 
   const response = await client.send(command);
 
-    const responseData = JSON.parse(new TextDecoder().decode(response.body));
+  const responseData = JSON.parse(new TextDecoder().decode(response.body));
   return JSON.parse(responseData.completion);
 }
 
@@ -58,37 +61,35 @@ export async function POST(req) {
   try {
     const { userId } = auth();
     const { history } = await req.json();
-    
+
     // Get analysis from Claude
     const analysis = await getConversationAnalysis(history);
 
     const user = await prisma.user.findFirst({
-      where: { userId }
-    })
-  
+      where: { userId },
+    });
 
     // Save to database
     await prisma.conversationRecord.create({
       data: {
         user: {
           connect: {
-            id: user.id
-          }
+            id: user.id,
+          },
         },
         dialogue: history,
-        analysis // This will be structured JSON
-      }
+        analysis, // This will be structured JSON
+      },
     });
 
     return NextResponse.json({
-      analysis: analysis.completion
+      analysis: analysis.completion,
     });
-
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error("Analysis error:", error);
     return NextResponse.json(
-      { error: 'Failed to analyze conversation' },
-      { status: 500 }
+      { error: "Failed to analyze conversation" },
+      { status: 500 },
     );
   }
 }

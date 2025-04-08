@@ -50,8 +50,8 @@ export default function CreateBookReportPage() {
     try {
       const response = await fetch(
         `/api/books/search?q=${encodeURIComponent(
-          query
-        )}&lang=${searchLanguage}`
+          query,
+        )}&lang=${searchLanguage}`,
       );
       const data = await response.json();
       setSearchResults(data.items || []);
@@ -103,9 +103,9 @@ export default function CreateBookReportPage() {
 
   return (
     <div className=" ">
-      <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16 mb-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="flex items-center gap-4 text-4xl font-bold mb-4">
+      <header className="mb-8 animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
             Books{" "}
             <LibraryBig strokeWidth={1.5} className="size-10 drop-shadow-xl" />
           </h1>
@@ -117,12 +117,12 @@ export default function CreateBookReportPage() {
         </div>
       </header>
       <div className="">
-        <Card className="relative overflow-hidden w-full max-w-4xl">
+        <Card className="relative w-full max-w-4xl overflow-hidden">
           {/* Decorative rings inside the card */}
-          <div className="absolute -top-6 left-24 w-10 h-10 border-4 border-sky-400 rounded-full z-0"></div>
-          <div className="absolute bottom-36 -right-12 w-16 h-16 border-4 border-emerald-400 rounded-full z-0"></div>
-          <div className="absolute top-36 -left-12 w-16 h-16 border-4 border-amber-400 rounded-full z-0"></div>
-          <div className="absolute -bottom-8 left-1/2 w-12 h-12 border-4 border-violet-400 rounded-full z-0"></div>
+          <div className="absolute -top-6 left-24 z-0 h-10 w-10 rounded-full border-4 border-sky-400"></div>
+          <div className="absolute -right-12 bottom-36 z-0 h-16 w-16 rounded-full border-4 border-emerald-400"></div>
+          <div className="absolute -left-12 top-36 z-0 h-16 w-16 rounded-full border-4 border-amber-400"></div>
+          <div className="absolute -bottom-8 left-1/2 z-0 h-12 w-12 rounded-full border-4 border-violet-400"></div>
 
           <CardHeader className="relative z-10">
             <CardTitle>Add a new book 😎✌🏼📚</CardTitle>
@@ -132,14 +132,14 @@ export default function CreateBookReportPage() {
             <input type="hidden" name="userId" value={user.id} />
             <input type="hidden" name="coverUrl" value={bookData.coverUrl} />
 
-            <CardContent className="space-y-6 relative z-10">
+            <CardContent className="relative z-10 space-y-6">
               {/* Top Section: Search + Image */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {/* Left Column: Search and Details */}
                 <div className="col-span-2 space-y-6">
                   {/* Book Search Section */}
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       {/* Search Language */}
                       <div className="space-y-2">
                         <Label>Search Language</Label>
@@ -178,18 +178,18 @@ export default function CreateBookReportPage() {
 
                     {/* Search Results Dropdown */}
                     {searchResults.length > 0 && (
-                      <div className="absolute z-20 bg-white shadow-lg rounded-md mt-1 max-h-60 overflow-auto w-full md:w-2/3">
+                      <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg md:w-2/3">
                         {searchResults.map((book) => (
                           <div
                             key={book.id}
-                            className="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
+                            className="flex cursor-pointer items-center p-2 hover:bg-gray-100"
                             onClick={() => handleBookSelect(book)}
                           >
                             {book.volumeInfo.imageLinks?.thumbnail && (
                               <img
                                 src={book.volumeInfo.imageLinks.thumbnail}
                                 alt={book.volumeInfo.title}
-                                className="w-12 h-16 object-cover mr-2"
+                                className="mr-2 h-16 w-12 object-cover"
                               />
                             )}
                             <div>
@@ -208,7 +208,7 @@ export default function CreateBookReportPage() {
 
                   {/* Book Details */}
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="title">Title</Label>
                         <Input
@@ -236,7 +236,7 @@ export default function CreateBookReportPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="pages">Pages</Label>
                         <Input
@@ -270,15 +270,15 @@ export default function CreateBookReportPage() {
 
                 {/* Right Column: Book Image */}
                 <div className="col-span-1 flex justify-center md:justify-end">
-                  <div className="w-full max-w-[200px] bg-gray-50 rounded-md border border-dashed border-gray-200 p-4">
+                  <div className="w-full max-w-[200px] rounded-md border border-dashed border-gray-200 bg-gray-50 p-4">
                     {bookData.coverUrl ? (
                       <img
                         src={bookData.coverUrl}
                         alt="Book cover"
-                        className="w-full h-auto object-cover rounded-md shadow-md"
+                        className="h-auto w-full rounded-md object-cover shadow-md"
                       />
                     ) : (
-                      <p className="text-sm text-gray-500 text-center">
+                      <p className="text-center text-sm text-gray-500">
                         Book cover preview
                       </p>
                     )}

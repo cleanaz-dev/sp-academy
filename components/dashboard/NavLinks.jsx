@@ -1,4 +1,12 @@
-import { Home, Speech, ScrollText, BookMarked, GraduationCap, Settings } from "lucide-react";
+import {
+  Home,
+  Speech,
+  ScrollText,
+  BookMarked,
+  GraduationCap,
+  Settings,
+  Gamepad,
+} from "lucide-react";
 
 export const navItems = [
   {
@@ -25,6 +33,11 @@ export const navItems = [
     label: "Learning Hub",
     href: "/learning-hub",
     icon: <GraduationCap strokeWidth={1.5} />,
+  },
+  {
+    label: "Games",
+    href: "/games",
+    icon: <Gamepad strokeWidth={1.5} />,
   },
 ];
 

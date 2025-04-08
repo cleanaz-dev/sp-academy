@@ -6,25 +6,26 @@ import Link from "next/link";
 import ExerciseHandler from "@/components/lessons/ExerciseHandler";
 
 export default async function SingleLessonsPage({ params }) {
-  const lesson = await getLessonById(params.id);
+  const id = await params.id;
+  const lesson = await getLessonById(id);
 
   if (!lesson) {
     return <h1>Lesson not found</h1>;
   }
   console.log("exercise", lesson.Exercise);
   return (
-    <div className="max-w-5xl p-4 flex flex-col bg-white">
-      <h1 className="text-2xl font-bold mb-4 text-black bg-transparent">
+    <div className="flex max-w-5xl flex-col bg-white p-4">
+      <h1 className="mb-4 bg-transparent text-2xl font-bold text-black">
         {lesson.title}
       </h1>
-      <div className="prose prose-lg w-full flex-1  max-w-none dark:prose-invert">
+      <div className="prose prose-lg w-full max-w-none flex-1 dark:prose-invert">
         <span>
           <Markdown remarkPlugins={[remarkGfm]}>{lesson.content}</Markdown>
           {lesson.quiz && (
             <div>
               <Link
                 href={`/lessons/${lesson.id}/quiz`}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="rounded bg-blue-500 px-4 py-2 text-white"
               >
                 Take Quiz
               </Link>
@@ -32,10 +33,10 @@ export default async function SingleLessonsPage({ params }) {
           )}
         </span>
         <div>
-      {lesson.Exercise.map((exercise) => (
-        <ExerciseHandler key={exercise.id} exercise={exercise} />
-      ))}
-    </div>
+          {lesson.Exercise.map((exercise) => (
+            <ExerciseHandler key={exercise.id} exercise={exercise} />
+          ))}
+        </div>
       </div>
     </div>
   );

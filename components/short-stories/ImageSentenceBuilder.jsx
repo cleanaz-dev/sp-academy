@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, HelpCircle } from "lucide-react";
 
-export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }) {
+export default function ImageSentenceBuilder({
+  exercise,
+  onAnswer,
+  showResults,
+}) {
   const [sentence, setSentence] = useState("");
   const [showHints, setShowHints] = useState(false);
 
@@ -15,18 +19,18 @@ export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }
 
   const validateSentence = (input) => {
     // Check if the sentence contains the expected elements
-    return exercise.expectedElements.every(element => 
-      input.toLowerCase().includes(element.toLowerCase())
+    return exercise.expectedElements.every((element) =>
+      input.toLowerCase().includes(element.toLowerCase()),
     );
   };
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg overflow-hidden shadow-lg">
+      <div className="overflow-hidden rounded-lg shadow-lg">
         <img
           src={exercise.imageUrl || "/placeholder-image.jpg"}
           alt="Scene to describe"
-          className="w-full h-64 object-cover"
+          className="h-64 w-full object-cover"
         />
       </div>
 
@@ -58,12 +62,14 @@ export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="p-4 bg-purple-50 rounded-lg"
+            className="rounded-lg bg-purple-50 p-4"
           >
-            <h4 className="font-medium mb-2">Vocabulary Hints:</h4>
-            <ul className="list-disc list-inside space-y-1">
+            <h4 className="mb-2 font-medium">Vocabulary Hints:</h4>
+            <ul className="list-inside list-disc space-y-1">
               {exercise.vocabularyHints.map((hint, index) => (
-                <li key={index} className="text-gray-600">{hint}</li>
+                <li key={index} className="text-gray-600">
+                  {hint}
+                </li>
               ))}
             </ul>
           </motion.div>
@@ -73,7 +79,7 @@ export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className={`p-4 rounded-lg ${
+            className={`rounded-lg p-4 ${
               validateSentence(sentence) ? "bg-green-50" : "bg-red-50"
             }`}
           >
@@ -81,7 +87,9 @@ export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }
               {validateSentence(sentence) ? (
                 <div className="flex items-center space-x-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
-                  <span>Great job! Your sentence includes all required elements.</span>
+                  <span>
+                    Great job! Your sentence includes all required elements.
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2 text-red-600">
@@ -89,7 +97,9 @@ export default function ImageSentenceBuilder({ exercise, onAnswer, showResults }
                   <div>
                     <p>Your sentence is missing some elements.</p>
                     <p className="mt-2">Sample correct sentence:</p>
-                    <p className="font-medium">{exercise.sampleCorrectSentence}</p>
+                    <p className="font-medium">
+                      {exercise.sampleCorrectSentence}
+                    </p>
                   </div>
                 </div>
               )}

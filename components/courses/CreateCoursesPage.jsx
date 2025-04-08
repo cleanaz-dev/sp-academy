@@ -124,7 +124,7 @@ export default function CreateCoursesPage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(lesson),
-          }
+          },
         );
 
         if (!lessonResponse.ok) {
@@ -142,7 +142,7 @@ export default function CreateCoursesPage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(courseData.materials),
-          }
+          },
         );
 
         if (!materialsResponse.ok) {
@@ -217,17 +217,17 @@ export default function CreateCoursesPage() {
   return (
     <div className="space-y-6">
       {/* Progress Steps */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         {steps.map((step, index) => (
-          <div 
-            key={step.id} 
+          <div
+            key={step.id}
             className={`flex items-center ${
-            currentStep >= step.id ? "text-blue-600 " : "text-gray-400"
-          }}
-        `}>
+              currentStep >= step.id ? "text-blue-600" : "text-gray-400"
+            }} `}
+          >
             {/* Step Circle */}
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
                 currentStep >= step.id
                   ? "border-blue-600 bg-blue-50 text-blue-600"
                   : "border-gray-300 text-gray-400"
@@ -241,7 +241,7 @@ export default function CreateCoursesPage() {
 
             {/* Connector Bar (Except Last Step) */}
             {index !== steps.length - 1 && (
-              <div className="flex-1 h-0.5 mx-4 bg-gray-200" />
+              <div className="mx-4 h-0.5 flex-1 bg-gray-200" />
             )}
           </div>
         ))}
@@ -284,7 +284,7 @@ export default function CreateCoursesPage() {
                         )}
                       </Button>
                       {validationIssues.length > 0 && (
-                        <p className="text-sm text-red-500 mt-1">
+                        <p className="mt-1 text-sm text-red-500">
                           {validationIssues.length} issue
                           {validationIssues.length !== 1 ? "s" : ""} to fix
                         </p>
@@ -294,8 +294,8 @@ export default function CreateCoursesPage() {
                   <TooltipContent>
                     {validationIssues.length > 0 ? (
                       <div className="max-w-xs">
-                        <p className="font-semibold mb-1">Required fixes:</p>
-                        <ul className="list-disc list-inside text-sm">
+                        <p className="mb-1 font-semibold">Required fixes:</p>
+                        <ul className="list-inside list-disc text-sm">
                           {validationIssues.slice(0, 3).map((issue, index) => (
                             <li key={index}>{issue}</li>
                           ))}

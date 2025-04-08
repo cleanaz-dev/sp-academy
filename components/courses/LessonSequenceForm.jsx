@@ -1,5 +1,5 @@
 // components/courses/LessonSequenceForm.jsx
-"use client"
+"use client";
 
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
@@ -115,26 +115,26 @@ export default function LessonSequenceForm({ courseData, onUpdateCourseData }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Lesson Sequence</h3>
         <Button
           onClick={addLesson}
           disabled={courseData.lessons.length >= MAX_LESSONS}
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           Add Lesson
         </Button>
       </div>
 
       {courseData.lessons.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="py-8 text-center text-gray-500">
           No lessons added yet. Click "Add Lesson" to begin.
         </div>
       )}
 
       {courseData.lessons.map((lesson, lessonIndex) => (
         <Card key={lessonIndex} className="p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <GripVertical className="h-5 w-5 text-gray-400" />
               <h4 className="font-medium">Lesson {lessonIndex + 1}</h4>
@@ -206,7 +206,7 @@ export default function LessonSequenceForm({ courseData, onUpdateCourseData }) {
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <Label>Learning Objectives</Label>
                 <Button
                   type="button"
@@ -218,14 +218,17 @@ export default function LessonSequenceForm({ courseData, onUpdateCourseData }) {
                 </Button>
               </div>
               {lesson.objectives.map((objective, objectiveIndex) => (
-                <div key={objectiveIndex} className="flex items-center gap-2 mb-2">
+                <div
+                  key={objectiveIndex}
+                  className="mb-2 flex items-center gap-2"
+                >
                   <Input
                     value={objective}
                     onChange={(e) =>
                       updateObjective(
                         lessonIndex,
                         objectiveIndex,
-                        e.target.value
+                        e.target.value,
                       )
                     }
                     placeholder={`Objective ${objectiveIndex + 1}`}
@@ -234,9 +237,7 @@ export default function LessonSequenceForm({ courseData, onUpdateCourseData }) {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() =>
-                      removeObjective(lessonIndex, objectiveIndex)
-                    }
+                    onClick={() => removeObjective(lessonIndex, objectiveIndex)}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>

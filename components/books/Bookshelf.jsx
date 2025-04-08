@@ -1,5 +1,5 @@
 // components/books/Bookshelf.jsx
-"use client"
+"use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -15,16 +15,13 @@ const Bookshelf = ({ books }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-8">
+    <div className="mx-auto max-w-7xl p-8">
       {/* Bookshelves */}
       <div className="space-y-16">
         {bookRows.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="relative"
-          >
+          <div key={rowIndex} className="relative">
             {/* Shelf */}
-            <div className="flex justify-around items-end h-64 relative">
+            <div className="relative flex h-64 items-end justify-around">
               {row.map((book) => (
                 <motion.div
                   key={book.id}
@@ -33,17 +30,17 @@ const Bookshelf = ({ books }) => {
                   onClick={() => setSelectedBook(book)}
                 >
                   {/* Book spine/cover */}
-                  <div className="w-32 h-48 relative">
+                  <div className="relative h-48 w-32">
                     {book.coverUrl ? (
                       <Image
                         src={book.coverUrl}
                         alt={book.title}
                         fill
-                        className="object-cover rounded-sm shadow-lg"
+                        className="rounded-sm object-cover shadow-lg"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-sm shadow-lg flex items-center justify-center p-2">
-                        <span className="text-white text-sm text-center">
+                      <div className="flex h-full w-full items-center justify-center rounded-sm bg-gradient-to-r from-blue-500 to-blue-600 p-2 shadow-lg">
+                        <span className="text-center text-sm text-white">
                           {book.title}
                         </span>
                       </div>
@@ -53,7 +50,7 @@ const Bookshelf = ({ books }) => {
               ))}
             </div>
             {/* Wooden shelf */}
-            <div className="h-4 bg-gradient-to-r from-brown-800 to-brown-600 rounded-sm shadow-md" />
+            <div className="from-brown-800 to-brown-600 h-4 rounded-sm bg-gradient-to-r shadow-md" />
           </div>
         ))}
       </div>
@@ -65,9 +62,9 @@ const Bookshelf = ({ books }) => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-0 left-0 right-0 bg-white p-6 shadow-lg rounded-t-xl"
+            className="fixed bottom-0 left-0 right-0 rounded-t-xl bg-white p-6 shadow-lg"
           >
-            <div className="max-w-3xl mx-auto">
+            <div className="mx-auto max-w-3xl">
               <div className="flex gap-6">
                 <div className="w-32">
                   {selectedBook.coverUrl && (
@@ -88,7 +85,7 @@ const Bookshelf = ({ books }) => {
                 </div>
                 <button
                   onClick={() => setSelectedBook(null)}
-                  className="absolute top-4 right-4"
+                  className="absolute right-4 top-4"
                 >
                   ×
                 </button>

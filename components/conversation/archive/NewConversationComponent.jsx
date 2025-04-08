@@ -117,7 +117,7 @@ export default function NewConversationComponent({
 
   useEffect(() => {
     const savedHistory = JSON.parse(
-      localStorage.getItem(localStorageKey) || "[]"
+      localStorage.getItem(localStorageKey) || "[]",
     );
     setConversationHistory(savedHistory);
   }, [localStorageKey]);
@@ -130,7 +130,7 @@ export default function NewConversationComponent({
     try {
       // Get the existing conversation history for the current id
       const storedHistory = JSON.parse(
-        localStorage.getItem(localStorageKey) || "[]"
+        localStorage.getItem(localStorageKey) || "[]",
       );
 
       const newUserMessage = { role: "user", content: message };
@@ -285,8 +285,7 @@ export default function NewConversationComponent({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 
-                       transition-colors duration-200"
+            className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-200 hover:bg-gray-50"
           >
             <div className="flex-1">
               <div>
@@ -296,7 +295,7 @@ export default function NewConversationComponent({
                     size="icon"
                     variant="ghost"
                     onClick={() => speakPhrase(suggestion.french)}
-                    className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                    className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                     title="Listen to pronunciation"
                   >
                     🔊
@@ -305,7 +304,7 @@ export default function NewConversationComponent({
                     size="icon"
                     variant="ghost"
                     onClick={() => usePhrase(suggestion.french)}
-                    className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                    className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                     title="Use in conversation"
                   >
                     💬
@@ -315,7 +314,7 @@ export default function NewConversationComponent({
               <p className="text-sm font-medium text-purple-600">
                 {suggestion.french}
               </p>
-              <p className="text-xs text-gray-600 italic mt-1">
+              <p className="mt-1 text-xs italic text-gray-600">
                 {suggestion.english}
               </p>
             </div>
@@ -418,7 +417,7 @@ export default function NewConversationComponent({
   };
 
   return (
-    <div className="flex container mx-auto h-[calc(75vh-2rem)] max-w-4xl gap-4">
+    <div className="container mx-auto flex h-[calc(75vh-2rem)] max-w-4xl gap-4">
       {/* Main Conversation Area */}
       <div
         className={`transition-all duration-300 ${
@@ -426,7 +425,7 @@ export default function NewConversationComponent({
         }`}
       >
         {/* Your existing conversation UI */}
-        <div className="bg-white rounded-lg shadow p-4 h-full flex flex-col">
+        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow">
           <div className="flex items-center justify-between p-2">
             <header>
               <div>
@@ -448,7 +447,7 @@ export default function NewConversationComponent({
                         voiceGender === "male"
                           ? "translate-x-6"
                           : "translate-x-1"
-                      } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
+                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                     />
                   </Switch>
                   <span className="text-2xl">
@@ -460,14 +459,14 @@ export default function NewConversationComponent({
           </div>
 
           {/* Conversation History */}
-          <ScrollArea className="flex-1 my-4">
+          <ScrollArea className="my-4 flex-1">
             <div className="space-y-4">
               {" "}
               {/* Ensure ScrollArea is directly applied here */}
               {conversationHistory.map((message, index) => (
                 <div
                   key={index}
-                  className={`p-3 rounded text-sm ${
+                  className={`rounded p-3 text-sm ${
                     message.role === "user" ? "bg-gray-100" : "bg-blue-50"
                   }`}
                 >
@@ -476,7 +475,7 @@ export default function NewConversationComponent({
                   </p>
                   <p>{message.content}</p>
                   {message.translation && (
-                    <p className="mt-1 text-gray-600 italic text-xs">
+                    <p className="mt-1 text-xs italic text-gray-600">
                       {message.translation}
                     </p>
                   )}
@@ -486,19 +485,19 @@ export default function NewConversationComponent({
           </ScrollArea>
 
           {/* Input Area */}
-          <div className="border-t bg-white/80 backdrop-blur-sm p-4">
-            <div className="max-w-4xl mx-auto flex flex-col gap-4">
+          <div className="border-t bg-white/80 p-4 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-4xl flex-col gap-4">
               {/* Status Indicators */}
               <div className="relative h-8 w-full">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       !isRecording && !isProcessing
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex justify-center">
+                    <div className="flex w-full justify-center rounded-full px-4 py-2">
                       <span className="text-sm font-medium text-gray-600">
                         Ready to start! 🚀
                       </span>
@@ -506,16 +505,16 @@ export default function NewConversationComponent({
                   </div>
 
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       isRecording
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2">
                       <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
                       </span>
                       <span className="text-sm font-medium text-red-600">
                         Recording
@@ -524,13 +523,13 @@ export default function NewConversationComponent({
                   </div>
 
                   <div
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full w-full justify-center transition-opacity duration-300 ease-in-out absolute ${
+                    className={`absolute flex w-full items-center justify-center gap-2 rounded-full px-4 py-2 transition-opacity duration-300 ease-in-out ${
                       isProcessing
                         ? "opacity-100"
-                        : "opacity-0 pointer-events-none"
+                        : "pointer-events-none opacity-0"
                     }`}
                   >
-                    <div className="px-4 py-2 rounded-full w-full flex items-center justify-center gap-2">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-2">
                       <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                       <span className="text-sm font-medium text-blue-600">
                         Processing
@@ -541,21 +540,21 @@ export default function NewConversationComponent({
               </div>
               {/* Input Controls */}
               <div className="flex items-center gap-4">
-                <div className="flex-1 bg-gray-100 rounded-full p-2 flex items-center">
+                <div className="flex flex-1 items-center rounded-full bg-gray-100 p-2">
                   {/* Text Input */}
                   <input
                     type="text"
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Type something to translate..."
-                    className="flex-1 bg-transparent outline-none px-3 text-sm"
+                    className="flex-1 bg-transparent px-3 text-sm outline-none"
                   />
 
                   {/* Send Button */}
                   <button
                     onClick={() => handleTranslation(textInput)}
                     disabled={isProcessing || !textInput.trim()}
-                    className="p-2 rounded-full hover:bg-blue-500 bg-blue-400 text-white disabled:opacity-50 transition-all mr-2"
+                    className="mr-2 rounded-full bg-blue-400 p-2 text-white transition-all hover:bg-blue-500 disabled:opacity-50"
                   >
                     <Send className="h-5 w-5" />
                   </button>
@@ -564,9 +563,9 @@ export default function NewConversationComponent({
                   <button
                     onClick={toggleRecording}
                     disabled={isProcessing}
-                    className={`p-2 rounded-full hover:bg-red-500 duration-300 ${
+                    className={`rounded-full p-2 duration-300 hover:bg-red-500 ${
                       isRecording ? "bg-red-500" : "bg-blue-500"
-                    } text-white disabled:opacity-50 transition-all`}
+                    } text-white transition-all disabled:opacity-50`}
                   >
                     {isRecording ? (
                       // Show a "Stop" icon or a glowing mic when recording
@@ -583,7 +582,7 @@ export default function NewConversationComponent({
                   {conversationHistory.length >= 2 && (
                     <button
                       onClick={deleteLastExchange}
-                      className="group ml-2 p-2 rounded-full hover:bg-gray-200 transition-all duration-300"
+                      className="group ml-2 rounded-full p-2 transition-all duration-300 hover:bg-gray-200"
                       title="Delete last exchange"
                     >
                       <Trash2 className="h-5 w-5 text-red-500" />
@@ -596,7 +595,7 @@ export default function NewConversationComponent({
 
           {/* Error Messages */}
           {error && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-100 border border-red-200 text-red-700 px-4 py-2 rounded-full text-sm shadow-lg">
+            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full border border-red-200 bg-red-100 px-4 py-2 text-sm text-red-700 shadow-lg">
               {error}
             </div>
           )}
@@ -613,8 +612,7 @@ export default function NewConversationComponent({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 
-                 transition-colors duration-200"
+                className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-200 hover:bg-gray-50"
               >
                 <div className="flex-1">
                   <div className="flex gap-2">
@@ -622,7 +620,7 @@ export default function NewConversationComponent({
                       size="icon"
                       variant="ghost"
                       onClick={() => speakPhrase(translationResult)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Listen to pronunciation"
                     >
                       🔊
@@ -631,7 +629,7 @@ export default function NewConversationComponent({
                       size="icon"
                       variant="ghost"
                       onClick={() => usePhrase(translationResult)}
-                      className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                      className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Use in conversation"
                     >
                       💬
@@ -650,10 +648,10 @@ export default function NewConversationComponent({
 
           {/* Clear button at bottom */}
           {conversationHistory.length > 0 && (
-            <div className="flex gap-2 mt-4">
+            <div className="mt-4 flex gap-2">
               <button
                 onClick={clearConversationHistory}
-                className="w-1/2 p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-all"
+                className="w-1/2 rounded bg-gray-500 p-2 text-white transition-all hover:bg-gray-600"
               >
                 Clear Conversation
               </button>
@@ -664,7 +662,7 @@ export default function NewConversationComponent({
                   isSaving
                     ? "bg-purple-300"
                     : "bg-purple-500 hover:bg-purple-600"
-                } text-white rounded transition-all flex items-center justify-center gap-2`}
+                } flex items-center justify-center gap-2 rounded text-white transition-all`}
               >
                 {isSaving ? (
                   <>
@@ -684,7 +682,7 @@ export default function NewConversationComponent({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-0 top-1/2 transform -translate-y-1/2"
+        className="absolute right-0 top-1/2 -translate-y-1/2 transform"
         onClick={() => setIsPanelOpen(!isPanelOpen)}
       >
         {isPanelOpen ? <ChevronRight /> : <ChevronLeft />}
@@ -697,10 +695,10 @@ export default function NewConversationComponent({
           width: isPanelOpen ? "40%" : "0%",
           opacity: isPanelOpen ? 1 : 0,
         }}
-        className="bg-white rounded-lg shadow"
+        className="rounded-lg bg-white shadow"
       >
         {isPanelOpen && (
-          <Tabs defaultValue="vocabulary" className="w-full h-full">
+          <Tabs defaultValue="vocabulary" className="h-full w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="vocabulary">Vocabulary</TabsTrigger>
               <TabsTrigger value="dialogue">Dialogue</TabsTrigger>
@@ -715,23 +713,23 @@ export default function NewConversationComponent({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
+                      className="rounded-lg border p-3 hover:bg-gray-50"
                     >
                       <div className="flex justify-between">
                         <div className="flex flex-col">
                           <span className="text-[14px] font-semibold text-purple-600">
                             {item.es}
                           </span>
-                          <span className="text-gray-600  text-[14px]">
+                          <span className="text-[14px] text-gray-600">
                             {item.en}
                           </span>
                         </div>
-                        <div className="flex gap-2 ">
+                        <div className="flex gap-2">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => speakPhrase(item.es)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Listen to pronunciation"
                           >
                             🔊
@@ -740,7 +738,7 @@ export default function NewConversationComponent({
                             size="icon"
                             variant="ghost"
                             onClick={() => usePhrase(item.es)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Use in conversation"
                           >
                             💬
@@ -749,12 +747,10 @@ export default function NewConversationComponent({
                       </div>
 
                       <div className="mt-2">
-                        <p className="text-[13px] text-purple-500 italic flex items-center">
-                          
+                        <p className="flex items-center text-[13px] italic text-purple-500">
                           "{item.example.es}"
                         </p>
-                        <p className="text-[13px] text-gray-500 italic flex items-center">
-                         
+                        <p className="flex items-center text-[13px] italic text-gray-500">
                           "{item.example.en}"
                         </p>
                       </div>
@@ -773,10 +769,10 @@ export default function NewConversationComponent({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-3 border rounded-lg hover:bg-gray-50"
+                      className="rounded-lg border p-3 hover:bg-gray-50"
                     >
-                      <div className="flex justify-between items-center">
-                        <div className="font-medium text-purple-600 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium text-purple-600">
                           {line.speaker}
                         </div>
                         <div className="flex gap-2">
@@ -784,7 +780,7 @@ export default function NewConversationComponent({
                             size="icon"
                             variant="ghost"
                             onClick={() => textToSpeech(line.french)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Listen to pronunciation"
                           >
                             🔊
@@ -793,7 +789,7 @@ export default function NewConversationComponent({
                             size="icon"
                             variant="ghost"
                             onClick={() => usePhrase(line.french)}
-                            className="p-1 text-gray-600 hover:text-purple-600 transition-colors"
+                            className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                             title="Use in conversation"
                           >
                             💬
@@ -801,7 +797,7 @@ export default function NewConversationComponent({
                         </div>
                       </div>
                       <p className="mb-1 text-[13px]">{line.french}</p>
-                      <p className="text-[12px] text-gray-600 italic">
+                      <p className="text-[12px] italic text-gray-600">
                         {line.english}
                       </p>
                     </motion.div>

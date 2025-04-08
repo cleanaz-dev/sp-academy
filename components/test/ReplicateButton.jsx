@@ -9,25 +9,25 @@ export default function ReplicateButton() {
     setIsLoading(true);
 
     try {
-      const prompt = "Avatar (headshot, above the neck) of character based on the title Doctor Visit";
-      const model = "black-forest-labs/flux-schnell"
+      const prompt =
+        "Avatar (headshot, above the neck) of character based on the title Doctor Visit";
+      const model = "black-forest-labs/flux-schnell";
 
       // Send prompt to api/replicate
-      const response = await fetch('/api/replicate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, model }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from server');
+        throw new Error("Failed to get response from server");
       }
 
       const data = await response.json();
       console.log("Replicate response:", data);
 
       // You can handle the response data here, like setting a state for the result
-
     } catch (error) {
       console.error("Error replicating post:", error);
     } finally {
@@ -37,7 +37,7 @@ export default function ReplicateButton() {
 
   return (
     <Button onClick={handleReplicatePost} disabled={isLoading}>
-      {isLoading ? 'Replicating...' : 'Replicate POST'}
+      {isLoading ? "Replicating..." : "Replicate POST"}
     </Button>
   );
 }

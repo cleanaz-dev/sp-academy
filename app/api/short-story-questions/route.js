@@ -3,13 +3,11 @@ import axios from "axios";
 
 export async function POST(reqeust) {
   try {
-
     const data = await reqeust.json();
-    
 
-    const { name, userId, storyId, englishText, phoneNumber } = data
+    const { name, userId, storyId, englishText, phoneNumber } = data;
 
-   const response = await axios.post(
+    const response = await axios.post(
       "https://api.bland.ai/v1/calls",
       {
         phone_number: `${phoneNumber}`,
@@ -56,35 +54,36 @@ export async function POST(reqeust) {
         dynamic_data: [],
         analysis_preset: null,
         analysis_schema: {
-          "correct_answers": "int",
-          "incorrect_answers": "int",
-          "first_questions": "string",
-          "second_questions": "string",
-          "third_questions": "string",
-          "fourth_questions": "string",
-          "first_answer": "string",
-          "second_answer": "string",
-          "third_answer": "string",
-          "fourth_answer": "string",
+          correct_answers: "int",
+          incorrect_answers: "int",
+          first_questions: "string",
+          second_questions: "string",
+          third_questions: "string",
+          fourth_questions: "string",
+          first_answer: "string",
+          second_answer: "string",
+          third_answer: "string",
+          fourth_answer: "string",
         },
-        webhook: "https://sp-academy.vercel.app/api/short-story-questions/response",
+        webhook:
+          "https://sp-academy.vercel.app/api/short-story-questions/response",
       },
       {
         headers: {
           authorization: process.env.BLAND_API_KEY,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
-  return NextResponse.json(
-    { message: "Response sent to BlandAI" },
-    { status: 200 }
-  );
-} catch (error) {
+    return NextResponse.json(
+      { message: "Response sent to BlandAI" },
+      { status: 200 },
+    );
+  } catch (error) {
     console.error("Error generating story:", error);
     return new NextResponse(
       JSON.stringify({ message: "Error generating story" }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

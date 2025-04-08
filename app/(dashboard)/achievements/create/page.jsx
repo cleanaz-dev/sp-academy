@@ -60,27 +60,30 @@ export default function CreateAchievement() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-  
+
     if (generatedBadges.length > 0 && !selectedBadge) {
       toast.error("Please select a badge");
       setLoading(false);
       return;
     }
-  
+
     try {
-      const awsUploadUrl = await fetch("/api/achievements/upload-achievement-badge", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const awsUploadUrl = await fetch(
+        "/api/achievements/upload-achievement-badge",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageUrl: selectedBadge }),
         },
-        body: JSON.stringify({ imageUrl: selectedBadge }),
-      });
-  
+      );
+
       if (!awsUploadUrl.ok) {
         throw new Error("Failed to upload image");
       }
       const awsUploadUrlData = await awsUploadUrl.json();
-  
+
       // Send the form data with the correct structure
       const response = await fetch("/api/achievements", {
         method: "POST",
@@ -95,12 +98,12 @@ export default function CreateAchievement() {
           criteria: formData.criteria,
         }),
       });
-  
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to create achievement");
       }
-  
+
       toast.success("Achievement created successfully");
       router.push("/achievements");
       router.refresh();
@@ -124,7 +127,7 @@ export default function CreateAchievement() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ formData }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -143,7 +146,7 @@ export default function CreateAchievement() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="mx-auto max-w-2xl p-6">
       <header className="mb-2">
         <h1 className="header-title">Create Achievement 🏆🥇🎯🔓</h1>
         <p className="text-sm text-muted-foreground">
@@ -186,7 +189,7 @@ export default function CreateAchievement() {
                 value={formData.category.id}
                 onValueChange={(value) => {
                   const selectedCategory = categories.find(
-                    (category) => category.id === value
+                    (category) => category.id === value,
                   );
                   setFormData({
                     ...formData,
@@ -255,12 +258,12 @@ export default function CreateAchievement() {
 
             {loadingBadges && (
               <div className="flex justify-center p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
               </div>
             )}
 
             {generatedBadges.length > 0 && (
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="mb-2 text-sm text-muted-foreground">
                 {generatedBadges.length} badges generated. Click to select one.
               </p>
             )}
@@ -268,16 +271,15 @@ export default function CreateAchievement() {
             {generatedBadges.length > 0 && (
               <div className="space-y-4">
                 <Label className="font-semibold">Select Badge</Label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   {generatedBadges.map((badgeUrl, index) => (
                     <div
                       key={index}
-                      className={`relative cursor-pointer border-2 rounded-lg p-2 hover:border-primary
-            ${
-              selectedBadge === badgeUrl
-                ? "border-primary"
-                : "border-transparent"
-            }`}
+                      className={`relative cursor-pointer rounded-lg border-2 p-2 hover:border-primary ${
+                        selectedBadge === badgeUrl
+                          ? "border-primary"
+                          : "border-transparent"
+                      }`}
                       onClick={() => {
                         setSelectedBadge(badgeUrl);
                         setFormData({ ...formData, imageUrl: badgeUrl });
@@ -286,10 +288,10 @@ export default function CreateAchievement() {
                       <img
                         src={badgeUrl}
                         alt={`Badge option ${index + 1}`}
-                        className="w-full h-auto rounded"
+                        className="h-auto w-full rounded"
                       />
                       {selectedBadge === badgeUrl && (
-                        <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
+                        <div className="absolute right-2 top-2 rounded-full bg-primary p-1 text-white">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-4 w-4"
@@ -312,11 +314,10 @@ export default function CreateAchievement() {
 
             <div className="flex justify-between">
               <Button variant="outline" onClick={handleGenerateBadges}>
-               
-                {!loadingBadges ? "Generate Badges 🎨🖼️🖌️" : (
-                  <span className=" text-gray-400">
-                    Generating badges...
-                  </span>
+                {!loadingBadges ? (
+                  "Generate Badges 🎨🖼️🖌️"
+                ) : (
+                  <span className="text-gray-400">Generating badges...</span>
                 )}
               </Button>
 

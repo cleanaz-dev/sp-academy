@@ -12,7 +12,7 @@ export async function POST(request) {
     if (!text || typeof text !== "string") {
       return NextResponse.json(
         { message: "Invalid input. 'text' is required and must be a string." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +38,8 @@ export async function POST(request) {
 
     console.log("Selected Voice ID:", voiceId);
 
-    const ttsResponse = await fetch( // Changed variable name from response to ttsResponse
+    const ttsResponse = await fetch(
+      // Changed variable name from response to ttsResponse
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
       {
         method: "POST",
@@ -52,12 +53,12 @@ export async function POST(request) {
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.5,
-            language: targetLanguage || 'fr', // Use the target language here
+            language: targetLanguage || "fr", // Use the target language here
             use_speaker_boost: true,
           },
           optimize_streaming_latency: 3,
         }),
-      }
+      },
     );
 
     // Log the response for debugging
@@ -68,7 +69,7 @@ export async function POST(request) {
       console.error("TTS API Error Details:", errorDetails);
       return NextResponse.json(
         { message: `TTS API Error: ${errorDetails}` },
-        { status: ttsResponse.status }
+        { status: ttsResponse.status },
       );
     }
 
@@ -83,7 +84,7 @@ export async function POST(request) {
     console.error("Error processing Text-to-Speech request:", error);
     return NextResponse.json(
       { message: "Error processing request. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

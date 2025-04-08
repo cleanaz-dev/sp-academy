@@ -6,14 +6,13 @@ import prisma from "@/lib/prisma";
 export async function POST(request) {
   try {
     const { conversationId, userId } = await request.json();
-  
-    if (!conversationId ||!userId) {
+
+    if (!conversationId || !userId) {
       throw new Error("Missing required parameters: conversationId and userId");
     }
     const user = await prisma.user.findFirst({
       where: { userId },
-
-    })
+    });
 
     if (!user) {
       throw new Error("User not found");
@@ -32,7 +31,7 @@ export async function POST(request) {
           message: "Conversation record already exists.",
           conversationRecordId: existingRecord.id,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -52,13 +51,13 @@ export async function POST(request) {
         conversationRecordId: newRecord.id,
         message: "Data processed successfully!",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error processing data:", error.message);
     return NextResponse.json(
       { error: "An error occurred while processing data." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

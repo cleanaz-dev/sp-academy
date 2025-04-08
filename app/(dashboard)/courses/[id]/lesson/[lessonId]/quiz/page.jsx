@@ -71,14 +71,16 @@ export default function Quiz({ params }) {
   const handleNextQuestion = () => {
     // Create a copy of the answers array to work with
     const currentAnswers = [...answers];
-    
+
     // Check if the current answer is correct using the latest state
-    const isCorrect = currentAnswers[currentQuestion] === quiz.questions[currentQuestion].answer;
-    
+    const isCorrect =
+      currentAnswers[currentQuestion] ===
+      quiz.questions[currentQuestion].answer;
+
     // Update score only if we haven't reached the end yet
     if (currentQuestion + 1 < quiz.questions.length) {
       if (isCorrect) {
-        setScore(prev => prev + 1);
+        setScore((prev) => prev + 1);
       }
       setCurrentQuestion(currentQuestion + 1);
     } else {
@@ -86,7 +88,7 @@ export default function Quiz({ params }) {
       const finalScore = currentAnswers.reduce((acc, answer, index) => {
         return answer === quiz.questions[index].answer ? acc + 1 : acc;
       }, 0);
-      
+
       setScore(finalScore);
       setQuizCompleted(true);
     }
@@ -108,7 +110,7 @@ export default function Quiz({ params }) {
       // Calculate the score as a percentage
       const totalQuestions = quiz.questions.length;
       const percentageScore = (score / totalQuestions) * 100;
-  
+
       // Send the quiz result to the API
       const response = await fetch("/api/quiz/", {
         method: "POST",
@@ -121,11 +123,11 @@ export default function Quiz({ params }) {
           lessonId: quiz.lessonId,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to submit quiz");
       }
-  
+
       const data = await response.json();
       console.log("Quiz submitted:", data);
       toast.success("Quiz submitted successfully!");
@@ -134,7 +136,7 @@ export default function Quiz({ params }) {
       console.error(error);
       toast.error("An error occurred while submitting the quiz");
     }
-  }; 
+  };
 
   if (!quiz) return <div>Loading...</div>;
 
@@ -142,7 +144,7 @@ export default function Quiz({ params }) {
     return (
       <div className="container mx-auto p-4">
         <Confetti width={windowWidth} height={windowHeight} />
-        <h1 className="text-2xl font-bold mb-4">Quiz Completed</h1>
+        <h1 className="mb-4 text-2xl font-bold">Quiz Completed</h1>
         <p className="mb-4">
           Your score: {score} out of {quiz.questions.length}
         </p>
@@ -150,14 +152,14 @@ export default function Quiz({ params }) {
           <Button
             type="button"
             onClick={handleReturnToLesson}
-            className="bg-blue-500 text-white hover:bg-white hover:text-blue-500 transition-all duration-300"
+            className="bg-blue-500 text-white transition-all duration-300 hover:bg-white hover:text-blue-500"
           >
             Return to Lesson
           </Button>
           <Button
             type="button"
             onClick={handleQuizSubmit}
-            className="bg-emerald-500 text-white hover:bg-white hover:text-emerald-500 transition-colors duration-300"
+            className="bg-emerald-500 text-white transition-colors duration-300 hover:bg-white hover:text-emerald-500"
           >
             Submit Quiz
           </Button>
@@ -170,7 +172,7 @@ export default function Quiz({ params }) {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">{quiz.lesson.title}</h1>
+      <h1 className="mb-4 text-2xl font-bold">{quiz.lesson.title}</h1>
       <p className="mb-4">
         Question {currentQuestion + 1} of {quiz.questions.length}
       </p>
@@ -182,7 +184,7 @@ export default function Quiz({ params }) {
               {/* Button */}
               <button
                 onClick={() => handleAnswerSelect(option)}
-                className={`px-4 py-2 rounded flex transition-all ${
+                className={`flex rounded px-4 py-2 transition-all ${
                   selectedAnswer === option
                     ? "bg-blue-500 text-white"
                     : "bg-gray-200 hover:bg-gray-300"
@@ -194,7 +196,7 @@ export default function Quiz({ params }) {
               {/* Checkmark icon (outside the button, aligned to the right) */}
               {selectedAnswer === option && (
                 <CheckCircle
-                  className="h-5 w-5 text-green-500 hover:text-green-600 cursor-pointer animate-in fade-in zoom-in-50 transition-all duration-300"
+                  className="h-5 w-5 cursor-pointer text-green-500 transition-all duration-300 animate-in fade-in zoom-in-50 hover:text-green-600"
                   aria-hidden="true"
                 />
               )}
@@ -210,7 +212,7 @@ export default function Quiz({ params }) {
           disabled={currentQuestion === 0} // Disable on the first question
           className={`bg-blue-300 text-white transition-all duration-300 ${
             currentQuestion === 0
-              ? "opacity-50 cursor-not-allowed"
+              ? "cursor-not-allowed opacity-50"
               : "hover:bg-blue-500"
           }`}
         >
@@ -224,11 +226,11 @@ export default function Quiz({ params }) {
           disabled={!selectedAnswer} // Disable if no answer is selected
           className={`bg-green-300 text-white transition-all duration-300 ${
             !selectedAnswer
-              ? "opacity-50 cursor-not-allowed"
+              ? "cursor-not-allowed opacity-50"
               : "hover:bg-green-500"
           }`}
         >
-         <SkipForward />
+          <SkipForward />
         </Button>
       </div>
     </div>

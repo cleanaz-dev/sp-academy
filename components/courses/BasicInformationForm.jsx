@@ -12,7 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-export default function BasicInformationForm({ courseData, onUpdateCourseData }) {
+export default function BasicInformationForm({
+  courseData,
+  onUpdateCourseData,
+}) {
   const handleInputChange = (field, value) => {
     onUpdateCourseData({
       ...courseData,
@@ -29,14 +32,17 @@ export default function BasicInformationForm({ courseData, onUpdateCourseData })
       ...courseData,
       basicInfo: {
         ...courseData.basicInfo,
-        learningOutcomes: [...courseData.basicInfo.learningOutcomes, newOutcome],
+        learningOutcomes: [
+          ...courseData.basicInfo.learningOutcomes,
+          newOutcome,
+        ],
       },
     });
   };
 
   const handleRemoveOutcome = (index) => {
     const newOutcomes = courseData.basicInfo.learningOutcomes.filter(
-      (_, i) => i !== index
+      (_, i) => i !== index,
     );
     onUpdateCourseData({
       ...courseData,
@@ -120,7 +126,7 @@ export default function BasicInformationForm({ courseData, onUpdateCourseData })
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <Label>Learning Outcomes</Label>
           <Button
             type="button"
@@ -132,7 +138,7 @@ export default function BasicInformationForm({ courseData, onUpdateCourseData })
           </Button>
         </div>
         {courseData.basicInfo.learningOutcomes.map((outcome, index) => (
-          <div key={index} className="flex items-center gap-2 mb-2">
+          <div key={index} className="mb-2 flex items-center gap-2">
             <Input
               value={outcome}
               onChange={(e) => {

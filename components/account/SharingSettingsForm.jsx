@@ -35,7 +35,7 @@ export function SharingSettingsForm({ initialSettings, userId }) {
         </p>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Reading Logs</Label>
               <p className="text-sm text-muted-foreground">
@@ -50,7 +50,7 @@ export function SharingSettingsForm({ initialSettings, userId }) {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Conversations</Label>
               <p className="text-sm text-muted-foreground">
@@ -65,7 +65,7 @@ export function SharingSettingsForm({ initialSettings, userId }) {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-lg border">
+          <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
               <Label>Achievements</Label>
               <p className="text-sm text-muted-foreground">

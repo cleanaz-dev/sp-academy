@@ -12,15 +12,15 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    console.log("body:", body);
-    
+    // console.log("body:", body);
+
     // Destructure with the correct structure
-    const { 
-      name, 
-      description, 
+    const {
+      name,
+      description,
       category, // This comes as an object from your form
-      imageUrl, 
-      criteria 
+      imageUrl,
+      criteria,
     } = body;
 
     if (!name || !category.id || !criteria) {

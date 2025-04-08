@@ -5,9 +5,9 @@ import React from "react";
 export default function LessonsPage() {
   return (
     <div>
-      <header className="bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-white py-16 mb-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="flex items-center gap-4 text-4xl font-bold mb-4">
+      <header className="mb-8 animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
             Lessons{" "}
             <GraduationCap
               strokeWidth={1.5}

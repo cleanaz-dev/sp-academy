@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteReadingLog } from "@/lib/actions";
@@ -25,7 +33,11 @@ export default function DeleteReadingDialog({ log }) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon" className="text-gray-500 hover:text-gray-600">
+        <Button
+          variant="outline"
+          size="icon"
+          className="text-gray-500 hover:text-gray-600"
+        >
           <Trash2 />
         </Button>
       </DialogTrigger>
@@ -33,11 +45,16 @@ export default function DeleteReadingDialog({ log }) {
         <DialogHeader>
           <DialogTitle>Delete Log</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this log? This action cannot be undone.
+            Are you sure you want to delete this log? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isLoading}
+          >
             {isLoading ? "Deleting..." : "Confirm Delete"}
           </Button>
         </DialogFooter>

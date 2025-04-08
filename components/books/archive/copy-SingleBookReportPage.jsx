@@ -94,7 +94,7 @@ export default function SingleBookReportPage({ bookReport }) {
   const dayPropGetter = (date) => {
     if (
       mockLogs.some(
-        (log) => format(log.date, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+        (log) => format(log.date, "yyyy-MM-dd") === format(date, "yyyy-MM-dd"),
       )
     ) {
       return {
@@ -105,8 +105,8 @@ export default function SingleBookReportPage({ bookReport }) {
   };
 
   return (
-    <div className="py-8 h-full">
-      <Card className="max-w-4xl ">
+    <div className="h-full py-8">
+      <Card className="max-w-4xl">
         <CardHeader>
           <CardTitle>
             <span className="text-4xl">{bookReport.book.title}</span>

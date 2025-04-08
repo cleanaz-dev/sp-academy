@@ -15,7 +15,7 @@ export default function RecentLessons({ progress }) {
   }));
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="transition-shadow hover:shadow-lg">
       <CardHeader className="border-b bg-gray-50">
         <CardTitle className="text-lg font-semibold">Recent Lessons</CardTitle>
       </CardHeader>
@@ -24,7 +24,7 @@ export default function RecentLessons({ progress }) {
           {formattedProgress.map((lesson, index) => (
             <li
               key={index}
-              className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-between rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
             >
               <div className="flex-col gap-1">
                 <p className="text-sm text-muted-foreground">
@@ -39,7 +39,7 @@ export default function RecentLessons({ progress }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`text-${lesson.color}-600 border-${lesson.color}-600 hover:bg-${lesson.color}-50 hover:-translate-y-0.5 transition-all duration-300`}
+                  className={`text-${lesson.color}-600 border-${lesson.color}-600 hover:bg-${lesson.color}-50 transition-all duration-300 hover:-translate-y-0.5`}
                 >
                   {lesson.status}
                 </Button>

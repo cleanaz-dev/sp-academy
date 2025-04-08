@@ -13,10 +13,10 @@ const s3Client = new S3Client({
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('audio');
-    
+    const file = formData.get("audio");
+
     if (!file) {
-      return NextResponse.json({ success: false, error: 'No file provided' });
+      return NextResponse.json({ success: false, error: "No file provided" });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -26,17 +26,17 @@ export async function POST(request) {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: `audio/${filename}`,
       Body: buffer,
-      ContentType: 'audio/mpeg',
-      ACL: 'public-read',
+      ContentType: "audio/mpeg",
+      ACL: "public-read",
     });
 
     await s3Client.send(command);
-    
+
     const audioUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/audio/${filename}`;
-    
+
     return NextResponse.json({ success: true, audioUrl });
   } catch (error) {
-    console.error('S3 upload error:', error);
+    console.error("S3 upload error:", error);
     return NextResponse.json({ success: false, error: error.message });
   }
 }

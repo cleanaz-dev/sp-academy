@@ -50,16 +50,16 @@ const ImageExercise = forwardRef(({ exercise, isCompleted }, ref) => {
 
   return (
     <div
-      className={`relative p-4 rounded-lg border-2 ${
+      className={`relative rounded-lg border-2 p-4 ${
         isCompleted ? "border-green-200 bg-green-50" : "border-gray-200"
       }`}
     >
       {isCompleted && (
-        <div className="absolute top-2 right-2 text-green-500">✓</div>
+        <div className="absolute right-2 top-2 text-green-500">✓</div>
       )}
-      <div className="mx-auto p-6 bg-white rounded-lg shadow-md">
-      <div className="flex items-center gap-4 mb-10">
-          <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] animate-[gradient_6s_ease_infinite] text-sm font-medium text-white">
+      <div className="mx-auto rounded-lg bg-white p-6 shadow-md">
+        <div className="mb-10 flex items-center gap-4">
+          <span className="flex h-8 w-8 animate-[gradient_6s_ease_infinite] items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] text-sm font-medium text-white">
             {exercise.order + 1}
           </span>
           <p className="font-medium text-muted-foreground">
@@ -68,17 +68,17 @@ const ImageExercise = forwardRef(({ exercise, isCompleted }, ref) => {
         </div>
 
         {/* Image and exercise content */}
-        <div className="flex flex-col items-center mb-6 text-center justify-center">
+        <div className="mb-6 flex flex-col items-center justify-center text-center">
           <Image
             src="https://placehold.co/400"
             alt={exercise.title}
             width={400}
             height={300}
-            className="rounded-lg border-teal-300 border-4"
+            className="rounded-lg border-4 border-teal-300"
             unoptimized
             priority
           />
-          <p className="mt-2 text-sm text-gray-600 italic text-center">
+          <p className="mt-2 text-center text-sm italic text-gray-600">
             {exercise.image_prompt}
           </p>
         </div>
@@ -89,14 +89,14 @@ const ImageExercise = forwardRef(({ exercise, isCompleted }, ref) => {
             type="text"
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
-            className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-lg border-2 border-gray-200 p-3 focus:border-blue-500 focus:outline-none"
             placeholder="Type your French greeting here..."
             disabled={isLoading}
           />
 
           {/* Error and feedback display */}
           {error && (
-            <div className="p-3 bg-red-100 text-red-700 rounded-lg">
+            <div className="rounded-lg bg-red-100 p-3 text-red-700">
               {error}
             </div>
           )}
@@ -104,7 +104,7 @@ const ImageExercise = forwardRef(({ exercise, isCompleted }, ref) => {
           <button
             type="submit"
             disabled={isLoading || !userAnswer.trim()}
-            className={`px-6 py-2 text-white rounded-lg transition-all ${
+            className={`rounded-lg px-6 py-2 text-white transition-all ${
               isLoading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"
             }`}
           >
@@ -115,20 +115,20 @@ const ImageExercise = forwardRef(({ exercise, isCompleted }, ref) => {
         {/* Results display */}
         {result && (
           <div
-            className={`mt-4 p-4 rounded-lg ${
+            className={`mt-4 rounded-lg p-4 ${
               result.score >= 0.8
                 ? "bg-green-100 text-green-700"
                 : result.score >= 0.5
-                ? "bg-yellow-100 text-yellow-700"
-                : "bg-red-100 text-red-700"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-red-100 text-red-700"
             }`}
           >
             <p className="font-medium">
               {result.score >= 0.8
                 ? "✅ Excellent!"
                 : result.score >= 0.5
-                ? "⚠️ Almost There!"
-                : "❌ Needs Improvement"}
+                  ? "⚠️ Almost There!"
+                  : "❌ Needs Improvement"}
             </p>
             <p className="mt-2">{result.feedback}</p>
 

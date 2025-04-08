@@ -51,7 +51,7 @@ ${content}
     });
     // Parse the response into JSON
     const { newTitle, newDescription, newTopics } = JSON.parse(
-      response.content[0].text
+      response.content[0].text,
     );
 
     // Step 2: Extract image URLs from the content
@@ -59,7 +59,7 @@ ${content}
 
     // Step 3: Upload each image using the shared function
     const uploadedUrls = await Promise.all(
-      imageUrls.map((url) => uploadImage(url))
+      imageUrls.map((url) => uploadImage(url)),
     );
 
     // Step 4: Replace the old URLs with the new ones in the content
@@ -102,7 +102,7 @@ ${content}
     console.error("Error creating lesson:", error);
     return NextResponse.json(
       { error: "Error creating lesson" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -7,11 +7,11 @@ export async function POST(request) {
 
   try {
     const {
-      id, 
-      liked, 
+      id,
+      liked,
       type,
       item: { type: itemType, typeName },
-      userId: itemUserId 
+      userId: itemUserId,
     } = await request.json();
 
     const userPerformingLike = await prisma.user.findFirst({
@@ -49,7 +49,7 @@ export async function POST(request) {
             : [
                 prisma.notification.create({
                   data: {
-                    userId: itemUserId,       // Receiver
+                    userId: itemUserId, // Receiver
                     toUserId: itemUserId,
                     fromUserId: userPerformingLike.id, // Sender
                     activityId: id,
@@ -87,7 +87,7 @@ export async function POST(request) {
     console.error("Error updating like:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

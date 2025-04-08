@@ -9,7 +9,6 @@ export async function POST(request) {
 
     const levelInt = parseInt(level, 10) || 0;
 
-
     // Send data to the webhook endpoint
     const webhookResponse = await axios.post(
       "https://hook.us1.make.com/g8vr0fxdc4tv88e2pwrahhl3trd6n6pz",
@@ -17,8 +16,8 @@ export async function POST(request) {
         title,
         level: levelInt,
         subject,
-        topic
-      }
+        topic,
+      },
     );
 
     // Handle the webhook response
@@ -41,7 +40,7 @@ export async function POST(request) {
       // Handle unexpected webhook response status
       return NextResponse.json(
         { error: "Failed to get valid response from the webhook" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
@@ -49,7 +48,7 @@ export async function POST(request) {
     console.error("Error:", error);
     return NextResponse.json(
       { error: "An error occurred while creating the lesson" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

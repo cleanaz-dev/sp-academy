@@ -104,9 +104,18 @@ const LEARNING_CONTENT = {
         ],
         keyPhrases: {
           beginner: [
-            { phrase: "I'd like a burger, please", usage: "Placing a simple order" },
-            { phrase: "Can I get fries with that?", usage: "Requesting additional items" },
-            { phrase: "What do you recommend?", usage: "Asking for suggestions" },
+            {
+              phrase: "I'd like a burger, please",
+              usage: "Placing a simple order",
+            },
+            {
+              phrase: "Can I get fries with that?",
+              usage: "Requesting additional items",
+            },
+            {
+              phrase: "What do you recommend?",
+              usage: "Asking for suggestions",
+            },
           ],
           intermediate: [
             {
@@ -140,18 +149,40 @@ const LEARNING_CONTENT = {
         vocabulary: {
           beginner: [
             { word: "burger", context: "a type of sandwich with a meat patty" },
-            { word: "fries", context: "fried potato slices, often served as a side" },
-            { word: "combo", context: "a meal that includes a main item and side" },
+            {
+              word: "fries",
+              context: "fried potato slices, often served as a side",
+            },
+            {
+              word: "combo",
+              context: "a meal that includes a main item and side",
+            },
           ],
           intermediate: [
             { word: "vegetarian", context: "a person who does not eat meat" },
-            { word: "onion", context: "a common vegetable often used in fast food" },
-            { word: "upgrade", context: "to increase the size or quality of something" },
+            {
+              word: "onion",
+              context: "a common vegetable often used in fast food",
+            },
+            {
+              word: "upgrade",
+              context: "to increase the size or quality of something",
+            },
           ],
           advanced: [
-            { word: "condiments", context: "sauces or seasonings used with food" },
-            { word: "milkshake", context: "a sweet, cold beverage made with milk and ice cream" },
-            { word: "gluten-free", context: "food that does not contain gluten, suitable for people with celiac disease" },
+            {
+              word: "condiments",
+              context: "sauces or seasonings used with food",
+            },
+            {
+              word: "milkshake",
+              context: "a sweet, cold beverage made with milk and ice cream",
+            },
+            {
+              word: "gluten-free",
+              context:
+                "food that does not contain gluten, suitable for people with celiac disease",
+            },
           ],
         },
       },
@@ -436,7 +467,8 @@ const LEARNING_CONTENT = {
         label: "Shopping for Electronics",
         location: "electronics_store",
         roles: ["customer", "sales_assistant"],
-        situation: "Shopping for electronic gadgets and interacting with store staff",
+        situation:
+          "Shopping for electronic gadgets and interacting with store staff",
         culturalNotes: [
           "Warranty policies vary by product and region",
           "Some countries may have restrictions on the sale of certain electronics",
@@ -445,18 +477,36 @@ const LEARNING_CONTENT = {
         keyPhrases: {
           beginner: [
             { phrase: "I'm looking for...", usage: "Starting search" },
-            { phrase: "What features does this have?", usage: "Asking about product features" },
+            {
+              phrase: "What features does this have?",
+              usage: "Asking about product features",
+            },
             { phrase: "How much is this?", usage: "Asking price" },
           ],
           intermediate: [
-            { phrase: "Can I see the specs?", usage: "Requesting product details" },
-            { phrase: "Do you have this in stock?", usage: "Inquiring about availability" },
+            {
+              phrase: "Can I see the specs?",
+              usage: "Requesting product details",
+            },
+            {
+              phrase: "Do you have this in stock?",
+              usage: "Inquiring about availability",
+            },
             { phrase: "Is this on sale?", usage: "Asking about discounts" },
           ],
           advanced: [
-            { phrase: "Does this come with an extended warranty?", usage: "Warranty inquiry" },
-            { phrase: "What are the return policies for this?", usage: "Asking about returns" },
-            { phrase: "How does this compare with other models?", usage: "Comparison request" },
+            {
+              phrase: "Does this come with an extended warranty?",
+              usage: "Warranty inquiry",
+            },
+            {
+              phrase: "What are the return policies for this?",
+              usage: "Asking about returns",
+            },
+            {
+              phrase: "How does this compare with other models?",
+              usage: "Comparison request",
+            },
           ],
         },
         vocabulary: {
@@ -471,8 +521,14 @@ const LEARNING_CONTENT = {
             { word: "sale", context: "discounted price" },
           ],
           advanced: [
-            { word: "extended warranty", context: "additional product coverage" },
-            { word: "return policy", context: "guidelines for returning products" },
+            {
+              word: "extended warranty",
+              context: "additional product coverage",
+            },
+            {
+              word: "return policy",
+              context: "guidelines for returning products",
+            },
             { word: "comparison", context: "evaluating different models" },
           ],
         },
@@ -988,7 +1044,7 @@ export default function EnhancedDialogueGenerator() {
 
   const updatePreview = (scenario, level, focus) => {
     const selectedScenario = LEARNING_CONTENT.scenarios.find(
-      (s) => s.id === scenario
+      (s) => s.id === scenario,
     );
     const selectedLevel = level
       ? LEARNING_CONTENT.levels.find((l) => l.id === level)
@@ -999,7 +1055,7 @@ export default function EnhancedDialogueGenerator() {
       keyPhrases:
         selectedScenario && level
           ? selectedScenario.context.keyPhrases[level].map(
-              (item) => item.phrase
+              (item) => item.phrase,
             )
           : [],
 
@@ -1035,13 +1091,13 @@ export default function EnhancedDialogueGenerator() {
 
     try {
       const selectedScenarioData = LEARNING_CONTENT.scenarios.find(
-        (s) => s.id === selectedScenario
+        (s) => s.id === selectedScenario,
       );
       const levelRequirements = LEARNING_CONTENT.levels.find(
-        (l) => l.id === selectedLevel
+        (l) => l.id === selectedLevel,
       )?.requirements;
       const focusObjectives = LEARNING_CONTENT.focusAreas.find(
-        (f) => f.id === selectedFocus
+        (f) => f.id === selectedFocus,
       )?.learningObjectives;
 
       const response = await fetch("/api/generate-dialogue-test-copy", {
@@ -1074,7 +1130,7 @@ export default function EnhancedDialogueGenerator() {
             type: selectedFocus,
             objectives: focusObjectives,
             label: LEARNING_CONTENT.focusAreas.find(
-              (f) => f.id === selectedFocus
+              (f) => f.id === selectedFocus,
             )?.label,
           },
         }),
@@ -1110,14 +1166,12 @@ export default function EnhancedDialogueGenerator() {
   };
 
   return (
-    <div className="max-w-2xl mb-4">
-      <h1 className="header-title">French Conversation Generator</h1>
-
+    <div className="mb-4 max-w-2xl">
       {!generatedScenario && (
-        <div className="space-y-6 my-6">
+        <div className="my-6 space-y-6">
           <div className="flex gap-4">
             <div className="flex-1">
-              <Label className="block text-sm font-medium mb-2">
+              <Label className="mb-2 block text-sm font-medium">
                 Your Language
               </Label>
               <Select value={nativeLanguage} onValueChange={setNativeLanguage}>
@@ -1135,7 +1189,7 @@ export default function EnhancedDialogueGenerator() {
             </div>
 
             <div className="flex-1">
-              <Label className="block text-sm font-medium mb-2">
+              <Label className="mb-2 block text-sm font-medium">
                 Language to Learn
               </Label>
               <Select value={targetLanguage} onValueChange={setTargetLanguage}>
@@ -1156,14 +1210,14 @@ export default function EnhancedDialogueGenerator() {
           </div>
           {/* Select Scenario */}
           <div>
-            <Label className="block text-sm font-medium mb-2">
+            <Label className="mb-2 block text-sm font-medium">
               Select Scenario
             </Label>
             <Select
               onValueChange={(value) => {
                 setSelectedScenario(value);
                 const selectedScenarioObj = LEARNING_CONTENT.scenarios.find(
-                  (scenario) => scenario.id === value
+                  (scenario) => scenario.id === value,
                 );
                 setScenarioTitle(selectedScenarioObj?.context.label || "");
                 updatePreview(value, selectedLevel, selectedFocus);
@@ -1175,7 +1229,7 @@ export default function EnhancedDialogueGenerator() {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">Health</span>
+                    <span className="text-lg font-bold">Health</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.scenarios
                     .filter((scenario) => scenario.category === "Health")
@@ -1189,7 +1243,7 @@ export default function EnhancedDialogueGenerator() {
 
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">Leisure</span>
+                    <span className="text-lg font-bold">Leisure</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.scenarios
                     .filter((scenario) => scenario.category === "Leisure")
@@ -1203,7 +1257,7 @@ export default function EnhancedDialogueGenerator() {
 
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">Food</span>
+                    <span className="text-lg font-bold">Food</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.scenarios
                     .filter((scenario) => scenario.category === "Food")
@@ -1217,7 +1271,7 @@ export default function EnhancedDialogueGenerator() {
 
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">School</span>
+                    <span className="text-lg font-bold">School</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.scenarios
                     .filter((scenario) => scenario.category === "School")
@@ -1233,7 +1287,7 @@ export default function EnhancedDialogueGenerator() {
           </div>
 
           <div>
-            <Label className="block text-sm font-medium mb-2">
+            <Label className="mb-2 block text-sm font-medium">
               Select Level
             </Label>
             <Select
@@ -1248,7 +1302,7 @@ export default function EnhancedDialogueGenerator() {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">Available Levels</span>
+                    <span className="text-lg font-bold">Available Levels</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.levels.map((level) => (
                     <SelectItem key={level.id} value={level.id}>
@@ -1261,7 +1315,7 @@ export default function EnhancedDialogueGenerator() {
           </div>
 
           <div>
-            <Label className="block text-sm font-medium mb-2">
+            <Label className="mb-2 block text-sm font-medium">
               Select Focus Area
             </Label>
             <Select
@@ -1276,7 +1330,7 @@ export default function EnhancedDialogueGenerator() {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>
-                    <span className="font-bold text-lg">Focus Areas</span>
+                    <span className="text-lg font-bold">Focus Areas</span>
                   </SelectLabel>
                   {LEARNING_CONTENT.focusAreas.map((focus) => (
                     <SelectItem key={focus.id} value={focus.id}>
@@ -1293,25 +1347,25 @@ export default function EnhancedDialogueGenerator() {
             preview.keyPhrases.length > 0 ||
             preview.culturalNotes.length > 0 ||
             preview.levelRequirements) && (
-            <div className="mt-4 p-4 bg-white rounded-lg shadow-md space-y-4">
-              <h3 className="font-semibold text-xl mb-4 text-gray-800">
+            <div className="mt-4 space-y-4 rounded-lg bg-white p-4 shadow-md">
+              <h3 className="mb-4 text-xl font-semibold text-gray-800">
                 Learning Preview
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Vocabulary Section */}
                 {preview.vocabulary.length > 0 && (
-                  <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <BookOpen className="text-blue-500 mr-2" />
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                    <div className="mb-2 flex items-center">
+                      <BookOpen className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
                         Key Vocabulary:
                       </p>
                     </div>
-                    <ul className="text-sm space-y-1">
+                    <ul className="space-y-1 text-sm">
                       {preview.vocabulary.map((item, idx) => (
                         <li key={idx} className="flex items-center">
                           <CheckCircle
-                            className="text-green-500 mr-2"
+                            className="mr-2 text-green-500"
                             size={16}
                           />
                           <span className="font-medium">{item.word}</span>
@@ -1329,14 +1383,14 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Key Phrases Section */}
                 {preview.keyPhrases.length > 0 && (
-                  <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <MessageSquare className="text-blue-500 mr-2" />
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                    <div className="mb-2 flex items-center">
+                      <MessageSquare className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
                         Common Phrases:
                       </p>
                     </div>
-                    <ul className="text-sm list-disc list-inside">
+                    <ul className="list-inside list-disc text-sm">
                       {preview.keyPhrases.map((phrase, idx) => (
                         <li key={idx}>{phrase}</li>
                       ))}
@@ -1346,14 +1400,14 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Cultural Notes Section */}
                 {preview.culturalNotes.length > 0 && (
-                  <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <Info className="text-blue-500 mr-2" />
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                    <div className="mb-2 flex items-center">
+                      <Info className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
                         Cultural Notes:
                       </p>
                     </div>
-                    <ul className="text-sm list-disc list-outside pl-4">
+                    <ul className="list-outside list-disc pl-4 text-sm">
                       {preview.culturalNotes.map((note, idx) => (
                         <li key={idx}>{note}</li>
                       ))}
@@ -1363,14 +1417,14 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Level Requirements Section */}
                 {preview.levelRequirements && (
-                  <div className="bg-gray-100 p-4 rounded-lg shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <CheckCircle className="text-blue-500 mr-2" />
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                    <div className="mb-2 flex items-center">
+                      <CheckCircle className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
                         Level Requirements:
                       </p>
                     </div>
-                    <ul className="text-sm list-disc list-outside pl-4">
+                    <ul className="list-outside list-disc pl-4 text-sm">
                       <li>
                         Vocabulary: {preview.levelRequirements.vocabulary} words
                       </li>
@@ -1397,7 +1451,7 @@ export default function EnhancedDialogueGenerator() {
           </Button>
 
           {error && (
-            <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+            <div className="rounded bg-red-50 p-2 text-sm text-red-500">
               {error}
             </div>
           )}
@@ -1412,7 +1466,10 @@ export default function EnhancedDialogueGenerator() {
           focusArea={selectedFocus}
           nativeLanguage={nativeLanguage}
           targetLanguage={targetLanguage}
-          title={LEARNING_CONTENT.scenarios.find((s) => s.id === selectedScenario)?.context.label}
+          title={
+            LEARNING_CONTENT.scenarios.find((s) => s.id === selectedScenario)
+              ?.context.label
+          }
         />
       )}
     </div>

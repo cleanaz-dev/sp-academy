@@ -40,7 +40,6 @@ const focusAreas = [
   { id: "fluency", label: "Conversation Fluency" },
 ];
 
-
 export default function DialogueGenerator() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
@@ -93,9 +92,9 @@ export default function DialogueGenerator() {
 
       {/* Scenario Generation Form */}
 
-      <div className="space-y-4 my-6">
+      <div className="my-6 space-y-4">
         <div>
-          <Label className="block text-sm font-medium mb-2">
+          <Label className="mb-2 block text-sm font-medium">
             Select Scenario
           </Label>
           <Select onValueChange={(value) => setSelectedScenario(value)}>
@@ -129,7 +128,7 @@ export default function DialogueGenerator() {
         </div>
 
         <div>
-          <Label className="block text-sm font-medium mb-2">Select Level</Label>
+          <Label className="mb-2 block text-sm font-medium">Select Level</Label>
           <Select onValueChange={(value) => setSelectedLevel(value)}>
             <SelectTrigger>
               <SelectValue placeholder="Choose a level..." />
@@ -164,7 +163,7 @@ export default function DialogueGenerator() {
         </div> */}
 
         <div>
-          <Label className="block text-sm font-medium mb-2">
+          <Label className="mb-2 block text-sm font-medium">
             Select Focus Area
           </Label>
           <Select onValueChange={(value) => setSelectedFocus(value)}>
@@ -206,17 +205,17 @@ export default function DialogueGenerator() {
         <Button
           onClick={handleGenerate}
           disabled={loading}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-300"
+          className="w-full rounded bg-blue-500 p-2 text-white hover:bg-blue-600 disabled:bg-gray-300"
         >
           {loading ? "Generating..." : "Generate Dialogue Scenario"}
         </Button>
 
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {error && <div className="text-sm text-red-500">{error}</div>}
       </div>
 
       {/* Generated Scenario Display */}
       {generatedScenario && (
-        <div className="mt-6 p-4 border rounded bg-gray-50">
+        <div className="mt-6 rounded border bg-gray-50 p-4">
           <ReactMarkdown className="prose max-w-none">
             {generatedScenario}
           </ReactMarkdown>
@@ -226,7 +225,7 @@ export default function DialogueGenerator() {
       {/* Conversation Interface */}
       {showConversation && (
         <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4">Practice Conversation 😎</h2>
+          <h2 className="mb-4 text-xl font-bold">Practice Conversation 😎</h2>
           <ConversationInterface scenarioContext={generatedScenario} />
         </div>
       )}

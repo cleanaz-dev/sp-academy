@@ -1,9 +1,9 @@
 // components/Transcription.js (Frontend Component)
-"use client"
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
 
 export default function TranscriptionComponent() {
-  const [transcription, setTranscription] = useState('');
+  const [transcription, setTranscription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -16,22 +16,22 @@ export default function TranscriptionComponent() {
 
     try {
       const formData = new FormData();
-      formData.append('audio', file);
+      formData.append("audio", file);
 
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Transcription failed');
+        throw new Error("Transcription failed");
       }
 
       const data = await response.json();
-      setTranscription(data.transcripts.join(' '));
+      setTranscription(data.transcripts.join(" "));
     } catch (err) {
       setError(err.message);
-      console.error('Error:', err);
+      console.error("Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -39,19 +39,17 @@ export default function TranscriptionComponent() {
 
   return (
     <div>
-      <input 
-        type="file" 
-        accept="audio/*" 
+      <input
+        type="file"
+        accept="audio/*"
         onChange={handleFileUpload}
         disabled={isLoading}
       />
-      
+
       {isLoading && <p>Processing audio...</p>}
-      
-      {error && (
-        <p style={{ color: 'red' }}>Error: {error}</p>
-      )}
-      
+
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+
       {transcription && (
         <div>
           <h3>Transcription:</h3>

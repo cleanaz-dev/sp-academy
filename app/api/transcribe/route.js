@@ -1,15 +1,17 @@
 // pages/api/transcribe.js
-import { NextResponse } from 'next/server';
-import { TranscribeStreamingClient, StartStreamTranscriptionCommand } from "@aws-sdk/client-transcribe-streaming";
-import { Buffer } from 'buffer';
+import { NextResponse } from "next/server";
+import {
+  TranscribeStreamingClient,
+  StartStreamTranscriptionCommand,
+} from "@aws-sdk/client-transcribe-streaming";
+import { Buffer } from "buffer";
 
 const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 1024 * 8;
 
-
 // Create the client with credentials from server-side environment variables
 const client = new TranscribeStreamingClient({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || "us-east-1",
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -40,7 +42,7 @@ async function transcribeAudio(audioFile) {
     async function* audioStream() {
       const arrayBuffer = await audioFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      
+
       for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
         const chunk = buffer.slice(i, i + CHUNK_SIZE);
         yield { AudioEvent: { AudioChunk: chunk } };
@@ -74,25 +76,24 @@ async function transcribeAudio(audioFile) {
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    const audioFile = formData.get('audio');
-    c
+    const audioFile = formData.get("audio");
+    c;
 
     if (!audioFile) {
       return NextResponse.json(
-        { error: 'No audio file provided' },
-        { status: 400 }
+        { error: "No audio file provided" },
+        { status: 400 },
       );
     }
 
     const transcripts = await transcribeAudio(audioFile);
-    
-    
+
     return NextResponse.json({ transcripts });
   } catch (error) {
-    console.error('Transcription error:', error);
+    console.error("Transcription error:", error);
     return NextResponse.json(
-      { error: 'Transcription failed' },
-      { status: 500 }
+      { error: "Transcription failed" },
+      { status: 500 },
     );
   }
 }

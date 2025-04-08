@@ -1,11 +1,11 @@
 // components/AudioRecorder.js
-"use client"
-import { useState, useRef } from 'react';
-import { Button } from '../ui/button';
+"use client";
+import { useState, useRef } from "react";
+import { Button } from "../ui/button";
 
 export default function AudioRecorder() {
   const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState('');
+  const [transcription, setTranscription] = useState("");
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -21,40 +21,44 @@ export default function AudioRecorder() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
-        const file = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
-        
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
+        const file = new File([audioBlob], "recording.wav", {
+          type: "audio/wav",
+        });
+
         const formData = new FormData();
-        formData.append('audio', file);
+        formData.append("audio", file);
 
         try {
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
+          const response = await fetch("/api/transcribe", {
+            method: "POST",
             body: formData,
           });
 
           if (!response.ok) {
-            throw new Error('Transcription failed');
+            throw new Error("Transcription failed");
           }
 
           const data = await response.json();
-          setTranscription(data.transcripts.join(' '));
+          setTranscription(data.transcripts.join(" "));
         } catch (error) {
-          console.error('Transcription error:', error);
+          console.error("Transcription error:", error);
         }
       };
 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error("Error accessing microphone:", error);
     }
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
       setIsRecording(false);
     }
   };
@@ -62,7 +66,7 @@ export default function AudioRecorder() {
   return (
     <div>
       <Button onClick={isRecording ? stopRecording : startRecording}>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
+        {isRecording ? "Stop Recording" : "Start Recording"}
       </Button>
 
       {transcription && (
