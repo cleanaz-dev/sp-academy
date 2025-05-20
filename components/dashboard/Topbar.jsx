@@ -9,7 +9,7 @@ import { navItems } from "./NavLinks";
 import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 import { getReadNotificationsByUserId } from "@/lib/actions";
-import { PanelLeftOpen } from "lucide-react";
+import { PanelLeftOpen,PanelRightOpen } from "lucide-react";
 import { PanelLeftClose } from "lucide-react";
 
 export const Topbar = ({
@@ -68,12 +68,12 @@ export const Topbar = ({
           >
             {!desktopSidebarOpen ? (
               <PanelLeftOpen
-                className="mb-1 animate-pulse text-blue-400"
+                className="mb-1 animate-pulse text-blue-400/80"
                 strokeWidth={1.5}
               />
             ) : (
               <PanelLeftClose
-                className="mb-1 animate-pulse text-blue-400"
+                className="mb-1 animate-pulse text-blue-400/80"
                 strokeWidth={1.5}
               />
             )}
@@ -87,12 +87,12 @@ export const Topbar = ({
           >
             {!desktopSidebarOpen ? (
               <PanelLeftOpen
-                className="mb-1 animate-pulse text-blue-400"
+                className="mb-1 animate-pulse text-blue-400/80"
                 strokeWidth={1.5}
               />
             ) : (
               <PanelLeftClose
-                className="mb-1 animate-pulse text-blue-400"
+                className="mb-1 animate-pulse text-blue-400/80"
                 strokeWidth={1.5}
               />
             )}
