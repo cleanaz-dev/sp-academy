@@ -1,6 +1,7 @@
+import FamilySection from "@/components/landing-page/FamilySection";
 import FeaturesSection from "@/components/landing-page/FeaturesSection";
 import HeroSection from "@/components/landing-page/HeroSection";
-import Navbar from "@/components/landing-page/Navbar";
+import NavigationBar from "@/components/landing-page/nav-bar";
 import StatsSection from "@/components/landing-page/StatsSection";
 import { ScrollArea } from "@/components/ui/scroll-area-landing";
 import React from "react";
@@ -9,9 +10,10 @@ export default function Home() {
   return (
     <div>
       {/* <LandingPage /> */}
-      {/* <Navbar /> */}
+      <NavigationBar />
       <HeroSection />
       <FeaturesSection />
+      <FamilySection />
       <StatsSection />
     </div>
   );

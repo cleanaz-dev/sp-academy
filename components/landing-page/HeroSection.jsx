@@ -1,9 +1,10 @@
-//components/NewLandingPage.jsx
 "use client";
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
+import HeroImage from "@/public/hero-image-01.png";
 
 export default function HeroSection() {
   return (
@@ -30,9 +31,9 @@ export default function HeroSection() {
       </div>
 
       {/* Main Container */}
-      <div className="container relative mx-auto h-screen max-w-5xl px-4">
+      <div className="container relative mx-auto h-screen max-w-7xl px-4">
         {/* Content Wrapper */}
-        <div className="flex h-full flex-col items-center gap-12 py-32 md:mx-24 md:flex-row md:py-8">
+        <div className="flex h-full flex-col items-center gap-12 py-20 md:flex-row md:gap-16 md:py-8">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -51,20 +52,75 @@ export default function HeroSection() {
               </span>
             </motion.div>
 
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="mt-8 text-4xl font-bold sm:text-5xl lg:text-7xl"
             >
-              <span className="bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 bg-clip-text text-transparent">
-                Spoon
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-amber-400 via-purple-400 to-sky-400 bg-clip-text text-transparent">
-                Academy
-              </span>
-            </motion.h1>
+              <h1 className="mt-8 text-4xl font-bold tracking-wide sm:text-5xl lg:text-7xl">
+                <span className="text-white">
+                  <span
+                    style={{
+                      textShadow: `
+        0 0 10px rgba(56, 189, 248, 1),
+        0 0 20px rgba(56, 189, 248, 0.8),
+        0 0 30px rgba(56, 189, 248, 0.6)
+      `,
+                    }}
+                  >
+                    S
+                  </span>
+                  <span
+                    style={{
+                      textShadow: `
+        0 0 10px rgba(16, 185, 129, 1),
+        0 0 20px rgba(16, 185, 129, 0.8),
+        0 0 30px rgba(16, 185, 129, 0.6)
+      `,
+                    }}
+                  >
+                    p
+                  </span>
+                  <span
+                    style={{
+                      textShadow: `
+        0 0 10px rgba(251, 191, 36, 1),
+        0 0 20px rgba(251, 191, 36, 0.8),
+        0 0 30px rgba(251, 191, 36, 0.6)
+      `,
+                    }}
+                  >
+                    o
+                  </span>
+                  <span
+                    style={{
+                      textShadow: `
+        0 0 10px rgba(251, 191, 36, 1),
+        0 0 20px rgba(251, 191, 36, 0.8),
+        0 0 30px rgba(251, 191, 36, 0.6)
+      `,
+                    }}
+                  >
+                    o
+                  </span>
+                  <span
+                    style={{
+                      textShadow: `
+        0 0 10px rgba(192, 132, 252, 1),
+        0 0 20px rgba(192, 132, 252, 0.8),
+        0 0 30px rgba(192, 132, 252, 0.6)
+      `,
+                    }}
+                  >
+                    n
+                  </span>
+                </span>
+                <br />
+
+                <span>Academy</span>
+              </h1>
+            </motion.div>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -72,8 +128,8 @@ export default function HeroSection() {
               transition={{ delay: 0.6 }}
               className="mx-auto mt-6 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg lg:mx-0 lg:text-xl"
             >
-              Where every child's potential unfolds through playful learning and
-              creative discovery. Join us on a journey of wonder and growth!
+              Where every student's potential unfolds through playful learning
+              and creative discovery. Join us on a journey of wonder and growth!
             </motion.p>
 
             <motion.div
@@ -96,66 +152,46 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right Content - Floating Elements */}
+          {/* Hero Image */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="relative aspect-square h-1/2 w-full"
+            className="rounded-full"
           >
-            {/* Animated floating elements */}
             <motion.div
               animate={{
-                y: [0, -20, 0],
-                rotate: [0, 5, 0],
+                borderColor: [
+                  "rgba(56, 189, 248, 1)", // sky
+                  "rgba(16, 185, 129, 1)", // emerald
+                  "rgba(251, 191, 36, 1)", // amber
+                  "rgba(192, 132, 252, 1)", // purple
+                  "rgba(56, 189, 248, 1)", // back to sky
+                ],
+                boxShadow: [
+                  "0 0 40px rgba(56, 189, 248, 0.6)",
+                  "0 0 40px rgba(16, 185, 129, 0.6)",
+                  "0 0 40px rgba(251, 191, 36, 0.6)",
+                  "0 0 40px rgba(192, 132, 252, 0.6)",
+                  "0 0 40px rgba(56, 189, 248, 0.6)",
+                ],
               }}
               transition={{
                 duration: 4,
                 repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute left-[20%] top-[20%] aspect-square w-[30%] rounded-2xl bg-gradient-to-r from-sky-400 to-emerald-400 shadow-xl backdrop-blur-sm"
-            />
-            <motion.div
-              animate={{
-                y: [0, 20, 0],
-                rotate: [0, -5, 0],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 0.5,
-              }}
-              className="absolute bottom-[20%] right-[60%] aspect-square w-[30%] rounded-full bg-gradient-to-r from-amber-400 to-purple-400 shadow-xl backdrop-blur-sm"
-            />
-            <motion.div
-              animate={{
-                y: [-10, 10, -10],
-                x: [-10, 10, -10],
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-              className="absolute left-1/2 top-1/2 aspect-square w-[40%] -translate-x-1/2 -translate-y-1/2 transform rounded-3xl bg-gradient-to-r from-purple-400 to-sky-400 shadow-xl backdrop-blur-sm"
-            />
-
-            {/* Additional floating element */}
-            <motion.div
-              animate={{
-                scale: [1, 1.1, 1],
-                rotate: [0, 360],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Infinity,
                 ease: "linear",
               }}
-              className="absolute right-[40%] top-[40%] aspect-square w-[15%] rounded-lg bg-gradient-to-r from-emerald-400 to-amber-400 shadow-lg"
-            />
+              className="rounded-full"
+            >
+              <Image
+                src={HeroImage}
+                className="rounded-full"
+                height={600}
+                width={600}
+                priority
+                alt="hero image"
+              />
+            </motion.div>
           </motion.div>
         </div>
       </div>

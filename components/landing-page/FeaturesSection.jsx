@@ -1,129 +1,141 @@
-// components/FeaturesSection.tsx
 "use client";
 
 import { motion } from "framer-motion";
-import { Bot, BookOpen, Sparkles } from "lucide-react"; // Make sure to install lucide-react
+import { Bot, BookOpen, Award, Globe } from "lucide-react";
+import Image from "next/image";
 
 const features = [
   {
     icon: <Bot className="h-8 w-8" />,
     title: "Conversational AI",
     description:
-      "Engage with our intelligent AI tutors that adapt to each student's learning style and pace, providing personalized conversations and guidance.",
+      "Practice real conversations with an intelligent AI tutor that helps you learn new languages naturally. Get instant pronunciation feedback, adaptive dialogue, and confidence in English or French.",
     gradient: "from-sky-400 to-emerald-400",
+    imageSrc: "/feature-02.png",
   },
   {
     icon: <BookOpen className="h-8 w-8" />,
-    title: "AI Generated Lessons",
+    title: "AI-Generated Lessons",
     description:
-      "Dynamic lesson plans created in real-time, perfectly tailored to your child's interests and learning objectives.",
+      "Smart, evolving lessons built just for you — every quiz, challenge, and game crafted in real time around your goals and learning style.",
     gradient: "from-amber-400 to-purple-400",
+    imageSrc: "/feature-03.png",
   },
   {
-    icon: <Sparkles className="h-8 w-8" />,
-    title: "Interactive Learning",
+    icon: <Award className="h-8 w-8" />,
+    title: "Certificates & Achievements",
     description:
-      "Immersive educational experiences that combine games, quizzes, and interactive exercises to make learning fun and effective.",
+      "Earn verified certificates for your progress. Track milestones, unlock trophies, and showcase your achievements with pride.",
     gradient: "from-purple-400 to-sky-400",
+    imageSrc: "/feature-04.png",
+  },
+  {
+    icon: <Globe className="h-8 w-8" />,
+    title: "Learn Anywhere",
+    description:
+      "Stay connected wherever you go — continue lessons seamlessly on mobile, tablet, or desktop with real-time progress syncing.",
+    gradient: "from-emerald-400 to-sky-400",
+    imageSrc: "/feature-01.png",
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section className="relative min-h-screen overflow-hidden py-24 md:h-screen md:py-0">
-      {/* Background Elements */}
-      <div className="absolute inset-0 h-full w-full">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-32">
+      {/* floating gradients */}
+      <motion.div
+        animate={{
+          background: [
+            "radial-gradient(circle at 20% 30%, rgba(56,189,248,0.2), transparent 70%)",
+            "radial-gradient(circle at 80% 70%, rgba(192,132,252,0.2), transparent 70%)",
+            "radial-gradient(circle at 30% 80%, rgba(16,185,129,0.2), transparent 70%)",
+          ],
+        }}
+        transition={{ duration: 10, repeat: Infinity, repeatType: "mirror" }}
+        className="absolute inset-0 z-0"
+      />
+
+      <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute right-[10%] top-[10%] h-72 w-72 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 1,
-          }}
-          className="absolute bottom-[10%] left-[10%] h-72 w-72 rounded-full bg-gradient-to-r from-purple-400 to-amber-400 blur-3xl"
-        />
-      </div>
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-20"
+        >
+          <span className="inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-6 py-2 text-lg font-semibold text-white shadow-md">
+            Explore What Makes Us Different
+          </span>
+          <h2 className="mt-6 bg-gradient-to-r from-purple-400 via-amber-400 to-sky-400 bg-clip-text text-transparent text-5xl font-bold">
+            Learning That Adapts To You
+          </h2>
+        </motion.div>
 
-      {/* Content Container */}
-      <div className="container relative mx-auto h-full max-w-5xl px-4">
-        <div className="flex h-full flex-col justify-center">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-16 text-center"
-          >
-            <span className="mb-4 inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-sky-400/20">
-              Our Magic Features ✨
-            </span>
-            <h2 className="bg-gradient-to-r from-purple-400 via-amber-400 to-sky-400 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-              Learning Reimagined
-            </h2>
-          </motion.div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 gap-8 px-4 md:grid-cols-3">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                whileHover={{ scale: 1.05 }}
-                className="group relative cursor-default"
-              >
-                <div className="relative z-10 min-h-80 rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:shadow-2xl">
-                  {/* Feature Icon */}
-                  <div
-                    className={`h-16 w-16 rounded-xl bg-gradient-to-r ${feature.gradient} mb-6 p-4 text-white shadow-lg`}
-                  >
-                    {feature.icon}
-                  </div>
-
-                  {/* Feature Content */}
-                  <h3 className="mb-4 bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-lg font-bold text-transparent md:text-xl">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    {feature.description}
-                  </p>
-
-                  {/* Hover Effect */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileHover={{ opacity: 1 }}
-                    className="absolute inset-0 z-10 rounded-2xl bg-gradient-to-r from-sky-400/20 to-emerald-400/20 blur-xl transition-opacity"
+        <div className="space-y-32">
+          {features.map((feature, i) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: i * 0.15 }}
+              className={`relative flex flex-col md:flex-row items-center gap-10 ${
+                i % 2 === 1 ? "md:flex-row-reverse" : ""
+              }`}
+            >
+              {/* image */}
+              <div className="relative flex-1">
+                <motion.div
+                  animate={{
+                    rotate: [0, 2, -2, 0],
+                  }}
+                  transition={{ duration: 6, repeat: Infinity }}
+                  className="rounded-3xl overflow-hidden "
+                >
+                  <Image
+                    src={feature.imageSrc}
+                    alt={feature.title}
+                    width={550}
+                    height={400}
+                    className="rounded-3xl object-cover"
                   />
+                </motion.div>
+
+                <div
+                  className={`absolute -inset-4 rounded-3xl bg-gradient-to-r ${feature.gradient} opacity-20 blur-3xl`}
+                />
+              </div>
+
+              {/* text */}
+              <div className="flex-1 relative z-10">
+                <div
+                  className={`inline-flex items-center justify-center rounded-xl bg-gradient-to-r ${feature.gradient} p-3 text-white shadow-lg mb-6`}
+                >
+                  {feature.icon}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Bottom CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-16 text-center"
-          >
-            <span className="inline-block rounded-full bg-white/50 px-6 py-3 text-lg text-gray-600 backdrop-blur-sm dark:text-gray-300">
-              Experience the future of education with Spoon Academy 🚀
-            </span>
-          </motion.div>
+                <h3
+                  className={`text-2xl md:text-3xl font-semibold mb-4 bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}
+                >
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
 
-      {/* Glass effect overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-white/10" />
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-32 text-center"
+        >
+          <span className="inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-8 py-4 text-white text-lg font-semibold shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+            Start Learning With Spoon Academy 🚀
+          </span>
+        </motion.div>
+      </div>
     </section>
   );
 }
