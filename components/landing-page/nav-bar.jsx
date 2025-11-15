@@ -3,30 +3,19 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Menu } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import NavLogo from "@/public/logo1.png";
 import NavLogoMobile from "@/public/logo1-min.png";
+import Link from "next/link";
 
 export default function NavigationBar() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogin = () => {
-    console.log("Login clicked");
-  };
-
-  const handleSignup = () => {
-    console.log("Signup clicked");
-  };
-
   return (
     <nav className="border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex-shrink-0">
             {/* Desktop Logo */}
@@ -35,7 +24,7 @@ export default function NavigationBar() {
               alt="Logo"
               width={200}
               height={200}
-              className="object-cover hidden md:block"
+              className="hidden object-cover md:block"
             />
             {/* Mobile Logo */}
             <Image
@@ -48,7 +37,7 @@ export default function NavigationBar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden items-center space-x-8 md:flex">
             <a href="#home" className="text-gray-700 hover:text-gray-900">
               Home
             </a>
@@ -64,12 +53,12 @@ export default function NavigationBar() {
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" onClick={handleLogin}>
-              Login
+          <div className="hidden items-center space-x-4 md:flex">
+            <Button variant="ghost">
+              <Link href="/sign-in">Sign In</Link>
             </Button>
-            <Button onClick={handleSignup}>
-              Sign Up
+            <Button>
+              <Link href="/sign-up">Sign Up</Link>
             </Button>
           </div>
 
@@ -82,7 +71,7 @@ export default function NavigationBar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-white">
-                <div className="flex flex-col space-y-4 mt-8">
+                <div className="mt-8 flex flex-col space-y-4">
                   <a
                     href="#home"
                     className="text-lg font-medium"
@@ -104,25 +93,23 @@ export default function NavigationBar() {
                   >
                     Stats
                   </a>
-                  <div className="pt-4 space-y-2">
+                  <div className="space-y-2 pt-4">
                     <Button
                       variant="ghost"
                       className="w-full"
                       onClick={() => {
-                        handleLogin();
                         setIsOpen(false);
                       }}
                     >
-                      Login
+                      <Link href="/sign-in">Sign In</Link>
                     </Button>
                     <Button
                       className="w-full"
                       onClick={() => {
-                        handleSignup();
                         setIsOpen(false);
                       }}
                     >
-                      Sign Up
+                      <Link href="/sign-up">Sign Up</Link>
                     </Button>
                   </div>
                 </div>

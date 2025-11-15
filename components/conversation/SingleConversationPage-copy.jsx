@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import NewConversationComponentCopy from "./NewConversationComponent-copy";
 
 export default function SingleConversationPageCopy({

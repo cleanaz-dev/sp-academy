@@ -4,150 +4,105 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import HeroImage from "@/public/hero-image-01.png";
+import { heroConfig, generateTextShadow, generateGlowSequence } from "./landing-page-config"
 
 export default function HeroSection() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-sky-400/10 via-emerald-400/10 to-purple-400/10">
+    <main className={`relative min-h-screen overflow-hidden bg-gradient-to-br ${heroConfig.background.gradient}`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 h-full w-full">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute left-[10%] top-[10%] h-72 w-72 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 blur-3xl"
-        />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.5 }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse",
-            delay: 1,
-          }}
-          className="absolute bottom-[10%] right-[10%] h-72 w-72 rounded-full bg-gradient-to-r from-amber-400 to-purple-400 blur-3xl"
-        />
+        {heroConfig.background.blobs.map((blob, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            transition={{
+              duration: blob.duration,
+              repeat: Infinity,
+              repeatType: "reverse",
+              delay: blob.delay,
+            }}
+            className={`absolute ${blob.position} h-72 w-72 rounded-full bg-gradient-to-r ${blob.gradient} blur-3xl`}
+          />
+        ))}
       </div>
 
       {/* Main Container */}
       <div className="container relative mx-auto h-screen max-w-7xl px-4">
         {/* Content Wrapper */}
-        <div className="flex h-full flex-col items-center gap-12 py-20 md:flex-row md:gap-16 md:py-8">
+        <div className="flex h-full flex-col items-center gap-12 py-10 md:py-20 md:flex-row md:gap-16">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1 }}
-            className="flex-1"
+            className="flex-1 text-center md:text-left relative z-20"
           >
+            {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className=""
+              className="flex justify-center md:justify-start"
             >
-              <span className="rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-sky-400/20">
-                Learning Made Magical ✨
+              <span className={`rounded-full bg-gradient-to-r ${heroConfig.badge.gradient} px-4 md:px-8 py-2 text-sm md:text-2xl font-medium text-white shadow-lg shadow-sky-400/20`}>
+                {heroConfig.badge.text}
               </span>
             </motion.div>
 
+            {/* Title */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-8 text-4xl font-bold sm:text-5xl lg:text-7xl"
             >
-              <h1 className="mt-8 text-4xl font-bold tracking-wide sm:text-5xl lg:text-7xl">
+              <h1 className="mt-8 text-5xl md:text-7xl font-bold tracking-wide">
                 <span className="text-white">
-                  <span
-                    style={{
-                      textShadow: `
-        0 0 10px rgba(56, 189, 248, 1),
-        0 0 20px rgba(56, 189, 248, 0.8),
-        0 0 30px rgba(56, 189, 248, 0.6)
-      `,
-                    }}
-                  >
-                    S
-                  </span>
-                  <span
-                    style={{
-                      textShadow: `
-        0 0 10px rgba(16, 185, 129, 1),
-        0 0 20px rgba(16, 185, 129, 0.8),
-        0 0 30px rgba(16, 185, 129, 0.6)
-      `,
-                    }}
-                  >
-                    p
-                  </span>
-                  <span
-                    style={{
-                      textShadow: `
-        0 0 10px rgba(251, 191, 36, 1),
-        0 0 20px rgba(251, 191, 36, 0.8),
-        0 0 30px rgba(251, 191, 36, 0.6)
-      `,
-                    }}
-                  >
-                    o
-                  </span>
-                  <span
-                    style={{
-                      textShadow: `
-        0 0 10px rgba(251, 191, 36, 1),
-        0 0 20px rgba(251, 191, 36, 0.8),
-        0 0 30px rgba(251, 191, 36, 0.6)
-      `,
-                    }}
-                  >
-                    o
-                  </span>
-                  <span
-                    style={{
-                      textShadow: `
-        0 0 10px rgba(192, 132, 252, 1),
-        0 0 20px rgba(192, 132, 252, 0.8),
-        0 0 30px rgba(192, 132, 252, 0.6)
-      `,
-                    }}
-                  >
-                    n
-                  </span>
+                  {heroConfig.title.letters.map((letter, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        textShadow: generateTextShadow(letter.color),
+                      }}
+                    >
+                      {letter.char}
+                    </span>
+                  ))}
                 </span>
                 <br />
-
-                <span>Academy</span>
+                <span>{heroConfig.title.plainText}</span>
               </h1>
             </motion.div>
 
+            {/* Description */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="mx-auto mt-6 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg lg:mx-0 lg:text-xl"
+              className="mx-auto mt-6 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg md:mx-0 lg:text-xl"
             >
-              Where every student's potential unfolds through playful learning
-              and creative discovery. Join us on a journey of wonder and growth!
+              {heroConfig.description}
             </motion.p>
 
+            {/* CTA Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="mt-8 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
+              className="mt-6 md:mt-8 flex flex-col justify-center gap-4 sm:flex-row md:justify-start"
             >
-              <Link href="/sign-up">
-                <Button className="rounded-full border-2 bg-gradient-to-r from-sky-400 to-emerald-400 px-8 py-6 text-lg text-white shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105 hover:from-sky-500 hover:to-emerald-500">
-                  Begin the Adventure
+              <Link href={heroConfig.buttons.primary.href}>
+                <Button 
+                  className={`rounded-full border-2 bg-gradient-to-r ${heroConfig.buttons.primary.gradient} px-8 py-6 text-lg text-white md:shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105 hover:${heroConfig.buttons.primary.hoverGradient}`}
+                >
+                  {heroConfig.buttons.primary.text}
                 </Button>
               </Link>
               <Button
-                variant="outline"
-                className="rounded-full border-2 border-purple-400 px-8 py-6 text-lg text-purple-400 transition-all duration-300 hover:scale-105 hover:bg-purple-50"
+                variant={heroConfig.buttons.secondary.variant}
+                className={`hidden md:flex rounded-full border-2 ${heroConfig.buttons.secondary.borderColor} px-8 py-6 text-lg ${heroConfig.buttons.secondary.textColor} transition-all duration-300 hover:scale-105 ${heroConfig.buttons.secondary.hoverBg}`}
               >
-                Take a Tour 🎯
+                {heroConfig.buttons.secondary.text}
               </Button>
             </motion.div>
           </motion.div>
@@ -157,39 +112,27 @@ export default function HeroSection() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="rounded-full"
+            className="rounded-full relative z-10"
           >
             <motion.div
               animate={{
-                borderColor: [
-                  "rgba(56, 189, 248, 1)", // sky
-                  "rgba(16, 185, 129, 1)", // emerald
-                  "rgba(251, 191, 36, 1)", // amber
-                  "rgba(192, 132, 252, 1)", // purple
-                  "rgba(56, 189, 248, 1)", // back to sky
-                ],
-                boxShadow: [
-                  "0 0 40px rgba(56, 189, 248, 0.6)",
-                  "0 0 40px rgba(16, 185, 129, 0.6)",
-                  "0 0 40px rgba(251, 191, 36, 0.6)",
-                  "0 0 40px rgba(192, 132, 252, 0.6)",
-                  "0 0 40px rgba(56, 189, 248, 0.6)",
-                ],
+                borderColor: heroConfig.animations.glowColors,
+                boxShadow: generateGlowSequence(heroConfig.animations.glowColors),
               }}
               transition={{
-                duration: 4,
+                duration: heroConfig.animations.glowDuration,
                 repeat: Infinity,
                 ease: "linear",
               }}
               className="rounded-full"
             >
               <Image
-                src={HeroImage}
-                className="rounded-full"
-                height={600}
-                width={600}
+                src={heroConfig.image.src}
+                className="rounded-full -mt-20 md:mt-0 opacity-80 md:opacity-100"
+                height={heroConfig.image.height}
+                width={heroConfig.image.width}
                 priority
-                alt="hero image"
+                alt={heroConfig.image.alt}
               />
             </motion.div>
           </motion.div>
