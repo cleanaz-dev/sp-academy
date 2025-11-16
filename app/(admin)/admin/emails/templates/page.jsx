@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/old-ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card";
+} from "@/components/old-ui/card";
 
 export default async function EmailTemplatesPage() {
   // Fetch email templates from your database or Resend API

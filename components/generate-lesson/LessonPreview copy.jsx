@@ -1,9 +1,9 @@
 "use client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/old-ui/skeleton";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { generateMockLessonContent } from "./mockLessonContent";
 import { DndProvider } from "react-dnd";

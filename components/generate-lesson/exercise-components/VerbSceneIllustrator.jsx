@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { Check, CheckCircle } from "lucide-react";
 import { deburr } from "lodash";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/old-ui/button";
 import * as S from "./styles";
 
 const getItems = (words) =>

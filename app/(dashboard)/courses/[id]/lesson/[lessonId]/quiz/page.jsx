@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti"; // Import the Confetti component
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/old-ui/button";
 import { CheckCircle } from "lucide-react";
 import { SkipBack } from "lucide-react";
 import { SkipForward } from "lucide-react";

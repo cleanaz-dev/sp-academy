@@ -59,12 +59,12 @@ export default function AdminLayout({ children }) {
     <div className="flex min-h-screen">
       <aside
         className={`relative bg-slate-400 text-white ${
-          isSidebarOpen ? "w-48" : "w-[85px]"
-        } p-4 transition-all duration-300 ease-in-out`}
+          isSidebarOpen ? "w-48" : " w-[65px] md:w-[85px]"
+        } p-2 md:p-4 transition-all duration-300 ease-in-out`}
       >
         {/* Sidebar Toggle Button */}
         <button
-          className="mb-4 ml-3 text-white focus:outline-none"
+          className="mb-4 ml-3 text-white focus:outline-none mt-2 md:mt-0"
           onClick={() => setSidebarOpen(!isSidebarOpen)}
         >
           {isSidebarOpen ? (
@@ -89,7 +89,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Sidebar Navigation */}
-        <nav className="space-y-4 rounded-xl p-2 shadow-inner shadow-slate-500/50">
+        <nav className="space-y-4 rounded-xl p-1.5 md:p-2 shadow-inner shadow-slate-500/50">
           <Link
             href="/admin"
             className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-gray-700"

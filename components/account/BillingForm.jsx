@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/old-ui/button";
+import { Label } from "@/components/old-ui/label";
+import { Card } from "@/components/old-ui/card";
 import { toast } from "sonner"; // Assuming you're using sonner for toasts
 import { loadStripe } from "@stripe/stripe-js";
 import { CheckCircle, XCircle } from "lucide-react";

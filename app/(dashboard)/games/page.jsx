@@ -2,7 +2,7 @@ import { Dice3 } from "lucide-react";
 import React from "react";
 import GameCard from "@/components/games/GameCard";
 import { getAllGames } from "@/lib/actions";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/old-ui/skeleton";
 
 export default async function page() {
   const games = await getAllGames();

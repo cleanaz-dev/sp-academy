@@ -8,10 +8,10 @@ import {
   CardHeader,
   CardFooter,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/old-ui/badge";
 import Image from "next/image";
 import { BookOpenText } from "lucide-react";
 

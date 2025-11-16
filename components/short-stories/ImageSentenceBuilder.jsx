@@ -1,7 +1,7 @@
 // components/short-stories/ImageSentenceBuilder.jsx
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/old-ui/input";
+import { Button } from "@/components/old-ui/button";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, HelpCircle } from "lucide-react";
 

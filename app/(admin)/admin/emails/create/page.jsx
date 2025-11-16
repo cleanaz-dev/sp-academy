@@ -2,9 +2,9 @@
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/old-ui/input";
+import { Button } from "@/components/old-ui/button";
+import { Label } from "@/components/old-ui/label";
 import { toast } from "sonner";
 import DOMPurify from "dompurify";
 import { set } from "lodash";
@@ -16,7 +16,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/old-ui/select";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 const CodeEditor = dynamic(

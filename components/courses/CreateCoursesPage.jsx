@@ -2,14 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/old-ui/tooltip";
 
 import BasicInformationForm from "./BasicInformationForm";
 import LessonSequenceForm from "./LessonSequenceForm";

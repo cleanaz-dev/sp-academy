@@ -4,12 +4,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+} from "@/components/old-ui/dialog";
+import { Badge } from "../old-ui/badge";
+import { Button } from "../old-ui/button";
 import { CheckCircle } from "lucide-react";
 import { Circle } from "lucide-react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "../old-ui/scroll-area";
 
 export function RecommendedDetailsDialog({ item, isOpen, onClose }) {
   if (!item) return null;

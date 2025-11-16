@@ -7,8 +7,8 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import {
   BookOpen,
   Calendar,
@@ -21,9 +21,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "../ui/scroll-area";
-import { Progress } from "../ui/progress";
+import { Badge } from "@/components/old-ui/badge";
+import { ScrollArea } from "../old-ui/scroll-area";
+import { Progress } from "../old-ui/progress";
 import { formatDistanceToNow } from "date-fns";
 import { getReadingLogsByBookReportId } from "@/lib/actions";
 import { Flame } from "lucide-react";

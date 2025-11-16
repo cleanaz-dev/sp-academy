@@ -4,7 +4,7 @@ import { AudioLines } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 import React from "react";
-import { Button } from "../ui/button";
+import { Button } from "../old-ui/button";
 
 export default function SpeakingModule({
   text,

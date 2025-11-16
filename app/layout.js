@@ -10,13 +10,13 @@ const nunito = Nunito({
 });
 
 export const metadata = {
-  title: "Spoon Fed Academy - Revolutionizing Learning with AI",
+  title: "Spoon Academy - Revolutionizing Learning with AI",
   description:
-    "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+    "Transform your learning experience with Spoon Academy’s cutting-edge AI-powered approach.",
   openGraph: {
-    title: "Spoon Fed Academy - Revolutionizing Learning with AI",
+    title: "Spoon Academy - Revolutionizing Learning with AI",
     description:
-      "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+      "Transform your learning experience with Spoon Academy’s cutting-edge AI-powered approach.",
     images: [
       {
         url: "/logo1.png",
@@ -28,9 +28,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Spoon Fed Academy - Revolutionizing Learning with AI",
+    title: "Spoon Academy - Revolutionizing Learning with AI",
     description:
-      "Transform your learning experience with SP Academy’s cutting-edge AI-powered approach.",
+      "Transform your learning experience with Spoon Academy’s cutting-edge AI-powered approach.",
     images: ["/logo1.png"],
   },
 };

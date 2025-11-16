@@ -2,7 +2,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Card } from "../ui/card";
+import { Card } from "../old-ui/card";
 
 export function WaveformVisualizer({ isRecording, volume = 0 }) {
   const canvasRef = useRef(null);

@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button"; // Adjust path as needed
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/old-ui/button"; // Adjust path as needed
+import { Input } from "@/components/old-ui/input";
+import { Label } from "@/components/old-ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Card } from "@/components/ui/card";
+} from "@/components/old-ui/select";
+import { Switch } from "@/components/old-ui/switch";
+import { Card } from "@/components/old-ui/card";
 import { X } from "lucide-react"; // Assuming you're using lucide icons
 import { language } from "gray-matter";
 

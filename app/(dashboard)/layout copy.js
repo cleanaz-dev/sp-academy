@@ -16,7 +16,7 @@ import {
   BookHeartIcon,
   Star,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/old-ui/button";
 
 const shortStack = Short_Stack({
   subsets: ["latin"],

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/old-ui/button";
+import { Input } from "@/components/old-ui/input";
+import { Label } from "@/components/old-ui/label";
+import { Textarea } from "@/components/old-ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/old-ui/select";
 import { getLimitedGameData } from "@/lib/actions";
 
 const GameForm = ({ handleGeneratePreview, isLoading }) => {

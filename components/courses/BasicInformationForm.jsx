@@ -1,15 +1,15 @@
 // components/courses/BasicInformationForm.jsx
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/old-ui/label";
+import { Input } from "@/components/old-ui/input";
+import { Textarea } from "@/components/old-ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/select";
+import { Button } from "@/components/old-ui/button";
 import { X } from "lucide-react";
 
 export default function BasicInformationForm({

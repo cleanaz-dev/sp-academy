@@ -1,6 +1,6 @@
 //app/component/books/CreateBookReportCard.jsx
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 

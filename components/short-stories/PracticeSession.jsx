@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/old-ui/button";
+import { Progress } from "@/components/old-ui/progress";
 import { toast } from "sonner";
 
 const isMobileDevice = () => {

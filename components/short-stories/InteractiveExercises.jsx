@@ -1,11 +1,11 @@
 // components/short-stories/InteractiveExercises.jsx
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/old-ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/old-ui/radio-group";
+import { Input } from "@/components/old-ui/input";
+import { Label } from "@/components/old-ui/label";
+import { Card, CardHeader, CardContent } from "@/components/old-ui/card";
+import { Progress } from "@/components/old-ui/progress";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Award } from "lucide-react";
 import { DraggableMatch } from "./DraggableMatch";

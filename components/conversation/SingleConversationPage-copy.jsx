@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import NewConversationComponentCopy from "./NewConversationComponent-copy";
+import ConversationComponent from "./new/new-conversation-component";
 
 export default function SingleConversationPageCopy({
   conversation,
@@ -46,8 +47,20 @@ export default function SingleConversationPageCopy({
         <div className="mx-auto w-full max-w-5xl">
           {" "}
           {/* Ensure full width and center */}
-          <NewConversationComponentCopy
+          {/* <NewConversationComponentCopy
             userAvatarUrl={avatarUrl}
+            aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}
+            aiAvatarFemaleUrl={conversation.aiAvatarFemaleUrl}
+            vocabulary={conversation.vocabulary}
+            dialogue={conversation.dialogue}
+            title={conversation.title}
+            id={id}
+            tutorLanguage={conversation.tutorLanguage}
+            targetLanguage={conversation.metadata?.languages?.target || "fr"}
+            nativeLanguage={conversation.metadata?.languages?.native || "en"}
+          /> */}
+          <ConversationComponent 
+           userAvatarUrl={avatarUrl}
             aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}
             aiAvatarFemaleUrl={conversation.aiAvatarFemaleUrl}
             vocabulary={conversation.vocabulary}

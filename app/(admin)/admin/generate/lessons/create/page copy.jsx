@@ -2,17 +2,17 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/old-ui/card";
+import { Label } from "@/components/old-ui/label";
+import { Input } from "@/components/old-ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/select";
+import { Button } from "@/components/old-ui/button";
 import { z } from "zod";
 import {
   X,
@@ -23,18 +23,18 @@ import {
   Star,
   MessageCircle,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/old-ui/switch";
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/old-ui/skeleton";
 import { getAllCourses } from "@/lib/actions";
 import { visit } from "unist-util-visit";
 import { Tooltip } from "react-tooltip";
 import { AudioLines } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
 import PronunciationTestFR from "@/components/lessons/PronuncationTestFR";
-import ShinyStar from "@/components/ui/ShinyStar";
+import ShinyStar from "@/components/old-ui/ShinyStar";
 import ConversationWithAi from "@/components/lessons/ConversationWithAi";
 
 const lessonSchema = z.object({

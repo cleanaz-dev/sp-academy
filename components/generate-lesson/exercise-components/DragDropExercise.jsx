@@ -10,7 +10,7 @@ import React, {
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/old-ui/button";
 
 export const DragDropExercise = forwardRef(({ exercise }, ref) => {
   // Extract the words from the correct answer, including punctuation

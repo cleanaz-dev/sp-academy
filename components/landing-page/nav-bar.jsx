@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/old-ui/sheet";
+import { Button } from "@/components/old-ui/button";
 import NavLogo from "@/public/logo1.png";
 import NavLogoMobile from "@/public/logo1-min.png";
 import Link from "next/link";

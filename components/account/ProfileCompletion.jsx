@@ -1,7 +1,7 @@
 // components/account/ProfileCompletion.tsx
 "use client";
 
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "@/components/old-ui/progress";
 
 export function ProfileCompletion({ completionPercentage }) {
   return (

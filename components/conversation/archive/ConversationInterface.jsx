@@ -9,7 +9,7 @@ import {
   VolumeX,
   RefreshCw,
 } from "lucide-react";
-import { Button } from "../../ui/button";
+import { Button } from "../../old-ui/button";
 
 export default function ConversationInterface({ scenarioContext }) {
   const [isRecording, setIsRecording] = useState(false);

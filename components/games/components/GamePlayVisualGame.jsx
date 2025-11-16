@@ -7,8 +7,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAudio } from "@/hooks/useAudio";

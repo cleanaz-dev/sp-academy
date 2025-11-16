@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableItem } from "./SortableItem";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/old-ui/card";
 
 export function DraggableMatch({ pairs, onMatch, exerciseId }) {
   const [leftItems] = useState(

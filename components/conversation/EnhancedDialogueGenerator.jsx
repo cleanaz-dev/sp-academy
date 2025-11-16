@@ -1,7 +1,7 @@
 // components/conversation/EnhancedDialogueGenerator.jsx
 "use client";
 import { useState } from "react";
-import { Label } from "../ui/label";
+import { Label } from "../old-ui/label";
 import {
   Select,
   SelectContent,
@@ -10,8 +10,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Button } from "../ui/button";
+} from "../old-ui/select";
+import { Button } from "../old-ui/button";
 import NewGeneratedDialogue from "./NewGeneratedDialogue";
 import { BookOpen, MessageSquare, Info, CheckCircle } from "lucide-react";
 

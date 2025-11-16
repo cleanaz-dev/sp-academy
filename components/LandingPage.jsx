@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/old-ui/button";
+import { Input } from "@/components/old-ui/input";
+import { Textarea } from "@/components/old-ui/textarea";
 import { MenuIcon } from "lucide-react";
 import { BookOpen, Brain, Rocket, Star, Users } from "lucide-react";
 import Image from "next/image";

@@ -1,7 +1,7 @@
 // components/AudioRecorder.js
 "use client";
 import { useState, useRef } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../old-ui/button";
 
 export default function AudioRecorder() {
   const [isRecording, setIsRecording] = useState(false);

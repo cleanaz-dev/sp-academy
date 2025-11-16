@@ -9,8 +9,8 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/dialog";
+import { Button } from "@/components/old-ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteReadingLog } from "@/lib/actions";
 

@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
-import { Button } from "../ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "../old-ui/card";
+import { Button } from "../old-ui/button";
 import Link from "next/link";
 
 export default function RecentLessons({ progress }) {

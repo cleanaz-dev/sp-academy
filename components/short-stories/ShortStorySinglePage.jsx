@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import PronunciationAssessment from "@/components/short-stories/PronunciationAssessment";
 import Image from "next/image";
 import InteractiveExercises from "./InteractiveExercises";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "../ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
+import { Badge } from "../old-ui/badge";
 
 export default function ShortStorySinglePage({ story }) {
   const [isRecording, setIsRecording] = useState(false);

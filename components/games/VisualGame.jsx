@@ -6,8 +6,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "@/components/old-ui/card";
+import { Button } from "@/components/old-ui/button";
 
 export default function VisualGame({ gameData }) {
   // Helper function to ensure the URL starts with https://

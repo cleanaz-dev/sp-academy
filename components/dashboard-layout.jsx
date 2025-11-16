@@ -12,9 +12,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/old-ui/sheet";
 import Link from "next/link";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/old-ui/scroll-area";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   Home,
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Bell } from "lucide-react";
 import NotificationCard from "./notifications/NotificationCard";
-import { Button } from "./ui/button";
+import { Button } from "./old-ui/button";
 
 const navItems = [
   {

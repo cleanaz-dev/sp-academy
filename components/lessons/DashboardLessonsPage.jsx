@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/old-ui/button";
+import { Card, CardContent } from "@/components/old-ui/card";
 import {
   Clock,
   BookOpen,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getAllLessons } from "@/lib/actions";
-import { Badge } from "../ui/badge";
+import { Badge } from "../old-ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardLessonsPage() {

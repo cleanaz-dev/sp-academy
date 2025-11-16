@@ -1,11 +1,11 @@
 // components/conversation/GeneratedDialogue.jsx
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/old-ui/button";
+import { Card } from "@/components/old-ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
+import { Badge } from "@/components/old-ui/badge";
+import { ScrollArea } from "@/components/old-ui/scroll-area";
 import { Info } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";

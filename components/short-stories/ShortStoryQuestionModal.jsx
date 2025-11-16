@@ -2,9 +2,9 @@
 import { Modal, Toggle, Loader } from "rsuite";
 import { recordStoryQuestions } from "@/lib/actions";
 import React from "react";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
+import { Input } from "../old-ui/input";
+import { Label } from "../old-ui/label";
+import { Button } from "../old-ui/button";
 import { useUser } from "@clerk/nextjs";
 
 export default function ShortStoryQuestionsModal({ story }) {

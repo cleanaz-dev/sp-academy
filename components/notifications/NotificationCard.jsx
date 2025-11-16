@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardTitle, CardDescription } from "../ui/card";
+import { Card, CardContent, CardTitle, CardDescription } from "../old-ui/card";
 import { UserButton } from "@clerk/nextjs";
 import { MessageCircle, ThumbsUp, Bell } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "../old-ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
-import { ScrollArea } from "../ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "../old-ui/avatar";
+import { ScrollArea } from "../old-ui/scroll-area";
 
 const notificationIcons = {
   message: <MessageCircle className="h-5 w-5" />,

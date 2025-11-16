@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { format, formatDistanceToNow } from "date-fns";
 import { Heart } from "lucide-react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "../old-ui/scroll-area";
 
 // Helper functions
 const getUserFromActivity = (item) => {

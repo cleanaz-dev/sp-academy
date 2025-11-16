@@ -1,17 +1,17 @@
 // components/courses/CourseMaterialsForm.jsx
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Label } from "@/components/old-ui/label";
+import { Input } from "@/components/old-ui/input";
+import { Textarea } from "@/components/old-ui/textarea";
+import { Button } from "@/components/old-ui/button";
+import { Card } from "@/components/old-ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/old-ui/select";
 import { Plus, Minus, Link, FileText, Video, Image } from "lucide-react";
 
 export default function CourseMaterialsForm({

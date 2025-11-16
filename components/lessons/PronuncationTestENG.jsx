@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../old-ui/button";
 import { Mic, Check } from "lucide-react";
 
 export default function PronunciationTestENG({ targetText }) {

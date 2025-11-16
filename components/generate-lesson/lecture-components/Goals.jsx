@@ -1,4 +1,4 @@
-import ShinyStar from "@/components/ui/ShinyStar";
+import ShinyStar from "@/components/old-ui/ShinyStar";
 import { BookOpen, Mic, MessageSquare } from "lucide-react";
 import React from "react";
 
