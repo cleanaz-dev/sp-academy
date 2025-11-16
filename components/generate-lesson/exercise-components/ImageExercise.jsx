@@ -2,7 +2,7 @@
 
 import { useState, forwardRef, useImperativeHandle } from "react";
 import Image from "next/image";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle, X } from "lucide-react";
 import {
   Container,

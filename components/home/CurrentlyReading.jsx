@@ -1,10 +1,10 @@
 //component/home/CurrentlyReading.jsx
 import Image from "next/image";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/old-ui/card";
-import { Badge } from "../old-ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "../ui/badge";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import { BookPlus } from "lucide-react";
 export default function CurrentlyReading({ books }) {
   return (

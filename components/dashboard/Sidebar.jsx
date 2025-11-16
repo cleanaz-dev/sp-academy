@@ -4,7 +4,7 @@ import Link from "next/link";
 import { DoubleAltArrowLeft } from "solar-icon-set";
 import Image from "next/image";
 import { navItems, settingItems } from "./NavLinks";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 

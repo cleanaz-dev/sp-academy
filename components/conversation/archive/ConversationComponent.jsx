@@ -3,7 +3,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
-import { ScrollArea } from "../../old-ui/scroll-area";
+import { ScrollArea } from "../../ui/scroll-area";
 
 export default function ConversationComponent() {
   const [isRecording, setIsRecording] = useState(false);

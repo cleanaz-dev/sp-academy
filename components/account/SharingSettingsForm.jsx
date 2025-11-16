@@ -1,9 +1,9 @@
 // components/account/SharingSettingsForm.tsx
 "use client";
 
-import { Switch } from "@/components/old-ui/switch";
-import { Label } from "@/components/old-ui/label";
-import { Button } from "@/components/old-ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { updateAccountSettings } from "@/lib/actions";
 import { useState } from "react";
 import { useRouter } from "next/navigation";

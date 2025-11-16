@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import NewConversationComponent from "./NewConversationComponent";
 
 export default function SingleConversationPage({ conversation, id }) {

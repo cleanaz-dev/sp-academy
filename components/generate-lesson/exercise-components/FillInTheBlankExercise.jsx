@@ -2,7 +2,7 @@
 
 import React, { useState, forwardRef, useImperativeHandle } from "react";
 import { deburr } from "lodash";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import {
   Container,

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/old-ui/button";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { Textarea } from "@/components/old-ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   Select,
@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import { Loader2, Upload, Wand2, User, Save } from "lucide-react";
 import { updateAccountSettings } from "@/lib/actions";
 

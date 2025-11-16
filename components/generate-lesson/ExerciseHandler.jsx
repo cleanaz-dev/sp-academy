@@ -7,7 +7,7 @@ import AudioExercise from "./AudioExercise";
 import MatchingExercise from "./MatchingExercise";
 import ImageExercise from "./ImageExercise";
 import { NotebookPen } from "lucide-react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export default function ExerciseHandler({ exercises }) {

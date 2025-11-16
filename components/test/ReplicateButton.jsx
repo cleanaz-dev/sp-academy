@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 
 export default function ReplicateButton() {
   const [isLoading, setIsLoading] = useState(false);

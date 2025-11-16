@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import { Mic, Check, ChevronDown, ChevronUp } from "lucide-react";
 import SpeakingModule from "./SpeakingModule"; // Assumed extracted
 import { BarChart2 } from "lucide-react";

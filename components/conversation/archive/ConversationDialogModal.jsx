@@ -9,9 +9,9 @@ import {
 } from "rsuite";
 import { recordConversation } from "@/lib/actions";
 import React from "react";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { Switch } from "@/components/old-ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useUser } from "@clerk/nextjs";
 import { SubmitNoteButton } from "@/components/SubmitButton";
 

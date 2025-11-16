@@ -3,27 +3,27 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Card } from "@/components/old-ui/card";
-import { Label } from "@/components/old-ui/label";
-import { Input } from "@/components/old-ui/input";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
-import { Button } from "@/components/old-ui/button";
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { X } from "lucide-react";
-import { Switch } from "@/components/old-ui/switch";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Skeleton } from "@/components/old-ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createImagesForLecture } from "@/lib/replicate";
 import { getAllCourses } from "@/lib/actions";
-import { Badge } from "@/components/old-ui/badge";
+import { Badge } from "@/components/ui/badge";
 import remarkDirective from "remark-directive";
 import { visit } from "unist-util-visit";
 

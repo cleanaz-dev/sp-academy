@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
-import { ScrollArea } from "@/components/old-ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@clerk/nextjs";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -13,7 +13,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/old-ui/sheet";
+} from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export default function DashboardLayout({ children }) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,19 +9,19 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/old-ui/card";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/old-ui/radio-group";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
-import { Switch } from "@/components/old-ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Bell, Lock, Palette, User, Save } from "lucide-react";
 import Link from "next/link";
 

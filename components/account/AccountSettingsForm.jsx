@@ -3,16 +3,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/old-ui/button";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import { updateAccountSettings } from "@/lib/actions";
 
 export function AccountSettingsForm({ initialSettings, userId }) {

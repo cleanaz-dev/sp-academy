@@ -30,7 +30,7 @@ import {
   SymbolButton,
   FeedbackText,
 } from "./styles";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 
 const SYMBOLS = [

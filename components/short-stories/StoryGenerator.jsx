@@ -1,9 +1,9 @@
 // components/short-stories/StoryGenerator.jsx
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/old-ui/button";
-import { Label } from "@/components/old-ui/label";
-import { Input } from "@/components/old-ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { saveStory, generateStory } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
@@ -15,7 +15,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import { uploadAudio } from "@/lib/storage";
 import InteractiveExercises from "./InteractiveExercises";
 

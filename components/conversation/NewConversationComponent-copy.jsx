@@ -2,9 +2,9 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/old-ui/tabs";
-import { ScrollArea } from "@/components/old-ui/scroll-area";
-import { Button } from "@/components/old-ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogTrigger,
@@ -14,7 +14,7 @@ import {
   DialogDescription,
   DialogClose,
   DialogHeader,
-} from "../old-ui/dialog";
+} from "../ui/dialog";
 import {
   Mic,
   Loader2,
@@ -30,8 +30,8 @@ import {
   Info,
 } from "lucide-react";
 import { MdRecordVoiceOver } from "react-icons/md";
-import { Switch } from "@/components/old-ui/switch-voice";
-import { Avatar, AvatarFallback, AvatarImage } from "../old-ui/avatar";
+import { Switch } from "@/components/ui/switch-voice";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 

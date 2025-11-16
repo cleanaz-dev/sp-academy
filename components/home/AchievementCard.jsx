@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge } from "../old-ui/badge";
-import { Card, CardHeader, CardTitle, CardContent } from "../old-ui/card";
-import { Button } from "../old-ui/button";
-import { ScrollArea } from "@/components/old-ui/scroll-area";
+import { Badge } from "../ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";

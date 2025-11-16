@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/old-ui/card";
+import { Card } from "@/components/ui/card";
 import {
   BookA,
   BookOpen,

@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { Avatar, AvatarImage, AvatarFallback } from "../old-ui/avatar";
-import { Skeleton } from "../old-ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
 import { Heart, Trophy } from "lucide-react"; // Import Trophy icon
 import { Medal } from "lucide-react";
 

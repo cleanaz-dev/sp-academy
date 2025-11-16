@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import ConversationInterface from "./ConversationInterface";
-import { Label } from "../../old-ui/label";
+import { Label } from "../../ui/label";
 import {
   Select,
   SelectContent,
@@ -12,8 +12,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../../old-ui/select";
-import { Button } from "../../old-ui/button";
+} from "../../ui/select";
+import { Button } from "../../ui/button";
 
 const scenarios = [
   { id: "doctor", label: "At the Doctor's Office" },

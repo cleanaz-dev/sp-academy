@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { FileText, Mail, Users } from "lucide-react";
 import { MailCheck } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function EmailManager() {

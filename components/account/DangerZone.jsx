@@ -1,8 +1,8 @@
 // components/account/DangerZone.tsx
 "use client";
 
-import { Button } from "@/components/old-ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/old-ui/alert";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 
 export function DangerZone({ userId }) {

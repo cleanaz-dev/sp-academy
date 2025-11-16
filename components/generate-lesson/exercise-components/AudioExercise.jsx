@@ -3,7 +3,7 @@
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { Check, Play, Volume2 } from "lucide-react";
 import {
   Container,

@@ -2,7 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   return (

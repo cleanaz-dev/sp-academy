@@ -21,12 +21,12 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/old-ui/card";
-import { Button } from "@/components/old-ui/button";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { Textarea } from "@/components/old-ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addReadingLog } from "@/lib/actions";
 import { useUser } from "@clerk/nextjs";
 import "react-big-calendar/lib/css/react-big-calendar.css";

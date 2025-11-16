@@ -1,7 +1,7 @@
 // components/courses/ReviewForm.jsx
-import { Card } from "@/components/old-ui/card";
-import { Button } from "@/components/old-ui/button";
-import { Badge } from "@/components/old-ui/badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   FileText,
   Link,

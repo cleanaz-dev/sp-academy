@@ -2,29 +2,29 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/old-ui/tabs";
-import { Button } from "@/components/old-ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/old-ui/card";
+} from "@/components/ui/card";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/old-ui/hover-card";
-import { Progress } from "@/components/old-ui/progress";
-import { Separator } from "@/components/old-ui/separator";
+} from "@/components/ui/hover-card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import {
   Mic,
   MicOff,

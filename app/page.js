@@ -4,7 +4,6 @@ import FooterSection from "@/components/landing-page/FooterSection";
 import HeroSection from "@/components/landing-page/HeroSection";
 import NavigationBar from "@/components/landing-page/nav-bar";
 import StatsSection from "@/components/landing-page/StatsSection";
-import { ScrollArea } from "@/components/old-ui/scroll-area-landing";
 import React from "react";
 
 export default function Home() {

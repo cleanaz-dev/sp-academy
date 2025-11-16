@@ -1,7 +1,7 @@
 //components/books/BooksCard
 
-import { Card } from "@/components/old-ui/card";
-import { Button } from "@/components/old-ui/button";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   BookOpen,
   Calendar,
@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/old-ui/badge";
-import { Progress } from "../old-ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "../ui/progress";
 import { formatDistanceToNow } from "date-fns";
 import { Flame } from "lucide-react";
 

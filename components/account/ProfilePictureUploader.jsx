@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { Label } from "@/components/old-ui/label";
-import { Button } from "@/components/old-ui/button";
-import { Textarea } from "@/components/old-ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { updateAccountSettings } from "@/lib/actions";
 import { toast } from "sonner";
 import { Loader2, Upload, Wand2, Sparkles, User, Save } from "lucide-react";
@@ -16,7 +16,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../old-ui/select";
+} from "../ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function ProfilePictureUploader({ initialImageUrl, userId }) {

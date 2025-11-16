@@ -1,6 +1,6 @@
 // app/component/conversation/CreateConversationCard.jsx
 
-import { Card, CardContent } from "@/components/old-ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 

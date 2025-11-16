@@ -2,14 +2,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/old-ui/tabs";
-import { ScrollArea } from "@/components/old-ui/scroll-area";
-import { Button } from "@/components/old-ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Mic, Loader2 } from "lucide-react";
 import { RefreshCw } from "lucide-react";
 import { Trash2 } from "lucide-react";
 import { Send } from "lucide-react";
-import { Switch } from "@/components/old-ui/switch-voice";
+import { Switch } from "@/components/ui/switch-voice";
 
 export default function NewConversationComponent({
   vocabulary,

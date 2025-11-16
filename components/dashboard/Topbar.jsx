@@ -6,7 +6,7 @@ import { MenuDots } from "solar-icon-set";
 import { Bell } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { navItems } from "./NavLinks";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 import { getReadNotificationsByUserId } from "@/lib/actions";
 import { PanelLeftOpen,PanelRightOpen } from "lucide-react";

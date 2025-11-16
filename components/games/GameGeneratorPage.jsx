@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import GameForm from "./GameForm";
 import GamePreviewComponent from "./GamePreviewComponent";

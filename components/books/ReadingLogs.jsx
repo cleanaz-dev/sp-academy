@@ -8,9 +8,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/old-ui/table";
-import { Button } from "@/components/old-ui/button";
-import { Input } from "@/components/old-ui/input";
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import EditReadingLog from "./EditReadingLog";
 import DeleteReadingDialog from "./DeleteReadingLog";

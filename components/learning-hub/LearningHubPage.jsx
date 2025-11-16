@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardFooter,
-} from "@/components/old-ui/card";
-import { Badge } from "@/components/old-ui/badge";
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,

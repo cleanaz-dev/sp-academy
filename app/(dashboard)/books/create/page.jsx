@@ -8,23 +8,23 @@ import {
   CardTitle,
   CardContent,
   CardFooter,
-} from "@/components/old-ui/card";
-import { Button } from "@/components/old-ui/button";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { Textarea } from "@/components/old-ui/textarea";
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import { createBookReport } from "@/lib/actions";
 import { useUser } from "@clerk/nextjs";
 import { CreateBookReportButton } from "@/components/SubmitButton";
 import debounce from "lodash/debounce";
-import { Spinner } from "@/components/old-ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { LibraryBig } from "lucide-react";
 
 export default function CreateBookReportPage() {

@@ -2,18 +2,18 @@
 "use client";
 
 import { useState } from "react";
-import { Label } from "@/components/old-ui/label";
-import { Input } from "@/components/old-ui/input";
-import { Textarea } from "@/components/old-ui/textarea";
-import { Button } from "@/components/old-ui/button";
-import { Card } from "@/components/old-ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/old-ui/select";
+} from "@/components/ui/select";
 import { Plus, Minus, GripVertical } from "lucide-react";
 
 export default function LessonSequenceForm({ courseData, onUpdateCourseData }) {

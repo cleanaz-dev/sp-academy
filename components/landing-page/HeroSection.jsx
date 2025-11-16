@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { heroConfig, generateTextShadow, generateGlowSequence } from "./landing-page-config"

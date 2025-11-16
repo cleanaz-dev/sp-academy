@@ -3,7 +3,7 @@
 import { useConversation } from "@11labs/react";
 import { useCallback, useState } from "react";
 import { Mic, MicOff, Radio, Loader2 } from "lucide-react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const ConversationWithAi = () => {

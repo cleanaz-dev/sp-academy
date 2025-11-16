@@ -11,16 +11,16 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/old-ui/card";
-import { Input } from "@/components/old-ui/input";
-import { Label } from "@/components/old-ui/label";
-import { Textarea } from "@/components/old-ui/textarea";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { addReadingLog } from "@/lib/actions";
 import { useUser } from "@clerk/nextjs";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import ReadingLogs from "./ReadingLogs";
 import { AddReadingLog } from "../SubmitButton";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 import { Shapes } from "lucide-react";
 import { toast } from "sonner";
 import { Undo } from "lucide-react";

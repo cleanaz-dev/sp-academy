@@ -3,7 +3,7 @@
 import { useConversation } from "@11labs/react";
 import { useCallback, useState } from "react";
 import { Mic } from "lucide-react";
-import { Button } from "../old-ui/button";
+import { Button } from "../ui/button";
 
 export default function ConversationWithAi() {
   const [isCompleted, setIsCompleted] = useState(false);

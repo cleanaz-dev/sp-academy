@@ -1,7 +1,7 @@
 "use client";
 
 import { Lock, CheckCircle, PlayCircle, ChevronDown } from "lucide-react";
-import { Button } from "@/components/old-ui/button";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { CircleCheck } from "lucide-react";

@@ -8,12 +8,12 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/old-ui/dialog";
-import { Input } from "@/components/old-ui/input";
-import { Button } from "@/components/old-ui/button";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { editReadingLog } from "@/lib/actions";
-import { Textarea } from "../old-ui/textarea";
+import { Textarea } from "../ui/textarea";
 
 export default function EditReadingLog({ log }) {
   const [formData, setFormData] = useState({
