@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
-import { Heart, Trophy } from "lucide-react"; // Import Trophy icon
 import { Medal } from "lucide-react";
 
 export default function GameCard({ game, isLoading }) {
