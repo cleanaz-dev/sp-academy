@@ -49,3 +49,8 @@ export interface StoryFormData {
   grammar: string;
   learningObjectives: string;
 }
+
+export interface CourseCreationParams {
+  topic: string
+  prompt: string
+}
