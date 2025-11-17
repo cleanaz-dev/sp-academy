@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }) {
   // Show loading until everything is ready
   if (!isLoaded) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen w-screen overflow-hidden">
         <div>Loading...</div>
       </div>
     );
