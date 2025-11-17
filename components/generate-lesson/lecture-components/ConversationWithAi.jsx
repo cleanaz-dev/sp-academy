@@ -1,6 +1,6 @@
 "use client";
 
-import { useConversation } from "@11labs/react";
+import { useConversation } from "@elevenlabs/react"
 import { useCallback, useState } from "react";
 import { Mic, MicOff, Radio, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
