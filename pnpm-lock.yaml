@@ -273,8 +273,8 @@ importers:
         specifier: ^7.54.2
         version: 7.66.1(react@19.2.0)
       react-icons:
-        specifier: 5.4.0
-        version: 5.4.0(react@19.2.0)
+        specifier: 5.5.0
+        version: 5.5.0(react@19.2.0)
       react-markdown:
         specifier: ^9.0.1
         version: 9.1.0(@types/react@19.2.5)(react@19.2.0)
@@ -4370,8 +4370,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-icons@5.4.0:
-    resolution: {integrity: sha512-7eltJxgVt7X64oHh6wSWNwwbKTCtMfK35hcjvJS0yxEAhPM8oUKdS3+kqaW1vicIltw+kR2unHaa12S9pPALoQ==}
+  react-icons@5.5.0:
+    resolution: {integrity: sha512-MEFcXdkP3dLo8uumGI5xN3lDFNsRtrjbOEKDLD7yv76v4wpnEq2Lt2qeHaQOr34I/wPN3s3+N08WkQ+CW37Xiw==}
     peerDependencies:
       react: '*'
 
@@ -10267,7 +10267,7 @@ snapshots:
     dependencies:
       react: 19.2.0
 
-  react-icons@5.4.0(react@19.2.0):
+  react-icons@5.5.0(react@19.2.0):
     dependencies:
       react: 19.2.0
 
