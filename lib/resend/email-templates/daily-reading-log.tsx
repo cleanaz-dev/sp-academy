@@ -18,18 +18,8 @@ import {
   main,
   text,
 } from "../email-styles/standard-styles";
+import type { DailyReadingLogEmailProps } from "../types";
 
-interface DailyReadingLogEmailProps {
-  userName: string;
-  lastBookRead: string;
-  nextBook: {
-    title: string;
-    author: string;
-    recommendation: string;
-  };
-  readingStreak: number;
-  encouragement: string;
-}
 
 export default function DailyReadingLogEmail({
   userName,

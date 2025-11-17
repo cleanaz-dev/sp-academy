@@ -1,12 +1,6 @@
 import { replicate } from "../config/client";
+import type { Achievement } from "../types";
 
-interface Achievement {
-  name: string;
-  description: string;
-  category: {
-    name: string;
-  };
-}
 
 export const createAchievementBadges = async (achievement: Achievement) => {
   const {
