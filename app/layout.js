@@ -1,4 +1,3 @@
-import localFont from "next/font/local";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Nunito } from "next/font/google";

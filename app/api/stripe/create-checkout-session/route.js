@@ -20,7 +20,7 @@ const PRICING_PLANS = {
 export async function POST(request) {
   try {
     // Get the current host dynamically
-    const headersList = headers();
+    const headersList = await headers();
     const host = headersList.get("host"); // Gets "localhost:3000" or "yourdomain.com"
     const protocol = host.includes("localhost") ? "http" : "https"; // Use https in production
     const baseUrl = `${protocol}://${host}`;

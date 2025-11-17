@@ -7,9 +7,7 @@ import { headers as nextHeaders, cookies } from "next/headers";
 export async function GET() {
   try {
     // Get the user's ID from the authentication context
-    const authData = auth();
-    // some lines later...
-    const headers = new Headers(nextHeaders());
+    const authData = await auth();
     const { userId } = authData;
 
     if (!userId) {

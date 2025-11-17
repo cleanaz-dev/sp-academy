@@ -778,3 +778,28 @@ enum Status {
   IN_PROGRESS
   COMPLETED
 }
+
+model ReadABook {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  title          String
+  description    String?
+  coverImage     String?
+  topic          String
+  genre          String
+  pages          ReadABookPage[]
+  targetLanguage String
+  NativeLanguage String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model ReadABookPage {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  ReadABook   ReadABook? @relation(fields: [readABookId], references: [id])
+  readABookId String?    @db.ObjectId
+  pageNumber  Int
+  content     String
+  imageUrl    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
