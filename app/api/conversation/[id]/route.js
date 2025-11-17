@@ -4,9 +4,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function GET(request, { params }) {
+  const { id } = await params;
+  
   try {
     const conversationRecord = await prisma.conversationRecord.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!conversationRecord) {
@@ -29,9 +31,11 @@ export async function GET(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const { id } = await params;
+  
   try {
     const conversationRecord = await prisma.conversationRecord.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!conversationRecord) {
@@ -42,7 +46,7 @@ export async function DELETE(request, { params }) {
     }
 
     await prisma.conversationRecord.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json(

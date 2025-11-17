@@ -1,4 +1,4 @@
-//app/(dashboard)/conversation/[id]/route.js
+//app/(dashboard)/conversation/[id]/page.jsx
 
 import React from "react";
 import { getConversationById } from "@/lib/actions";
@@ -7,9 +7,11 @@ import { auth } from "@clerk/nextjs/server";
 import { getUserAvatarImage } from "@/lib/actions";
 
 export default async function page({ params }) {
-  const conversation = await getConversationById(params.id);
-  const id = await params.id;
-  const { userId } = auth();
+  const { id } = await params
+  console.log("id", id)
+  const conversation = await getConversationById(id);
+
+  const { userId } = await auth();
   const avatarUrl = await getUserAvatarImage(userId);
 
   return (
