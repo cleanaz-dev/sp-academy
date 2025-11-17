@@ -852,9 +852,9 @@ export default function CreateLesson() {
           ))}
         </div>
 
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <ConversationWithAi />
-        </div>
+        </div> */}
 
         <div className="relative rounded-lg border border-dotted border-blue-600/50 bg-white p-4">
           <Star className="absolute left-2 top-2 h-5 w-5 fill-amber-300 text-amber-300" />

@@ -128,7 +128,7 @@ export const Dialogue = ({ title, lines, analysis, evenColor, oddColor }) => {
             pronunciation and fluency
           </p>
         </div>
-        <ConversationWithAi />
+        {/* <ConversationWithAi /> */}
       </div>
 
       {/* Analysis section */}
