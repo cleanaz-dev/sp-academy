@@ -154,6 +154,29 @@ export const useConversation = ({
     }
   }, []);
 
+  const getSupportedMimeType = (): string => {
+    const supportedTypes = [
+      "audio/webm;codecs=opus", // Best quality, but limited mobile support
+      "audio/webm",
+      "audio/mp4", // Good mobile support (iOS Safari, Edge)
+      "audio/mp4;codecs=mp4a", // AAC codec for better compatibility
+      "audio/aac",
+    ];
+
+    for (const type of supportedTypes) {
+      if (
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported(type)
+      ) {
+        console.log(`✅ Using supported mimeType: ${type}`);
+        return type;
+      }
+    }
+
+    console.warn("⚠️ No preferred mimeType supported, using fallback");
+    return "audio/webm"; // Lowest common denominator
+  };
+
   // Effects
   useEffect(() => {
     if (!conversationRecordId) return;
@@ -462,7 +485,7 @@ export const useConversation = ({
   const stopRecording = () => {
     setIsRecording(false);
 
-    // Immediately close connection to prevent new events
+    // Stop Deepgram connection
     if (deepgramConnectionRef.current) {
       try {
         deepgramConnectionRef.current.finish();
@@ -472,15 +495,14 @@ export const useConversation = ({
       deepgramConnectionRef.current = null;
     }
 
-    // Stop media recorder
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {
-        console.warn("Error stopping recorder:", e);
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== "inactive") {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          console.warn("Error stopping recorder:", e);
+        }
       }
       mediaRecorderRef.current = null;
     }
@@ -491,24 +513,45 @@ export const useConversation = ({
       audioIntervalRef.current = null;
     }
 
-    // Also stop all tracks to release microphone
+    // Stop all tracks to release microphone
     if (mediaRecorderRef.current?.stream) {
       mediaRecorderRef.current.stream
         .getTracks()
         .forEach((track) => track.stop());
     }
+
+    // Clean up chunks
+    audioChunksRef.current = [];
   };
 
   const toggleRecording = useCallback(async () => {
+    // CRITICAL: Check for secure context first
+    if (!window.isSecureContext) {
+      setError(
+        "⚠️ Recording requires HTTPS connection. Please use a secure connection.",
+      );
+      return;
+    }
+
     if (isRecording) {
-      // Stop recording manually
       stopRecording();
     } else {
-      // Start recording
       setError(null);
       setIsRecording(true);
 
       try {
+        // Request user permission first with proper constraints
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            sampleRate: 16000,
+            sampleSize: 16,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
         const tokenResponse = await fetch("/api/deepgram/stt-token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -525,17 +568,7 @@ export const useConversation = ({
           throw new Error("No token received from backend");
         }
 
-        // Get microphone
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            channelCount: 1,
-            sampleRate: 16000,
-            echoCancellation: true,
-            noiseSuppression: true,
-          },
-        });
-
-        // Setup Deepgram
+        // Initialize Deepgram connection
         const deepgram = createClient(token);
         const connection = deepgram.listen.live({
           model: "nova-3",
@@ -548,9 +581,12 @@ export const useConversation = ({
 
         deepgramConnectionRef.current = connection;
 
-        // MediaRecorder for audio
+        // IMPORTANT: Get supported mimeType dynamically
+        const mimeType = getSupportedMimeType();
+
+        // For better compatibility on mobile, use a more conservative approach
         const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/webm;codecs=opus",
+          mimeType,
           audioBitsPerSecond: 16000,
         });
 
@@ -558,17 +594,20 @@ export const useConversation = ({
           if (event.data.size > 0 && connection.getReadyState() === 1) {
             const arrayBuffer = await event.data.arrayBuffer();
             connection.send(arrayBuffer);
-            // Store chunks for potential SpeechAce analysis
-            audioChunksRef.current.push(arrayBuffer);
+            audioChunksRef.current.push(event.data);
           }
         };
 
         mediaRecorderRef.current = mediaRecorder;
 
-        // Deepgram events
+        // Wire up Deepgram event handlers BEFORE starting
         connection.on(LiveTranscriptionEvents.Open, () => {
           console.log("✅ Deepgram connection opened");
-          mediaRecorder.start(100);
+
+          // CRITICAL: Start with timeslice for better mobile compatibility
+          mediaRecorder.start(250); // Use 250ms chunks instead of 100ms
+
+          // Keep connection alive
           audioIntervalRef.current = setInterval(() => {
             if (connection.getReadyState() === 1) {
               connection.keepAlive();
@@ -583,15 +622,13 @@ export const useConversation = ({
             isProcessingTranscriptRef.current = true;
             console.log("📝 Transcript:", transcript);
 
-            // Create audio blob from chunks and store it for later analysis
             const audioBlob = new Blob(audioChunksRef.current, {
-              type: "audio/webm;codecs=opus",
+              type: mimeType,
             });
             lastAudioBlobRef.current = audioBlob;
             lastTranscriptRef.current = transcript;
 
             stopRecording();
-
             await handleConversation(transcript);
             isProcessingTranscriptRef.current = false;
           }
@@ -599,12 +636,10 @@ export const useConversation = ({
 
         connection.on(LiveTranscriptionEvents.Error, (err) => {
           console.error("❌ Deepgram error:", err);
-          setError(err.message || "WebSocket error");
+          setError(`Transcription error: ${err.message || "Unknown error"}`);
           isProcessingTranscriptRef.current = false;
           stopRecording();
           audioChunksRef.current = [];
-          lastAudioBlobRef.current = null;
-          lastTranscriptRef.current = null;
         });
 
         connection.on(LiveTranscriptionEvents.Close, () => {
@@ -612,9 +647,44 @@ export const useConversation = ({
           setIsRecording(false);
           audioChunksRef.current = [];
         });
+
+        // Handle stream ending
+        stream.getTracks().forEach((track) => {
+          track.onended = () => {
+            console.log("Audio track ended unexpectedly");
+            stopRecording();
+          };
+        });
       } catch (error) {
-        console.error("Failed to start recording:", error);
-        setError(error instanceof Error ? error.message : "Failed to start");
+        console.error("❌ Failed to start recording:", error);
+
+        // Provide user-friendly error messages
+        let errorMessage = "Failed to start recording";
+
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          errorMessage =
+            "🎤 Microphone access denied. Please enable microphone permissions in your browser settings.";
+        } else if (
+          error instanceof DOMException &&
+          error.name === "NotFoundError"
+        ) {
+          errorMessage = "🎤 No microphone found. Please connect a microphone.";
+        } else if (
+          error instanceof DOMException &&
+          error.name === "SecurityError"
+        ) {
+          errorMessage =
+            "🔒 Recording blocked for security reasons. Please use HTTPS and ensure you're on a trusted site.";
+        } else if (
+          error instanceof DOMException &&
+          error.name === "NotSupportedError"
+        ) {
+          errorMessage = "❌ Audio recording not supported in this browser.";
+        } else {
+          errorMessage = `Recording error: ${error instanceof Error ? error.message : "Unknown error"}`;
+        }
+
+        setError(errorMessage);
         setIsRecording(false);
       }
     }
@@ -659,6 +729,6 @@ export const useConversation = ({
     setError,
     speechAceResult,
     analyzeSpeechAce,
-    isAnalyzingSpeech
+    isAnalyzingSpeech,
   };
 };
