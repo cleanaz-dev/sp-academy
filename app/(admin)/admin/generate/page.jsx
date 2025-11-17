@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import {
   BookA,
+  BookHeart,
   BookOpen,
   ClipboardList,
   Video,
@@ -39,6 +40,12 @@ export default function Page() {
       icon: <Award className="h-8 w-8" />,
       description: "Create and manage achievements",
     },
+    {
+      name: "Books",
+      href: "/admin/generate/books/create",
+      icon: <BookHeart className="h-8 w-8" />,
+      description: "Create and manage books"
+    }
   ];
 
   return (

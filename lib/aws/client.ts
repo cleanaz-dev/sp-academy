@@ -1,5 +1,5 @@
 import { Polly } from '@aws-sdk/client-polly';
-import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const pollyClient = new Polly({
   region: process.env.AWS_REGION!,
@@ -17,4 +17,4 @@ const s3Client = new S3Client({
   },
 });
 
-export { pollyClient, s3Client };
+export { pollyClient, s3Client, PutObjectCommand };

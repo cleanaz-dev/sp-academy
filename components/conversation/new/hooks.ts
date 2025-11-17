@@ -93,6 +93,8 @@ export const useConversation = ({
   const [recognition, setRecognition] = useState<any>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [userMessage, setUserMessage] = useState("");
+  const [speechAceResult, setSpeechAceResult] = useState<any>(null);
+  const [isAnalyzingSpeech, setIsAnalyzingSpeech] = useState(false);
 
   // With:
   const deepgramConnectionRef = useRef<any>(null);
@@ -103,6 +105,9 @@ export const useConversation = ({
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastAudioBlobRef = useRef<Blob | null>(null);
+  const lastTranscriptRef = useRef<string | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   // Helper functions (all moved from component)
   const scrollToBottom = useCallback(() => {
@@ -421,6 +426,39 @@ export const useConversation = ({
     setIsMuted(!isMuted);
   };
 
+  const analyzeSpeechAce = useCallback(async () => {
+    if (!lastAudioBlobRef.current || !lastTranscriptRef.current) {
+      setError("No recording available for analysis");
+      return null;
+    }
+
+    setIsAnalyzingSpeech(true);
+    try {
+      const formData = new FormData();
+      formData.append("audio", lastAudioBlobRef.current, "recording.webm");
+      formData.append("transcript", lastTranscriptRef.current);
+
+      const response = await fetch("/api/analyze-speechace", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`SpeechAce API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setSpeechAceResult(result);
+      return result;
+    } catch (error) {
+      console.error("❌ SpeechAce error:", error);
+      setError("Failed to analyze speech");
+      return null;
+    } finally {
+      setIsAnalyzingSpeech(false);
+    }
+  }, []);
+
   const stopRecording = () => {
     setIsRecording(false);
 
@@ -520,6 +558,8 @@ export const useConversation = ({
           if (event.data.size > 0 && connection.getReadyState() === 1) {
             const arrayBuffer = await event.data.arrayBuffer();
             connection.send(arrayBuffer);
+            // Store chunks for potential SpeechAce analysis
+            audioChunksRef.current.push(arrayBuffer);
           }
         };
 
@@ -536,33 +576,41 @@ export const useConversation = ({
           }, 5000);
         });
 
-        connection.on(LiveTranscriptionEvents.Transcript, (data) => {
+        connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
           const transcript = data.channel?.alternatives?.[0]?.transcript;
 
-          // Prevent duplicate processing
           if (transcript?.trim() && !isProcessingTranscriptRef.current) {
-            isProcessingTranscriptRef.current = true; // Lock
+            isProcessingTranscriptRef.current = true;
             console.log("📝 Transcript:", transcript);
 
-            stopRecording(); // Stop hardware first
-
-            // Process conversation and unlock when done
-            handleConversation(transcript).finally(() => {
-              isProcessingTranscriptRef.current = false;
+            // Create audio blob from chunks and store it for later analysis
+            const audioBlob = new Blob(audioChunksRef.current, {
+              type: "audio/webm;codecs=opus",
             });
+            lastAudioBlobRef.current = audioBlob;
+            lastTranscriptRef.current = transcript;
+
+            stopRecording();
+
+            await handleConversation(transcript);
+            isProcessingTranscriptRef.current = false;
           }
         });
 
         connection.on(LiveTranscriptionEvents.Error, (err) => {
           console.error("❌ Deepgram error:", err);
           setError(err.message || "WebSocket error");
-          isProcessingTranscriptRef.current = false; // Unlock on error
+          isProcessingTranscriptRef.current = false;
           stopRecording();
+          audioChunksRef.current = [];
+          lastAudioBlobRef.current = null;
+          lastTranscriptRef.current = null;
         });
 
         connection.on(LiveTranscriptionEvents.Close, () => {
           console.log("🔌 Deepgram connection closed");
           setIsRecording(false);
+          audioChunksRef.current = [];
         });
       } catch (error) {
         console.error("Failed to start recording:", error);
@@ -609,5 +657,8 @@ export const useConversation = ({
     toggleMute,
     setTextInput,
     setError,
+    speechAceResult,
+    analyzeSpeechAce,
+    isAnalyzingSpeech
   };
 };
