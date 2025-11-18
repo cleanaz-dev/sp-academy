@@ -1,11 +1,12 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { capitalizeFirstLetter } from './utils';
-import { ImprovementTooltip } from './improvement-tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MdRecordVoiceOver } from 'react-icons/md';
-import type { Message, VoiceGender } from './types';
+import React from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { capitalizeFirstLetter } from "./utils";
+import { ImprovementTooltip } from "./improvement-tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MdRecordVoiceOver } from "react-icons/md";
+import type { Message, VoiceGender } from "./types";
+import { InlineAudioButton } from "./inline-audio-button";
 
 interface Props {
   message: Message;
@@ -14,6 +15,8 @@ interface Props {
   aiAvatarFemaleUrl: string;
   userAvatarUrl?: string;
   speakPhrase: (text: string) => void;
+  audioBase64Map: Record<string, string>;
+  createAudioUrl: (base64: string) => string;
 }
 
 export const MessageBubble: React.FC<Props> = ({
@@ -23,17 +26,23 @@ export const MessageBubble: React.FC<Props> = ({
   aiAvatarFemaleUrl,
   userAvatarUrl,
   speakPhrase,
+  audioBase64Map,
+  createAudioUrl,
 }) => {
-  const isUser = message.role === 'user';
-  const showAIAvatar = !isUser && voiceGender === 'female';
-  const showMaleAvatar = !isUser && voiceGender === 'male';
+  const isUser = message.role === "user";
+  const showAIAvatar = !isUser && voiceGender === "female";
+  const showMaleAvatar = !isUser && voiceGender === "male";
+
+  const messageId =
+    message.id || `${message.role}-${message.timestamp || Date.now()}`;
+  const audioBase64 = audioBase64Map[messageId];
+
+  console.log("audioBase64:", audioBase64);
+  console.log("createAudioUrl", createAudioUrl);
 
   return (
     <div
-      className={cn(
-        'flex items-end',
-        isUser ? 'justify-end' : 'justify-start',
-      )}
+      className={cn("flex items-end", isUser ? "justify-end" : "justify-start")}
     >
       {showAIAvatar && (
         <Avatar className="mr-3 h-10 w-10 transform drop-shadow-md">
@@ -51,15 +60,15 @@ export const MessageBubble: React.FC<Props> = ({
 
       <div
         className={cn(
-          'relative rounded-2xl px-4 py-3 text-sm shadow-md md:max-w-[75%]',
+          "relative rounded-2xl px-4 py-3 text-sm shadow-md md:max-w-[75%]",
           isUser
-            ? 'min-w-32 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white'
-            : 'self-start rounded-bl-none bg-white text-gray-900',
+            ? "min-w-32 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white"
+            : "self-start rounded-bl-none bg-white text-gray-900",
         )}
       >
-        <p className="font-medium">
-          {capitalizeFirstLetter(message.content)}
-        </p>
+        <p className="font-medium">{capitalizeFirstLetter(message.content)}</p>
+
+        {/* Inline audio button for AI messages */}
 
         {message.translation && (
           <p className="mt-1 text-xs italic opacity-80">
@@ -67,18 +76,26 @@ export const MessageBubble: React.FC<Props> = ({
           </p>
         )}
 
+        {!isUser && audioBase64 && (
+          <InlineAudioButton
+            audioBase64={audioBase64}
+            createAudioUrl={createAudioUrl}
+            size="small"
+          />
+        )}
+
         {message.label && (
           <div className="flex items-center justify-end space-x-2">
             <span
               className={cn(
-                'flex items-center gap-1 text-xs font-bold italic',
-                message.label === 'Excellent' || message.label === 'Great'
-                  ? 'text-emerald-500'
-                  : message.label === 'Good'
-                  ? 'text-green-600'
-                  : message.label === 'OK'
-                  ? 'text-amber-500'
-                  : 'text-red-400',
+                "flex items-center gap-1 text-xs font-bold italic",
+                message.label === "Excellent" || message.label === "Great"
+                  ? "text-emerald-500"
+                  : message.label === "Good"
+                    ? "text-green-600"
+                    : message.label === "OK"
+                      ? "text-amber-500"
+                      : "text-red-400",
               )}
             >
               <MdRecordVoiceOver /> {message.label}!

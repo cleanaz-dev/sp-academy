@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import NewConversationComponentCopy from "./NewConversationComponent-copy";
+
 import ConversationComponent from "./new/new-conversation-component";
 
 export default function SingleConversationPageCopy({
@@ -12,7 +12,7 @@ export default function SingleConversationPageCopy({
 }) {
   return (
     <div className="min-h-screen animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-8">
-      <div className="container mx-auto w-full max-w-5xl px-4">
+      <div className="container mx-auto w-full max-w-5xl px-1 md:px-4">
         {" "}
         {/* Added max-w-5xl and w-full */}
         <motion.div
@@ -47,18 +47,6 @@ export default function SingleConversationPageCopy({
         <div className="mx-auto w-full max-w-5xl">
           {" "}
           {/* Ensure full width and center */}
-          {/* <NewConversationComponentCopy
-            userAvatarUrl={avatarUrl}
-            aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}
-            aiAvatarFemaleUrl={conversation.aiAvatarFemaleUrl}
-            vocabulary={conversation.vocabulary}
-            dialogue={conversation.dialogue}
-            title={conversation.title}
-            id={id}
-            tutorLanguage={conversation.tutorLanguage}
-            targetLanguage={conversation.metadata?.languages?.target || "fr"}
-            nativeLanguage={conversation.metadata?.languages?.native || "en"}
-          /> */}
           <ConversationComponent 
            userAvatarUrl={avatarUrl}
             aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}

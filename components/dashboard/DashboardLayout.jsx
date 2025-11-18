@@ -68,18 +68,20 @@ export default function DashboardLayout({ children }) {
           isDesktopSidebarOpen ? "lg:w-[calc(100%-12rem)]" : "lg:w-full"
         }`}
       >
-        <Topbar
-          sidebarOpen={isSheetSidebarOpen} // Mobile toggle affects sheet
-          setSidebarOpen={setIsSheetSidebarOpen} // Mobile toggle updates sheet state
-          desktopSidebarOpen={isDesktopSidebarOpen} // Pass desktop state to Topbar
-          setDesktopSidebarOpen={setIsDesktopSidebarOpen} // Pass setter for desktop
-          pathname={pathname}
-          handleNotificationClick={() =>
-            setShowNotifications(!showNotifications)
-          }
-        />
+        <div className="flex-shrink-0">
+          <Topbar
+            sidebarOpen={isSheetSidebarOpen}
+            setSidebarOpen={setIsSheetSidebarOpen}
+            desktopSidebarOpen={isDesktopSidebarOpen}
+            setDesktopSidebarOpen={setIsDesktopSidebarOpen}
+            pathname={pathname}
+            handleNotificationClick={() =>
+              setShowNotifications(!showNotifications)
+            }
+          />
+        </div>
 
-        <ScrollArea className="h-full w-full">
+        <ScrollArea className="w-full flex-1">
           <div className="h-full flex-grow overflow-auto bg-white">
             {children}
           </div>

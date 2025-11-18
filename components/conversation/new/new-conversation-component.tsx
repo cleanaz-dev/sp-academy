@@ -56,6 +56,8 @@ export default function ConversationComponent({
     usePhrase,
     toggleVoiceGender,
     setTextInput,
+    audioBase64Map,
+    createAudioUrl
   } = useConversation({
     id,
     title,
@@ -116,6 +118,8 @@ export default function ConversationComponent({
       speakPhrase={speakPhrase}
       usePhrase={usePhrase}
       handleTranslation={handleTranslation}
+      audioBase64Map={audioBase64Map}
+      createAudioUrl={createAudioUrl}
     />
   );
 }

@@ -7,6 +7,7 @@ import {
   Corrections,
 } from "./types";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
+import { useMobileDetection } from "@/hooks/use-mobile-detection";
 
 export const useSuggestions = (): UseSuggestionsReturn => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -95,6 +96,8 @@ export const useConversation = ({
   const [userMessage, setUserMessage] = useState("");
   const [speechAceResult, setSpeechAceResult] = useState<any>(null);
   const [isAnalyzingSpeech, setIsAnalyzingSpeech] = useState(false);
+  const [audioBase64Map, setAudioBase64Map] = useState<Record<string, string>>({});
+  const MAX_CACHED_AUDIO = 10; // Keep last 10 messages
 
   // With:
   const deepgramConnectionRef = useRef<any>(null);
@@ -108,6 +111,23 @@ export const useConversation = ({
   const lastAudioBlobRef = useRef<Blob | null>(null);
   const lastTranscriptRef = useRef<string | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+
+  // Mobile Detection
+  const isMobile = useMobileDetection()
+
+
+   // NEW: Cleanup function for old audio
+  const cleanupOldAudio = useCallback((currentMessageIds: string[]) => {
+    setAudioBase64Map(prev => {
+      const newMap: Record<string, string> = {};
+      currentMessageIds.forEach(id => {
+        if (prev[id]) newMap[id] = prev[id];
+      });
+      return newMap;
+    });
+  }, []);
+
+  
 
   // Helper functions (all moved from component)
   const scrollToBottom = useCallback(() => {
@@ -135,23 +155,79 @@ export const useConversation = ({
     [targetLanguage, getFullLanguageCode],
   );
 
-  const handleAudioPlayback = useCallback(async (audioBase64: string) => {
-    try {
-      // Convert base64 to binary
-      const binaryString = atob(audioBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+   const handleAudioPlayback = useCallback(async (
+  audioBase64: string, 
+  messageId: string,
+  attemptAutoPlay: boolean = true
+) => {
+  if (isMuted) {
+    console.log("🔇 Audio muted, skipping playback setup");
+    return;
+  }
 
-      const audioBlob = new Blob([bytes], { type: "audio/mpeg" });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      await audio.play();
-    } catch (error) {
-      console.error("Audio playback error:", error);
-      setError("Failed to play audio");
+  try {
+    // Store base64 for replay button
+    setAudioBase64Map(prev => {
+      const entries = Object.entries(prev);
+      
+      // Cleanup oldest if over limit (more reliable way)
+      if (entries.length >= MAX_CACHED_AUDIO) {
+        // Find oldest by checking keys (assuming messageId includes timestamp)
+        const oldestId = entries.find(([id]) => !id.includes(messageId))?.[0];
+        
+        if (oldestId) {
+          console.log("🧹 Cleaning up old audio:", oldestId);
+          const newPrev = { ...prev };
+          delete newPrev[oldestId];
+          return { ...newPrev, [messageId]: audioBase64 };
+        }
+      }
+      
+      return { ...prev, [messageId]: audioBase64 };
+    });
+
+    // Desktop: Try auto-play
+    if (attemptAutoPlay && !isMobile) {
+      console.log("🖥️ Desktop: Attempting auto-play");
+      const url = createAudioUrl(audioBase64);
+      const audio = new Audio(url);
+      
+      try {
+        await audio.play();
+        console.log("✅ Desktop auto-play succeeded");
+        
+        // Auto-revoke after play
+        audio.addEventListener('ended', () => {
+          URL.revokeObjectURL(url);
+          console.log("🗑️ Revoked URL after playback");
+        }, { once: true });
+        
+        return; // Success, exit early
+      } catch (error) {
+        console.log("⚠️ Desktop auto-play failed, showing button");
+        URL.revokeObjectURL(url); // Immediate cleanup
+      }
     }
+    
+    // Mobile or fallback: Just prepare button
+    console.log("📱 Mobile: Audio ready for manual playback");
+    
+  } catch (error) {
+    console.error("❌ Audio setup failed:", error);
+    setError("Audio playback failed");
+  }
+}, [isMuted, isMobile, setError, MAX_CACHED_AUDIO]); // ✅ Add MAX_CACHED_AUDIO to deps
+
+  // Helper function
+  const createAudioUrl = useCallback((base64: string): string => {
+    const cleanBase64 = base64.replace(/^data:audio\/\w+;base64,/, '');
+    const binaryString = atob(cleanBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "audio/mpeg" });
+    return URL.createObjectURL(blob);
   }, []);
 
   const getSupportedMimeType = (): string => {
@@ -247,82 +323,89 @@ export const useConversation = ({
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
-  const handleConversation = async (message: string) => {
-    setIsProcessing(true);
-    setError(null);
+const handleConversation = async (message: string) => {
+  setIsProcessing(true);
+  setError(null);
 
-    try {
-      if (!conversationRecordId) throw new Error("No active conversation");
+  try {
+    if (!conversationRecordId) throw new Error("No active conversation");
 
-      const newUserMessage: Message = {
-        role: "user",
-        content: message,
-      };
+    const newUserMessage: Message = {
+      role: "user",
+      content: message,
+      // Add ID for consistency
+      id: `user-${Date.now()}`,
+    };
 
-      const response = await fetch("/api/new/conversation-moonshot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          history: conversationHistory,
-          title,
-          vocabulary,
-          dialogue,
-          voiceGender,
-          targetLanguage,
-          nativeLanguage,
-        }),
-      });
+    const response = await fetch("/api/new/conversation-moonshot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: conversationHistory,
+        title,
+        vocabulary,
+        dialogue,
+        voiceGender,
+        targetLanguage,
+        nativeLanguage,
+      }),
+    });
 
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok)
+      throw new Error(`HTTP error! status: ${response.status}`);
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
 
-      const fullUserMessage: Message = {
-        ...newUserMessage,
-        translation: data.messageTranslation,
-        score: data.score,
-        label: data.label,
-        improvedResponse: data.improvedResponse,
-        corrections: data.corrections,
-      };
+    const fullUserMessage: Message = {
+      ...newUserMessage,
+      translation: data.messageTranslation,
+      score: data.score,
+      label: data.label,
+      improvedResponse: data.improvedResponse,
+      corrections: data.corrections,
+    };
 
-      const aiMessage: Message = {
-        role: "assistant",
-        content: data.targetLanguage,
-        translation: data.nativeLanguage,
-      };
+    // ✅ Generate ID for AI message
+    const aiMessageId = `ai-${Date.now()}`;
+    
+    const aiMessage: Message = {
+      id: aiMessageId, // ✅ Add ID!
+      role: "assistant",
+      content: data.targetLanguage,
+      translation: data.nativeLanguage,
+    };
 
-      const updateResponse = await fetch("/api/conversation/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationRecordId,
-          messages: [fullUserMessage, aiMessage],
-        }),
-      });
+    const updateResponse = await fetch("/api/conversation/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationRecordId,
+        messages: [fullUserMessage, aiMessage],
+      }),
+    });
 
-      if (!updateResponse.ok) throw new Error("Failed to save to DB");
+    if (!updateResponse.ok) throw new Error("Failed to save to DB");
 
-      const { messages: savedMessages } = await updateResponse.json();
-      setConversationHistory(savedMessages);
+    const { messages: savedMessages } = await updateResponse.json();
+    setConversationHistory(savedMessages);
 
-      setIsGeneratingAudio(true);
-      if (!isMuted) {
-        await handleAudioPlayback(data.audio);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Failed to process conversation");
-    } finally {
-      setIsProcessing(false);
-      setIsGeneratingAudio(false);
-      setSuggestions([]);
-      setTranslationResult("");
+    setIsGeneratingAudio(true);
+    if (!isMuted && data.audio) {
+      // ✅ Pass the AI message ID
+      await handleAudioPlayback(data.audio, aiMessageId);
     }
-  };
+  } catch (error) {
+    console.error("Error:", error);
+    setError("Failed to process conversation");
+  } finally {
+    setIsProcessing(false);
+    setIsGeneratingAudio(false);
+    setSuggestions([]);
+    setTranslationResult("");
+  }
+};
 
   const handleStartConversation = async () => {
     try {
@@ -419,23 +502,6 @@ export const useConversation = ({
     }
   };
 
-  const textToSpeech = async (text: string) => {
-    try {
-      const response = await fetch("/api/conversation/text-to-speech", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voiceGender, targetLanguage }),
-      });
-
-      if (!response.ok) throw new Error("Text-to-speech failed");
-
-      const data = await response.json();
-      await handleAudioPlayback(data.audio);
-    } catch (error) {
-      console.error("Error in text-to-speech:", error);
-      setError("Failed to process text-to-speech");
-    }
-  };
 
   const usePhrase = (phrase: string) => {
     handleConversation(phrase);
@@ -720,7 +786,6 @@ export const useConversation = ({
     clearConversationHistory,
     getSuggestions,
     analyzeAndSaveConversation,
-    textToSpeech,
     usePhrase,
     speakPhrase,
     toggleVoiceGender,
@@ -730,5 +795,8 @@ export const useConversation = ({
     speechAceResult,
     analyzeSpeechAce,
     isAnalyzingSpeech,
+    isMobile,
+    createAudioUrl,
+    audioBase64Map
   };
 };

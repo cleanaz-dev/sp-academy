@@ -36,6 +36,7 @@ export interface ImprovementTooltipProps {
 export type VoiceGender = 'male' | 'female';
 
 export interface Message {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   translation?: string;
@@ -43,6 +44,7 @@ export interface Message {
   improvedResponse?: string;
   corrections?: Corrections;
   score?: number;
+  timestamp?: number;
 }
 
 // Suggestions system

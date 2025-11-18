@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { motion } from 'framer-motion';
-import { VoiceGenderToggle } from './voice-gender-toggle';
-import { MessageBubble } from './message-bubble';
-import { InputControls } from './input-controls';
-import { SuggestionsPanel } from './suggestions-panel';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import type { Message, VoiceGender } from './types';
+import React, { useEffect, useRef } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from "framer-motion";
+import { VoiceGenderToggle } from "./voice-gender-toggle";
+import { MessageBubble } from "./message-bubble";
+import { InputControls } from "./input-controls";
+import { SuggestionsPanel } from "./suggestions-panel";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import type { Message, VoiceGender } from "./types";
 
 interface Props {
   // State
@@ -26,7 +26,8 @@ interface Props {
   userAvatarUrl?: string;
   aiAvatarMaleUrl: string;
   aiAvatarFemaleUrl: string;
-  
+  audioBase64Map: Record<string, string>;
+
   // Handlers
   onToggleVoiceGender: () => void;
   onStartConversation: () => void;
@@ -38,6 +39,7 @@ interface Props {
   speakPhrase: (text: string) => void;
   usePhrase: (text: string) => void;
   handleTranslation: (text: string) => void;
+  createAudioUrl: (base64: string) => string;
 }
 
 export const ConversationContainer: React.FC<Props> = ({
@@ -66,12 +68,14 @@ export const ConversationContainer: React.FC<Props> = ({
   speakPhrase,
   usePhrase,
   handleTranslation,
+  audioBase64Map,
+  createAudioUrl,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversationHistory, translationResult]);
 
   return (
@@ -105,6 +109,8 @@ export const ConversationContainer: React.FC<Props> = ({
                   aiAvatarFemaleUrl={aiAvatarFemaleUrl}
                   userAvatarUrl={userAvatarUrl}
                   speakPhrase={speakPhrase}
+                  audioBase64Map={audioBase64Map}
+                  createAudioUrl={createAudioUrl}
                 />
               ))}
               <div ref={messagesEndRef} />
@@ -112,7 +118,7 @@ export const ConversationContainer: React.FC<Props> = ({
           </ScrollArea>
 
           {/* Input Area */}
-          <div className="p-4">
+          <div className="md:p-4">
             <InputControls
               textInput={textInput}
               isRecording={isRecording}
@@ -189,13 +195,15 @@ export const ConversationContainer: React.FC<Props> = ({
                 onClick={onClearHistory}
                 className="w-1/2 rounded bg-gray-500 p-2 text-white hover:bg-gray-600"
               >
-                {isDeleting ? 'Clearing...' : 'Clear Conversation'}
+                {isDeleting ? "Clearing..." : "Clear Conversation"}
               </button>
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className={`w-1/2 p-2 flex items-center justify-center gap-2 rounded text-white ${
-                  isSaving ? 'bg-purple-300' : 'bg-purple-500 hover:bg-purple-600'
+                className={`flex w-1/2 items-center justify-center gap-2 rounded p-2 text-white ${
+                  isSaving
+                    ? "bg-purple-300"
+                    : "bg-purple-500 hover:bg-purple-600"
                 }`}
               >
                 {isSaving ? (
@@ -204,7 +212,7 @@ export const ConversationContainer: React.FC<Props> = ({
                     Saving...
                   </>
                 ) : (
-                  'Save & Analyze'
+                  "Save & Analyze"
                 )}
               </button>
             </div>
