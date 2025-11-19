@@ -1,28 +1,62 @@
 import { moonshotAPI } from '../client';
-import { getConversationPrompt } from '../prompts/conversation-dialog';
 import type { ConversationParams, AIResponse } from '../types';
+import { conversationSchema } from '../schemas/conversation-schema';
 
-// Just export functions, no classes needed
+
+
+function buildPrompt(params: ConversationParams): string {
+  return `You are a ${params.targetLanguage} language conversation partner for ABSOLUTE BEGINNERS.
+Your Role: Cashier at Fast Food
+Topic: ${params.title}
+
+Dialogue Scenario:
+${params.dialogue?.map(d => `${d.speaker}: ${d.targetLanguage} (${d.nativeLanguage})`).join('\n')}
+
+Vocabulary to use:
+${params.vocabulary?.map(v => `${v.targetLanguage} - ${v.nativeLanguage}`).join('\n')}
+
+Recent messages:
+${params.history?.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+User says: "${params.message}"
+
+Rules: 5-6 words, present tense, end with question, use vocabulary above.
+Critical: At the fast food counter, no checks — just roleplay and say 'Thanks, come again' when appropriate
+OUTPUT IN JSON SCHEMA target language, native language, user message translation and isCompleted.`;
+}
+
+// Main function
 export const sendMessage = async (params: ConversationParams): Promise<AIResponse> => {
-  const prompt = getConversationPrompt(params);
-  
+  const prompt = buildPrompt(params);
+
   const completion = await moonshotAPI.chat.completions.create({
     model: 'kimi-k2-turbo-preview',
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content: params.message }
     ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "translation",
+        strict: true,
+        schema: conversationSchema
+      },
+    },
     temperature: 0.3,
-    max_tokens: 300,
+    max_tokens: 1000,
   });
 
-  const responseText = completion.choices[0].message.content || '';
-  
-  const targetMatch = responseText.match(/➤\s*(.*?)(?=\n|⟿|$)/);
-  const nativeMatch = responseText.match(/⟿\s*(.*?)(?=\n|$)/);
+  const content = completion.choices[0].message.content;
+  if (!content) throw new Error("No response");
+
+  const parsed = JSON.parse(content);
+  console.log("parsed:", parsed)
 
   return {
-    targetLanguage: targetMatch ? targetMatch[1].trim() : responseText,
-    nativeLanguage: nativeMatch ? nativeMatch[1].trim() : "",
+    targetLanguage: parsed.targetLanguage,
+    nativeLanguage: parsed.nativeLanguage,
+    isCompleted: parsed.isCompleted, 
+    userMessageTranslation: parsed.userMessageTranslation
   };
 };

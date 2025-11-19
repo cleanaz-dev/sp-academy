@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   Info,
   Sparkles,
@@ -17,10 +17,11 @@ import {
   Book,
   PenTool,
   Volume2,
-} from 'lucide-react';
-import type { ImprovementTooltipProps } from './types';
-import { capitalizeFirstLetter } from './utils';
-import { speakPhrase } from './utils';
+  Mic2
+} from "lucide-react";
+import type { ImprovementTooltipProps } from "./types";
+import { capitalizeFirstLetter } from "./utils";
+import { speakPhrase } from "./utils";
 
 export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
   improvedResponse,
@@ -29,8 +30,6 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
   speakPhrase: customSpeakPhrase, // Allow override via props
 }) => {
   const handleSpeak = customSpeakPhrase || speakPhrase;
-
-  console.log('Full corrections object:', corrections);
 
   const renderCorrectionCategory = (
     title: string,
@@ -49,9 +48,11 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
         </div>
         <div className="space-y-1 pl-6">
           <div className="text-white">
-            {typeof correction === 'object' ? correction.correction : correction}
+            {typeof correction === "object"
+              ? correction.correction
+              : correction}
           </div>
-          {typeof correction === 'object' && correction.reason && (
+          {typeof correction === "object" && correction.reason && (
             <div className="text-xs italic text-emerald-400">
               Why: {correction.reason}
             </div>
@@ -61,15 +62,12 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
     );
   };
 
-  console.log('Gender Agreement:', corrections?.genderAgreement);
-  console.log('Vocabulary:', corrections?.vocabulary);
-  console.log('Article:', corrections?.article);
-  console.log('Additional Notes:', corrections?.additionalNotes);
+
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="flex animate-pulse items-center space-x-1 text-white shadow-2xl shadow-white transition-transform hover:scale-110">
+        <button className="flex animate-pulse items-center space-x-1 text-blue-500 white shadow-2xl shadow-white transition-transform hover:scale-110">
           <Info className="h-4 w-4" />
         </button>
       </DialogTrigger>
@@ -94,10 +92,11 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
               Original phrase:
             </span>
             <span className="block pl-6 text-slate-200">
-              {originalText ? capitalizeFirstLetter(originalText) : ''}
+              {originalText ? capitalizeFirstLetter(originalText) : ""}
             </span>
           </p>
-
+          
+          {/* 
           <div className="rounded-lg bg-white/5 p-3">
             <span className="mb-2 flex items-center gap-2 text-xs">
               <CircleCheck className="h-4 w-4 text-green-600" />
@@ -124,7 +123,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
                 corrections.article,
                 <PenTool className="h-4 w-4" />,
               )}
-          </div>
+          </div> */}
 
           <div className="rounded-lg border border-white/10 bg-white/10 p-3">
             <span className="mb-2 flex items-center gap-2 text-xs text-emerald-300">
@@ -132,7 +131,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
               Improved version:
             </span>
             <span className="mb-4 block pl-6 font-medium text-white">
-              {improvedResponse ? improvedResponse.replace(/^"|"$/g, '') : ''}
+              {improvedResponse ? improvedResponse.replace(/^"|"$/g, "") : ""}
             </span>
 
             <span className="flex justify-end border-t border-white/10 pt-2">

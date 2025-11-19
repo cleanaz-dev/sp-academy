@@ -4,53 +4,36 @@ import prisma from "@/lib/prisma";
 
 export async function PUT(request) {
   try {
-    const { conversationRecordId, messages } = await request.json();
-    console.log(
-      "Updating conversation record:",
-      conversationRecordId,
-      "with messages:",
-      messages,
-    );
+    const { conversationRecordId, messages, pronunciationScore } = await request.json();
 
-    // Fetch existing record
     const existingRecord = await prisma.conversationRecord.findUnique({
       where: { id: conversationRecordId },
     });
 
     if (!existingRecord) {
-      return NextResponse.json(
-        { error: "Conversation record not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
     }
 
-    // Ensure messages is always an array
-    const existingMessages = Array.isArray(existingRecord.messages)
-      ? existingRecord.messages
-      : [];
-    const updatedMessages = [...existingMessages, ...messages];
-
-    // Update the conversation record
-    const updatedRecord = await prisma.conversationRecord.update({
-      where: { id: conversationRecordId },
-      data: {
-        messages: updatedMessages,
-        updatedAt: new Date(),
-      },
+    // Add pronunciation score to user message
+    const messagesWithScore = messages.map(msg => {
+      if (msg.role === 'user' && pronunciationScore) {
+        return { ...msg, pronunciationScore };
+      }
+      return msg;
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        messages: updatedRecord.messages, // Return the updated messages
-      },
-      { status: 200 },
-    );
+    const existingMessages = Array.isArray(existingRecord.messages) ? existingRecord.messages : [];
+    const updatedMessages = [...existingMessages, ...messagesWithScore];
+
+    const updatedRecord = await prisma.conversationRecord.update({
+      where: { id: conversationRecordId },
+      data: { messages: updatedMessages, updatedAt: new Date() },
+    });
+    // console.log("updatedRecord:", JSON.stringify(updatedRecord, null, 2));
+
+    return NextResponse.json({ success: true, messages: updatedRecord.messages });
   } catch (error) {
-    console.error("Error updating conversation record:", error);
-    return NextResponse.json(
-      { error: "Failed to update conversation record" },
-      { status: 500 },
-    );
+    console.error("Update error:", error);
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }

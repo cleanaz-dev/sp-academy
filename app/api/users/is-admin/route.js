@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    const { userId } = auth(); // Add await here
+    const { userId } = await auth(); // Add await here
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }

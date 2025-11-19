@@ -1,0 +1,35 @@
+model Conversation {
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  metadata           Json?
+  nativeLanguage     Languages?
+  tutorLanguage      Languages?
+  level              Level?
+  introduction       Json
+  vocabulary         Json[]
+  characters         Json[]
+  dialogue           Json[]
+  userId             String               @db.ObjectId
+  user               User                 @relation(fields: [userId], references: [id])
+  messages           Json?
+  imageUrl           String?
+  aiAvatarUrl        String?
+  aiAvatarMaleUrl    String?
+  aiAvatarFemaleUrl  String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  ConversationRecord ConversationRecord[]
+}
+
+model ConversationRecord {
+  id                  String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String       @db.ObjectId
+  user                User         @relation(fields: [userId], references: [id])
+  conversationId      String       @db.ObjectId
+  conversation        Conversation @relation(fields: [conversationId], references: [id])
+  messages            Json?
+  analysis            Json?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  pronunciationScores Json?
+}

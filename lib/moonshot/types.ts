@@ -1,5 +1,6 @@
 // lib/moonshot/types.ts
 
+
 export interface ConversationParams {
   message: string;
   history: any[];
@@ -9,11 +10,18 @@ export interface ConversationParams {
   targetLanguage: string;
   nativeLanguage: string;
 }
+export interface SpeechAceResults {
+  score:  number;
+  cerfScore: string;
+  fluency?: string;
+}
 
 export interface AIResponse {
   targetLanguage: string;
   nativeLanguage: string;
-  message?: string
+  message?: string;
+  isCompleted?: boolean;
+  userMessageTranslation?: string;
 }
 
 export interface ScoringParams {
@@ -54,3 +62,4 @@ export interface CourseCreationParams {
   topic: string
   prompt: string
 }
+

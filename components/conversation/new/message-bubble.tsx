@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MdRecordVoiceOver } from "react-icons/md";
 import type { Message, VoiceGender } from "./types";
 import { InlineAudioButton } from "./inline-audio-button";
+import { SpellCheck2 } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -37,9 +38,7 @@ export const MessageBubble: React.FC<Props> = ({
     message.id || `${message.role}-${message.timestamp || Date.now()}`;
   const audioBase64 = audioBase64Map[messageId];
 
-  console.log("audioBase64:", audioBase64);
-  console.log("createAudioUrl", createAudioUrl);
-
+  console.log("Message:", message);
   return (
     <div
       className={cn("flex items-end", isUser ? "justify-end" : "justify-start")}
@@ -62,13 +61,11 @@ export const MessageBubble: React.FC<Props> = ({
         className={cn(
           "relative rounded-2xl px-4 py-3 text-sm shadow-md md:max-w-[75%]",
           isUser
-            ? "min-w-32 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white"
+            ? "min-w-44 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white"
             : "self-start rounded-bl-none bg-white text-gray-900",
         )}
       >
         <p className="font-medium">{capitalizeFirstLetter(message.content)}</p>
-
-        {/* Inline audio button for AI messages */}
 
         {message.translation && (
           <p className="mt-1 text-xs italic opacity-80">
@@ -84,31 +81,64 @@ export const MessageBubble: React.FC<Props> = ({
           />
         )}
 
-        {message.label && (
-          <div className="flex items-center justify-end space-x-2">
-            <span
-              className={cn(
-                "flex items-center gap-1 text-xs font-bold italic",
-                message.label === "Excellent" || message.label === "Great"
-                  ? "text-emerald-500"
-                  : message.label === "Good"
-                    ? "text-green-600"
-                    : message.label === "OK"
-                      ? "text-amber-500"
-                      : "text-red-400",
-              )}
-            >
-              <MdRecordVoiceOver /> {message.label}!
-            </span>
-
-            {message.improvedResponse && (
-              <ImprovementTooltip
-                improvedResponse={message.improvedResponse}
-                originalText={message.content}
-                corrections={message.corrections}
-                speakPhrase={speakPhrase}
-              />
+        {isUser && (
+          <div
+            className={cn(
+              "-mx-4 -mb-3 mt-2 px-4 pb-3 pt-2",
+              "rounded-b-2xl border-t border-gray-100 bg-gray-50",
+              isUser ? "rounded-br-none" : "rounded-bl-none",
             )}
+          >
+            <div className="flex items-center justify-between">
+              {/* Left side: Score and Label */}
+              <div className="flex items-center gap-4">
+                {message.pronunciationScore && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 text-xs font-bold",
+                      message.pronunciationScore.score >= 90
+                        ? "text-emerald-500"
+                        : message.pronunciationScore.score >= 80
+                          ? "text-green-600"
+                          : message.pronunciationScore.score >= 70
+                            ? "text-amber-500"
+                            : "text-red-400",
+                    )}
+                  >
+                    <MdRecordVoiceOver className="size-4" />
+                    <p> {message.pronunciationScore.score}</p>
+                  </div>
+                )}
+
+                {message.label && (
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 text-xs font-bold",
+                      message.label === "Excellent" || message.label === "Great"
+                        ? "text-emerald-500"
+                        : message.label === "Good"
+                          ? "text-green-600"
+                          : message.label === "OK"
+                            ? "text-amber-500"
+                            : "text-red-400",
+                    )}
+                  >
+                    <SpellCheck2 className="size-4" /> {message.label}!
+                  </span>
+                )}
+              </div>
+
+              {/* Right side: Improvement Tooltip */}
+              {message.improvedResponse && (
+                <ImprovementTooltip
+                  improvedResponse={message.improvedResponse}
+                  originalText={message.content}
+                  corrections={message.corrections}
+                  speakPhrase={speakPhrase}
+                  pronunciationScore={message.pronunciationScore}
+                />
+              )}
+            </div>
           </div>
         )}
 

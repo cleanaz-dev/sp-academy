@@ -1,0 +1,197 @@
+model User {
+  id                    String                  @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String
+  email                 String                  @unique
+  name                  String
+  role                  Role                    @default(USER)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Journal               Journal[]
+  StoryQuestions        StoryQuestions[]
+  PronunciationSession  PronunciationSession[]
+  PronunciationProgress PronunciationProgress[]
+  PracticeSessions      PracticeSession[] // Add this relation
+  BookReport            BookReport[]
+  Book                  Book[]
+  Conversation          Conversation[]
+  LearningProgress      LearningProgress[]
+  ConversationRecord    ConversationRecord[]
+  AccountSettings       AccountSettings?
+  BillingInformation    BillingInformation?
+  UserProgress          UserProgress[]
+  Like                  Like[]
+  Course                Course[]
+  Enrollment            Enrollment[]
+  Progress              Progress[]
+  Teacher               Teacher?
+  QuizResult            QuizResult[]
+  Resource              Resource[]
+  AIGeneratedContent    AIGeneratedContent[]
+  notifications         Notification[]
+  GameScore             GameScore[]
+  UserSchedule          UserSchedule[]
+}
+
+model BillingInformation {
+  id                   String          @id @default(auto()) @map("_id") @db.ObjectId
+  user                 User            @relation(fields: [userId], references: [id])
+  userId               String          @unique @db.ObjectId
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPlan          Billing         @default(FREE)
+  billingInterval      BillingInterval @default(MONTHLY)
+  nextBillingDate      DateTime?
+  isActive             Boolean         @default(true)
+  cancelAtPeriodEnd    Boolean         @default(false)
+  lastPaymentDate      DateTime?
+  paymentStatus        PaymentStatus   @default(UNPAID)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+}
+
+model AccountSettings {
+  id                        String          @id @default(auto()) @map("_id") @db.ObjectId
+  user                      User            @relation(fields: [userId], references: [id])
+  userId                    String          @unique @db.ObjectId
+  language                  Languages       @default(ENGLISH)
+  displayName               String?
+  avatarUrl                 String?
+  aiVoicePreference         VoicePreference @default(MALE)
+  level                     Level?          @default(BEGINNER)
+  dailyEmails               Boolean?        @default(true)
+  weeklyEmails              Boolean?        @default(true)
+  promotionEmails           Boolean?        @default(true)
+  shareReadingLogs          Boolean         @default(false)
+  shareConversationActivity Boolean         @default(false)
+  shareAchievements         Boolean         @default(false)
+  shareLessonsAndCourses    Boolean         @default(false)
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+}
+
+model Teacher {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String   @unique @db.ObjectId
+  subjects String[]
+  lessons  Lesson[]
+}
+
+model Journal {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  callId       String   @unique
+  record       Boolean?
+  recordingUrl String?
+  length       String?
+  completed    Boolean
+  summary      String?
+  to           String?
+  from         String?
+  transcripts  String?
+  language     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Resource {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  type      String // e.g., "DOCUMENT", "VIDEO", "LINK"
+  content   String
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AIGeneratedContent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  type      String // e.g., "EXERCISE", "EXPLANATION", "QUIZ"
+  content   Json
+  context   String? // Store the conversation context that generated this
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Achievement {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String?
+  category     Category       @relation(fields: [categoryId], references: [id])
+  criteria     Json
+  imageUrl     String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  categoryId   String         @db.ObjectId
+  UserProgress UserProgress[]
+}
+
+model UserProgress {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String      @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  achievementId String      @db.ObjectId
+  progress      Json?
+  unlockedAt    DateTime?
+  isUnlocked    Boolean?    @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Category {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  achievements Achievement[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Like {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  activityId String   @db.ObjectId
+  type       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, activityId])
+}
+
+model Notification {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String
+  userId        String   @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  toUserId      String   @db.ObjectId
+  fromUserId    String   @db.ObjectId
+  activityId    String
+  activityType  String
+  activityTitle String
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, activityId, fromUserId])
+  @@index([userId, isRead]) // For fetching unread notifications
+  @@index([activityId, type]) // For activity-specific notifications
+}
+
+model UserSchedule {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String        @db.ObjectId
+  schedule   EmailSchedule @relation(fields: [scheduleId], references: [id])
+  scheduleId String        @db.ObjectId
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([userId, scheduleId])
+}

@@ -96,7 +96,9 @@ export const useConversation = ({
   const [userMessage, setUserMessage] = useState("");
   const [speechAceResult, setSpeechAceResult] = useState<any>(null);
   const [isAnalyzingSpeech, setIsAnalyzingSpeech] = useState(false);
-  const [audioBase64Map, setAudioBase64Map] = useState<Record<string, string>>({});
+  const [audioBase64Map, setAudioBase64Map] = useState<Record<string, string>>(
+    {},
+  );
   const MAX_CACHED_AUDIO = 10; // Keep last 10 messages
 
   // With:
@@ -113,21 +115,18 @@ export const useConversation = ({
   const audioChunksRef = useRef<BlobPart[]>([]);
 
   // Mobile Detection
-  const isMobile = useMobileDetection()
+  const isMobile = useMobileDetection();
 
-
-   // NEW: Cleanup function for old audio
+  // NEW: Cleanup function for old audio
   const cleanupOldAudio = useCallback((currentMessageIds: string[]) => {
-    setAudioBase64Map(prev => {
+    setAudioBase64Map((prev) => {
       const newMap: Record<string, string> = {};
-      currentMessageIds.forEach(id => {
+      currentMessageIds.forEach((id) => {
         if (prev[id]) newMap[id] = prev[id];
       });
       return newMap;
     });
   }, []);
-
-  
 
   // Helper functions (all moved from component)
   const scrollToBottom = useCallback(() => {
@@ -155,72 +154,80 @@ export const useConversation = ({
     [targetLanguage, getFullLanguageCode],
   );
 
-   const handleAudioPlayback = useCallback(async (
-  audioBase64: string, 
-  messageId: string,
-  attemptAutoPlay: boolean = true
-) => {
-  if (isMuted) {
-    console.log("🔇 Audio muted, skipping playback setup");
-    return;
-  }
-
-  try {
-    // Store base64 for replay button
-    setAudioBase64Map(prev => {
-      const entries = Object.entries(prev);
-      
-      // Cleanup oldest if over limit (more reliable way)
-      if (entries.length >= MAX_CACHED_AUDIO) {
-        // Find oldest by checking keys (assuming messageId includes timestamp)
-        const oldestId = entries.find(([id]) => !id.includes(messageId))?.[0];
-        
-        if (oldestId) {
-          console.log("🧹 Cleaning up old audio:", oldestId);
-          const newPrev = { ...prev };
-          delete newPrev[oldestId];
-          return { ...newPrev, [messageId]: audioBase64 };
-        }
+  const handleAudioPlayback = useCallback(
+    async (
+      audioBase64: string,
+      messageId: string,
+      attemptAutoPlay: boolean = true,
+    ) => {
+      if (isMuted) {
+        console.log("🔇 Audio muted, skipping playback setup");
+        return;
       }
-      
-      return { ...prev, [messageId]: audioBase64 };
-    });
 
-    // Desktop: Try auto-play
-    if (attemptAutoPlay && !isMobile) {
-      console.log("🖥️ Desktop: Attempting auto-play");
-      const url = createAudioUrl(audioBase64);
-      const audio = new Audio(url);
-      
       try {
-        await audio.play();
-        console.log("✅ Desktop auto-play succeeded");
-        
-        // Auto-revoke after play
-        audio.addEventListener('ended', () => {
-          URL.revokeObjectURL(url);
-          console.log("🗑️ Revoked URL after playback");
-        }, { once: true });
-        
-        return; // Success, exit early
+        // Store base64 for replay button
+        setAudioBase64Map((prev) => {
+          const entries = Object.entries(prev);
+
+          // Cleanup oldest if over limit (more reliable way)
+          if (entries.length >= MAX_CACHED_AUDIO) {
+            // Find oldest by checking keys (assuming messageId includes timestamp)
+            const oldestId = entries.find(
+              ([id]) => !id.includes(messageId),
+            )?.[0];
+
+            if (oldestId) {
+              console.log("🧹 Cleaning up old audio:", oldestId);
+              const newPrev = { ...prev };
+              delete newPrev[oldestId];
+              return { ...newPrev, [messageId]: audioBase64 };
+            }
+          }
+
+          return { ...prev, [messageId]: audioBase64 };
+        });
+
+        // Desktop: Try auto-play
+        if (attemptAutoPlay && !isMobile) {
+          console.log("🖥️ Desktop: Attempting auto-play");
+          const url = createAudioUrl(audioBase64);
+          const audio = new Audio(url);
+
+          try {
+            await audio.play();
+            console.log("✅ Desktop auto-play succeeded");
+
+            // Auto-revoke after play
+            audio.addEventListener(
+              "ended",
+              () => {
+                URL.revokeObjectURL(url);
+                console.log("🗑️ Revoked URL after playback");
+              },
+              { once: true },
+            );
+
+            return; // Success, exit early
+          } catch (error) {
+            console.log("⚠️ Desktop auto-play failed, showing button");
+            URL.revokeObjectURL(url); // Immediate cleanup
+          }
+        }
+
+        // Mobile or fallback: Just prepare button
+        console.log("📱 Mobile: Audio ready for manual playback");
       } catch (error) {
-        console.log("⚠️ Desktop auto-play failed, showing button");
-        URL.revokeObjectURL(url); // Immediate cleanup
+        console.error("❌ Audio setup failed:", error);
+        setError("Audio playback failed");
       }
-    }
-    
-    // Mobile or fallback: Just prepare button
-    console.log("📱 Mobile: Audio ready for manual playback");
-    
-  } catch (error) {
-    console.error("❌ Audio setup failed:", error);
-    setError("Audio playback failed");
-  }
-}, [isMuted, isMobile, setError, MAX_CACHED_AUDIO]); // ✅ Add MAX_CACHED_AUDIO to deps
+    },
+    [isMuted, isMobile, setError, MAX_CACHED_AUDIO],
+  ); // ✅ Add MAX_CACHED_AUDIO to deps
 
   // Helper function
   const createAudioUrl = useCallback((base64: string): string => {
-    const cleanBase64 = base64.replace(/^data:audio\/\w+;base64,/, '');
+    const cleanBase64 = base64.replace(/^data:audio\/\w+;base64,/, "");
     const binaryString = atob(cleanBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -323,89 +330,92 @@ export const useConversation = ({
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
-const handleConversation = async (message: string) => {
-  setIsProcessing(true);
-  setError(null);
+  const handleConversation = async (message: string) => {
+    setIsProcessing(true);
+    setError(null);
 
-  try {
-    if (!conversationRecordId) throw new Error("No active conversation");
+    try {
+      if (!conversationRecordId) throw new Error("No active conversation");
 
-    const newUserMessage: Message = {
-      role: "user",
-      content: message,
-      // Add ID for consistency
-      id: `user-${Date.now()}`,
-    };
+      const newUserMessage: Message = {
+        role: "user",
+        content: message,
+        // Add ID for consistency
+        id: `user-${Date.now()}`,
+      };
 
-    const response = await fetch("/api/new/conversation-moonshot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message,
-        history: conversationHistory,
-        title,
-        vocabulary,
-        dialogue,
-        voiceGender,
-        targetLanguage,
-        nativeLanguage,
-      }),
-    });
+      const response = await fetch("/api/new/conversation-moonshot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          history: conversationHistory,
+          title,
+          vocabulary,
+          dialogue,
+          voiceGender,
+          targetLanguage,
+          nativeLanguage,
+          speechAceResult: speechAceResult || "Not here yet"
+        }),
+      });
 
-    if (!response.ok)
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
 
-    const fullUserMessage: Message = {
-      ...newUserMessage,
-      translation: data.messageTranslation,
-      score: data.score,
-      label: data.label,
-      improvedResponse: data.improvedResponse,
-      corrections: data.corrections,
-    };
+      const fullUserMessage: Message = {
+        ...newUserMessage,
+        translation: data.messageTranslation,
+        score: data.score,
+        label: data.label,
+        improvedResponse: data.improvedResponse,
+        corrections: data.corrections,
+        pronunciationScore: speechAceResult
+      };
 
-    // ✅ Generate ID for AI message
-    const aiMessageId = `ai-${Date.now()}`;
-    
-    const aiMessage: Message = {
-      id: aiMessageId, // ✅ Add ID!
-      role: "assistant",
-      content: data.targetLanguage,
-      translation: data.nativeLanguage,
-    };
+      // ✅ Generate ID for AI message
+      const aiMessageId = `ai-${Date.now()}`;
 
-    const updateResponse = await fetch("/api/conversation/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversationRecordId,
-        messages: [fullUserMessage, aiMessage],
-      }),
-    });
+      const aiMessage: Message = {
+        id: aiMessageId, // ✅ Add ID!
+        role: "assistant",
+        content: data.targetLanguage,
+        translation: data.nativeLanguage,
+      };
 
-    if (!updateResponse.ok) throw new Error("Failed to save to DB");
+      const updateResponse = await fetch("/api/conversation/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationRecordId,
+          messages: [fullUserMessage, aiMessage],
+          pronunciationScore: speechAceResult
+        }),
+      });
 
-    const { messages: savedMessages } = await updateResponse.json();
-    setConversationHistory(savedMessages);
+      if (!updateResponse.ok) throw new Error("Failed to save to DB");
 
-    setIsGeneratingAudio(true);
-    if (!isMuted && data.audio) {
-      // ✅ Pass the AI message ID
-      await handleAudioPlayback(data.audio, aiMessageId);
+      const { messages: savedMessages } = await updateResponse.json();
+      setConversationHistory(savedMessages);
+
+      setIsGeneratingAudio(true);
+      if (!isMuted && data.audio) {
+        // ✅ Pass the AI message ID
+        await handleAudioPlayback(data.audio, aiMessageId);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("Failed to process conversation");
+    } finally {
+      setIsProcessing(false);
+      setIsGeneratingAudio(false);
+      setSuggestions([]);
+      setTranslationResult("");
     }
-  } catch (error) {
-    console.error("Error:", error);
-    setError("Failed to process conversation");
-  } finally {
-    setIsProcessing(false);
-    setIsGeneratingAudio(false);
-    setSuggestions([]);
-    setTranslationResult("");
-  }
-};
+  };
 
   const handleStartConversation = async () => {
     try {
@@ -502,7 +512,6 @@ const handleConversation = async (message: string) => {
     }
   };
 
-
   const usePhrase = (phrase: string) => {
     handleConversation(phrase);
   };
@@ -524,8 +533,11 @@ const handleConversation = async (message: string) => {
     setIsAnalyzingSpeech(true);
     try {
       const formData = new FormData();
+      const dialect =  getFullLanguageCode(targetLanguage)
       formData.append("audio", lastAudioBlobRef.current, "recording.webm");
       formData.append("transcript", lastTranscriptRef.current);
+      formData.append("dialect", dialect)
+      formData.append("conversationRecordId", conversationRecordId)
 
       const response = await fetch("/api/analyze-speechace", {
         method: "POST",
@@ -695,6 +707,9 @@ const handleConversation = async (message: string) => {
             lastTranscriptRef.current = transcript;
 
             stopRecording();
+
+            // 🎯 Run SpeechAce in parallel - don't await it
+            analyzeSpeechAce()
             await handleConversation(transcript);
             isProcessingTranscriptRef.current = false;
           }
@@ -797,6 +812,6 @@ const handleConversation = async (message: string) => {
     isAnalyzingSpeech,
     isMobile,
     createAudioUrl,
-    audioBase64Map
+    audioBase64Map,
   };
 };

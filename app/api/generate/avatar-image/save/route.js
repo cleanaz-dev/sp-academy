@@ -6,7 +6,7 @@ import { uploadImage } from "@/lib/uploadImage";
 
 export async function POST(request) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
 
     // Destructure aiImageUrl from the request body
     const { aiImageUrl } = await request.json();

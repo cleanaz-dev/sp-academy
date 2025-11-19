@@ -1,0 +1,143 @@
+model Story {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  title             String?
+  topic             String
+  difficulty        String
+  paragraphs        Int
+  genre             String
+  grammar           String
+  frenchText        String
+  englishText       String
+  teaser            String?
+  language          String?
+  vocabulary        Json // Array of {french, english, grammarType}
+  grammarHighlights Json
+  exercises         Json? // Array of {expression, explanation}
+  audioUrl          String?
+  imageUrl          String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  StoryQuestions    StoryQuestions[]
+  PracticeSessions  PracticeSession[]
+}
+
+model StoryQuestions {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  storyId   String   @db.ObjectId
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  question  String[]
+  answer    String[]
+  mark      String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BookReport {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String       @db.ObjectId
+  user      User         @relation(fields: [userId], references: [id])
+  bookId    String       @db.ObjectId
+  book      Book         @relation(fields: [bookId], references: [id])
+  startDate DateTime     @default(now())
+  endDate   DateTime?
+  status    ReportStatus @default(NOT_STARTED)
+  progress  Float        @default(0)
+  report    String?
+  rating    Int?         @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Book {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  title    String
+  author   String
+  genre    String
+  pages    Int
+  language String?
+
+  // Reading Tracking
+  isReading       Boolean @default(false)
+  currentPage     Int     @default(0)
+  readingProgress Int     @default(0)
+  isCompleted     Boolean @default(false)
+
+  // Optional
+  coverUrl    String?
+  description String?
+
+  readingLogs ReadingLog[]
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  BookReport BookReport[]
+}
+
+model ReadingLog {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  dateRead     DateTime @default(now())
+  startPage    Int
+  endPage      Int
+  pagesRead    Int
+  shortSummary String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  book         Book?    @relation(fields: [bookId], references: [id])
+  bookId       String?  @db.ObjectId
+}
+
+model EmailTemplate {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  templateName   String
+  subject        String
+  content        String
+  designHtml     String
+  handlebarsType HandlebarsType
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  EmailSchedule  EmailSchedule[]
+}
+
+enum HandlebarsType {
+  Lesson
+  Course
+  Book
+  Exercise
+}
+
+model EmailSchedule {
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleName String
+  templateId   String         @db.ObjectId
+  status       ScheduleStatus @default(ACTIVE)
+  frequency    String // DAILY, WEEKLY, MONTHLY
+  startDate    DateTime       @default(now())
+  endDate      DateTime? // Optional end date
+  timeOfDay    String // Time to send (HH:mm format)
+  daysOfWeek   String? // Comma-separated days (e.g., "MON,WED,FRI")
+  timeZone     String         @default("UTC")
+  lastRun      DateTime? // Track last execution
+  nextRun      DateTime? // Calculate next run time
+  recipients   String[] // Array of email addresses
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  template      EmailTemplate          @relation(fields: [templateId], references: [id])
+  executionLogs ScheduleExecutionLog[]
+
+  UserSchedule UserSchedule[]
+}
+
+model ScheduleExecutionLog {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleId String        @db.ObjectId
+  runAt      DateTime      @default(now())
+  status     String // success, failure
+  details    String? // Additional details or error message
+  schedule   EmailSchedule @relation(fields: [scheduleId], references: [id])
+}

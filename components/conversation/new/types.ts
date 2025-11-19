@@ -1,3 +1,4 @@
+import type { SpeechAceResults } from "@/lib/moonshot/types";
 export interface Suggestion {
   targetLanguage: string;
   nativeLanguage: string;
@@ -31,6 +32,7 @@ export interface ImprovementTooltipProps {
   originalText: string;
   corrections?: Corrections;
   speakPhrase?: (text: string) => void; // Make it optional or provide default
+  pronunciationScore?: SpeechAceResults
 }
 
 export type VoiceGender = 'male' | 'female';
@@ -45,6 +47,7 @@ export interface Message {
   corrections?: Corrections;
   score?: number;
   timestamp?: number;
+  pronunciationScore?: SpeechAceResults
 }
 
 // Suggestions system

@@ -9,8 +9,9 @@ import { navItems } from "./NavLinks";
 import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 import { getReadNotificationsByUserId } from "@/lib/actions";
-import { PanelLeftOpen,PanelRightOpen } from "lucide-react";
+import { PanelLeftOpen, PanelRightOpen } from "lucide-react";
 import { PanelLeftClose } from "lucide-react";
+import { Spinner } from "../ui/spinner";
 
 export const Topbar = ({
   sidebarOpen,
@@ -21,7 +22,7 @@ export const Topbar = ({
   setDesktopSidebarOpen,
 }) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // Track if there are unread notifications
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
 
   useEffect(() => {
     // Fetch unread notifications when the user changes or the component mounts
@@ -136,7 +137,7 @@ export const Topbar = ({
           )}
         </Button>
 
-        <UserButton />
+        {isLoaded ? <UserButton /> : <Spinner />}
       </div>
     </div>
   );

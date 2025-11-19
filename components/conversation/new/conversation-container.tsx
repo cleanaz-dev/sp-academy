@@ -27,6 +27,7 @@ interface Props {
   aiAvatarMaleUrl: string;
   aiAvatarFemaleUrl: string;
   audioBase64Map: Record<string, string>;
+  
 
   // Handlers
   onToggleVoiceGender: () => void;
@@ -81,7 +82,7 @@ export const ConversationContainer: React.FC<Props> = ({
   return (
     <div className="container mx-auto flex max-w-4xl gap-4">
       <div className="w-full">
-        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow">
+        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow max-h-[1200px]">
           {/* Header with Voice Toggle */}
           <div className="flex items-center justify-between p-2">
             <header>

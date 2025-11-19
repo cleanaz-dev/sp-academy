@@ -5,7 +5,7 @@ import { createUserAvatar } from "@/lib/replicate";
 
 export async function POST(request) {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }

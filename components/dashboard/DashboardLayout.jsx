@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUser } from "@clerk/nextjs";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { NotificationsPanel } from "./NotificationsPanel";
@@ -20,17 +19,9 @@ export default function DashboardLayout({ children }) {
   const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true); // For desktop sidebar
   const [isSheetSidebarOpen, setIsSheetSidebarOpen] = useState(false); // For mobile sheet sidebar
   const [showNotifications, setShowNotifications] = useState(false);
-  const { isLoaded } = useUser();
   const pathname = usePathname();
 
-  // Show loading until everything is ready
-  if (!isLoaded) {
-    return (
-      <div className="flex h-screen w-screen overflow-hidden">
-        <div>Loading...</div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">

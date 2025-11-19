@@ -1,0 +1,100 @@
+enum ScheduleStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum GameType {
+  Verbal
+  Visual
+  Acoustic
+}
+
+enum PracticeStatus {
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum WordStatus {
+  NEEDS_PRACTICE
+  IMPROVING
+  MASTERED
+}
+
+enum ReportStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Languages {
+  ENGLISH
+  FRENCH
+  SPANISH
+}
+
+enum VoicePreference {
+  MALE
+  FEMALE
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Billing {
+  FREE
+  BASIC_MONTHLY
+  BASIC_ANNUALLY
+  PREMIUM_MONTHLY
+  PREMIUM_ANNUALLY
+}
+
+enum BillingInterval {
+  MONTHLY
+  ANNUALLY
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  PAST_DUE
+  CANCELED
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  DROPPED
+}
+
+enum LessonType {
+  Lesson
+  Lecture
+  Conversation
+  Visual
+  Exercise
+}
+
+enum Role {
+  USER
+  STUDENT
+  TEACHER
+  ADMIN
+}

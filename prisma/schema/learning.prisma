@@ -1,0 +1,228 @@
+model Lesson {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subject     String?
+  description String?
+  duration    String?
+  level       Int?
+  content     String      @db.String
+  type        LessonType?
+  coverUrl    String?
+  topics      Json?
+  teacher     Teacher?    @relation(fields: [teacherId], references: [id])
+  teacherId   String?     @db.ObjectId
+  quiz        Quiz?
+  course      Course?     @relation(fields: [courseId], references: [id])
+  courseId    String?     @db.ObjectId
+  Progress    Progress[]
+  orderIndex  Int? // Add this to maintain lesson order in course
+  exercise    Exercise[]
+  Lecture     Lecture[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Lecture {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  content     String?
+  coverUrl    String?
+  Lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId    String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Exercise {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  lesson         Lesson?  @relation(fields: [lessonId], references: [id])
+  lessonId       String?  @db.ObjectId
+  title          String
+  type           String // Exercise type identifier
+  question       String // Main prompt/instruction
+  correctAnswer  String?
+  correct_answer String? // Flexible answer storage
+  additionalData Json? // All type-specific data
+  objectives     Json?
+  order          Int? // For sorting within lesson
+  completed      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([lessonId, order])
+}
+
+model Quiz {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  questions  Question[]
+  lessonId   String       @unique @db.ObjectId
+  lesson     Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  quizResult QuizResult[]
+}
+
+model Question {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  quizId  String   @db.ObjectId
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text    String
+  options String[]
+  answer  String
+}
+
+model QuizResult {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  quizId      String   @db.ObjectId
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  score       Float
+  attempts    Int      @default(0)
+  completedAt DateTime @default(now())
+}
+
+model PronunciationSession {
+  id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String              @db.ObjectId
+  user               User                @relation(fields: [userId], references: [id])
+  referenceText      String
+  recognizedText     String
+  language           String
+  audioUrl           String?
+  duration           Float
+  overallScore       Float
+  accuracyScore      Float
+  fluencyScore       Float
+  pronunciationScore Float
+  completenessScore  Float
+  words              PronunciationWord[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+}
+
+model PronunciationWord {
+  id            String               @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId     String               @db.ObjectId
+  session       PronunciationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  word          String
+  accuracyScore Float
+  errorType     String // None, Omission, Insertion, Mispronunciation
+  duration      Float?
+  offset        Float?
+  syllables     String[]
+  createdAt     DateTime             @default(now())
+}
+
+model PronunciationProgress {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id])
+  language         String
+  totalSessions    Int       @default(0)
+  averageScore     Float     @default(0)
+  practiceStreak   Int       @default(0)
+  lastPracticeDate DateTime?
+  commonMistakes   Json? // Array of {word, count, errorType}
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, language])
+}
+
+model PracticeSession {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String         @db.ObjectId
+  user          User           @relation(fields: [userId], references: [id])
+  storyId       String         @db.ObjectId // New field to link to specific story
+  story         Story          @relation(fields: [storyId], references: [id])
+  status        PracticeStatus @default(IN_PROGRESS)
+  language      String
+  practiceWords PracticeWord[]
+  progress      Float          @default(0) // Percentage of words practiced
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model PracticeWord {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  practiceSessionId String            @db.ObjectId
+  practiceSession   PracticeSession   @relation(fields: [practiceSessionId], references: [id], onDelete: Cascade)
+  originalWord      String
+  attempts          PracticeAttempt[]
+  status            WordStatus        @default(NEEDS_PRACTICE)
+  originalContext   String? // Add context from the story
+  difficulty        Int               @default(1) // Can be used for adaptive practice
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model PracticeAttempt {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  practiceWordId String       @db.ObjectId
+  practiceWord   PracticeWord @relation(fields: [practiceWordId], references: [id], onDelete: Cascade)
+  audioUrl       String?
+  accuracyScore  Float?
+  feedback       String?
+  createdAt      DateTime     @default(now())
+}
+
+model LearningProgress {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String    @db.ObjectId
+  user               User      @relation(fields: [userId], references: [id])
+  level              String    @default("beginner")
+  language           Languages @default(ENGLISH)
+  vocabularyMastered String[]
+  lastActivity       DateTime
+}
+
+model Course {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  teacherId   String?      @db.ObjectId
+  teacher     User?        @relation(fields: [teacherId], references: [id])
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  level       Level
+  coverUrl    String?
+  status      CourseStatus // Renamed to be more specific
+  duration    String? // Total course duration
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Enrollment {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String           @db.ObjectId
+  courseId       String           @db.ObjectId
+  user           User             @relation(fields: [userId], references: [id])
+  course         Course           @relation(fields: [courseId], references: [id])
+  status         EnrollmentStatus
+  progress       Float // Percentage of completion
+  lastAccessedAt DateTime?
+  completedAt    DateTime?
+  lessonProgress Progress[] // Track individual lesson progress
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String      @db.ObjectId
+  lessonId     String      @db.ObjectId
+  user         User        @relation(fields: [userId], references: [id])
+  lesson       Lesson      @relation(fields: [lessonId], references: [id])
+  status       Status
+  score        Int?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id])
+  enrollmentId String?     @db.ObjectId
+  completedAt  DateTime? // Add this field
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, lessonId])
+}

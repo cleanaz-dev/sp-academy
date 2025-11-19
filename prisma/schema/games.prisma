@@ -1,0 +1,58 @@
+model Game {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  description      String?
+  rules            String
+  imageUrl         String?
+  language         Languages          @default(ENGLISH)
+  difficulty       Int                @default(1)
+  type             GameType
+  theme            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  GameScore        GameScore[]
+  gameData         Json[]
+  GameSoundEffects GameSoundEffects[]
+  GameVariation    GameVariation[]
+}
+
+model GameScore {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id])
+  score     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, gameId])
+}
+
+model GameSoundEffects {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameId        String   @db.ObjectId
+  game          Game     @relation(fields: [gameId], references: [id])
+  correctAnswer String
+  wrongAnswer   String?
+  timerBepp     String?
+  streakStart   String?
+  streakEnd     String?
+  gameStart     String?
+  gameEnd       String?
+  otherSounds   Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model GameVariation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameId    String   @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id])
+  variation String   @default("default") // Unique identifier for this variation
+  gameData  Json[] // Store structured game content
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, variation]) // Ensure each variation is unique per game
+}
