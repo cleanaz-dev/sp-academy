@@ -22,7 +22,7 @@ export const useSuggestions = (): UseSuggestionsReturn => {
     setError(null);
     try {
       // Replace with your actual API call
-      const response = await fetch("/api/suggestions");
+      const response = await fetch("/api/conversation/suggestions");
       const data = await response.json();
       setSuggestions(data);
     } catch (err) {

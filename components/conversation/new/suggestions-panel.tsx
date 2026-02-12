@@ -15,6 +15,7 @@ export const SuggestionsPanel = () => {
     conversationHistory,
   } = useSuggestions();
 
+  console.log("conversation history:", conversationHistory)
   return (
     <div className="mt-4 space-y-2">
       <div className="flex items-center justify-between">

@@ -66,7 +66,7 @@ export default function CurrentlyReading({ books }) {
                 aria-label={`Reading progress: ${book.readingProgress}%`}
               >
                 <div
-                  className="duration-[600ms] h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all ease-out"
+                  className="duration-700 h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all ease-out"
                   style={{ width: `${book.readingProgress}%` }}
                 />
               </div>
