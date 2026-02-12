@@ -82,15 +82,13 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
 
   const message = await miniMax.messages.create({
     model: MINIMAX_MODELS.M2_5_LIGHTNING,
-    max_tokens: 1000,
+    max_tokens: 300, // Reduced from 1000
     system: prompt,
     messages: [
       { role: 'user', content: params.message }
     ],
     temperature: 0.3,
   });
-
-  console.log("MiniMax sendMessage response:", JSON.stringify(message, null, 2));
 
   // Extract text from MiniMax response
   let content = '';
@@ -104,7 +102,6 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
   }
 
   if (!content) {
-    console.error("No text content found in response:", message);
     throw new Error("No response from MiniMax");
   }
 
@@ -112,7 +109,6 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
   content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
   const parsed = JSON.parse(content);
-  console.log("parsed conversation:", parsed);
 
   return {
     targetLanguage: parsed.targetLanguage,
@@ -127,15 +123,13 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
 
   const message = await miniMax.messages.create({
     model: MINIMAX_MODELS.M2_5_LIGHTNING,
-    max_tokens: 500,
+    max_tokens: 200, // Reduced from 500
     system: prompt,
     messages: [
       { role: 'user', content: params.userMessage }
     ],
     temperature: 0.3,
   });
-
-  console.log("MiniMax getUserScore response:", JSON.stringify(message, null, 2));
 
   // Extract text from MiniMax response
   let content = '';
@@ -149,7 +143,6 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
   }
 
   if (!content) {
-    console.error("No text content found in response:", message);
     throw new Error("No scoring response from MiniMax");
   }
 
@@ -157,7 +150,6 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
   content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
   const parsed = JSON.parse(content);
-  console.log("Parsed user score:", parsed);
 
   return {
     score: parsed.score,

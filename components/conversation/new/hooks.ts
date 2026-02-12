@@ -337,92 +337,97 @@ export const useConversation = ({
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
-  const handleConversation = async (message: string) => {
-    setIsProcessing(true);
-    setError(null);
+const handleConversation = async (message: string) => {
+  setIsProcessing(true);
+  setError(null);
 
-    try {
-      if (!conversationRecordId) throw new Error("No active conversation");
+  try {
+    if (!conversationRecordId) throw new Error("No active conversation");
 
-      const newUserMessage: Message = {
-        role: "user",
-        content: message,
-        // Add ID for consistency
-        id: `user-${Date.now()}`,
-      };
+    const newUserMessage: Message = {
+      role: "user",
+      content: message,
+      id: `user-${Date.now()}`,
+    };
 
-      const response = await fetch("/api/new/conversation-minimax", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          history: conversationHistory,
-          title,
-          vocabulary,
-          dialogue,
-          voiceGender,
-          targetLanguage,
-          nativeLanguage,
-          speechAceResult: speechAceResult || "Not here yet"
-        }),
-      });
+    // 🚀 CALL API (still single endpoint for now)
+    const response = await fetch("/api/new/conversation-minimax", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: conversationHistory,
+        title,
+        vocabulary,
+        dialogue,
+        voiceGender,
+        targetLanguage,
+        nativeLanguage,
+        speechAceResult: speechAceResult || "Not here yet"
+      }),
+    });
 
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+    // ✅ SHOW AI MESSAGE IMMEDIATELY (no grading yet)
+    const aiMessageId = `ai-${Date.now()}`;
+    const aiMessage: Message = {
+      id: aiMessageId,
+      role: "assistant",
+      content: data.targetLanguage,
+      translation: data.nativeLanguage,
+    };
 
-      const fullUserMessage: Message = {
-        ...newUserMessage,
-        translation: data.messageTranslation,
-        score: data.score,
-        label: data.label,
-        improvedResponse: data.improvedResponse,
-        corrections: data.corrections,
-        pronunciationScore: speechAceResult
-      };
-
-      // ✅ Generate ID for AI message
-      const aiMessageId = `ai-${Date.now()}`;
-
-      const aiMessage: Message = {
-        id: aiMessageId, // ✅ Add ID!
-        role: "assistant",
-        content: data.targetLanguage,
-        translation: data.nativeLanguage,
-      };
-
-      const updateResponse = await fetch("/api/conversation/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationRecordId,
-          messages: [fullUserMessage, aiMessage],
-          pronunciationScore: speechAceResult
-        }),
-      });
-
-      if (!updateResponse.ok) throw new Error("Failed to save to DB");
-
-      const { messages: savedMessages } = await updateResponse.json();
-      setConversationHistory(savedMessages);
-
-      setIsGeneratingAudio(true);
-      if (!isMuted && data.audio) {
-        // ✅ Pass the AI message ID
-        await handleAudioPlayback(data.audio, aiMessageId);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Failed to process conversation");
-    } finally {
-      setIsProcessing(false);
-      setIsGeneratingAudio(false);
-      setSuggestions([]);
-      setTranslationResult("");
+    // Add AI message to UI immediately
+    setConversationHistory(prev => [...prev, newUserMessage, aiMessage]);
+    
+    // Play audio if available
+    setIsGeneratingAudio(true);
+    if (!isMuted && data.audio) {
+      await handleAudioPlayback(data.audio, aiMessageId);
     }
-  };
+    setIsGeneratingAudio(false);
+
+    // ✅ NOW add grading info (update the user message)
+    const fullUserMessage: Message = {
+      ...newUserMessage,
+      translation: data.messageTranslation,
+      score: data.score,
+      label: data.label,
+      improvedResponse: data.improvedResponse,
+      corrections: data.corrections,
+      pronunciationScore: speechAceResult
+    };
+
+    // Update UI with grading
+    setConversationHistory(prev => 
+      prev.map(msg => msg.id === newUserMessage.id ? fullUserMessage : msg)
+    );
+
+    // Save to DB
+    const updateResponse = await fetch("/api/conversation/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationRecordId,
+        messages: [fullUserMessage, aiMessage],
+        pronunciationScore: speechAceResult
+      }),
+    });
+
+    if (!updateResponse.ok) throw new Error("Failed to save to DB");
+
+  } catch (error) {
+    console.error("Error:", error);
+    setError("Failed to process conversation");
+  } finally {
+    setIsProcessing(false);
+    setSuggestions([]);
+    setTranslationResult("");
+  }
+};
 
   const handleStartConversation = async () => {
     try {
