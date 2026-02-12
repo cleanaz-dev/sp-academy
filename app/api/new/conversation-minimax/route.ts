@@ -58,33 +58,33 @@ export async function POST(req: Request) {
       title,
     };
 
-    console.log("Starting Moonshot API calls...");
+    console.log("Starting MiniMax API calls...");
     const moonshotStart = Date.now();
 
     // Run Moonshot services in parallel (now only 2 calls!)
     const [aiResponse, userScore] = await Promise.all([
       sendMessage(conversationParams)
         .then((response) => {
-          console.log("✅ Moonshot sendMessage SUCCESS");
+          console.log("✅ MiniMax sendMessage SUCCESS");
           return response;
         })
         .catch((error) => {
-          console.error("❌ Moonshot sendMessage FAILED:", error);
+          console.error("❌ MiniMax sendMessage FAILED:", error);
           throw error;
         }),
       getUserScoreNew(scoringParams)
         .then((response) => {
-          console.log("✅ Moonshot scoring SUCCESS");
+          console.log("✅ MiniMax scoring SUCCESS");
           return response;
         })
         .catch((error) => {
-          console.error("❌ Moonshot scoring FAILED:", error);
+          console.error("❌ MiniMax scoring FAILED:", error);
           throw error;
         }),
     ]);
 
     const moonshotTime = Date.now() - moonshotStart;
-    console.log(`🎯 ALL MOONSHOT CALLS COMPLETED in ${moonshotTime}ms`);
+    console.log(`🎯 ALL MiniMax CALLS COMPLETED in ${moonshotTime}ms`);
 
     // ✅ ADD TTS - Synthesize the AI's response (NOT the user's input)
     let audio = null;

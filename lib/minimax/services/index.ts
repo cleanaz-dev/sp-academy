@@ -1,3 +1,4 @@
+// @/lib/minimax/services/index.ts
 import { miniMax, MINIMAX_MODELS } from '@/lib/minimax';
 import type { ConversationParams, AIResponse, ScoringParams, UserScore } from '@/lib/moonshot/types';
 import { conversationSchema } from '@/lib/moonshot/schemas/conversation-schema';
@@ -20,7 +21,10 @@ ${params.history?.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 User says: "${params.message}"
 
 Rules: 5-6 words, present tense, end with question, use vocabulary above.
-Critical: At the fast food counter, no checks — just roleplay and say 'Thanks, come again' when appropriate`;
+Critical: At the fast food counter, no checks — just roleplay and say 'Thanks, come again' when appropriate
+
+Respond with valid JSON only (no markdown) matching this schema:
+${JSON.stringify(conversationSchema, null, 2)}`;
 }
 
 function getUserScorePrompt({
@@ -67,7 +71,10 @@ ${recentHistory.map((msg) => `${msg.role}: ${msg.content}`).join("\n")}
 "${userMessage}"
 
 ### Suggested Vocabulary:
-${vocabulary?.map((v) => `${v.targetLanguage} - ${v.nativeLanguage}`).join("\n") || 'No vocabulary provided'}`;
+${vocabulary?.map((v) => `${v.targetLanguage} - ${v.nativeLanguage}`).join("\n") || 'No vocabulary provided'}
+
+Respond with valid JSON only (no markdown) matching this schema:
+${JSON.stringify(userScoreSchema, null, 2)}`;
 }
 
 export const sendMessage = async (params: ConversationParams): Promise<AIResponse> => {
@@ -80,12 +87,6 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
     messages: [
       { role: 'user', content: params.message }
     ],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: conversationSchema
-      }
-    },
     temperature: 0.3,
   });
 
@@ -99,6 +100,9 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
   }
 
   if (!content) throw new Error("No response from MiniMax");
+
+  // Strip markdown if present
+  content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
   const parsed = JSON.parse(content);
   console.log("parsed conversation:", parsed);
@@ -121,12 +125,6 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
     messages: [
       { role: 'user', content: params.userMessage }
     ],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: userScoreSchema
-      }
-    },
     temperature: 0.3,
   });
 
@@ -140,6 +138,9 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
   }
 
   if (!content) throw new Error("No scoring response from MiniMax");
+
+  // Strip markdown if present
+  content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
   const parsed = JSON.parse(content);
   console.log("Parsed user score:", parsed);
