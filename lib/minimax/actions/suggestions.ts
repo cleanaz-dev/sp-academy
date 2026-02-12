@@ -1,7 +1,5 @@
 import { miniMax, MINIMAX_MODELS } from "@/lib/minimax"
 
-
-
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -45,7 +43,7 @@ RULES:
 - Focus on user responses, not assistant replies.`;
 
   const message = await miniMax.messages.create({
-    model: MINIMAX_MODELS.M2_5_LIGHTNING, // or "MiniMax-M2.1-lightning" for faster responses
+    model: MINIMAX_MODELS.M2_1_LIGHTNING, // or "MiniMax-M2.1-lightning" for faster responses
     max_tokens: 500,
     system: systemPrompt,
     messages: [

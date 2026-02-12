@@ -90,16 +90,23 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
     temperature: 0.3,
   });
 
-  // Extract text from MiniMax response (handle thinking blocks)
+  console.log("MiniMax sendMessage response:", JSON.stringify(message, null, 2));
+
+  // Extract text from MiniMax response
   let content = '';
-  for (const block of message.content) {
-    if (block.type === 'text') {
-      content = block.text;
-      break;
+  if (message.content && Array.isArray(message.content)) {
+    for (const block of message.content) {
+      if (block.type === 'text') {
+        content = block.text;
+        break;
+      }
     }
   }
 
-  if (!content) throw new Error("No response from MiniMax");
+  if (!content) {
+    console.error("No text content found in response:", message);
+    throw new Error("No response from MiniMax");
+  }
 
   // Strip markdown if present
   content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -128,16 +135,23 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
     temperature: 0.3,
   });
 
+  console.log("MiniMax getUserScore response:", JSON.stringify(message, null, 2));
+
   // Extract text from MiniMax response
   let content = '';
-  for (const block of message.content) {
-    if (block.type === 'text') {
-      content = block.text;
-      break;
+  if (message.content && Array.isArray(message.content)) {
+    for (const block of message.content) {
+      if (block.type === 'text') {
+        content = block.text;
+        break;
+      }
     }
   }
 
-  if (!content) throw new Error("No scoring response from MiniMax");
+  if (!content) {
+    console.error("No text content found in response:", message);
+    throw new Error("No scoring response from MiniMax");
+  }
 
   // Strip markdown if present
   content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
