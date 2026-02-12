@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export const miniMax = new Anthropic({
     apiKey: process.env['MINIMAX_API_KEY'],
+    baseURL: 'https://api.minimax.io',
 })
 
 export const MINIMAX_MODELS = {
