@@ -48,7 +48,7 @@ export default function SingleConversationPageCopy({
           {" "}
           {/* Ensure full width and center */}
           <ConversationComponent 
-           userAvatarUrl={avatarUrl}
+            userAvatarUrl={avatarUrl}
             aiAvatarMaleUrl={conversation.aiAvatarMaleUrl}
             aiAvatarFemaleUrl={conversation.aiAvatarFemaleUrl}
             vocabulary={conversation.vocabulary}

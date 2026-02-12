@@ -9,22 +9,31 @@ import {
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { useMobileDetection } from "@/hooks/use-mobile-detection";
 
-export const useSuggestions = (): UseSuggestionsReturn => {
+export const useSuggestions = (conversationHistory: Message[]): UseSuggestionsReturn => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock conversation history - replace with your actual context
-  const conversationHistory: Array<{ role: string; content: string }> = [];
-
   const getSuggestions = async () => {
+    if (conversationHistory.length === 0) {
+      setError("No conversation history available");
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
-      // Replace with your actual API call
-      const response = await fetch("/api/conversation/suggestions");
+      const response = await fetch("/api/conversation/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          history: conversationHistory,
+          targetLanguage: "French", // Pass these from your context
+          nativeLanguage: "English",
+        }),
+      });
       const data = await response.json();
-      setSuggestions(data);
+      setSuggestions(data.suggestions);
     } catch (err) {
       setError("Failed to fetch suggestions");
     } finally {
@@ -33,12 +42,10 @@ export const useSuggestions = (): UseSuggestionsReturn => {
   };
 
   const speakPhrase = (text: string) => {
-    // Use Web Speech API or your audio service
     console.log("Speaking:", text);
   };
 
   const usePhrase = (text: string) => {
-    // Add to conversation input
     console.log("Using phrase:", text);
   };
 
@@ -344,7 +351,7 @@ export const useConversation = ({
         id: `user-${Date.now()}`,
       };
 
-      const response = await fetch("/api/new/conversation-moonshot", {
+      const response = await fetch("/api/new/conversation-minimax", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

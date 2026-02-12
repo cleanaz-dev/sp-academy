@@ -4,7 +4,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSuggestions } from './hooks';
 
-export const SuggestionsPanel = () => {
+export const SuggestionsPanel = ({ conversationHistory }) => {
   const {
     suggestions,
     isLoading: isLoadingSuggestions,
@@ -12,10 +12,8 @@ export const SuggestionsPanel = () => {
     getSuggestions,
     speakPhrase,
     usePhrase,
-    conversationHistory,
-  } = useSuggestions();
+  } = useSuggestions(conversationHistory);
 
-  console.log("conversation history:", conversationHistory)
   return (
     <div className="mt-4 space-y-2">
       <div className="flex items-center justify-between">
