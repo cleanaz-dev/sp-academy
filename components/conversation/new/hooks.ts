@@ -43,21 +43,12 @@ export const useSuggestions = (
     }
   };
 
-  const speakPhrase = (text: string) => {
-    console.log("Speaking:", text);
-  };
-
-  const usePhrase = (text: string) => {
-    console.log("Using phrase:", text);
-  };
 
   return {
     suggestions,
     isLoading,
     error,
     getSuggestions,
-    speakPhrase,
-    usePhrase,
     conversationHistory,
   };
 };
