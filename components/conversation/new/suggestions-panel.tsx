@@ -4,14 +4,16 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSuggestions } from './hooks';
 
-export const SuggestionsPanel = ({ conversationHistory }) => {
+export const SuggestionsPanel = ({ 
+  conversationHistory,
+  speakPhrase,
+  usePhrase 
+}) => {
   const {
     suggestions,
     isLoading: isLoadingSuggestions,
     error,
     getSuggestions,
-    speakPhrase,
-    usePhrase,
   } = useSuggestions(conversationHistory);
 
   return (

@@ -189,6 +189,8 @@ export const ConversationContainer: React.FC<Props> = ({
           {/* Suggestions Panel */}
           <SuggestionsPanel
             conversationHistory={conversationHistory}
+            speakPhrase={speakPhrase}
+            usePhrase={usePhrase}
           />
 
           {/* Action Buttons */}

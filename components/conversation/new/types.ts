@@ -9,8 +9,6 @@ export interface UseSuggestionsReturn {
   isLoading: boolean;
   error: string | null;
   getSuggestions: () => Promise<void>;
-  speakPhrase: (text: string) => void;
-  usePhrase: (text: string) => void;
   conversationHistory: Array<{ role: string; content: string }>;
 }
 
