@@ -9,9 +9,9 @@ export interface UseSuggestionsReturn {
   isLoading: boolean;
   error: string | null;
   getSuggestions: () => Promise<void>;
+  clearSuggestions: () => void;  // ← Add 'void' here
   conversationHistory: Array<{ role: string; content: string }>;
 }
-
 export interface CorrectionDetail {
   correction: string;
   reason?: string;

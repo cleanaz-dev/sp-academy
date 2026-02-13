@@ -1,10 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useSuggestions } from './hooks';
+import React from "react";
+import { motion } from "framer-motion";
+import { Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useSuggestions } from "./hooks";
 
-export const SuggestionsPanel = ({ 
+export const SuggestionsPanel = ({
   conversationHistory,
   speakPhrase,
   usePhrase,
@@ -14,6 +14,7 @@ export const SuggestionsPanel = ({
     isLoading: isLoadingSuggestions,
     error,
     getSuggestions,
+    clearSuggestions,
   } = useSuggestions(conversationHistory);
 
   return (
@@ -97,7 +98,10 @@ export const SuggestionsPanel = ({
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => usePhrase(suggestion.targetLanguage)}
+                      onClick={() => {
+                        clearSuggestions();
+                        usePhrase(suggestion.targetLanguage);
+                      }}
                       className="p-1 text-gray-600 transition-colors hover:text-purple-600"
                       title="Use in conversation"
                       aria-label={`Use ${suggestion.targetLanguage} in conversation`}

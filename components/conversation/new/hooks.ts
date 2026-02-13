@@ -42,13 +42,16 @@ export const useSuggestions = (
       setIsLoading(false);
     }
   };
-
+ const clearSuggestions = () => {
+    setSuggestions([]);
+  };
 
   return {
     suggestions,
     isLoading,
     error,
     getSuggestions,
+    clearSuggestions,
     conversationHistory,
   };
 };
@@ -603,7 +606,6 @@ const handleConversation = async (message: string) => {
 
   const usePhrase = (phrase: string) => {
     handleConversation(phrase);
-    setSuggestions([]);
   };
 
   const toggleVoiceGender = (checked: boolean) => {
