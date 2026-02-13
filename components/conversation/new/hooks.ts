@@ -9,7 +9,9 @@ import {
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { useMobileDetection } from "@/hooks/use-mobile-detection";
 
-export const useSuggestions = (conversationHistory: Message[]): UseSuggestionsReturn => {
+export const useSuggestions = (
+  conversationHistory: Message[],
+): UseSuggestionsReturn => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,22 @@ export const useConversation = ({
 
   // Mobile Detection
   const isMobile = useMobileDetection();
+
+
+  interface ReplyApiResponse {
+  messageTranslation: string;
+  targetLanguage: string;   
+  nativeLanguage: string;   
+  audio: string | null;     
+}
+
+interface ScoreApiResponse {
+  label?: 'Excellent' | 'Great' | 'Good' | 'OK' | 'Poor';
+  score?: number;
+  explanation?: string;
+  improvedResponse?: string;
+  corrections?: Corrections; // Uses your existing Corrections type
+}
 
   // NEW: Cleanup function for old audio
   const cleanupOldAudio = useCallback((currentMessageIds: string[]) => {
@@ -337,92 +355,165 @@ export const useConversation = ({
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
-  const handleConversation = async (message: string) => {
-    setIsProcessing(true);
-    setError(null);
+const handleConversation = async (message: string) => {
+  setIsProcessing(true);
+  setError(null);
+  
+  // 1. GENERATE IDs UPFRONT
+  // We need these to target specific messages during state updates
+  const userMessageId = `user-${Date.now()}`;
+  const aiMessageId = `ai-${Date.now()}`;
 
-    try {
-      if (!conversationRecordId) throw new Error("No active conversation");
-
-      const newUserMessage: Message = {
-        role: "user",
-        content: message,
-        // Add ID for consistency
-        id: `user-${Date.now()}`,
-      };
-
-      const response = await fetch("/api/new/conversation-minimax", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          history: conversationHistory,
-          title,
-          vocabulary,
-          dialogue,
-          voiceGender,
-          targetLanguage,
-          nativeLanguage,
-          speechAceResult: speechAceResult || "Not here yet"
-        }),
-      });
-
-      if (!response.ok)
-        throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      const fullUserMessage: Message = {
-        ...newUserMessage,
-        translation: data.messageTranslation,
-        score: data.score,
-        label: data.label,
-        improvedResponse: data.improvedResponse,
-        corrections: data.corrections,
-        pronunciationScore: speechAceResult
-      };
-
-      // ✅ Generate ID for AI message
-      const aiMessageId = `ai-${Date.now()}`;
-
-      const aiMessage: Message = {
-        id: aiMessageId, // ✅ Add ID!
-        role: "assistant",
-        content: data.targetLanguage,
-        translation: data.nativeLanguage,
-      };
-
-      const updateResponse = await fetch("/api/conversation/update", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationRecordId,
-          messages: [fullUserMessage, aiMessage],
-          pronunciationScore: speechAceResult
-        }),
-      });
-
-      if (!updateResponse.ok) throw new Error("Failed to save to DB");
-
-      const { messages: savedMessages } = await updateResponse.json();
-      setConversationHistory(savedMessages);
-
-      setIsGeneratingAudio(true);
-      if (!isMuted && data.audio) {
-        // ✅ Pass the AI message ID
-        await handleAudioPlayback(data.audio, aiMessageId);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setError("Failed to process conversation");
-    } finally {
-      setIsProcessing(false);
-      setIsGeneratingAudio(false);
-      setSuggestions([]);
-      setTranslationResult("");
-    }
+  // 2. OPTIMISTIC UI UPDATE
+  // Show the user's message immediately with a loading state
+  const initialUserMessage: Message = {
+    id: userMessageId,
+    role: "user",
+    content: message,
+    pronunciationScore: speechAceResult, // Pass this if it exists from previous step
   };
+
+  setConversationHistory((prev) => [...prev, initialUserMessage]);
+
+  try {
+    if (!conversationRecordId) throw new Error("No active conversation");
+
+    // 3. FIRE REQUESTS IN PARALLEL
+    // We start both, but we handle them at different times
+    const replyPromise = fetch("/api/conversation/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: conversationHistory,
+        title,
+        vocabulary,
+        dialogue,
+        voiceGender,
+        targetLanguage,
+        nativeLanguage,
+      }),
+    });
+
+    const scorePromise = fetch("/api/conversation/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        history: conversationHistory,
+        targetLanguage,
+        vocabulary,
+        title,
+      }),
+    });
+
+    // ---------------------------------------------------------
+    // 4. CRITICAL PATH: HANDLE REPLY (Text + Audio)
+    // ---------------------------------------------------------
+    const replyResponse = await replyPromise;
+    if (!replyResponse.ok) throw new Error("Failed to get reply");
+    
+    const replyData: ReplyApiResponse = await replyResponse.json();
+
+    // Create the AI Message object
+    const aiMessage: Message = {
+      id: aiMessageId,
+      role: "assistant",
+      content: replyData.targetLanguage, // The French/Spanish text
+      translation: replyData.nativeLanguage, // The English translation
+    };
+
+    // Update UI Phase 1: 
+    // - Update User message with translation
+    // - Add AI message
+    setConversationHistory((prev) => 
+      prev.map((msg) => {
+        if (msg.id === userMessageId) {
+          return { ...msg, translation: replyData.messageTranslation };
+        }
+        return msg;
+      }).concat(aiMessage)
+    );
+
+    // 🚀 PLAY AUDIO IMMEDIATELY 
+    // We do NOT wait for the score here.
+    setIsGeneratingAudio(true);
+    if (!isMuted && replyData.audio) {
+      handleAudioPlayback(replyData.audio, aiMessageId).catch((err) => 
+        console.error("Audio playback error:", err)
+      );
+    }
+
+    // ---------------------------------------------------------
+    // 5. BACKGROUND PATH: HANDLE SCORE
+    // ---------------------------------------------------------
+    // While audio is playing, we wait for the score
+    let scoreData: ScoreApiResponse = {}; // Default empty
+    
+    try {
+      const scoreResponse = await scorePromise;
+      if (scoreResponse.ok) {
+        scoreData = await scoreResponse.json();
+      }
+    } catch (scoreError) {
+      console.warn("Scoring failed, continuing without score:", scoreError);
+    }
+
+    // Prepare the Final User Message with all scoring data
+    // We reconstruct this manually to ensure we have the "Final Truth" for the DB
+    const finalUserMessage: Message = {
+      ...initialUserMessage,
+      translation: replyData.messageTranslation, // From Reply API
+      score: scoreData.score,                    // From Score API
+      label: scoreData.label ?? "OK",
+      improvedResponse: scoreData.improvedResponse,
+      corrections: scoreData.corrections,
+    };
+
+    // Update UI Phase 2: Add Score to User Message
+    setConversationHistory((prev) => 
+      prev.map((msg) => {
+        if (msg.id === userMessageId) {
+          return finalUserMessage;
+        }
+        return msg;
+      })
+    );
+
+    // ---------------------------------------------------------
+    // 6. PERSISTENCE
+    // ---------------------------------------------------------
+    // Now we save the complete state to the DB
+    // We use a clean array reconstruction to avoid stale state issues
+    const finalMessagesForDb = [
+      ...conversationHistory, // Old history
+      finalUserMessage,       // The fully populated user message
+      aiMessage               // The AI message
+    ];
+
+    const updateResponse = await fetch("/api/conversation/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationRecordId,
+        messages: finalMessagesForDb,
+        pronunciationScore: speechAceResult
+      }),
+    });
+
+    if (!updateResponse.ok) console.warn("Background DB save failed");
+
+  } catch (error) {
+    console.error("Conversation Error:", error);
+    setError("Failed to process conversation");
+    // Optionally remove the optimistic message here if it failed critically
+  } finally {
+    setIsProcessing(false);
+    setIsGeneratingAudio(false);
+    setSuggestions([]);
+    setTranslationResult("");
+  }
+};
 
   const handleStartConversation = async () => {
     try {
@@ -540,11 +631,11 @@ export const useConversation = ({
     setIsAnalyzingSpeech(true);
     try {
       const formData = new FormData();
-      const dialect =  getFullLanguageCode(targetLanguage)
+      const dialect = getFullLanguageCode(targetLanguage);
       formData.append("audio", lastAudioBlobRef.current, "recording.webm");
       formData.append("transcript", lastTranscriptRef.current);
-      formData.append("dialect", dialect)
-      formData.append("conversationRecordId", conversationRecordId)
+      formData.append("dialect", dialect);
+      formData.append("conversationRecordId", conversationRecordId);
 
       const response = await fetch("/api/analyze-speechace", {
         method: "POST",
@@ -716,7 +807,7 @@ export const useConversation = ({
             stopRecording();
 
             // 🎯 Run SpeechAce in parallel - don't await it
-            analyzeSpeechAce()
+            analyzeSpeechAce();
             await handleConversation(transcript);
             isProcessingTranscriptRef.current = false;
           }

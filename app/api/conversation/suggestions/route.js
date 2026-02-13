@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateSuggestions } from "@/lib/minimax/actions/suggestions";
+import { generateSuggestions } from "@/lib/replicate/actions";
 
 export async function POST(req) {
   try {

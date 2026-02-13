@@ -1,13 +1,12 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { capitalizeFirstLetter } from "./utils";
+import { capitalizeFirstLetter } from "./utils"
 import { ImprovementTooltip } from "./improvement-tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MdRecordVoiceOver } from "react-icons/md";
 import type { Message, VoiceGender } from "./types";
 import { InlineAudioButton } from "./inline-audio-button";
-import { SpellCheck2 } from "lucide-react";
+import { SpellCheck2, Loader2 } from "lucide-react"; // Added Loader2
 
 interface Props {
   message: Message;
@@ -36,13 +35,23 @@ export const MessageBubble: React.FC<Props> = ({
 
   const messageId =
     message.id || `${message.role}-${message.timestamp || Date.now()}`;
-  const audioBase64 = audioBase64Map[messageId];
+  const audioBase64 = audioBase64Map?.[messageId]; // Safety check
 
-  console.log("Message:", message);
+  // --- LOGIC: Determine Loading States ---
+  const hasTranslation = !!message.translation;
+  const hasGrammarScore = !!message.label || !!message.score;
+  
+  // 1. Translating: User sent it, but no translation returned yet
+  const isTranslating = isUser && !hasTranslation;
+  
+  // 2. Grading: User has translation (so AI replied), but no score yet
+  const isGrading = isUser && hasTranslation && !hasGrammarScore;
+
   return (
     <div
-      className={cn("flex items-end", isUser ? "justify-end" : "justify-start")}
+      className={cn("flex items-end mb-4", isUser ? "justify-end" : "justify-start")}
     >
+      {/* AI AVATARS */}
       {showAIAvatar && (
         <Avatar className="mr-3 h-10 w-10 transform drop-shadow-md">
           <AvatarImage src={aiAvatarFemaleUrl} />
@@ -57,6 +66,7 @@ export const MessageBubble: React.FC<Props> = ({
         </Avatar>
       )}
 
+      {/* BUBBLE CONTENT */}
       <div
         className={cn(
           "relative rounded-2xl px-4 py-3 text-sm shadow-md md:max-w-[75%]",
@@ -67,12 +77,21 @@ export const MessageBubble: React.FC<Props> = ({
       >
         <p className="font-medium">{capitalizeFirstLetter(message.content)}</p>
 
-        {message.translation && (
-          <p className="mt-1 text-xs italic opacity-80">
-            {message.translation}
-          </p>
+        {/* LOGIC INSERTION 1: Translation or Loading Spinner */}
+        {isTranslating ? (
+           <div className="mt-1 flex items-center gap-2 opacity-80">
+             <Loader2 className="h-3 w-3 animate-spin" />
+             <p className="text-xs italic">Translating...</p>
+           </div>
+        ) : (
+           message.translation && (
+            <p className="mt-1 text-xs italic opacity-80">
+              {message.translation}
+            </p>
+          )
         )}
 
+        {/* AI Audio Button */}
         {!isUser && audioBase64 && (
           <InlineAudioButton
             audioBase64={audioBase64}
@@ -81,6 +100,7 @@ export const MessageBubble: React.FC<Props> = ({
           />
         )}
 
+        {/* USER FOOTER (Scores) */}
         {isUser && (
           <div
             className={cn(
@@ -89,9 +109,11 @@ export const MessageBubble: React.FC<Props> = ({
               isUser ? "rounded-br-none" : "rounded-bl-none",
             )}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between min-h-[24px]">
+              
               {/* Left side: Score and Label */}
               <div className="flex items-center gap-4">
+                {/* Pronunciation (Usually instant if using SpeechAce) */}
                 {message.pronunciationScore && (
                   <div
                     className={cn(
@@ -110,7 +132,13 @@ export const MessageBubble: React.FC<Props> = ({
                   </div>
                 )}
 
-                {message.label && (
+                {/* LOGIC INSERTION 2: Grammar Grading Spinner or Result */}
+                {isGrading ? (
+                   <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
+                      <span>Checking grammar...</span>
+                   </div>
+                ) : message.label ? (
                   <span
                     className={cn(
                       "flex items-center gap-1 text-xs font-bold",
@@ -125,11 +153,11 @@ export const MessageBubble: React.FC<Props> = ({
                   >
                     <SpellCheck2 className="size-4" /> {message.label}!
                   </span>
-                )}
+                ) : null}
               </div>
 
-              {/* Right side: Improvement Tooltip */}
-              {message.improvedResponse && (
+              {/* Right side: Improvement Tooltip (Only show if done grading) */}
+              {!isGrading && message.improvedResponse && (
                 <ImprovementTooltip
                   improvedResponse={message.improvedResponse}
                   originalText={message.content}
@@ -142,7 +170,7 @@ export const MessageBubble: React.FC<Props> = ({
           </div>
         )}
 
-        {isUser && (
+        {isUser && isGrading && (
           <span className="absolute -bottom-1 right-2 h-2 w-2 animate-ping rounded-full bg-blue-400"></span>
         )}
       </div>

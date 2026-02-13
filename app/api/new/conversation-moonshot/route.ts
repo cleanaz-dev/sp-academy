@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { sendMessage, getUserScoreNew } from "@/lib/moonshot/services";
 import type { ConversationParams, ScoringParams, SpeechAceResults } from "@/lib/moonshot/types";
-import { textToSpeech } from "@/lib/aws/services/polly-tts-service";
+import { textToSpeech } from "@/lib/deepgram/services/tts-service";
 
 export async function POST(req: Request) {
   console.log("=== CONVERSATION API START ===");
@@ -40,8 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Prepare params for services
-    const conversationParams: ConversationParams = {
+     const conversationParams: ConversationParams = {
       message,
       history,
       title,
@@ -62,7 +61,6 @@ export async function POST(req: Request) {
     console.log("Starting Moonshot API calls...");
     const moonshotStart = Date.now();
 
-    // Run Moonshot services in parallel (now only 2 calls!)
     const [aiResponse, userScore] = await Promise.all([
       sendMessage(conversationParams)
         .then((response) => {
@@ -87,17 +85,14 @@ export async function POST(req: Request) {
     const moonshotTime = Date.now() - moonshotStart;
     console.log(`🎯 ALL MOONSHOT CALLS COMPLETED in ${moonshotTime}ms`);
 
-    // ✅ ADD TTS - Synthesize the AI's response (NOT the user's input)
+    // ✅ TTS Logic (Works exactly the same with the new function)
     let audio = null;
     try {
       const ttsStart = Date.now();
-      console.log("🎙️ Starting TTS synthesis for AI response...");
+      console.log("🎙️ Starting Deepgram TTS synthesis for AI response...");
 
       const aiMessage = aiResponse.targetLanguage;
-      console.log(
-        `📝 TTS synthesizing AI message: "${aiMessage?.substring(0, 60)}..."`,
-      );
-
+      
       if (aiMessage) {
         audio = await textToSpeech(aiMessage, {
           language: targetLanguage,
@@ -105,20 +100,19 @@ export async function POST(req: Request) {
         });
 
         const ttsTime = Date.now() - ttsStart;
-        console.log(`✅ TTS SUCCESS - ${ttsTime}ms`);
+        console.log(`✅ Deepgram TTS SUCCESS - ${ttsTime}ms`);
       } else {
         console.warn("⚠️ No AI message available for TTS");
       }
-    } catch (ttsError) {
+    } catch (ttsError: any) {
       console.error("❌ TTS FAILED (non-critical):", ttsError.message);
-      // Continue without audio - don't block the response
     }
 
     const totalTime = Date.now() - startTime;
     console.log(`=== CONVERSATION API SUCCESS - Total: ${totalTime}ms ===`);
 
     const responseData = {
-      messageTranslation: aiResponse.userMessageTranslation, // ✅ Now comes from sendMessage
+      messageTranslation: aiResponse.userMessageTranslation,
       targetLanguage: aiResponse.targetLanguage,
       nativeLanguage: aiResponse.nativeLanguage,
       label: userScore?.label ?? "OK",
@@ -130,7 +124,7 @@ export async function POST(req: Request) {
     };
 
     return NextResponse.json(responseData);
-  } catch (error) {
+  } catch (error: any) {
     const totalTime = Date.now() - startTime;
     console.error(`=== CONVERSATION API ERROR - Total: ${totalTime}ms ===`);
     console.error("Main error:", error?.message);
