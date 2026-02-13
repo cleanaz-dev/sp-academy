@@ -14,6 +14,14 @@ export async function POST(req: Request) {
       title,
     });
 
+     console.log("📊 Score API Response:", {
+      label: userScore?.label,
+      score: userScore?.score,
+      hasImprovedResponse: !!userScore?.improvedResponse,
+      hasCorrections: !!userScore?.corrections,
+      improvedResponse: userScore?.improvedResponse,  // See actual value
+    });
+
     return NextResponse.json({
       label: userScore?.label ?? "OK",
       score: userScore?.score ?? null,
