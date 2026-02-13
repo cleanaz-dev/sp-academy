@@ -7,7 +7,7 @@ import { useSuggestions } from './hooks';
 export const SuggestionsPanel = ({ 
   conversationHistory,
   speakPhrase,
-  usePhrase 
+  usePhrase,
 }) => {
   const {
     suggestions,

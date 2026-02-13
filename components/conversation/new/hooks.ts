@@ -440,7 +440,7 @@ const handleConversation = async (message: string) => {
     // ---------------------------------------------------------
     // While audio is playing, we wait for the score
     let scoreData: ScoreApiResponse = {}; // Default empty
-    
+
     try {
       const scoreResponse = await scorePromise;
       if (scoreResponse.ok) {
@@ -603,6 +603,7 @@ const handleConversation = async (message: string) => {
 
   const usePhrase = (phrase: string) => {
     handleConversation(phrase);
+    setSuggestions([]);
   };
 
   const toggleVoiceGender = (checked: boolean) => {
