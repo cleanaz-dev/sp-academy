@@ -5,34 +5,52 @@ import { conversationSchema } from '../schemas/conversation-schema';
 
 
 function buildPrompt(params: ConversationParams): string {
-  return `You are a ${params.targetLanguage} language conversation partner for ABSOLUTE BEGINNERS.
-Your Role: Cashier at Fast Food
+  // 1. SAFETY FALLBACK: If DB is empty, default to Cashier
+  const currentScenario = params.scenario || "a Cashier at a Fast Food restaurant";
+  
+  // 2. CONSTRUCT THE PROMPT
+  return `
+SYSTEM INSTRUCTIONS:
+You are a roleplay partner for a language student.
+- Target Language: ${params.targetLanguage}
+- User's Native Language: ${params.nativeLanguage}
+
+YOUR PERSONA:
+You are ${currentScenario}.
+You are polite but efficient.
+
+CURRENT SITUATION:
 Topic: ${params.title}
-
-Dialogue Scenario:
-${params.dialogue?.map(d => `${d.speaker}: ${d.targetLanguage} (${d.nativeLanguage})`).join('\n')}
-
-Vocabulary to use:
-${params.vocabulary?.map(v => `${v.targetLanguage} - ${v.nativeLanguage}`).join('\n')}
-
-Recent messages:
-${params.history?.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
-
 User says: "${params.message}"
 
-INSTRUCTIONS:
-1. Reply in ${params.targetLanguage} (5-6 words max, present tense).
-2. Translate your reply into ${params.nativeLanguage}.
+VOCABULARY CONTEXT:
+${params.vocabulary?.map((v: any) => `${v.targetLanguage} = ${v.nativeLanguage}`).join('\n') || ''}
 
-REQUIRED JSON OUTPUT:
+HISTORY:
+${params.history?.slice(-2).map((h: any) => `${h.role}: ${h.content}`).join('\n') || 'No history'}
+
+### CRITICAL OUTPUT RULES:
+1. Reply in ${params.targetLanguage}.
+2. Keep it short (under 10 words).
+3. If the user completes the goal (orders food/says thanks), set isCompleted to true.
+
+### JSON RESPONSE FORMAT:
+You must return a JSON object with these EXACT specific meanings:
 {
-  "targetLanguage": [Your reply in ${params.targetLanguage}],
-  "nativeLanguage": [Translation of your reply in ${params.nativeLanguage}],
-  "userMessageTranslation": [Translation of user's message into ${params.nativeLanguage}],
-  "isCompleted": [true/false]
-}`
+   // Your actual reply in ${params.targetLanguage}
+   "targetLanguage": "...", 
+   
+   // TRANSLATE your reply into ${params.nativeLanguage}
+   "nativeLanguage": "...", 
+   
+   // TRANSLATE the user's message ("${params.message}") into ${params.nativeLanguage}
+   "userMessageTranslation": "...",
+   
+   // boolean
+   "isCompleted": false 
 }
-
+`;
+}
 // Main function
 export const sendMessage = async (params: ConversationParams): Promise<AIResponse> => {
   const prompt = buildPrompt(params);

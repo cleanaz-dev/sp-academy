@@ -5,8 +5,9 @@ export interface ConversationParams {
   message: string;
   history: any[];
   title?: string;
-  vocabulary?: any;
-  dialogue?: any;
+  scenario?: string; // <-- Add this
+  vocabulary?: any[]; // Typed as array usually helps
+  dialogue?: any[];   // Typed as array usually helps
   targetLanguage: string;
   nativeLanguage: string;
 }

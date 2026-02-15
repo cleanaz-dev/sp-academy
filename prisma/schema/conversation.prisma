@@ -1,6 +1,7 @@
 model Conversation {
   id                 String               @id @default(auto()) @map("_id") @db.ObjectId
   title              String
+  scenario           String?
   metadata           Json?
   nativeLanguage     Languages?
   tutorLanguage      Languages?
