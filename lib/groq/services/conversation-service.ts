@@ -20,9 +20,17 @@ ${params.history?.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
 
 User says: "${params.message}"
 
-Rules: 5-6 words, present tense, end with question, use vocabulary above.
-Critical: At the fast food counter, no checks — just roleplay and say 'Thanks, come again' when appropriate
-OUTPUT IN JSON SCHEMA target language, native language, user message translation and isCompleted.`;
+INSTRUCTIONS:
+1. Reply in ${params.targetLanguage} (5-6 words max, present tense).
+2. Translate your reply into ${params.nativeLanguage}.
+
+REQUIRED JSON OUTPUT:
+{
+  "targetLanguage": [Your reply in ${params.targetLanguage}],
+  "nativeLanguage": [Translation of your reply in ${params.nativeLanguage}],
+  "userMessageTranslation": [Translation of user's message into ${params.nativeLanguage}],
+  "isCompleted": [true/false]
+}`
 }
 
 // Main function
