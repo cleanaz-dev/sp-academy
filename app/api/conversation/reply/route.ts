@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendMessage } from "@/lib/moonshot/services";
+import { sendMessage } from "@/lib/groq/services"; // changed to groq from moonshot
 import { textToSpeech } from "@/lib/deepgram/services/tts-service";
 
 export async function POST(req: Request) {

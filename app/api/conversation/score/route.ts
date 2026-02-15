@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUserScoreNew } from "@/lib/moonshot/services";
+import { getUserScoreNew } from "@/lib/groq/services";
 
 export async function POST(req: Request) {
   try {
