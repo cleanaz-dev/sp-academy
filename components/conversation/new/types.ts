@@ -1,4 +1,27 @@
 import type { SpeechAceResults } from "@/lib/moonshot/types";
+
+// 🔥 NEW: Word-level pronunciation scoring
+export interface WordScore {
+  word: string;
+  quality_score: number; // 0-100
+  phone_score_list?: Array<{
+    phone: string;
+    quality_score: number;
+    sound_most_like?: string;
+  }>;
+  syllable_score_list?: any[];
+  stress_level?: number;
+  sound_most_like?: string;
+}
+
+// 🔥 UPDATED: Add words array to pronunciation score
+export interface PronunciationScore {
+  score: number;
+  cerf_score: string;
+  words?: WordScore[]; // NEW
+  overall_fluency?: number;
+}
+
 export interface Suggestion {
   targetLanguage: string;
   nativeLanguage: string;
@@ -9,9 +32,10 @@ export interface UseSuggestionsReturn {
   isLoading: boolean;
   error: string | null;
   getSuggestions: () => Promise<void>;
-  clearSuggestions: () => void;  // ← Add 'void' here
+  clearSuggestions: () => void;
   conversationHistory: Array<{ role: string; content: string }>;
 }
+
 export interface CorrectionDetail {
   correction: string;
   reason?: string;
@@ -29,8 +53,8 @@ export interface ImprovementTooltipProps {
   improvedResponse: string;
   originalText: string;
   corrections?: Corrections;
-  speakPhrase?: (text: string) => void; // Make it optional or provide default
-  pronunciationScore?: SpeechAceResults
+  speakPhrase?: (text: string) => void;
+  pronunciationScore?: PronunciationScore; // 🔥 CHANGED from SpeechAceResults
 }
 
 export type VoiceGender = 'male' | 'female';
@@ -45,29 +69,9 @@ export interface Message {
   corrections?: Corrections;
   score?: number;
   timestamp?: number;
-  pronunciationScore?: SpeechAceResults
+  pronunciationScore?: PronunciationScore; // 🔥 CHANGED from SpeechAceResults
 }
 
-// Suggestions system
-export interface Suggestion {
-  targetLanguage: string;
-  nativeLanguage: string;
-}
-
-// Corrections for improved responses
-export interface CorrectionDetail {
-  correction: string;
-  reason?: string;
-}
-
-export interface Corrections {
-  genderAgreement?: string | CorrectionDetail;
-  vocabulary?: string | CorrectionDetail;
-  article?: string | CorrectionDetail;
-  finalNotes?: string;
-}
-
-// Component props
 export interface VoiceGenderToggleProps {
   voiceGender: VoiceGender;
   onToggle: () => void;
@@ -104,14 +108,6 @@ export interface SuggestionsPanelProps {
   usePhrase: (text: string) => void;
 }
 
-export interface ImprovementTooltipProps {
-  improvedResponse: string;
-  originalText: string;
-  corrections?: Corrections;
-  speakPhrase?: (text: string) => void;
-}
-
-// Hook return type
 export interface UseConversationReturn {
   // State
   voiceGender: VoiceGender;
@@ -139,5 +135,4 @@ export interface UseConversationReturn {
   usePhrase: (text: string) => void;
 }
 
-// Utility types
 export type ClassValue = string | number | boolean | undefined | null;

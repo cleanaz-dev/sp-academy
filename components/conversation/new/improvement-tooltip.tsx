@@ -1,3 +1,4 @@
+// improvement-tooltip.tsx
 import React from "react";
 import {
   Dialog,
@@ -19,7 +20,8 @@ import {
   Volume2,
   Mic2
 } from "lucide-react";
-import type { ImprovementTooltipProps } from "./types";
+import { cn } from "@/lib/utils";
+import type { ImprovementTooltipProps, WordScore } from "./types";
 import { capitalizeFirstLetter } from "./utils";
 import { speakPhrase } from "./utils";
 
@@ -27,9 +29,25 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
   improvedResponse,
   originalText,
   corrections,
-  speakPhrase: customSpeakPhrase, // Allow override via props
+  pronunciationScore,
+  speakPhrase: customSpeakPhrase,
 }) => {
   const handleSpeak = customSpeakPhrase || speakPhrase;
+
+  // Helper to get color for word scores
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return "text-green-400 bg-green-500/20";
+    if (score >= 80) return "text-yellow-400 bg-yellow-500/20";
+    if (score >= 70) return "text-orange-400 bg-orange-500/20";
+    return "text-red-400 bg-red-500/20";
+  };
+
+  // Show pronunciation breakdown if score is low (< 80)
+  const showPronunciationBreakdown = 
+    pronunciationScore && 
+    pronunciationScore.score < 80 && 
+    pronunciationScore.words && 
+    pronunciationScore.words.length > 0;
 
   const renderCorrectionCategory = (
     title: string,
@@ -37,8 +55,6 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
     icon: React.ReactNode,
   ) => {
     if (!correction) return null;
-
-    console.log(`${title} correction:`, correction);
 
     return (
       <div className="mb-3 pl-2">
@@ -62,8 +78,6 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
     );
   };
 
-
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -72,7 +86,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-2xl rounded-lg border-none bg-gradient-to-r from-indigo-600/70 to-purple-700/70 p-6 text-white shadow-xl backdrop-blur-md">
+      <DialogContent className="max-w-2xl rounded-lg border-none bg-gradient-to-r from-indigo-600/70 to-purple-700/70 p-6 text-white shadow-xl backdrop-blur-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-semibold text-white">
             <Sparkles className="h-6 w-6" />
@@ -86,6 +100,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 text-sm text-slate-100">
+          {/* Original Phrase */}
           <p className="rounded-lg bg-white/5 p-3">
             <span className="mb-2 flex items-center gap-2 text-xs text-slate-300">
               <MessageSquareQuote className="h-4 w-4" />
@@ -95,36 +110,53 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
               {originalText ? capitalizeFirstLetter(originalText) : ""}
             </span>
           </p>
-          
-          {/* 
-          <div className="rounded-lg bg-white/5 p-3">
-            <span className="mb-2 flex items-center gap-2 text-xs">
-              <CircleCheck className="h-4 w-4 text-green-600" />
-              <span className="text-slate-300">Corrections:</span>
-            </span>
 
-            {corrections?.genderAgreement &&
-              renderCorrectionCategory(
-                'Gender Agreement',
-                corrections.genderAgreement,
-                <GraduationCap className="h-4 w-4" />,
-              )}
+          {/* 🔥 PRONUNCIATION BREAKDOWN - Only if score < 80 */}
+          {showPronunciationBreakdown && (
+            <div className="rounded-lg bg-white/5 p-3">
+              <span className="mb-3 flex items-center gap-2 text-xs text-slate-300">
+                <Mic2 className="h-4 w-4" />
+                Pronunciation Issues:
+              </span>
+              
+              <div className="pl-6 space-y-2">
+                <p className="text-xs text-slate-400 mb-2">
+                  Words highlighted below need improvement:
+                </p>
+                
+                <div className="flex flex-wrap gap-2">
+                  {pronunciationScore.words!.map((word: WordScore, idx: number) => {
+                    const scoreColor = getScoreColor(word.quality_score);
+                    
+                    return (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "rounded px-2 py-1 text-sm font-medium border",
+                          scoreColor
+                        )}
+                        title={word.sound_most_like 
+                          ? `Sounded like: ${word.sound_most_like}` 
+                          : undefined
+                        }
+                      >
+                        <span className="block">{word.word}</span>
+                        <span className="block text-xs opacity-75">
+                          {word.quality_score}/100
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-            {corrections?.vocabulary &&
-              renderCorrectionCategory(
-                'Vocabulary',
-                corrections.vocabulary,
-                <Book className="h-4 w-4" />,
-              )}
+                <p className="text-xs text-emerald-400 mt-3">
+                  💡 Tip: Focus on the red and orange words. Click "Listen" below to hear the correct pronunciation.
+                </p>
+              </div>
+            </div>
+          )}
 
-            {corrections?.article &&
-              renderCorrectionCategory(
-                'Article',
-                corrections.article,
-                <PenTool className="h-4 w-4" />,
-              )}
-          </div> */}
-
+          {/* Improved Version */}
           <div className="rounded-lg border border-white/10 bg-white/10 p-3">
             <span className="mb-2 flex items-center gap-2 text-xs text-emerald-300">
               <Sparkles className="h-4 w-4" />
