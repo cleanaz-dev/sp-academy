@@ -30,7 +30,7 @@ export const sendMessage = async (params: ConversationParams): Promise<AIRespons
   const prompt = buildPrompt(params);
 
   const completion = await groq.chat.completions.create({
-    model: GROQ_MODELS.LLAMA_3_1_8B,
+    model: GROQ_MODELS.GPT_OSS_20B,
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content: params.message }

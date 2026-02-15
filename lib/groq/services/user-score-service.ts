@@ -56,7 +56,7 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
   const prompt = getUserScorePrompt(params);
   
   const completion = await groq.chat.completions.create({
-    model: GROQ_MODELS.LLAMA_3_1_8B,
+    model: GROQ_MODELS.GPT_OSS_20B,
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content: params.userMessage }
