@@ -7,7 +7,7 @@ export const getMessageTranslation = async (
   const { message, nativeLanguage } = params;
   
   const completion = await groq.chat.completions.create({
-    model: GROQ_MODELS.LLAMA_3_1_8B,
+    model: GROQ_MODELS.GPT_OSS_20B,
     messages: [
       { 
         role: 'user', 
