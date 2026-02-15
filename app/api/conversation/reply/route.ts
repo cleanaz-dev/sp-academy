@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendMessage } from "@/lib/groq/services"; // changed to groq from moonshot
+import { sendMessage } from "@/lib/groq/services";
 import { textToSpeech } from "@/lib/deepgram/services/tts-service";
 
 export async function POST(req: Request) {
@@ -31,12 +31,25 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      messageTranslation: aiResponse.userMessageTranslation, // We get translation here too
+      messageTranslation: aiResponse.userMessageTranslation,
       targetLanguage: aiResponse.targetLanguage,
       nativeLanguage: aiResponse.nativeLanguage,
       audio,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    // Proper error handling for TypeScript
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error("API Route Error:", {
+      message: errorMessage,
+      stack: errorStack,
+      error: error
+    });
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? errorStack : undefined
+    }, { status: 500 });
   }
 }

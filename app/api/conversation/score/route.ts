@@ -14,7 +14,6 @@ export async function POST(req: Request) {
       title,
     });
 
-
     return NextResponse.json({
       label: userScore?.label ?? "OK",
       score: userScore?.score ?? null,
@@ -22,7 +21,19 @@ export async function POST(req: Request) {
       improvedResponse: userScore?.improvedResponse,
       corrections: userScore?.corrections,
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error("User Score API Error:", {
+      message: errorMessage,
+      stack: errorStack,
+      error: error
+    });
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? errorStack : undefined
+    }, { status: 500 });
   }
 }
