@@ -1,8 +1,12 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import { Send, Mic, Loader2 } from 'lucide-react';
+import { SpellCheck2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
+  targetLanguage: string;
   textInput: string;
   isRecording: boolean;
   isProcessing: boolean;
@@ -15,6 +19,7 @@ interface Props {
 }
 
 export const InputControls: React.FC<Props> = ({
+  targetLanguage,
   textInput,
   isRecording,
   isProcessing,
@@ -27,8 +32,26 @@ export const InputControls: React.FC<Props> = ({
 }) => {
   const showInput = conversationStarted && conversationRecordId;
   const hasText = textInput.trim().length > 0;
+  const [isChecking, setIsChecking] = useState(false);
 
-  // Determine which status to show
+  const handleGrammarCheck = async () => {
+    if (!textInput.trim()) return;
+    setIsChecking(true);
+    try {
+      const res = await fetch("/api/conversation/grammar-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: textInput, language: targetLanguage }),
+      });
+      const data = await res.json();
+      if (data.improved) onTextChange(data.improved);
+    } catch (e) {
+      console.error("Grammar check failed:", e);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
   const getStatusContent = () => {
     if (isProcessing) {
       return (
@@ -66,16 +89,13 @@ export const InputControls: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Status Area - Single element that changes content */}
       <div className="flex h-8 items-center justify-center">
         {getStatusContent()}
       </div>
 
-      {/* Input Controls */}
       {showInput && (
         <div className="flex items-center gap-4">
           <div className="flex w-full flex-1 items-center rounded-full bg-gray-100 p-2 shadow-inner">
-            {/* Text Input */}
             <input
               type="text"
               value={textInput}
@@ -84,26 +104,45 @@ export const InputControls: React.FC<Props> = ({
               className="w-full flex-1 bg-transparent px-3 text-sm outline-none"
             />
 
-            {/* Action Button */}
-            {hasText ? (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => onSend(textInput)}
-                disabled={isProcessing || !hasText}
-                className="rounded-full p-2 text-emerald-500 hover:bg-emerald-500 hover:text-white"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            ) : (
+            {hasText && (
+              <>
+                {/* Grammar Check Button */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleGrammarCheck}
+                  disabled={isChecking || isProcessing}
+                  className="rounded-full p-2 text-purple-500 hover:bg-purple-500 hover:text-white"
+                >
+                  {isChecking
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <SpellCheck2 className="h-4 w-4" />
+                  }
+                </Button>
+
+                {/* Send Button */}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => onSend(textInput)}
+                  disabled={isProcessing}
+                  className="rounded-full p-2 text-emerald-500 hover:bg-emerald-500 hover:text-white"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+
+            {/* Mic Button - only when no text */}
+            {!hasText && (
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={onToggleRecording}
                 disabled={isProcessing}
                 className={`rounded-full p-2 ${
-                  isRecording 
-                    ? 'bg-red-500 text-white hover:bg-red-600' 
+                  isRecording
+                    ? 'bg-red-500 text-white hover:bg-red-600'
                     : 'text-blue-500 hover:bg-blue-500 hover:text-white'
                 }`}
               >

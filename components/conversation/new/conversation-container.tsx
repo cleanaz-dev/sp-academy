@@ -11,6 +11,7 @@ import type { Message, VoiceGender } from "./types";
 
 interface Props {
   // State
+  targetLanguage: string;
   voiceGender: VoiceGender;
   conversationHistory: Message[];
   textInput: string;
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export const ConversationContainer: React.FC<Props> = ({
+  targetLanguage,
   voiceGender,
   conversationHistory,
   textInput,
@@ -130,6 +132,7 @@ export const ConversationContainer: React.FC<Props> = ({
               onSend={onSend}
               onToggleRecording={onToggleRecording}
               onStartConversation={onStartConversation}
+              targetLanguage={targetLanguage}
             />
           </div>
 

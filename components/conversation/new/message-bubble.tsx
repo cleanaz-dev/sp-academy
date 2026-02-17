@@ -134,7 +134,7 @@ export const MessageBubble: React.FC<Props> = ({
 
                 {/* LOGIC INSERTION 2: Grammar Grading Spinner or Result */}
                 {isGrading ? (
-                   <div className="flex items-center gap-2 text-xs text-gray-500">
+                   <div className="flex items-center gap-2 text-xs text-black">
                       <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
                       <span>Checking grammar...</span>
                    </div>

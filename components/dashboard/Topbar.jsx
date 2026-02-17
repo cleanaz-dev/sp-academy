@@ -4,14 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { MenuDots } from "solar-icon-set";
 import { Bell } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { navItems } from "./NavLinks";
 import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
 import { getReadNotificationsByUserId } from "@/lib/actions";
-import { PanelLeftOpen, PanelRightOpen } from "lucide-react";
-import { PanelLeftClose } from "lucide-react";
+import { PanelLeftOpen, PanelRightOpen, PanelLeftClose } from "lucide-react";
 import { Spinner } from "../ui/spinner";
+import dynamic from "next/dynamic";
+
+// Dynamically import UserButton with SSR disabled
+const UserButton = dynamic(
+  () => import("@clerk/nextjs").then((mod) => mod.UserButton),
+  { ssr: false }
+);
 
 export const Topbar = ({
   sidebarOpen,
@@ -21,16 +27,15 @@ export const Topbar = ({
   desktopSidebarOpen,
   setDesktopSidebarOpen,
 }) => {
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // Track if there are unread notifications
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const { user, isLoaded } = useUser();
 
   useEffect(() => {
-    // Fetch unread notifications when the user changes or the component mounts
     const fetchUnreadNotifications = async () => {
       try {
         if (user?.id) {
           const unreadCount = await getReadNotificationsByUserId(user.id);
-          setHasUnreadNotifications(unreadCount > 0); // Update state if there are unread notifications
+          setHasUnreadNotifications(unreadCount > 0);
         }
       } catch (error) {
         console.error("Error fetching unread notifications:", error);
@@ -60,8 +65,7 @@ export const Topbar = ({
           )}
         </div>
 
-        {/* MenuDots should always be visible */}
-
+        {/* Desktop sidebar toggle */}
         <div className="mt-2 hidden lg:block">
           <button
             className="ml-2 mt-1 text-slate-800"
@@ -81,6 +85,7 @@ export const Topbar = ({
           </button>
         </div>
 
+        {/* Mobile sidebar toggle */}
         <div className="mt-2 block lg:hidden">
           <button
             className="ml-2 mt-1 text-slate-800"
@@ -100,7 +105,7 @@ export const Topbar = ({
           </button>
         </div>
 
-        {/* Top Menu Bar for larger screens */}
+        {/* Top Menu Bar */}
         <div className="ml-4 hidden cursor-pointer gap-4 text-slate-500 md:flex">
           {navItems.map((item, index) => (
             <Link
@@ -119,7 +124,6 @@ export const Topbar = ({
       </div>
 
       <div className="relative flex items-center gap-2">
-        {/* Notification Button with Ping Circle */}
         <Button
           type="button"
           size="icon"
@@ -128,7 +132,6 @@ export const Topbar = ({
           className="relative"
         >
           <Bell className="size-5" strokeWidth={1.5} />
-          {/* Ping Circle */}
           {hasUnreadNotifications && (
             <span className="absolute right-0 top-0 flex h-3 w-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
@@ -137,7 +140,8 @@ export const Topbar = ({
           )}
         </Button>
 
-        {isLoaded ? <UserButton /> : <Spinner />}
+        {/* No suppressHydrationWarning needed - component only renders client-side */}
+        <UserButton />
       </div>
     </div>
   );

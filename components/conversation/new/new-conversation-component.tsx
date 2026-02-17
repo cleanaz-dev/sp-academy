@@ -91,6 +91,8 @@ export default function ConversationComponent({
 
   return (
     <ConversationContainer
+      // language helpers
+      targetLanguage={targetLanguage}
       // State
       voiceGender={voiceGender}
       conversationHistory={conversationHistory}
