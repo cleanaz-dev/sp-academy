@@ -349,22 +349,21 @@ interface ScoreApiResponse {
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
+// Inside useConversation.ts
+
 const handleConversation = async (message: string) => {
   setIsProcessing(true);
   setError(null);
   
-  // 1. GENERATE IDs UPFRONT
-  // We need these to target specific messages during state updates
   const userMessageId = `user-${Date.now()}`;
   const aiMessageId = `ai-${Date.now()}`;
 
-  // 2. OPTIMISTIC UI UPDATE
-  // Show the user's message immediately with a loading state
+  // Optimistic UI update
   const initialUserMessage: Message = {
     id: userMessageId,
     role: "user",
     content: message,
-    pronunciationScore: speechAceResult, // Pass this if it exists from previous step
+    pronunciationScore: speechAceResult, 
   };
 
   setConversationHistory((prev) => [...prev, initialUserMessage]);
@@ -372,8 +371,9 @@ const handleConversation = async (message: string) => {
   try {
     if (!conversationRecordId) throw new Error("No active conversation");
 
-    // 3. FIRE REQUESTS IN PARALLEL
-    // We start both, but we handle them at different times
+    // --- PARALLEL REQUESTS ---
+
+    // 1. Reply API (unchanged)
     const replyPromise = fetch("/api/conversation/reply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -389,6 +389,7 @@ const handleConversation = async (message: string) => {
       }),
     });
 
+    // 2. Score API (UPDATED)
     const scorePromise = fetch("/api/conversation/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -398,28 +399,28 @@ const handleConversation = async (message: string) => {
         targetLanguage,
         vocabulary,
         title,
+        // <--- NEW: Pass IDs so backend can save to Review Table
+        conversationId: id, 
+        userId: user.id     
+        // ----------------------------------------------------
       }),
     });
 
-    // ---------------------------------------------------------
-    // 4. CRITICAL PATH: HANDLE REPLY (Text + Audio)
-    // ---------------------------------------------------------
+    // --- HANDLING RESPONSES ---
+
+    // Handle Reply (Audio + Translation)
     const replyResponse = await replyPromise;
     if (!replyResponse.ok) throw new Error("Failed to get reply");
     
     const replyData: ReplyApiResponse = await replyResponse.json();
 
-    // Create the AI Message object
     const aiMessage: Message = {
       id: aiMessageId,
       role: "assistant",
-      content: replyData.targetLanguage, // The French/Spanish text
-      translation: replyData.nativeLanguage, // The English translation
+      content: replyData.targetLanguage, 
+      translation: replyData.nativeLanguage, 
     };
 
-    // Update UI Phase 1: 
-    // - Update User message with translation
-    // - Add AI message
     setConversationHistory((prev) => 
       prev.map((msg) => {
         if (msg.id === userMessageId) {
@@ -429,8 +430,6 @@ const handleConversation = async (message: string) => {
       }).concat(aiMessage)
     );
 
-    // 🚀 PLAY AUDIO IMMEDIATELY 
-    // We do NOT wait for the score here.
     setIsGeneratingAudio(true);
     if (!isMuted && replyData.audio) {
       handleAudioPlayback(replyData.audio, aiMessageId).catch((err) => 
@@ -438,11 +437,8 @@ const handleConversation = async (message: string) => {
       );
     }
 
-    // ---------------------------------------------------------
-    // 5. BACKGROUND PATH: HANDLE SCORE
-    // ---------------------------------------------------------
-    // While audio is playing, we wait for the score
-    let scoreData: ScoreApiResponse = {}; // Default empty
+    // Handle Score
+    let scoreData: ScoreApiResponse = {}; 
 
     try {
       const scoreResponse = await scorePromise;
@@ -453,18 +449,15 @@ const handleConversation = async (message: string) => {
       console.warn("Scoring failed, continuing without score:", scoreError);
     }
 
-    // Prepare the Final User Message with all scoring data
-    // We reconstruct this manually to ensure we have the "Final Truth" for the DB
     const finalUserMessage: Message = {
       ...initialUserMessage,
-      translation: replyData.messageTranslation, // From Reply API
-      score: scoreData.score,                    // From Score API
+      translation: replyData.messageTranslation, 
+      score: scoreData.score,                    
       label: scoreData.label ?? "OK",
       improvedResponse: scoreData.improvedResponse,
       corrections: scoreData.corrections,
     };
 
-    // Update UI Phase 2: Add Score to User Message
     setConversationHistory((prev) => 
       prev.map((msg) => {
         if (msg.id === userMessageId) {
@@ -474,15 +467,11 @@ const handleConversation = async (message: string) => {
       })
     );
 
-    // ---------------------------------------------------------
-    // 6. PERSISTENCE
-    // ---------------------------------------------------------
-    // Now we save the complete state to the DB
-    // We use a clean array reconstruction to avoid stale state issues
+    // Save history to DB
     const finalMessagesForDb = [
-      ...conversationHistory, // Old history
-      finalUserMessage,       // The fully populated user message
-      aiMessage               // The AI message
+      ...conversationHistory, 
+      finalUserMessage,       
+      aiMessage               
     ];
 
     const updateResponse = await fetch("/api/conversation/update", {
@@ -500,7 +489,6 @@ const handleConversation = async (message: string) => {
   } catch (error) {
     console.error("Conversation Error:", error);
     setError("Failed to process conversation");
-    // Optionally remove the optimistic message here if it failed critically
   } finally {
     setIsProcessing(false);
     setIsGeneratingAudio(false);

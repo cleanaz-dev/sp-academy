@@ -30,6 +30,7 @@ model User {
   notifications         Notification[]
   GameScore             GameScore[]
   UserSchedule          UserSchedule[]
+  ConversationReview    ConversationReview[]
 }
 
 model BillingInformation {
