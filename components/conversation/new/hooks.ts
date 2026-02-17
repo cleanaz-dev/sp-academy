@@ -358,6 +358,8 @@ const handleConversation = async (message: string) => {
   const userMessageId = `user-${Date.now()}`;
   const aiMessageId = `ai-${Date.now()}`;
 
+  
+
   // Optimistic UI update
   const initialUserMessage: Message = {
     id: userMessageId,
@@ -604,41 +606,49 @@ const handleConversation = async (message: string) => {
     setIsMuted(!isMuted);
   };
 
-  const analyzeSpeechAce = useCallback(async () => {
-    if (!lastAudioBlobRef.current || !lastTranscriptRef.current) {
-      setError("No recording available for analysis");
-      return null;
-    }
+ const analyzeSpeechAce = useCallback(async () => {
+  if (!lastAudioBlobRef.current || !lastTranscriptRef.current) {
+    setError("No recording available for analysis");
+    return null;
+  }
 
-    setIsAnalyzingSpeech(true);
-    try {
-      const formData = new FormData();
-      const dialect = getFullLanguageCode(targetLanguage);
-      formData.append("audio", lastAudioBlobRef.current, "recording.webm");
-      formData.append("transcript", lastTranscriptRef.current);
-      formData.append("dialect", dialect);
+  setIsAnalyzingSpeech(true);
+  try {
+    const formData = new FormData();
+    const dialect = getFullLanguageCode(targetLanguage);
+    
+    formData.append("audio", lastAudioBlobRef.current, "recording.webm");
+    formData.append("transcript", lastTranscriptRef.current);
+    formData.append("dialect", dialect);
+    
+    // ✅ CRITICAL FIX: Send the generic template ID for the Review DB logic
+    formData.append("conversationId", id); 
+    
+    // Keep this if you want to link it to the specific record in the future
+    if (conversationRecordId) {
       formData.append("conversationRecordId", conversationRecordId);
-
-      const response = await fetch("/api/analyze-speechace", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`SpeechAce API error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setSpeechAceResult(result);
-      return result;
-    } catch (error) {
-      console.error("❌ SpeechAce error:", error);
-      setError("Failed to analyze speech");
-      return null;
-    } finally {
-      setIsAnalyzingSpeech(false);
     }
-  }, []);
+
+    const response = await fetch("/api/analyze-speechace", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`SpeechAce API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    setSpeechAceResult(result);
+    return result; // ✅ Return result so we can use it immediately
+  } catch (error) {
+    console.error("❌ SpeechAce error:", error);
+    setError("Failed to analyze speech");
+    return null;
+  } finally {
+    setIsAnalyzingSpeech(false);
+  }
+}, [id, conversationRecordId, targetLanguage, getFullLanguageCode]);
 
   const stopRecording = () => {
     setIsRecording(false);
