@@ -70,7 +70,7 @@ export const getUserScoreNew = async (params: ScoringParams): Promise<UserScore>
       },
     },
     temperature: 0.3,
-    max_tokens: 500,
+    max_tokens: 750,
   });
 
   const content = completion.choices[0].message.content;
