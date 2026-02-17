@@ -112,7 +112,7 @@ export const InputControls: React.FC<Props> = ({
                   variant="ghost"
                   onClick={handleGrammarCheck}
                   disabled={isChecking || isProcessing}
-                  className="rounded-full p-2 text-purple-500 hover:bg-purple-500 hover:text-white"
+                  className="rounded-full p-2 text-purple-500 hover:bg-purple-500 hover:text-white bg-slate-200 mr-1"
                 >
                   {isChecking
                     ? <Loader2 className="h-4 w-4 animate-spin" />

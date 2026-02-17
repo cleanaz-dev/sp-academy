@@ -354,28 +354,34 @@ interface ScoreApiResponse {
 const handleConversation = async (message: string) => {
   setIsProcessing(true);
   setError(null);
-  
+
   const userMessageId = `user-${Date.now()}`;
   const aiMessageId = `ai-${Date.now()}`;
-
-  
 
   // Optimistic UI update
   const initialUserMessage: Message = {
     id: userMessageId,
     role: "user",
     content: message,
-    pronunciationScore: speechAceResult, 
+    pronunciationScore: speechAceResult,
   };
 
-  setConversationHistory((prev) => [...prev, initialUserMessage]);
+  // Typing indicator
+  const typingMessage: Message = {
+    id: aiMessageId,
+    role: "assistant",
+    content: "",
+    isTyping: true,
+  };
+
+  setConversationHistory((prev) => [...prev, initialUserMessage, typingMessage]);
 
   try {
     if (!conversationRecordId) throw new Error("No active conversation");
 
     // --- PARALLEL REQUESTS ---
 
-    // 1. Reply API (unchanged)
+    // 1. Reply API
     const replyPromise = fetch("/api/conversation/reply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -391,7 +397,7 @@ const handleConversation = async (message: string) => {
       }),
     });
 
-    // 2. Score API (UPDATED)
+    // 2. Score API
     const scorePromise = fetch("/api/conversation/score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -401,10 +407,8 @@ const handleConversation = async (message: string) => {
         targetLanguage,
         vocabulary,
         title,
-        // <--- NEW: Pass IDs so backend can save to Review Table
-        conversationId: id, 
-        userId: user.id     
-        // ----------------------------------------------------
+        conversationId: id,
+        userId: user.id,
       }),
     });
 
@@ -413,34 +417,38 @@ const handleConversation = async (message: string) => {
     // Handle Reply (Audio + Translation)
     const replyResponse = await replyPromise;
     if (!replyResponse.ok) throw new Error("Failed to get reply");
-    
+
     const replyData: ReplyApiResponse = await replyResponse.json();
 
     const aiMessage: Message = {
       id: aiMessageId,
       role: "assistant",
-      content: replyData.targetLanguage, 
-      translation: replyData.nativeLanguage, 
+      content: replyData.targetLanguage,
+      translation: replyData.nativeLanguage,
+      isTyping: false,
     };
 
-    setConversationHistory((prev) => 
+    setConversationHistory((prev) =>
       prev.map((msg) => {
         if (msg.id === userMessageId) {
           return { ...msg, translation: replyData.messageTranslation };
         }
+        if (msg.id === aiMessageId) {
+          return aiMessage; // swap typing bubble with real message
+        }
         return msg;
-      }).concat(aiMessage)
+      })
     );
 
     setIsGeneratingAudio(true);
     if (!isMuted && replyData.audio) {
-      handleAudioPlayback(replyData.audio, aiMessageId).catch((err) => 
+      handleAudioPlayback(replyData.audio, aiMessageId).catch((err) =>
         console.error("Audio playback error:", err)
       );
     }
 
     // Handle Score
-    let scoreData: ScoreApiResponse = {}; 
+    let scoreData: ScoreApiResponse = {};
 
     try {
       const scoreResponse = await scorePromise;
@@ -453,14 +461,14 @@ const handleConversation = async (message: string) => {
 
     const finalUserMessage: Message = {
       ...initialUserMessage,
-      translation: replyData.messageTranslation, 
-      score: scoreData.score,                    
+      translation: replyData.messageTranslation,
+      score: scoreData.score,
       label: scoreData.label ?? "OK",
       improvedResponse: scoreData.improvedResponse,
       corrections: scoreData.corrections,
     };
 
-    setConversationHistory((prev) => 
+    setConversationHistory((prev) =>
       prev.map((msg) => {
         if (msg.id === userMessageId) {
           return finalUserMessage;
@@ -471,9 +479,9 @@ const handleConversation = async (message: string) => {
 
     // Save history to DB
     const finalMessagesForDb = [
-      ...conversationHistory, 
-      finalUserMessage,       
-      aiMessage               
+      ...conversationHistory,
+      finalUserMessage,
+      aiMessage,
     ];
 
     const updateResponse = await fetch("/api/conversation/update", {
@@ -482,7 +490,7 @@ const handleConversation = async (message: string) => {
       body: JSON.stringify({
         conversationRecordId,
         messages: finalMessagesForDb,
-        pronunciationScore: speechAceResult
+        pronunciationScore: speechAceResult,
       }),
     });
 
@@ -491,6 +499,10 @@ const handleConversation = async (message: string) => {
   } catch (error) {
     console.error("Conversation Error:", error);
     setError("Failed to process conversation");
+    // Remove typing indicator on error
+    setConversationHistory((prev) =>
+      prev.filter((msg) => msg.id !== aiMessageId)
+    );
   } finally {
     setIsProcessing(false);
     setIsGeneratingAudio(false);

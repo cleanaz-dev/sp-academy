@@ -69,7 +69,8 @@ export interface Message {
   corrections?: Corrections;
   score?: number;
   timestamp?: number;
-  pronunciationScore?: PronunciationScore; // 🔥 CHANGED from SpeechAceResults
+  pronunciationScore?: PronunciationScore;
+  isTyping?: boolean; // 👈 add this
 }
 
 export interface VoiceGenderToggleProps {
