@@ -1,10 +1,14 @@
 import ExerciseHandler from "@/components/lessons/exercises/ExerciseHandler";
-import React from "react";
+import prisma from "@/lib/prisma"; // adjust to your actual prisma client path
 
-export default function page() {
+export default async function Page() {
+  const exercises = await prisma.exercise.findMany({
+    // whatever query gets your exercise set — adjust to your schema
+  });
+
   return (
     <div>
-      <ExerciseHandler />
+      <ExerciseHandler exercises={exercises} />
     </div>
   );
 }
