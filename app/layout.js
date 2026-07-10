@@ -36,9 +36,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider dynamic>
-      <html lang="en">
-        <body className={nunito.className}>
+    <html lang="en">
+      <body className={nunito.className}><ClerkProvider dynamic>
           {children}
           <Toaster
             position="bottom-right"
@@ -46,8 +45,7 @@ export default function RootLayout({ children }) {
             theme="system"
             closeButton
           />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider></body>
+    </html>
   );
 }

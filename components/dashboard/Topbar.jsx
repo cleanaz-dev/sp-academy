@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MenuDots } from "solar-icon-set";
 import { Bell } from "lucide-react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { navItems } from "./NavLinks";
 import { Button } from "../ui/button";
 import { useUser } from "@clerk/nextjs";
