@@ -1,4 +1,4 @@
-import { replicate } from "@/lib/replicate";
+import { replicate } from "../config/client";
 
 
 
