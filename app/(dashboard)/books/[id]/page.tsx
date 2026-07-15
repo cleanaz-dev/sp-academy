@@ -2,10 +2,9 @@
 import SingleReportPage from "@/components/books/SingleBookPage";
 import { getReadingLogsByBookId } from "@/lib/actions";
 
-
 interface Params {
   params: Promise<{
-    id: String;
+    id: string;
   }>
 }
 

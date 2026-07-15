@@ -40,7 +40,7 @@ model ConversationReview {
   id             String       @id @default(auto()) @map("_id") @db.ObjectId
   userId         String       @db.ObjectId
   user           User         @relation(fields: [userId], references: [id])
-  conversationId String       @db.ObjectId @unique
+  conversationId String       @unique @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   mistakes       Json[]       @default([])
 

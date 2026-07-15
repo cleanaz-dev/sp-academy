@@ -894,7 +894,7 @@ export async function getAllAchievements() {
     throw new Error("Failed to fetch achievements");
   }
 }
-export async function getAchievementsByUserId(userId) {
+export async function getAchievementsByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -916,7 +916,7 @@ export async function getAchievementsByUserId(userId) {
   }
 }
 
-export async function getUserDataByUserId(userId) {
+export async function getUserDataByUserId(userId: string) {
   try {
     const userData = await prisma.user.findFirst({
       where: { userId },
@@ -958,7 +958,7 @@ export async function getUserDataByUserId(userId) {
   }
 }
 
-export async function getReadingLogsByBookId(bookId) {
+export async function getReadingLogsByBookId(bookId:string) {
   try {
     const book = await prisma.book.findFirst({
       where: { id: bookId },

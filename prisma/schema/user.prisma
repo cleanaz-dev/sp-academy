@@ -31,6 +31,7 @@ model User {
   GameScore             GameScore[]
   UserSchedule          UserSchedule[]
   ConversationReview    ConversationReview[]
+  ReadingLog            ReadingLog[]
 }
 
 model BillingInformation {

@@ -89,6 +89,8 @@ model ReadingLog {
   updatedAt    DateTime @updatedAt
   book         Book?    @relation(fields: [bookId], references: [id])
   bookId       String?  @db.ObjectId
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       String?  @db.ObjectId
 }
 
 model EmailTemplate {
