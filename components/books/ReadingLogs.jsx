@@ -23,6 +23,8 @@ export default function ReadingLogs({ data }) {
   const [searchTerm, setSearchTerm] = useState("");
   const logsPerPage = 5;
 
+  console.log("Direct Reading Logs:", data)
+
   const filteredLogs =
     data.readingLogs?.filter((log) =>
       log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase()),
