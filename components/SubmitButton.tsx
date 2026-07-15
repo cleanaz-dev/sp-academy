@@ -40,12 +40,12 @@ export function CreateBookReportButton() {
 export function AddReadingLog({ isSubmitting }: {
   isSubmitting: boolean
 }) {
-  const { pending } = useFormStatus();
   return (
     <>
-      {pending ? (
+      {isSubmitting ? (
         <Button variant="outline" disabled>
           <Loader2Icon className="h-4 w-4 animate-spin" />
+          Adding...
         </Button>
       ) : (
         <Button type="submit" variant="outline">

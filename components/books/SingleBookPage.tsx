@@ -25,7 +25,6 @@ import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import { createReadingLogSchema } from "@/lib/zod/books/create-reading-log-schema";
 
-
 interface ReadingLog {
   id: string;
   createdAt: Date;
@@ -51,7 +50,9 @@ interface ReadingLogProps {
   readingLogs: ReadingLogData;
 }
 
-export default function SingleReportPage({ readingLogs: data }: ReadingLogProps) {
+export default function SingleReportPage({
+  readingLogs: data,
+}: ReadingLogProps) {
   const {
     title,
     author,
@@ -62,7 +63,7 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
   } = data;
 
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -76,9 +77,15 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
       endPage: 2,
       summary: "",
       bookId: id,
-      userId: user.id,
+      userId: user?.id ?? "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      form.setValue("userId", user.id);
+    }
+  }, [user, form]);
 
   // Add new state for draft summary
   const LOCAL_STORAGE_KEY = `reading-log-draft-${id}`; // unique key per book
@@ -115,16 +122,20 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
     }
   }, [logs]);
 
-  async function onSubmit(data:any) {
+  async function onSubmit(formData: any) {
+    if (!user) {
+      toast.error("Authentication not ready, please wait...");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await addReadingLog(data);
-      // Clear localStorage after successful submission
+      // Ensure the real userId is attached at submit time
+      await addReadingLog({ ...formData, userId: user.id });
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       router.refresh();
       form.reset();
     } catch (error) {
-      console.error("Failed to add daily log:", error.message);
+      console.error("Failed to add daily log:", error);
       toast.error("Failed to add reading log");
     } finally {
       setIsSubmitting(false);
@@ -231,7 +242,7 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
             </div>
 
             <div className="mt-6 flex gap-6">
-              <AddReadingLog isSubmitting={isSubmitting} />
+              <AddReadingLog isSubmitting={isSubmitting || !isLoaded} />
               <Button
                 type="button"
                 onClick={handleSummarizeSummary}
