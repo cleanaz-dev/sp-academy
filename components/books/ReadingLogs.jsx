@@ -14,24 +14,27 @@ import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import EditReadingLog from "./EditReadingLog";
 import DeleteReadingDialog from "./DeleteReadingLog";
-import { CalendarDays } from "lucide-react";
-import { BookOpenText } from "lucide-react";
-import { Info } from "lucide-react";
+import { CalendarDays, BookOpenText, Info } from "lucide-react";
 
 export default function ReadingLogs({ data }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const logsPerPage = 5;
 
-  console.log("Direct Reading Logs:", data)
-
+  // ✅ FIXED: Use `data` directly since it is the array of logs
   const filteredLogs =
-    data.readingLogs?.filter((log) =>
-      log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase()),
+    data?.filter((log) =>
+      log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
+  // (Optional safer version if data might sometimes be wrapped in an object)
+  // const logsArray = Array.isArray(data) ? data : data?.readingLogs || [];
+  // const filteredLogs = logsArray.filter((log) => 
+  //   log.shortSummary?.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
   const sortedLogs = [...filteredLogs].sort(
-    (a, b) => new Date(b.dateRead) - new Date(a.dateRead),
+    (a, b) => new Date(b.dateRead) - new Date(a.dateRead)
   );
 
   // Pagination
@@ -130,3 +133,4 @@ export default function ReadingLogs({ data }) {
     </div>
   );
 }
+
