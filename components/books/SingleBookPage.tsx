@@ -25,6 +25,8 @@ import { Shapes } from "lucide-react";
 import { toast } from "sonner";
 import { Undo } from "lucide-react";
 import { RotateCcw } from "lucide-react";
+import { createReadingLogSchema } from "@/lib/zod/books/create-reading-log-schema";
+
 
 interface ReadingLog {
   id: string;
@@ -67,24 +69,7 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [previousSummary, setPreviousSummary] = useState("");
-  const ReadingLogSchema = z
-    .object({
-      startPage: z.number().min(1, "Start page must be at least 1"),
-      endPage: z.number().min(1, "End page must be at least 1"),
-      summary: z
-        .string()
-        .min(50, "Summary must be at least 50 characters long"), // Changed this line
-      bookId: z.string(),
-      userId: z.string(),
-    })
-    .refine((data) => data.startPage <= data.endPage, {
-      message: "Start page must be less than or equal to end page",
-      path: ["startPage"],
-    })
-    .refine((data) => data.endPage <= totalPages, {
-      message: `End page cannot exceed total pages (${totalPages})`,
-      path: ["endPage"],
-    });
+  const ReadingLogSchema = createReadingLogSchema(totalPages);
 
   const form = useForm({
     resolver: zodResolver(ReadingLogSchema),

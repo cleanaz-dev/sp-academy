@@ -1,6 +1,7 @@
 
+import SingleReportPage from "@/components/books/SingleBookPage";
 import { getReadingLogsByBookId } from "@/lib/actions";
-import SingleBookReportPage from "@/components/books/SingleBookPage";
+
 
 interface Params {
   params: Promise<{
@@ -14,7 +15,7 @@ export default async function page({ params }: Params) {
   return (
     <div>
       <h1 className="header-title">Daily Reading Log</h1>
-      <SingleBookReportPage readingLogs={readingLogs} />
+      <SingleReportPage readingLogs={readingLogs} />
     </div>
   );
 }
