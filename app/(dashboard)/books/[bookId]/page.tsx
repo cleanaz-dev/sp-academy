@@ -1,5 +1,5 @@
 
-import SingleReportPage from "@/components/books/SingleBookPage";
+import SingleReportPage from "@/components/books/single-report-page";
 import { getReadingLogsByBookId } from "@/lib/actions";
 
 interface Params {

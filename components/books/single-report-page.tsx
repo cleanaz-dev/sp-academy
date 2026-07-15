@@ -62,6 +62,8 @@ export default function SingleReportPage({
     bookReports,
   } = data;
 
+  console.log("Reading Log Data:", data)
+
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
