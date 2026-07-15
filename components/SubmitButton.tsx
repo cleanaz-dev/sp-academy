@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "./ui/button";
 import { Loader2Icon } from "lucide-react";
@@ -38,7 +37,9 @@ export function CreateBookReportButton() {
   );
 }
 
-export function AddReadingLog() {
+export function AddReadingLog({ isSubmitting }: {
+  isSubmitting: boolean
+}) {
   const { pending } = useFormStatus();
   return (
     <>
@@ -54,6 +55,7 @@ export function AddReadingLog() {
     </>
   );
 }
+
 
 export function EditReadingLogSubmitButton() {
   const { pending } = useFormStatus();

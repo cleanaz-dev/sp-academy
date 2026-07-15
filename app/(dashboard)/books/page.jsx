@@ -1,9 +1,8 @@
 import BookCard from "@/components/books/BookCard";
-import BookReportCard from "@/components/books/BookReportCard";
 import CreateBookReportCard from "@/components/books/CreateBookReportCard";
-import { getBooksByUserId, getReadingLogsByBookReportId } from "@/lib/actions";
+import { getBooksByUserId } from "@/lib/actions";
 import { auth } from "@clerk/nextjs/server";
-import { Book, LibraryBig } from "lucide-react";
+import { LibraryBig } from "lucide-react";
 
 export default async function BookReportsPage() {
   const { userId } = auth();

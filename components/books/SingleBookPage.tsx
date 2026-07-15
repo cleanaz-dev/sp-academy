@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { addReadingLog } from "@/lib/actions";
 import { useUser } from "@clerk/nextjs";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+// import "react-big-calendar/lib/css/react-big-calendar.css";
 import ReadingLogs from "./ReadingLogs";
 import { AddReadingLog } from "../SubmitButton";
 import { Button } from "../ui/button";
@@ -26,8 +26,40 @@ import { toast } from "sonner";
 import { Undo } from "lucide-react";
 import { RotateCcw } from "lucide-react";
 
-export default function SingleReportPage({ readingLogs }) {
-  const { title, author, totalPages, id, readingLogs: logs } = readingLogs;
+interface ReadingLog {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  dateRead: Date;
+  startPage: number;
+  endPage: number;
+  pagesRead: number;
+  shortSummary: string | null;
+  bookId: string | null;
+}
+
+interface ReadingLogData {
+  title: string;
+  author: string;
+  totalPages: number;
+  id: string;
+  readingLogs: ReadingLog[];
+  bookReports?: any[];
+}
+
+interface ReadingLogProps {
+  readingLogs: ReadingLogData;
+}
+
+export default function SingleReportPage({ readingLogs: data }: ReadingLogProps) {
+  const {
+    title,
+    author,
+    totalPages,
+    id,
+    readingLogs: logs,
+    bookReports,
+  } = data;
 
   const router = useRouter();
   const { user } = useUser();
@@ -175,7 +207,7 @@ export default function SingleReportPage({ readingLogs }) {
                     {...form.register("startPage", { valueAsNumber: true })}
                     type="number"
                     min="1"
-                    max={readingLogs.totalPages}
+                    max={totalPages}
                     className="w-20"
                   />
                   {form.formState.errors.startPage && (
@@ -190,7 +222,7 @@ export default function SingleReportPage({ readingLogs }) {
                     {...form.register("endPage", { valueAsNumber: true })}
                     type="number"
                     min={form.watch("startPage") + 1}
-                    max={readingLogs.totalPages}
+                    max={totalPages}
                     className="w-20"
                   />
                   {form.formState.errors.endPage && (
@@ -250,7 +282,7 @@ export default function SingleReportPage({ readingLogs }) {
             </div>
           </form>
 
-          <ReadingLogs data={readingLogs} />
+          <ReadingLogs data={logs} />
         </CardContent>
       </Card>
     </div>
