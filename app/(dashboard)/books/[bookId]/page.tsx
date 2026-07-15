@@ -4,13 +4,13 @@ import { getReadingLogsByBookId } from "@/lib/actions";
 
 interface Params {
   params: Promise<{
-    id: string;
+    bookId: string;
   }>
 }
 
 export default async function page({ params }: Params) {
-  const { id } = await params
-  const readingLogs = await getReadingLogsByBookId(id);
+  const { bookId } = await params
+  const readingLogs = await getReadingLogsByBookId(bookId);
 
   console.log("Reading Logs:", readingLogs.readingLogs)
   return (

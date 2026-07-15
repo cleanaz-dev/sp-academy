@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -23,7 +22,6 @@ import { AddReadingLog } from "../SubmitButton";
 import { Button } from "../ui/button";
 import { Shapes } from "lucide-react";
 import { toast } from "sonner";
-import { Undo } from "lucide-react";
 import { RotateCcw } from "lucide-react";
 import { createReadingLogSchema } from "@/lib/zod/books/create-reading-log-schema";
 
@@ -117,7 +115,7 @@ export default function SingleReportPage({ readingLogs: data }: ReadingLogProps)
     }
   }, [logs]);
 
-  async function onSubmit(data) {
+  async function onSubmit(data:any) {
     setIsSubmitting(true);
     try {
       await addReadingLog(data);
