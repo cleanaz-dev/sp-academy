@@ -1,10 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import prisma from "./prisma";
 import { revalidatePath } from "next/cache";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { headers } from "next/headers";
+
+import { Prisma } from "@prisma/client";
+import { createBookReportSchema } from "./zod/books/create-book-report-schema";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -180,7 +183,7 @@ export async function saveStory(formData) {
   }
 }
 
-export async function generateStory(formData) {
+export async function generateStory(formData: FormData) {
   try {
     const topic = formData.get("topic");
     const difficulty = formData.get("difficulty");
@@ -236,7 +239,13 @@ export async function generateStory(formData) {
       temperature: 0.7,
     });
 
-    const storyData = JSON.parse(response.content[0].text.trim());
+    const firstBlock = response.content[0];
+
+    if (firstBlock.type !== "text") {
+      throw new Error("Expected a text response from Claude");
+    }
+
+    const storyData = JSON.parse(firstBlock.text.trim());
     console.log(storyData);
     return { success: true, data: storyData };
   } catch (error) {
@@ -245,7 +254,7 @@ export async function generateStory(formData) {
   }
 }
 
-export async function getStoryById(id) {
+export async function getStoryById(id:string) {
   const story = await prisma.story.findUnique({
     where: { id },
     include: {
@@ -271,7 +280,7 @@ export async function getAllShortStories() {
   }
 }
 
-export async function recordStoryQuestions(formData) {
+export async function recordStoryQuestions(formData:FormData) {
   try {
     // Extract values from formData
     const name = formData.get("name");
@@ -315,22 +324,16 @@ export async function recordStoryQuestions(formData) {
   }
 }
 
-export async function createBookReport(formData) {
+ // adjust path to match your file location
+
+export async function createBookReport(formData: FormData) {
   try {
-    const userId = formData.get("userId");
-    const title = formData.get("title");
-    const author = formData.get("author");
-    const genre = formData.get("genre");
-    const language = formData.get("language");
-    const pages = parseInt(formData.get("pages"));
-    const description = formData.get("description");
-    const coverUrl = formData.get("coverUrl");
+    const raw = Object.fromEntries(formData.entries());
+    const parsed = createBookReportSchema.parse(raw);
 
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { userId: parsed.userId },
     });
-
-    console.log("User Info:", user);
 
     if (!user) {
       throw new Error("User not found");
@@ -338,27 +341,21 @@ export async function createBookReport(formData) {
 
     const book = await prisma.book.create({
       data: {
-        title,
-        author,
-        genre,
-        language,
-        pages,
-        description,
-        coverUrl,
-        user: {
-          connect: { id: user.id },
-        },
+        title: parsed.title,
+        author: parsed.author,
+        genre: parsed.genre,
+        language: parsed.language,
+        pages: parsed.pages,
+        description: parsed.description,
+        coverUrl: parsed.coverUrl,
+        user: { connect: { id: user.id } },
       },
     });
 
     const bookReport = await prisma.bookReport.create({
       data: {
-        user: {
-          connect: { id: user.id },
-        },
-        book: {
-          connect: { id: book.id },
-        },
+        user: { connect: { id: user.id } },
+        book: { connect: { id: book.id } },
         status: "NOT_STARTED",
         progress: 0,
         startDate: new Date(),
@@ -372,7 +369,7 @@ export async function createBookReport(formData) {
   }
 }
 
-export async function addReadingLog(data) {
+export async function addReadingLog(data: any) {
   try {
     console.log("readingLog data:", data);
     const bookId = data.bookId;
@@ -441,34 +438,48 @@ export async function addReadingLog(data) {
   }
 }
 
-export async function getBooksByUserId(userId) {
+
+
+// Export the type so you can reuse it
+export type BookWithReadingLogs = Prisma.BookGetPayload<{
+  include: { readingLogs: true };
+}>;
+
+export async function getBooksByUserId(
+  userId: string | null
+): Promise<BookWithReadingLogs[]> {
+  // Guard clause so we don't crash if userId is null (from Clerk)
+  if (!userId) return [];
+
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
     });
+
+    if (!user) return [];
+
     const books = await prisma.book.findMany({
       where: { user: { id: user.id } },
       include: {
-        BookReport: true,
         readingLogs: true,
       },
     });
     return books;
   } catch (error) {
-    console.error("Error fetching books:", error.message);
+    console.error("Error fetching books:", error);
     throw new Error("Failed to fetch books");
   }
 }
 
-export async function getBookReportById(bookReportId) {
+
+export async function getBookReportById(bookReportId:string) {
   try {
     // console.log("Book Report ID:", bookReportId);
     const bookReport = await prisma.bookReport.findUnique({
       where: { id: bookReportId },
       include: {
         book: true,
-        user: true,
-        readingLogs: true,
+        user: true
       },
     });
     return bookReport;
@@ -478,10 +489,10 @@ export async function getBookReportById(bookReportId) {
   }
 }
 
-export async function getReadingLogsByBookReportId(bookReportId) {
+export async function getReadingLogsByBookReportId(bookReportId: string) {
   try {
     const readingLogs = await prisma.readingLog.findMany({
-      where: { bookReport: { id: bookReportId } },
+      where: { book: { id: bookReportId } },
     });
     return readingLogs;
   } catch (error) {
@@ -506,7 +517,7 @@ export async function editReadingLog(formData) {
     log = await prisma.readingLog.update({
       where: { id: readingLogId },
       data: { shortSummary },
-      select: { bookReportId: true },
+      select: { bookId: true },
     });
     return { success: true };
   } catch (error) {
@@ -729,7 +740,6 @@ export async function updateAccountSettings(data) {
         language,
         avatarUrl,
         aiVoicePreference,
-        billingPlan,
         dailyEmails,
         weeklyEmails,
         shareReadingLogs,
@@ -765,35 +775,35 @@ export async function getAccountSettingsByUserId(userId) {
   }
 }
 
-export async function testApiRoute(formData) {
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+// export async function testApiRoute(formData) {
+//   const headersList = await headers();
+//   const host = headersList.get("host");
+//   const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
 
-  try {
-    const name = formData.get("name");
-    console.log("name", name);
+//   try {
+//     const name = formData.get("name");
+//     console.log("name", name);
 
-    const response = await fetch(`${protocol}://${host}/api/test-api-route`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-    });
+//     const response = await fetch(`${protocol}://${host}/api/test-api-route`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({ name }),
+//     });
 
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`API request failed with status ${response.status}`);
+//     }
 
-    const responseData = await response.json();
-    console.log("Response data:", responseData);
-    return { success: true, data: responseData };
-  } catch (error) {
-    console.error("Error in test API route:", error);
-    return { success: false, error: error.message };
-  }
-}
+//     const responseData = await response.json();
+//     console.log("Response data:", responseData);
+//     return { success: true, data: responseData };
+//   } catch (error) {
+//     console.error("Error in test API route:", error);
+//     return { success: false, error: error.message };
+//   }
+// }
 
 export async function getSharedActivity() {
   try {
@@ -824,12 +834,12 @@ export async function getSharedActivity() {
       readingLogUserIds.length > 0
         ? prisma.readingLog.findMany({
             where: {
-              bookReport: {
+              book: {
                 userId: { in: readingLogUserIds },
               },
             },
             include: {
-              bookReport: {
+              book: {
                 select: { userId: true },
               },
             },
@@ -845,8 +855,11 @@ export async function getSharedActivity() {
             include: {
               user: {
                 select: {
-                  displayName: true,
-                  avatarUrl: true,
+                  AccountSettings: {
+                    select: {
+                      avatarUrl: true
+                    }
+                  },
                 },
               },
             },
@@ -1104,7 +1117,7 @@ export async function getIdByUserId(userId) {
   }
 }
 
-export async function getCourseByEnrolledUser(userId, courseId) {
+export async function getCourseByEnrolledUser(userId: string, courseId:string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1134,7 +1147,6 @@ export async function getCourseByEnrolledUser(userId, courseId) {
             quiz: true,
             teacher: true,
             Progress: true,
-            teacher: true,
           },
         },
         // Optional: Include teacher if needed
@@ -1217,7 +1229,7 @@ export async function updateLessonAndCourseProgress({
           },
         },
         update: {
-          status,
+          status: "COMPLETED",
           score,
           completedAt: new Date(),
           enrollmentId: enrollment.id, // Make sure this is set
@@ -1226,7 +1238,7 @@ export async function updateLessonAndCourseProgress({
           userId,
           lessonId,
           enrollmentId: enrollment.id,
-          status,
+          status: "COMPLETED",
           score,
           completedAt: new Date(),
         },
@@ -1276,7 +1288,7 @@ export async function updateLessonAndCourseProgress({
   }
 }
 
-export async function getExercisesByEnrolledUser(userId, exerciseId) {
+export async function getExercisesByEnrolledUser(userId:string, exerciseId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1335,7 +1347,7 @@ export async function getEnrolledCourseExercises(userId) {
     return enrollments.flatMap((enrollment) =>
       enrollment.course.lessons.map((lesson) => ({
         lessonId: lesson.id,
-        exercises: lesson.Exercise,
+        exercises: lesson.exercise,
       })),
     );
   } catch (error) {

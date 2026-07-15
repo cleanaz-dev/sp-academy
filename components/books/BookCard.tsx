@@ -1,5 +1,3 @@
-//components/books/BooksCard
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,16 +7,23 @@ import {
   BookOpenText,
   Languages,
   FileText,
+  Flame,
+  Trophy, // FIX: Added missing import
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "../ui/progress";
 import { formatDistanceToNow } from "date-fns";
-import { Flame } from "lucide-react";
+import { Prisma } from "@prisma/client";
 
-export default async function BookCard({ book }) {
-  // Destructure book properties
+// Type that exactly matches your Prisma query (Book + readingLogs included)
+export type BookWithReadingLogs = Prisma.BookGetPayload<{
+  include: { readingLogs: true };
+}>;
+
+// Removed 'async' because we are not awaiting anything inside
+export default function BookCard({ book }: { book: BookWithReadingLogs }) {
   const {
     id,
     title,
@@ -31,8 +36,6 @@ export default async function BookCard({ book }) {
     readingLogs,
   } = book;
 
-  console.log("book ID:", id);
-
   // Compute reading progress
   const lastReadingLog = readingLogs[readingLogs.length - 1];
   const currentPage = lastReadingLog?.endPage || 0;
@@ -40,55 +43,47 @@ export default async function BookCard({ book }) {
 
   // Compute last read information
   const lastRead = lastReadingLog?.createdAt
-    ? `Last read ${formatDistanceToNow(lastReadingLog.createdAt, {
+    ? `Last read ${formatDistanceToNow(new Date(lastReadingLog.createdAt), {
         addSuffix: true,
       })}`
     : "Not started yet";
 
-  function calculateCurrentStreak(readingLogs) {
-    if (!readingLogs || readingLogs.length === 0) return 0;
+  function calculateCurrentStreak(logs: BookWithReadingLogs["readingLogs"]) {
+    if (!logs || logs.length === 0) return 0;
 
-    // Get user's current time zone
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // Sort logs by date in descending order (most recent first)
-    const sortedLogs = readingLogs.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    // FIX: Copy array before sorting to avoid mutating props
+    const sortedLogs = [...logs].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     let currentStreak = 0;
 
-    // Convert UTC date to user's local date
-    function getLocalDateString(utcDate) {
+    function getLocalDateString(utcDate: Date) {
       return new Date(utcDate).toLocaleDateString("en-US", {
         timeZone: userTimeZone,
       });
     }
 
-    // Start from the most recent log and work backward
     for (let i = 0; i < sortedLogs.length - 1; i++) {
       const currentDate = getLocalDateString(sortedLogs[i].createdAt);
       const nextDate = getLocalDateString(sortedLogs[i + 1].createdAt);
 
-      // Convert to Date objects for comparison
       const curr = new Date(currentDate);
       const next = new Date(nextDate);
-      const daysDifference = (curr - next) / (1000 * 3600 * 24);
+      const daysDifference = (curr.getTime() - next.getTime()) / (1000 * 3600 * 24);
 
       if (daysDifference === 1) {
         currentStreak++;
       } else if (daysDifference > 1) {
-        // If there's a gap, stop counting
         break;
       }
     }
 
-    // Add 1 for the most recent log (since we started counting from the second log)
     return currentStreak + 1;
   }
 
-  // Usage
   const streak = calculateCurrentStreak(readingLogs);
 
   return (
@@ -126,7 +121,7 @@ export default async function BookCard({ book }) {
           </Badge>
           <Badge className="flex items-center gap-1 border-none bg-green-100 text-xs text-green-700 shadow-none hover:bg-green-300 hover:text-white">
             <Languages size={14} />
-            {language.toUpperCase()}
+            {language?.toUpperCase()}
           </Badge>
           <Badge className="flex items-center gap-1 border-none bg-yellow-100 text-xs text-yellow-700 shadow-none hover:bg-amber-300 hover:text-white">
             <FileText size={14} />
@@ -162,10 +157,10 @@ export default async function BookCard({ book }) {
                   streak === 0
                     ? "text-gray-300"
                     : streak > 3
-                      ? "fill-current text-orange-500"
-                      : streak > 5
-                        ? "fill-current text-red-500"
-                        : "fill-current text-amber-400"
+                    ? "fill-current text-orange-500"
+                    : streak > 5
+                    ? "fill-current text-red-500"
+                    : "fill-current text-amber-400"
                 }`}
               />
               <span className="text-xs text-gray-500">
@@ -198,3 +193,4 @@ export default async function BookCard({ book }) {
     </Card>
   );
 }
+

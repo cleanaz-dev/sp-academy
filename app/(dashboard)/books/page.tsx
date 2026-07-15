@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { LibraryBig } from "lucide-react";
 
 export default async function BookReportsPage() {
-  const { userId } = auth();
+  const { userId } = await auth();
   const books = await getBooksByUserId(userId);
 
   // console.log("Books data:", books);
@@ -29,7 +29,7 @@ export default async function BookReportsPage() {
       <div className="mt-6 grid max-w-7xl grid-cols-1 gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3">
         <CreateBookReportCard />
         {books.map((book) => (
-          <BookCard key={book.id} book={book} bookReports={book.bookReports} />
+          <BookCard key={book.id} book={book}  />
         ))}
       </div>
     </div>
