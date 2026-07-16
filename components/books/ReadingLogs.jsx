@@ -47,7 +47,7 @@ export default function ReadingLogs({ data }) {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="mb-4">
-        <h1 className="mb-4 text-2xl font-bold">Reading Logs</h1>
+        <h1 className="mb-4 text-2xl font-extrabold">Reading Logs</h1>
         <div className="flex items-center space-x-2">
           <Input
             type="text"
