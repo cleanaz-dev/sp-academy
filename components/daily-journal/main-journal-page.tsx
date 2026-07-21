@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { SpeechProvider } from "@/context/speech-context"; // Adjust path to match your setup
 import JournalModal from "./journal-modal"; // Adjust path to match your file structure
+import { BookAudio } from "lucide-react";
 
 // Helper to format date safely to YYYY-MM-DD (local time)
 const formatDate = (date: Date) => {
@@ -70,12 +71,15 @@ function JournalPageContent({ journals }: { journals: any[] }) {
       >
         <div className="mx-auto max-w-7xl px-6">
           <motion.h1
-            className="mb-2 text-3xl font-bold md:text-4xl"
+            className="flex items-center gap-2 mb-2 text-3xl font-bold md:text-4xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
             Daily Journal
+            <BookAudio 
+            className="size-8"
+            />
           </motion.h1>
           <motion.p
             className="mt-2 text-lg opacity-90 md:text-xl"
