@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
-import { useSpeech, LANGUAGES } from "@/context/speech-context"
+import { useSpeech, LANGUAGES } from "@/context/speech-context";
 
 interface JournalModalProps {
   date: Date | null;
@@ -29,49 +29,72 @@ export default function JournalModal({
     resetSpeechState,
   } = useSpeech();
 
-  const [isSaving, setIsSaving] = useState(false);
+  // Modal local state: "idle" | "recording" | "review" | "saving"
+  const [modalState, setModalState] = useState<"idle" | "recording" | "review" | "saving">("idle");
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Stop recording and send data to your Lambda / Backend endpoint
-  const handleStopAndSave = async () => {
-    setIsSaving(true);
+  // 1. Handle Start Recording
+  const handleStartRecording = async () => {
+    handleRetry(); // Reset previous recording if any
+    setModalState("recording");
+    await startRecording();
+  };
+
+  // 2. Handle Stop Recording -> Enter Review State
+  const handleStopRecording = async () => {
+    const blob = await stopRecording();
+    if (blob) {
+      setAudioBlob(blob);
+      const url = URL.createObjectURL(blob);
+      setAudioPreviewUrl(url);
+      setModalState("review");
+    } else {
+      setModalState("idle");
+    }
+  };
+
+  // 3. Handle Retry -> Reset state back to idle
+  const handleRetry = () => {
+    if (audioPreviewUrl) {
+      URL.revokeObjectURL(audioPreviewUrl); // Clean up memory
+    }
+    setAudioBlob(null);
+    setAudioPreviewUrl(null);
+    resetSpeechState();
+    setModalState("idle");
+  };
+
+  // 4. Handle Complete & Save -> Submit to API Endpoint
+  const handleCompleteAndSave = async () => {
+    if (!audioBlob) return;
+
+    setModalState("saving");
     try {
-      const audioBlob = await stopRecording();
-
-      if (!audioBlob) {
-        alert("No audio captured.");
-        setIsSaving(false);
-        return;
-      }
-
-      // Build payload for Lambda (S3 Upload + Azure Pronunciation Score)
       const formData = new FormData();
       formData.append("audio", audioBlob, `journal-${date?.toISOString()}.webm`);
       formData.append("transcript", transcript);
       formData.append("language", language);
-      if (date) formData.append("date", date.toISOString());
+      if (date) formData.append("entryDate", date.toISOString());
 
-      console.log("Ready for Lambda Submission:", {
-        audioBlob,
-        transcript,
-        language,
-        date,
+      const res = await fetch("/api/daily-journal/record", {
+        method: "POST",
+        body: formData,
       });
 
-      // TODO: Replace with your actual endpoint call
-      // const res = await fetch("/api/your-lambda-endpoint", {
-      //   method: "POST",
-      //   body: formData,
-      // });
-      // if (!res.ok) throw new Error("Failed to save entry");
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to save journal entry.");
+      }
 
       if (onSaveSuccess) onSaveSuccess();
       handleClose();
-    } catch (err) {
-      console.error("Error saving journal entry:", err);
-      alert("Failed to save journal entry. Please try again.");
-    } finally {
-      setIsSaving(false);
+    } catch (err: any) {
+      console.error("Error saving entry:", err);
+      alert(err.message || "Failed to save entry. Please try again.");
+      setModalState("review");
     }
   };
 
@@ -79,13 +102,13 @@ export default function JournalModal({
     if (isRecording) {
       await stopRecording();
     }
-    resetSpeechState();
+    handleRetry();
     onClose();
   };
 
-  // Canvas Audio Visualizer tied to audioStream from SpeechContext
+  // Canvas Visualizer (Active during "recording" state)
   useEffect(() => {
-    if (!isRecording || !audioStream || !canvasRef.current) return;
+    if (modalState !== "recording" || !audioStream || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -124,7 +147,7 @@ export default function JournalModal({
       cancelAnimationFrame(animationFrameId);
       audioCtx.close();
     };
-  }, [isRecording, audioStream]);
+  }, [modalState, audioStream]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -145,78 +168,126 @@ export default function JournalModal({
           </h3>
           <button
             onClick={handleClose}
-            disabled={isSaving}
+            disabled={modalState === "saving"}
             className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
           >
             Close
           </button>
         </div>
 
-        {/* Existing Entry Indicator */}
+        {/* Existing Entry / Instructions */}
         <div className="mb-3">
-          {existingEntry && !isRecording ? (
+          {existingEntry && modalState === "idle" ? (
             <p className="text-sm font-medium text-emerald-600">
-              ✓ You have a journal entry for this day. Record to create a new entry or update.
+              ✓ Journal entry completed for this day. Re-record below to update.
             </p>
           ) : (
-            <p className="text-sm text-gray-500">Record your verbal journal below.</p>
+            <p className="text-sm text-gray-500">
+              {modalState === "review"
+                ? "Listen to your recording or try again before completing."
+                : "Record your verbal journal entry below."}
+            </p>
           )}
         </div>
 
-        {/* Error Banner */}
+        {/* Error Message Banner */}
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-xs text-red-600 border border-red-200">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600">
             {error}
           </div>
         )}
 
-        {/* Language Picker */}
+        {/* Language Selection */}
         <div className="mb-4 flex justify-center gap-2">
           {Object.entries(LANGUAGES).map(([code, label]) => (
             <button
               key={code}
-              disabled={isRecording || isSaving}
+              disabled={modalState !== "idle"}
               onClick={() => setLanguage(code)}
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                 language === code
                   ? "border-2 border-emerald-500 bg-emerald-50 text-emerald-800"
                   : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              } ${isRecording || isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${modalState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* Live Transcript / Teleprompter Display */}
-        <div className="mb-4 flex min-h-[120px] max-h-[200px] overflow-y-auto items-center justify-center rounded-xl border-2 border-dashed border-gray-200 p-4 text-center text-lg font-medium text-gray-700 bg-gray-50">
-          {transcript || (isRecording ? "Listening..." : "Press record to start speaking!")}
+        {/* Teleprompter / Transcript Area */}
+        <div className="mb-4 flex min-h-[120px] max-h-[180px] overflow-y-auto items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 text-center text-lg font-medium text-gray-700">
+          {transcript ||
+            (modalState === "recording"
+              ? "Listening..."
+              : "Press Record to start speaking!")}
         </div>
 
-        {/* Audio Visualizer Canvas & Action Button */}
-        <div className="flex flex-col items-center gap-4">
+        {/* Audio Player Preview (Review Mode) */}
+        {modalState === "review" && audioPreviewUrl && (
+          <div className="mb-4 w-full rounded-lg bg-emerald-50 p-3 border border-emerald-200">
+            <p className="mb-2 text-xs font-semibold text-emerald-800">🎧 Audio Playback Preview:</p>
+            <audio src={audioPreviewUrl} controls className="w-full h-10" />
+          </div>
+        )}
+
+        {/* Audio Visualizer Canvas (Recording Mode) */}
+        {modalState === "recording" && (
           <canvas
             ref={canvasRef}
             width={400}
-            height={50}
-            className="w-full rounded-lg bg-gray-100"
+            height={40}
+            className="mb-4 w-full rounded-lg bg-gray-100"
           />
+        )}
 
-          {!isRecording ? (
+        {/* Dynamic Action Controls */}
+        <div className="mt-2 flex justify-center gap-3">
+          {/* STATE 1: IDLE */}
+          {modalState === "idle" && (
             <button
-              onClick={startRecording}
-              disabled={isSaving}
-              className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-red-600 disabled:opacity-50"
+              onClick={handleStartRecording}
+              className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-red-600"
             >
               🔴 Start Recording
             </button>
-          ) : (
+          )}
+
+          {/* STATE 2: RECORDING */}
+          {modalState === "recording" && (
             <button
-              onClick={handleStopAndSave}
-              disabled={isSaving}
-              className="rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-blue-700 disabled:opacity-50"
+              onClick={handleStopRecording}
+              className="rounded-full bg-gray-800 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-gray-900"
             >
-              {isSaving ? "Saving..." : "⏹ Stop & Save"}
+              ⏹ Stop Recording
+            </button>
+          )}
+
+          {/* STATE 3: REVIEW (PLAYBACK & RETRY) */}
+          {modalState === "review" && (
+            <>
+              <button
+                onClick={handleRetry}
+                className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+              >
+                🔄 Retry
+              </button>
+              <button
+                onClick={handleCompleteAndSave}
+                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
+              >
+                ✅ Complete & Save
+              </button>
+            </>
+          )}
+
+          {/* STATE 4: SAVING */}
+          {modalState === "saving" && (
+            <button
+              disabled
+              className="rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white opacity-70 cursor-wait"
+            >
+              💾 Saving Journal...
             </button>
           )}
         </div>

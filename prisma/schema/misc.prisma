@@ -145,12 +145,68 @@ model ScheduleExecutionLog {
 }
 
 model DailyJournal {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  transcript String
-  s3Key      String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  transcript  String
+  s3Key       String?
+  audioUrl    String?
+  language    String   @default("en-US")
+  isCompleted Boolean  @default(true)
+  entryDate   DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    String?  @db.ObjectId
+
+  // Relations
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String? @db.ObjectId
+
+  systemTasks SystemTask[]
+  review      JournalReview?
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum SystemTaskType {
+  SPEECH_PRONUNCIATION_ANALYSIS
+  COURSE_GENERTATION
+  BOOK_GENERATION
+  CONVERSATION_GENERATION
+}
+
+model SystemTask {
+  id      String         @id @default(auto()) @map("_id") @db.ObjectId
+  type    SystemTaskType @default(SPEECH_PRONUNCIATION_ANALYSIS)
+  status  TaskStatus     @default(PENDING)
+  payload Json? // Initial params sent to Lambda
+  error   String?
+
+  journalId String       @db.ObjectId
+  journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JournalReview {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  overallScore      Float // Azure PronScore
+  accuracyScore     Float // Azure AccuracyScore
+  fluencyScore      Float // Azure FluencyScore
+  completenessScore Float // Azure CompletenessScore
+  prosodyScore      Float? // Azure ProsodyScore
+
+  // Detailed word-level breakdown from Azure / AssemblyAI
+  wordAnalysis    Json // Array of { word, accuracyScore, errorType, phonemes }
+  summaryFeedback String? // Optional AssemblyAI/LLM summary or tips
+
+  journalId String       @unique @db.ObjectId
+  journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
