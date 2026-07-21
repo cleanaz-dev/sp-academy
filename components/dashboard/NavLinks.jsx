@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Settings,
   Gamepad,
+  BookAudio,
 } from "lucide-react";
 
 export const navItems = [
@@ -39,6 +40,11 @@ export const navItems = [
     href: "/games",
     icon: <Gamepad strokeWidth={1.5} />,
   },
+  {
+    label: "Daily Journal",
+    href: "/daily-journal",
+    icon: <BookAudio strokeWidth={1.5} />
+  }
 ];
 
 export const settingItems = [
