@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
-import { SpeechProvider } from "@/context/speech-context"; // Adjust path to match your setup
-import JournalModal from "./journal-modal"; // Adjust path to match your file structure
-import { BookAudio } from "lucide-react";
+import { SpeechProvider } from "@/context/speech-context"; // Adjust path
+import JournalModal from "./journal-modal"; // Adjust path
+import { BookAudio, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 
 // Helper to format date safely to YYYY-MM-DD (local time)
 const formatDate = (date: Date) => {
@@ -62,14 +62,14 @@ function JournalPageContent({ journals }: { journals: any[] }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Hero Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-12 text-white"
+        className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-12 text-white shrink-0"
       >
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto w-full max-w-[1600px] px-6">
           <motion.h1
             className="flex items-center gap-2 mb-2 text-3xl font-bold md:text-4xl"
             initial={{ opacity: 0 }}
@@ -77,9 +77,7 @@ function JournalPageContent({ journals }: { journals: any[] }) {
             transition={{ delay: 0.2 }}
           >
             Daily Journal
-            <BookAudio 
-            className="size-8"
-            />
+            <BookAudio className="size-8" />
           </motion.h1>
           <motion.p
             className="mt-2 text-lg opacity-90 md:text-xl"
@@ -92,67 +90,96 @@ function JournalPageContent({ journals }: { journals: any[] }) {
         </div>
       </motion.header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 md:flex-row">
+      {/* Main Content - Expanded Width with Flex Layout */}
+      <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        {/* lg:flex-row ensures it stacks on mobile, but goes side-by-side on desktop */}
+        <div className="flex flex-col gap-8 lg:flex-row items-start">
           
-          {/* Calendar Section */}
+          {/* BIG CALENDAR SECTION */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex-1 rounded-xl bg-white p-6 shadow-sm"
+            className="flex-1 w-full rounded-xl bg-white shadow-sm border border-gray-200 flex flex-col overflow-hidden"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">
+            {/* Calendar Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+              <h2 className="text-2xl font-bold text-gray-800">
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
               </h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => changeMonth(-1)}
-                  className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200"
+                  className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                 >
-                  Prev
+                  <ChevronLeft className="w-4 h-4" /> Prev
+                </button>
+                <button
+                  onClick={() => setCurrentDate(new Date())}
+                  className="rounded-md bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors hidden sm:block"
+                >
+                  Today
                 </button>
                 <button
                   onClick={() => changeMonth(1)}
-                  className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200"
+                  className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                 >
-                  Next
+                  Next <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Weekday headers */}
-            <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-400">
+            <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                <div key={d}>{d}</div>
+                <div key={d} className="py-3 text-center text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider border-r last:border-r-0 border-gray-200">
+                  <span className="hidden sm:inline">{d}</span>
+                  <span className="sm:hidden">{d.charAt(0)}</span>
+                </div>
               ))}
             </div>
 
-            {/* Days grid */}
-            <div className="grid grid-cols-7 gap-1">
+            {/* Days grid - Large layout */}
+            <div className="grid grid-cols-7 auto-rows-[minmax(100px,1fr)] bg-gray-200 gap-px">
               {calendarDays.map((date, idx) => {
-                if (!date) return <div key={idx} />;
+                if (!date) return <div key={idx} className="bg-gray-50/50" />; // Empty cells
+                
                 const dateStr = formatDate(date);
                 const isCompleted = completedDates.has(dateStr);
                 const isToday = formatDate(new Date()) === dateStr;
+                const journalData = completedDates.get(dateStr);
 
                 return (
                   <button
                     key={idx}
                     onClick={() => openModal(date)}
-                    className={`relative flex h-10 items-center justify-center rounded-lg text-sm transition-colors ${
-                      isToday ? "ring-2 ring-blue-500" : ""
-                    } ${
-                      isCompleted
-                        ? "bg-emerald-50 font-medium text-emerald-700 hover:bg-emerald-100"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className="relative flex flex-col p-2 sm:p-3 text-left transition-colors bg-white hover:bg-sky-50 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
                   >
-                    {date.getDate()}
+                    <div className="flex justify-between items-start w-full">
+                      <span
+                        className={`text-sm font-medium h-7 w-7 flex items-center justify-center rounded-full ${
+                          isToday
+                            ? "bg-sky-500 text-white"
+                            : "text-gray-700 group-hover:text-sky-700"
+                        }`}
+                      >
+                        {date.getDate()}
+                      </span>
+                    </div>
+
+                    {/* Display entry info if completed */}
                     {isCompleted && (
-                      <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <div className="mt-1 sm:mt-2 w-full">
+                        <div className="bg-emerald-100 border border-emerald-200 rounded p-1.5 sm:p-2 text-[10px] sm:text-xs text-emerald-800 flex flex-col gap-1 shadow-sm">
+                          <div className="flex items-center gap-1 font-semibold">
+                             <CheckCircle2 className="w-3 h-3 shrink-0" />
+                             <span className="truncate">Entry Logged</span>
+                          </div>
+                          {journalData?.title && (
+                             <span className="truncate opacity-80 hidden sm:block">{journalData.title}</span>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </button>
                 );
@@ -160,27 +187,31 @@ function JournalPageContent({ journals }: { journals: any[] }) {
             </div>
           </motion.div>
 
-          {/* Right Sidebar (Completed Days) */}
-          <div className="w-full shrink-0 md:w-80">
-            <div className="rounded-xl bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-semibold text-gray-700">Completed Journals</h3>
+          {/* RIGHT SIDEBAR (Completed Days) */}
+          <div className="w-full shrink-0 lg:w-80">
+            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 sticky top-8">
+              <h3 className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wider">Completed Journals</h3>
               {Array.from(completedDates.keys()).length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {Array.from(completedDates.entries()).map(([dateStr]) => (
                     <button
                       key={dateStr}
                       onClick={() => openModal(new Date(dateStr))}
-                      className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-200"
+                      className="rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200 transition-colors shadow-sm"
                     >
                       {new Date(dateStr).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
+                        year: "numeric"
                       })}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No journals completed yet.</p>
+                <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
+                  <p className="text-sm text-gray-500">No journals completed yet.</p>
+                  <p className="text-xs text-gray-400 mt-1">Click a day to start writing!</p>
+                </div>
               )}
             </div>
           </div>
