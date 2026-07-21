@@ -4,7 +4,15 @@ import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { SpeechProvider } from "@/context/speech-context"; // Adjust path
 import JournalModal from "./journal-modal"; // Adjust path
-import { BookAudio, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { 
+  BookAudio, 
+  ChevronLeft, 
+  ChevronRight, 
+  CheckCircle2,
+  Mic,
+  Plus,
+  Quote
+} from "lucide-react";
 
 // Helper to format date safely to YYYY-MM-DD (local time)
 const formatDate = (date: Date) => {
@@ -31,7 +39,8 @@ function JournalPageContent({ journals }: { journals: any[] }) {
   const completedDates = useMemo(() => {
     const map = new Map<string, any>();
     journals.forEach((j) => {
-      const d = new Date(j.createdAt);
+      // Use entryDate if it exists, fallback to createdAt
+      const d = new Date(j.entryDate || j.createdAt);
       map.set(formatDate(d), j);
     });
     return map;
@@ -90,9 +99,8 @@ function JournalPageContent({ journals }: { journals: any[] }) {
         </div>
       </motion.header>
 
-      {/* Main Content - Expanded Width with Flex Layout */}
+      {/* Main Content */}
       <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* lg:flex-row ensures it stacks on mobile, but goes side-by-side on desktop */}
         <div className="flex flex-col gap-8 lg:flex-row items-start">
           
           {/* BIG CALENDAR SECTION */}
@@ -140,45 +148,83 @@ function JournalPageContent({ journals }: { journals: any[] }) {
             </div>
 
             {/* Days grid - Large layout */}
-            <div className="grid grid-cols-7 auto-rows-[minmax(100px,1fr)] bg-gray-200 gap-px">
+            <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)] bg-gray-200 gap-px">
               {calendarDays.map((date, idx) => {
                 if (!date) return <div key={idx} className="bg-gray-50/50" />; // Empty cells
                 
                 const dateStr = formatDate(date);
-                const isCompleted = completedDates.has(dateStr);
-                const isToday = formatDate(new Date()) === dateStr;
                 const journalData = completedDates.get(dateStr);
+                const isCompleted = !!journalData;
+                const isToday = formatDate(new Date()) === dateStr;
+                
+                // Extract useful fields from your Prisma model
+                const hasAudio = journalData?.audioUrl || journalData?.s3Key;
+                const langCode = journalData?.language?.split("-")[0].toUpperCase() || "EN";
+                const transcriptPreview = journalData?.transcript;
 
                 return (
                   <button
                     key={idx}
                     onClick={() => openModal(date)}
-                    className="relative flex flex-col p-2 sm:p-3 text-left transition-colors bg-white hover:bg-sky-50 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
+                    className={`relative flex flex-col p-2 sm:p-3 text-left transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500 ${
+                      isCompleted ? "bg-white hover:bg-emerald-50/30" : "bg-white hover:bg-sky-50"
+                    }`}
                   >
+                    {/* Top Row: Date & Icons */}
                     <div className="flex justify-between items-start w-full">
                       <span
-                        className={`text-sm font-medium h-7 w-7 flex items-center justify-center rounded-full ${
+                        className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
                           isToday
                             ? "bg-sky-500 text-white"
-                            : "text-gray-700 group-hover:text-sky-700"
+                            : isCompleted
+                            ? "text-emerald-700" 
+                            : "text-gray-600 group-hover:text-sky-700"
                         }`}
                       >
                         {date.getDate()}
                       </span>
+                      
+                      {/* Empty state '+' icon on hover */}
+                      {!isCompleted && (
+                         <Plus className="w-4 h-4 text-sky-300 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
+                      )}
+
+                      {/* Filled state: audio indicator */}
+                      {isCompleted && hasAudio && (
+                        <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 shadow-sm">
+                          <Mic className="w-3 h-3" />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Display entry info if completed */}
-                    {isCompleted && (
-                      <div className="mt-1 sm:mt-2 w-full">
-                        <div className="bg-emerald-100 border border-emerald-200 rounded p-1.5 sm:p-2 text-[10px] sm:text-xs text-emerald-800 flex flex-col gap-1 shadow-sm">
-                          <div className="flex items-center gap-1 font-semibold">
-                             <CheckCircle2 className="w-3 h-3 shrink-0" />
-                             <span className="truncate">Entry Logged</span>
-                          </div>
-                          {journalData?.title && (
-                             <span className="truncate opacity-80 hidden sm:block">{journalData.title}</span>
-                          )}
+                    {/* Middle: Transcript Snippet (Desktop Only) */}
+                    {isCompleted && transcriptPreview && (
+                      <div className="mt-2 hidden sm:block w-full flex-1">
+                        <div className="flex gap-1 text-gray-500">
+                          <Quote className="w-3 h-3 shrink-0 mt-0.5 opacity-50" />
+                          <p className="text-xs italic leading-relaxed text-gray-600 line-clamp-2">
+                            "{transcriptPreview}"
+                          </p>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Bottom Row: Tags & Badges */}
+                    {isCompleted && (
+                      <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
+                        <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
+                          <CheckCircle2 className="w-3 h-3" /> 
+                          <span className="hidden md:inline">Logged</span>
+                        </span>
+                        <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
+                          {langCode}
+                        </span>
+                        {/* Optional: Add a star icon if `journalData.review` exists */}
+                        {journalData?.review && (
+                           <span className="text-[10px] bg-yellow-100 border border-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-sm font-medium">
+                             Reviewed
+                           </span>
+                        )}
                       </div>
                     )}
                   </button>
@@ -190,27 +236,45 @@ function JournalPageContent({ journals }: { journals: any[] }) {
           {/* RIGHT SIDEBAR (Completed Days) */}
           <div className="w-full shrink-0 lg:w-80">
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 sticky top-8">
-              <h3 className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wider">Completed Journals</h3>
+              <h3 className="mb-4 text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                Completed Journals
+              </h3>
               {Array.from(completedDates.keys()).length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(completedDates.entries()).map(([dateStr]) => (
+                <div className="flex flex-col gap-2">
+                  {Array.from(completedDates.entries())
+                    .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()) // Sort newest first
+                    .map(([dateStr, journal]) => (
                     <button
                       key={dateStr}
                       onClick={() => openModal(new Date(dateStr))}
-                      className="rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-200 transition-colors shadow-sm"
+                      className="group flex flex-col items-start rounded-lg bg-gray-50 border border-gray-100 p-3 text-left hover:border-emerald-200 hover:bg-emerald-50/50 transition-all"
                     >
-                      {new Date(dateStr).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                      })}
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-700">
+                          {new Date(dateStr).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric"
+                          })}
+                        </span>
+                        {(journal.audioUrl || journal.s3Key) && (
+                           <Mic className="w-3 h-3 text-emerald-500" />
+                        )}
+                      </div>
+                      {journal.transcript && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-1 italic">
+                          "{journal.transcript}"
+                        </p>
+                      )}
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
-                  <p className="text-sm text-gray-500">No journals completed yet.</p>
-                  <p className="text-xs text-gray-400 mt-1">Click a day to start writing!</p>
+                <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center bg-gray-50">
+                  <BookAudio className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-600">No journals yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Click a day on the calendar to start your first entry.</p>
                 </div>
               )}
             </div>
