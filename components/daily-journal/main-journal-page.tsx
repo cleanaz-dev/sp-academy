@@ -1,7 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { SpeechProvider } from "@/context/speech-context"; // Adjust path to match your setup
+import JournalModal from "./journal-modal"; // Adjust path to match your file structure
 
 // Helper to format date safely to YYYY-MM-DD (local time)
 const formatDate = (date: Date) => {
@@ -12,6 +14,14 @@ const formatDate = (date: Date) => {
 };
 
 export default function MainJournalPage({ journals = [] }: { journals: any[] }) {
+  return (
+    <SpeechProvider>
+      <JournalPageContent journals={journals} />
+    </SpeechProvider>
+  );
+}
+
+function JournalPageContent({ journals }: { journals: any[] }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,7 +62,7 @@ export default function MainJournalPage({ journals = [] }: { journals: any[] }) 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Header (kept similar to your course page) */}
+      {/* Hero Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -94,14 +104,26 @@ export default function MainJournalPage({ journals = [] }: { journals: any[] }) 
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
               </h2>
               <div className="flex gap-2">
-                <button onClick={() => changeMonth(-1)} className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200">Prev</button>
-                <button onClick={() => changeMonth(1)} className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200">Next</button>
+                <button
+                  onClick={() => changeMonth(-1)}
+                  className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200"
+                >
+                  Prev
+                </button>
+                <button
+                  onClick={() => changeMonth(1)}
+                  className="rounded bg-gray-100 px-3 py-1 text-sm hover:bg-gray-200"
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             {/* Weekday headers */}
             <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-400">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (<div key={d}>{d}</div>))}
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                <div key={d}>{d}</div>
+              ))}
             </div>
 
             {/* Days grid */}
@@ -116,10 +138,13 @@ export default function MainJournalPage({ journals = [] }: { journals: any[] }) 
                   <button
                     key={idx}
                     onClick={() => openModal(date)}
-                    className={`relative flex h-10 items-center justify-center rounded-lg text-sm transition-colors
-                      ${isToday ? "ring-2 ring-blue-500" : ""}
-                      ${isCompleted ? "bg-emerald-50 font-medium text-emerald-700 hover:bg-emerald-100" : "text-gray-700 hover:bg-gray-100"}
-                    `}
+                    className={`relative flex h-10 items-center justify-center rounded-lg text-sm transition-colors ${
+                      isToday ? "ring-2 ring-blue-500" : ""
+                    } ${
+                      isCompleted
+                        ? "bg-emerald-50 font-medium text-emerald-700 hover:bg-emerald-100"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
                   >
                     {date.getDate()}
                     {isCompleted && (
@@ -143,7 +168,10 @@ export default function MainJournalPage({ journals = [] }: { journals: any[] }) 
                       onClick={() => openModal(new Date(dateStr))}
                       className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-200"
                     >
-                      {new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      {new Date(dateStr).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </button>
                   ))}
                 </div>
@@ -167,144 +195,3 @@ export default function MainJournalPage({ journals = [] }: { journals: any[] }) 
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Modal Component (Handles Recording & Visualizer)                    */
-/* ------------------------------------------------------------------ */
-
-function JournalModal({ date, onClose, existingEntry }: { date: Date | null; onClose: () => void; existingEntry: any }) {
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Start recording (User gesture satisfies mobile mic policies)
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
-      // Setup Web Audio API for visualizer
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioCtx();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      
-      audioContextRef.current = audioCtx;
-      analyserRef.current = analyser;
-
-      // Setup MediaRecorder (you'll hook this up to your S3 upload logic)
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          // TODO: Upload e.data (Blob) to S3 and save to DB
-          console.log("Audio chunk ready for upload:", e.data);
-        }
-      };
-    } catch (err) {
-      console.error("Microphone access denied or error:", err);
-      alert("Could not access microphone.");
-    }
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
-    audioContextRef.current?.close();
-    setIsRecording(false);
-  };
-
-  // Canvas Visualizer Effect
-  useEffect(() => {
-    if (!isRecording || !analyserRef.current || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const analyser = analyserRef.current;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-    const renderFrame = () => {
-      if (!isRecording) return;
-      requestAnimationFrame(renderFrame);
-      analyser.getByteFrequencyData(dataArray);
-      ctx!.clearRect(0, 0, canvas.width, canvas.height);
-      const barWidth = (canvas.width / dataArray.length) * 2;
-      let x = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const barHeight = dataArray[i] / 2;
-        ctx!.fillStyle = "#3b82f6"; // blue-500
-        ctx!.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 1;
-      }
-    };
-    renderFrame();
-  }, [isRecording]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
-      audioContextRef.current?.close();
-    };
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      {/* Modal content - NO onClick on parent means clicking outside does nothing */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800">
-            {date?.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
-          </h3>
-          {/* Explicit Close Button */}
-          <button
-            onClick={onClose}
-            className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="py-2">
-          {existingEntry && !isRecording ? (
-            <p className="text-sm text-emerald-600">✓ You have a journal entry for this day.</p>
-          ) : (
-            <p className="text-sm text-gray-500">Record your verbal journal below.</p>
-          )}
-        </div>
-
-        {/* Recording UI */}
-        <div className="mt-6 flex flex-col items-center gap-4">
-          <canvas ref={canvasRef} width={400} height={60} className="w-full rounded-lg bg-gray-50" />
-          
-          {!isRecording ? (
-            <button
-              onClick={startRecording}
-              className="mt-2 rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-red-600"
-            >
-              🎤 Start Recording
-            </button>
-          ) : (
-            <button
-              onClick={stopRecording}
-              className="mt-2 rounded-full bg-gray-800 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-gray-900"
-            >
-              ⏹ Stop & Save
-            </button>
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
