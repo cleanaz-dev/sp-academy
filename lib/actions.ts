@@ -1462,7 +1462,7 @@ export async function getAllGames() {
   try {
     const games = await prisma.game.findMany({
       include: {
-        GameScore: {
+        scores: {
           orderBy: { score: "desc" }, // Sort scores in descending order
           take: 1, // Only get the highest score per game
           select: {
@@ -1492,8 +1492,8 @@ export async function getGameById(gameId:string) {
     const gameData = await prisma.game.findFirst({
       where: { id: gameId },
       include: {
-        GameScore: true,
-        GameSoundEffects: true,
+        score: true,
+        soundEffects: true,
       },
     });
     return gameData;
@@ -1509,7 +1509,7 @@ export async function getLimitedGameData() {
       select: {
         id: true,
         title: true,
-        GameVariation: true,
+        variations: true,
       },
     });
     return games;
