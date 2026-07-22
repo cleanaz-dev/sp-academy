@@ -8,12 +8,14 @@ import { headers } from "next/headers";
 
 import { Prisma } from "@prisma/client";
 import { createBookReportSchema } from "./zod/books/create-book-report-schema";
+import { generateNovitaImage } from "@/lib/novita"
+import { auth } from "@clerk/nextjs/server"
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
 
-export async function getLessonById(id) {
+export async function getLessonById(id:string) {
   try {
     const lesson = await prisma.lesson.findUnique({
       where: { id },
@@ -40,7 +42,7 @@ export async function getAllLessons() {
   }
 }
 
-export async function getUserbyUserId(userId) {
+export async function getUserbyUserId(userId:string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -52,7 +54,7 @@ export async function getUserbyUserId(userId) {
   }
 }
 
-export const recordJournal = async (formData) => {
+export const recordJournal = async (formData:FormData) => {
   try {
     const name = formData.get("name");
     const phoneNumber = formData.get("phoneNumber");
@@ -86,7 +88,7 @@ export const recordJournal = async (formData) => {
   redirect("/home");
 };
 
-export const recordConversation = async (formData) => {
+export const recordConversation = async (formData:FormData) => {
   try {
     const name = formData.get("name");
     const phoneNumber = formData.get("phoneNumber");
@@ -123,7 +125,7 @@ export const recordConversation = async (formData) => {
   redirect("/home");
 };
 
-export const getJournalByUserId = async (userId) => {
+export const getJournalByUserId = async (userId:string) => {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -141,7 +143,7 @@ export const getJournalByUserId = async (userId) => {
   }
 };
 
-export const deleteJournalById = async (id) => {
+export const deleteJournalById = async (id:string) => {
   try {
     await prisma.journal.delete({
       where: { id: id },
@@ -1401,7 +1403,7 @@ export async function getLessonExercisesByEnrolledUser(
   }
 }
 
-export async function getAllCoursesByUserId(userId) {
+export async function getAllCoursesByUserId(userId:string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1433,7 +1435,7 @@ export async function getAllCoursesByUserId(userId) {
   }
 }
 
-export async function getUserAvatarImage(userId) {
+export async function getUserAvatarImage(userId: string) {
   try {
     console.log("user id:", userId);
     const user = await prisma.user.findFirst({
@@ -1598,5 +1600,45 @@ export async function patchGameCode(gameId: string, code: string) {
   } catch (error: any) {
     console.error("Error patching game code:", error.message);
     throw new Error("Failed to attach game code.");
+  }
+}
+
+type GenerateThumbnailResult =
+  | { success: true; imageUrl: string }
+  | { success: false; error: string }
+
+export async function generateGameThumbnail(
+  prompt: string
+): Promise<GenerateThumbnailResult> {
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { userId },
+      select: { role: true },
+    })
+
+    if (!user || user.role !== "ADMIN") {
+      return { success: false, error: "Forbidden" }
+    }
+
+    if (!prompt || !prompt.trim()) {
+      return { success: false, error: "Prompt is required" }
+    }
+
+    const imageUrl = await generateNovitaImage(
+      `${prompt}, detailed, vibrant colors, high quality`
+    )
+
+    return { success: true, imageUrl }
+  } catch (error: any) {
+    console.error("[generateGameThumbnail] Error:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to generate image",
+    }
   }
 }

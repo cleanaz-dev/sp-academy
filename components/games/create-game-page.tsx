@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Field, FieldLabel, FieldDescription, FieldError } from "@/components/ui/field"
+import { generateGameThumbnail } from "@/lib/actions"
 
 const formSchema = z.object({
   title: z.string().min(2, "Title is required"),
@@ -47,22 +48,25 @@ export default function CreateGamePage() {
     },
   })
 
-  const generateImage = async () => {
-    if (!imagePrompt) return alert("Please enter an image prompt")
-    setIsGeneratingImage(true)
+const generateImage = async () => {
+  if (!imagePrompt) return alert("Please enter an image prompt")
+  setIsGeneratingImage(true)
 
-    try {
-      // Fake delay for demo. Replace with your actual AI endpoint returning a temp URL.
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      const mockTempUrl = `https://picsum.photos/seed/${encodeURIComponent(imagePrompt)}/400/400`
-      
-      form.setValue("imageUrl", mockTempUrl, { shouldValidate: true })
-    } catch (error) {
-      console.error("Failed to generate image", error)
-    } finally {
-      setIsGeneratingImage(false)
+  try {
+    const result = await generateGameThumbnail(imagePrompt)
+
+    if (!result.success) {
+      throw new Error
     }
+
+    form.setValue("imageUrl", result.imageUrl, { shouldValidate: true })
+  } catch (error: any) {
+    console.error("Failed to generate image", error)
+    alert(error.message || "Failed to generate image")
+  } finally {
+    setIsGeneratingImage(false)
   }
+}
 
   const onSubmit = async (values: GameFormValues) => {
     try {
