@@ -1492,7 +1492,7 @@ export async function getGameById(gameId:string) {
     const gameData = await prisma.game.findFirst({
       where: { id: gameId },
       include: {
-        score: true,
+        scores: true,
         soundEffects: true,
       },
     });
