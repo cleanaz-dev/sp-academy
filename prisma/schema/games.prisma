@@ -7,6 +7,7 @@ model Game {
   language         Languages          @default(ENGLISH)
   difficulty       Int                @default(1)
   type             GameType
+  code             String?
   theme            String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
