@@ -30,7 +30,7 @@ export default function Page() {
     },
     {
       name: "Games",
-      href: "/admin/generate/games/create",
+      href: "/admin/generate/games",
       icon: <Gamepad2 className="h-8 w-8" />,
       description: "Create and manage games",
     },
