@@ -42,9 +42,7 @@ export default function CreateGamePage() {
       rules: "",
       imageUrl: "",
       difficulty: 1,
-      type: "Speech_Describe",
-      code: "",
-      theme: "",
+      type: "Verbal",
     },
   })
 
@@ -70,7 +68,7 @@ const generateImage = async () => {
 
   const onSubmit = async (values: GameFormValues) => {
     try {
-      const response = await fetch("/api/games", {
+      const response = await fetch("/api/admin/games/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -247,44 +245,6 @@ const generateImage = async () => {
               <FieldDescription>
                 This temporary image will be permanently uploaded to S3 when you save the game.
               </FieldDescription>
-            </div>
-
-            {/* --- OPTIONAL FIELDS --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-              <Controller
-                name="code"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>Engine Code <span className="text-muted-foreground italic font-normal">(Optional)</span></FieldLabel>
-                    <Input 
-                      {...field} 
-                      id={field.name} 
-                      aria-invalid={fieldState.invalid} 
-                      placeholder="e.g. DUCK_A_WEAR" 
-                    />
-                    <FieldDescription>Used to map this DB entry to your frontend code registry.</FieldDescription>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                name="theme"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>UI Theme <span className="text-muted-foreground italic font-normal">(Optional)</span></FieldLabel>
-                    <Input 
-                      {...field} 
-                      id={field.name} 
-                      aria-invalid={fieldState.invalid} 
-                      placeholder="e.g. Jungle, Dark Mode" 
-                    />
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
-              />
             </div>
 
             <div className="pt-6">
