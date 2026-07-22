@@ -4,71 +4,59 @@ import { NextResponse } from "next/server";
 
 const NOVITA_API_KEY = process.env.NOVITA_API_KEY!;
 
-// Helper function to clean DeepSeek output (<think> tags, markdown code blocks)
+// 1. Tell Vercel to allow up to 60 seconds for this function
+export const maxDuration = 60;
+
+// Helper to clean DeepSeek output
 function cleanDeepSeekJson(content: string): string {
   if (!content) return "";
-  
-  // 1. Remove DeepSeek reasoning <think>...</think> blocks
   let cleaned = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-  // 2. Remove markdown code blocks ```json ... ```
   cleaned = cleaned.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
-
   return cleaned;
 }
 
-// Helper function to poll Novita async task result for Image Generation
-async function pollNovitaTaskResult(taskId: string, maxAttempts = 20): Promise<string> {
-  console.log(`[Preview API] Polling Novita Task ID: ${taskId}...`);
+// Helper function to poll Novita async task result
+async function pollNovitaTaskResult(taskId: string, maxAttempts = 15): Promise<string> {
+  // Wait 2.5s initially since z-image-turbo takes ~3s minimum
+  await new Promise((resolve) => setTimeout(resolve, 2500));
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     const response = await fetch(
       `https://api.novita.ai/v3/async/task-result?task_id=${taskId}`,
       {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${NOVITA_API_KEY}`,
-        },
+        headers: { Authorization: `Bearer ${NOVITA_API_KEY}` },
       }
     );
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[Preview API] Novita Poll Error (Attempt ${attempt}):`, errText);
       throw new Error(`Failed to query Novita task result: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log(`[Preview API] Poll Attempt ${attempt} Task Payload:`, JSON.stringify(data, null, 2));
-
     const task = data.task || data;
 
     if (task.status === "TASK_STATUS_SUCCEEDED" || task.status === "SUCCESS") {
       const imageUrl = task.images?.[0]?.image_url || task.images?.[0]?.url;
       if (!imageUrl) throw new Error("Image task succeeded but no image URL returned");
-      console.log(`[Preview API] Image Task Succeeded! URL: ${imageUrl}`);
       return imageUrl;
     }
 
     if (task.status === "TASK_STATUS_FAILED") {
-      console.error(`[Preview API] Novita Image Task Failed:`, task.reason);
       throw new Error(task.reason || "Novita image generation task failed");
     }
+
+    // Wait 1s between retries
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   throw new Error("Novita image generation timed out.");
 }
 
 export async function POST(req: Request) {
-  console.log("=== [Preview API] Route Called ===");
-
   try {
-    // 1. Clerk Admin Authentication
+    // Auth Check
     const { userId } = await auth();
-    console.log("[Preview API] Auth UserId:", userId);
-
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -78,16 +66,11 @@ export async function POST(req: Request) {
       select: { id: true, role: true },
     });
 
-    console.log("[Preview API] User Admin Check Result:", isUserAdmin);
-
     if (!isUserAdmin || isUserAdmin.role !== "ADMIN") {
       return NextResponse.json({ message: "Forbidden Request" }, { status: 403 });
     }
 
-    // 2. Parse Request Body
     const body = await req.json();
-    console.log("[Preview API] Request Body:", body);
-
     const { type, language, theme, imageStyle } = body;
 
     if (!theme || !type) {
@@ -101,7 +84,7 @@ export async function POST(req: Request) {
     };
     const targetLanguage = languageNames[language] || "English";
 
-    // 3. System Prompt setup
+    // --- PARALLEL TASK 1: Call DeepSeek LLM ---
     const systemPrompt = `You are an AI game content generator. 
 Generate exactly 1 sample item for a ${type} game.
 Theme: "${theme}".
@@ -111,21 +94,17 @@ Format your response ONLY as a valid raw JSON object (no markdown, no code fence
 
 If type is SPEECH_DESCRIBE:
 {
-  "imagePrompt": "Detailed English image generation prompt incorporating style '${imageStyle}'",
   "targetKeywords": ["3 to 5 keywords in ${targetLanguage}"],
   "description": "Full reference sentence in ${targetLanguage}"
 }
 
 If type is VISUAL:
 {
-  "imagePrompt": "Detailed English image generation prompt incorporating style '${imageStyle}'",
   "choices": ["Choice 1 in ${targetLanguage}", "Choice 2 in ${targetLanguage}", "Choice 3 in ${targetLanguage}", "Choice 4 in ${targetLanguage}"],
   "answer": "Correct choice in ${targetLanguage}"
 }`;
 
-    console.log("[Preview API] Calling Novita LLM (deepseek/deepseek-v4-flash)...");
-
-    const llmResponse = await fetch("https://api.novita.ai/openai/v1/chat/completions", {
+    const llmPromise = fetch("https://api.novita.ai/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -141,42 +120,10 @@ If type is VISUAL:
       }),
     });
 
-    console.log("[Preview API] Novita LLM HTTP Status:", llmResponse.status);
-
-    if (!llmResponse.ok) {
-      const errText = await llmResponse.text();
-      console.error("[Preview API] Novita LLM Request Failed:", errText);
-      throw new Error(`Novita LLM Error (${llmResponse.status}): ${errText}`);
-    }
-
-    const llmData = await llmResponse.json();
-    console.log("[Preview API] Full Novita LLM Response:", JSON.stringify(llmData, null, 2));
-
-    const rawContent = llmData.choices?.[0]?.message?.content;
-    console.log("[Preview API] Raw Message Content:", rawContent);
-
-    if (!rawContent) {
-      throw new Error("DeepSeek returned an empty message content");
-    }
-
-    // Clean markdown/think tags and parse JSON
-    const sanitizedContent = cleanDeepSeekJson(rawContent);
-    console.log("[Preview API] Sanitized JSON Content:", sanitizedContent);
-
-    let itemData: any;
-    try {
-      itemData = JSON.parse(sanitizedContent);
-      console.log("[Preview API] Successfully Parsed Item Data:", itemData);
-    } catch (parseErr) {
-      console.error("[Preview API] JSON Parse Error on string:", sanitizedContent);
-      throw new Error(`Failed to parse LLM JSON output: ${rawContent}`);
-    }
-
-    // 4. Submit Image Task
-    const imagePrompt = `${itemData.imagePrompt}, ${imageStyle} style, high quality, vibrant colors`;
-    console.log("[Preview API] Submitting Image Task to Novita with Prompt:", imagePrompt);
-
-    const imageTaskResponse = await fetch("https://api.novita.ai/v3/async/z-image-turbo", {
+    // --- PARALLEL TASK 2: Submit Novita Image Task ---
+    const imagePrompt = `${theme}, ${imageStyle} style, detailed, vibrant colors, high quality`;
+    
+    const imageTaskPromise = fetch("https://api.novita.ai/v3/async/z-image-turbo", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -191,38 +138,46 @@ If type is VISUAL:
       }),
     });
 
-    console.log("[Preview API] Image Task Submission HTTP Status:", imageTaskResponse.status);
+    // Run both LLM & Image Task Submission concurrently!
+    const [llmResponse, imageTaskResponse] = await Promise.all([
+      llmPromise,
+      imageTaskPromise,
+    ]);
 
+    if (!llmResponse.ok) {
+      throw new Error(`Novita LLM error: ${await llmResponse.text()}`);
+    }
     if (!imageTaskResponse.ok) {
-      const errText = await imageTaskResponse.text();
-      console.error("[Preview API] Image Task Submission Failed:", errText);
-      throw new Error(`Novita Image Submission Error (${imageTaskResponse.status}): ${errText}`);
+      throw new Error(`Novita Image error: ${await imageTaskResponse.text()}`);
     }
 
-    const imageTaskData = await imageTaskResponse.json();
-    console.log("[Preview API] Image Task Submission Payload:", JSON.stringify(imageTaskData, null, 2));
+    // Process LLM Output
+    const llmData = await llmResponse.json();
+    const rawContent = llmData.choices?.[0]?.message?.content;
+    const sanitizedContent = cleanDeepSeekJson(rawContent);
+    const itemData = JSON.parse(sanitizedContent);
 
+    // Process Image Task Result
+    const imageTaskData = await imageTaskResponse.json();
     const taskId = imageTaskData.task_id || imageTaskData.task?.task_id;
 
     if (!taskId) {
       throw new Error("No task_id returned from Novita image submission");
     }
 
-    // 5. Poll Image URL
+    // Poll for final image URL
     const imageUrl = await pollNovitaTaskResult(taskId);
 
-    // 6. Return Payload
+    // Return combined result
     const previewSample = {
       ...itemData,
       imageUrl,
     };
 
-    console.log("[Preview API] Final Preview Sample Payload Ready:", previewSample);
-
     return NextResponse.json({ previewSample }, { status: 200 });
 
   } catch (error: any) {
-    console.error("=== [Preview API] ERROR ===", error);
+    console.error("Preview Route Error:", error);
     return NextResponse.json(
       { message: error.message || "Failed to generate preview" },
       { status: 500 }
