@@ -42,7 +42,10 @@ export default function GameCodeModal({ gameId, gameTitle, currentCode }: GameCo
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog 
+      open={open} 
+      onOpenChange={setOpen}
+      >
       <DialogTrigger asChild>
         <Button variant={currentCode ? "outline" : "default"} className="w-full text-xs">
           <Code2 className="mr-2 h-3.5 w-3.5" />
@@ -50,7 +53,7 @@ export default function GameCodeModal({ gameId, gameTitle, currentCode }: GameCo
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl bg-white">
         <DialogHeader>
           <DialogTitle>Attach Code to {gameTitle}</DialogTitle>
           <DialogDescription>

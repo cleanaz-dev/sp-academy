@@ -1,0 +1,1 @@
+const key = process.env.NOVITA_API_KEY!
