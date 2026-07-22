@@ -34,19 +34,19 @@ async function pollNovitaTaskResult(taskId: string, maxAttempts = 15): Promise<s
     }
 
     const data = await response.json();
-    const task = data.task || data;
+    const status = data.task?.status;
 
-    if (task.status === "TASK_STATUS_SUCCEEDED" || task.status === "SUCCESS") {
-      const imageUrl = task.images?.[0]?.image_url || task.images?.[0]?.url;
+    if (status === "TASK_STATUS_SUCCEED") {
+      const imageUrl = data.images?.[0]?.image_url;
       if (!imageUrl) throw new Error("Image task succeeded but no image URL returned");
       return imageUrl;
     }
 
-    if (task.status === "TASK_STATUS_FAILED") {
-      throw new Error(task.reason || "Novita image generation task failed");
+    if (status === "TASK_STATUS_FAILED") {
+      throw new Error(data.task?.reason || "Novita image generation task failed");
     }
 
-    // Wait 1s between retries
+    // status is TASK_STATUS_QUEUED or TASK_STATUS_PROCESSING — keep polling
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
@@ -122,7 +122,7 @@ If type is VISUAL:
 
     // --- PARALLEL TASK 2: Submit Novita Image Task ---
     const imagePrompt = `${theme}, ${imageStyle} style, detailed, vibrant colors, high quality`;
-    
+
     const imageTaskPromise = fetch("https://api.novita.ai/v3/async/z-image-turbo-lora", {
       method: "POST",
       headers: {
@@ -133,8 +133,6 @@ If type is VISUAL:
         seed: Math.floor(Math.random() * 1000000),
         size: "1024*1024",
         prompt: imagePrompt,
-        output_format: "webp",
-        enable_base64_output: false,
       }),
     });
 
@@ -157,9 +155,9 @@ If type is VISUAL:
     const sanitizedContent = cleanDeepSeekJson(rawContent);
     const itemData = JSON.parse(sanitizedContent);
 
-    // Process Image Task Result
+    // Process Image Task Submission
     const imageTaskData = await imageTaskResponse.json();
-    const taskId = imageTaskData.task_id || imageTaskData.task?.task_id;
+    const taskId = imageTaskData.task_id;
 
     if (!taskId) {
       throw new Error("No task_id returned from Novita image submission");
