@@ -68,6 +68,7 @@ export async function POST(req: Request) {
       },
     });
 
+
     return NextResponse.json(newGame, { status: 201 });
 
   } catch (error) {
