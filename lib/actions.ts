@@ -1582,3 +1582,21 @@ export async function getEmailSchedules() {
     return [];
   }
 }
+
+
+export async function patchGameCode(gameId: string, code: string) {
+  try {
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { code },
+    });
+    
+    // Refresh the admin page so the "Generate" button unlocks
+    revalidatePath("/admin/games");
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error patching game code:", error.message);
+    throw new Error("Failed to attach game code.");
+  }
+}
