@@ -50,6 +50,11 @@ const nextConfig = {
         port: "",
         pathname: "/**", // Adjust the pathname as needed
       },
+      {
+        protocol: "https",
+        hostname: '**.amazonaws.com',
+        port: "",
+      }
     ],
   },
 };

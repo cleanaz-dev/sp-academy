@@ -73,6 +73,7 @@ export default function GamePreviewPanel() {
                 src={previewData.imageUrl}
                 alt="AI Generated Prompt"
                 className="w-full h-64 object-cover rounded-lg"
+                referrerPolicy="no-referrer" 
               />
             </div>
 
