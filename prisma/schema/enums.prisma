@@ -11,6 +11,13 @@ enum GameType {
   Speech_Describe
 }
 
+enum Languages {
+  ENGLISH
+  SPANISH
+  FRENCH
+  JAPANESE
+}
+
 enum PracticeStatus {
   IN_PROGRESS
   COMPLETED
@@ -29,11 +36,7 @@ enum ReportStatus {
   COMPLETED
 }
 
-enum Languages {
-  ENGLISH
-  FRENCH
-  SPANISH
-}
+
 
 enum VoicePreference {
   MALE

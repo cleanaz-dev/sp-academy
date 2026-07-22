@@ -27,9 +27,9 @@ export default function AdminGamesPage({ games }: { games: Game[] }) {
               Create base game engines, paste component code, and generate AI variations.
             </p>
           </div>
-          <Link href="/admin/games/create-engine">
+          <Link href="/admin/games/create">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-              <Plus className="mr-2 h-4 w-4" /> Create Base Engine
+              <Plus className="mr-2 h-4 w-4" /> Create Game
             </Button>
           </Link>
         </div>

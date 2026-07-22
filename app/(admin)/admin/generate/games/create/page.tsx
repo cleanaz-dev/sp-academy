@@ -1,7 +1,7 @@
 // app/admin/generate/games/create/page.tsx
 "use client";
 
-import React from "react";
+
 import { GenerateProvider } from "@/context/generate-context"; // Adjust path to context
 import GameForm from "@/components/games/game-form";
 import GamePreviewPanel from "@/components/games/game-preview-panel";

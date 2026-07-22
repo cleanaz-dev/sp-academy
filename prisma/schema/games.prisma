@@ -1,20 +1,21 @@
 model Game {
   id               String             @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
+  title            String             // e.g., "Duck a Wear"
   description      String?
   rules            String
   imageUrl         String?
-  language         Languages          @default(ENGLISH)
   difficulty       Int                @default(1)
-  type             GameType
-  code             String?
+  type             GameType           // e.g., Speech_Describe
+  code             String?            // e.g., "DUCK_A_WEAR" (Used to pick the engine)
   theme            String?
+  
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
-  GameScore        GameScore[]
-  gameData         Json[]
-  GameSoundEffects GameSoundEffects[]
-  GameVariation    GameVariation[]
+  
+  // Relations
+  scores           GameScore[]
+  soundEffects     GameSoundEffects[]
+  variations       GameVariation[]    // A game can have many variations (languages/levels)
 }
 
 model GameScore {
@@ -50,10 +51,13 @@ model GameVariation {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   gameId    String   @db.ObjectId
   game      Game     @relation(fields: [gameId], references: [id])
-  variation String   @default("default") // Unique identifier for this variation
-  gameData  Json[] // Store structured game content
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  
+  language  Languages @default(ENGLISH)
+  variation String    @default("default") // e.g., "Animals", "Level 1", "Default"
+  gameData  Json[]    // The actual localized content (words, images) goes here!
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  @@unique([gameId, variation]) // Ensure each variation is unique per game
+  @@unique([gameId, variation, language]) // Ensures you don't duplicate a language+variation combo
 }
