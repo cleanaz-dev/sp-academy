@@ -123,7 +123,7 @@ If type is VISUAL:
     // --- PARALLEL TASK 2: Submit Novita Image Task ---
     const imagePrompt = `${theme}, ${imageStyle} style, detailed, vibrant colors, high quality`;
     
-    const imageTaskPromise = fetch("https://api.novita.ai/v3/async/z-image-turbo", {
+    const imageTaskPromise = fetch("https://api.novita.ai/v3/async/z-image-turbo-lora", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
