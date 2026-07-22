@@ -8,6 +8,7 @@ enum GameType {
   Verbal
   Visual
   Acoustic
+  Speech_Describe
 }
 
 enum PracticeStatus {
