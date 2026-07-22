@@ -1487,7 +1487,7 @@ export async function getAllGames() {
   }
 }
 
-export async function getGameById(gameId) {
+export async function getGameById(gameId:string) {
   try {
     const gameData = await prisma.game.findFirst({
       where: { id: gameId },
@@ -1519,7 +1519,7 @@ export async function getLimitedGameData() {
   }
 }
 
-export async function isAdmin(userId) {
+export async function isAdmin(userId:string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
