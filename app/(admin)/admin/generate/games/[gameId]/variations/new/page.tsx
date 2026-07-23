@@ -7,14 +7,14 @@ interface Params {
   }>;
 }
 
-export async function Page({ params }: Params) {
-  const { gameId } = await params; // ✅ Await the promise
-  const game = await getGameForVariations(gameId); // ✅ Await the DB call
+export default async function Page({ params }: Params) {
+  const { gameId } = await params; 
+  const game = await getGameForVariations(gameId); 
 
   if (!game) {
     return <div className="p-6">Error: Game not found.</div>;
   }
 
-  // ✅ Pass data directly as props (no client-side fetching needed)
+  
   return <NewVariationPage gameId={gameId} gameName={game.name} />;
 }
