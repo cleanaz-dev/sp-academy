@@ -187,7 +187,7 @@ model SystemTask {
   payload  Json? // Initial params sent to Lambda
   error    String?
   metadata Json?
-  results  String?
+  result  String?
 
   journalId String?       @db.ObjectId
   journal   DailyJournal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
