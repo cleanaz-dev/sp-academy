@@ -281,7 +281,7 @@ export default function NewVariationPage({ game }: Props) {
                 type="submit"
                 disabled={isSubmitting}
                 size="lg"
-                className="w-full md:w-auto bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg px-8 py-6 h-auto text-md transition-all shadow-md flex items-center gap-2"
+                
               >
                 {isSubmitting ? (
                   <>
