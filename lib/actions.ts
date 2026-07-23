@@ -1512,7 +1512,7 @@ export async function getGameForVariations(gameId: string) {
       where: { id: gameId },
       select: {
         id: true,
-        name: true,
+        title: true,
         type: true,
         // code: true, // Uncomment later when passing to Lambda
       },

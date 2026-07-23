@@ -16,5 +16,5 @@ export default async function Page({ params }: Params) {
   }
 
   
-  return <NewVariationPage gameId={gameId} gameName={game.name} />;
+  return <NewVariationPage gameId={gameId} gameName={game.title} />;
 }
