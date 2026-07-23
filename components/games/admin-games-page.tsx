@@ -58,18 +58,12 @@ export default function AdminGamesPage({ games }: { games: Game[] }) {
                 </div>
               </div>
 
-              {/* Updated Actions Section */}
+             
               <div className="pt-4 border-t flex flex-col gap-2">
                 
-                {/* 1. Add/Edit Code Modal Button */}
-                <GameCodeModal 
-                  gameId={game.id} 
-                  gameTitle={game.title} 
-                  currentCode={game.code} 
-                />
-
-                {/* 2. Generate Content Button */}
-                <Link href={`/admin/generate/variation?gameId=${game.id}`} className={!game.code ? "pointer-events-none" : ""}>
+               
+                
+                <Link href={`/admin/generate/games/${game.id}/variations/new`} className={!game.code ? "pointer-events-none" : ""}>
                   <Button
                     disabled={!game.code}
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs disabled:opacity-50"
@@ -79,6 +73,13 @@ export default function AdminGamesPage({ games }: { games: Game[] }) {
                 </Link>
 
               </div>
+
+                <GameCodeModal 
+                  gameId={game.id} 
+                  gameTitle={game.title} 
+                  currentCode={game.code} 
+                />
+
             </div>
           ))}
         </div>
