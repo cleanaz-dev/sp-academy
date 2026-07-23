@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -27,7 +28,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-// 1. Define the Game type based on what we selected in the action
 interface GameProps {
   id: string;
   title: string;
@@ -48,6 +48,12 @@ export default function NewVariationPage({ game }: Props) {
   const [difficulty, setDifficulty] = useState<string>('EASY');
   const [variation, setVariation] = useState('Default');
   const [count, setCount] = useState(10);
+  
+  // NEW: Image Toggle State (Defaults to true if the game shell requires images)
+  const [generateImages, setGenerateImages] = useState<boolean>(
+    game.contexts.includes('IMAGES')
+  );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -61,11 +67,13 @@ export default function NewVariationPage({ game }: Props) {
       const res = await fetch(`/api/admin/games/${game.id}/variations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // PASS THE TOGGLE STATE TO THE LAMBDA AI
         body: JSON.stringify({ 
           language, 
           difficulty, 
           variation, 
-          count 
+          count,
+          generateImages 
         }),
       });
 
@@ -82,7 +90,7 @@ export default function NewVariationPage({ game }: Props) {
     <div className="p-6 mt-10">
       <Card className="max-w-2xl mx-auto shadow-md">
         
-        {/* Header Section with Image and Game Info */}
+        {/* Header Section */}
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold">Create Variation</CardTitle>
@@ -102,7 +110,6 @@ export default function NewVariationPage({ game }: Props) {
             </CardDescription>
           </div>
 
-          {/* Render Game Image if it exists */}
           {game.imageUrl && (
             <div className="relative w-24 h-24 rounded-md overflow-hidden shrink-0 border">
               <Image 
@@ -120,7 +127,6 @@ export default function NewVariationPage({ game }: Props) {
           <form onSubmit={handleSubmit} className="space-y-6">
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Target Language Select */}
               <div className="space-y-2">
                 <Label htmlFor="language">Target Language</Label>
                 <Select value={language} onValueChange={setLanguage}>
@@ -137,7 +143,6 @@ export default function NewVariationPage({ game }: Props) {
                 </Select>
               </div>
 
-              {/* Difficulty Select */}
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty Level</Label>
                 <Select value={difficulty} onValueChange={setDifficulty}>
@@ -155,7 +160,6 @@ export default function NewVariationPage({ game }: Props) {
               </div>
             </div>
 
-            {/* Variation Theme/Name Input */}
             <div className="space-y-2">
               <Label htmlFor="variation">Variation Theme/Name</Label>
               <Input
@@ -168,7 +172,6 @@ export default function NewVariationPage({ game }: Props) {
               />
             </div>
 
-            {/* Count Input */}
             <div className="space-y-2">
               <Label htmlFor="count">Iterations (Count)</Label>
               <Input
@@ -177,20 +180,32 @@ export default function NewVariationPage({ game }: Props) {
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
                 min={1}
-                max={10} // Capped at 10 based on your logic
+                max={10}
                 required
               />
               <p className="text-xs text-gray-500">Maximum of 10 iterations per variation.</p>
             </div>
 
-            {/* Error Message */}
+            {/* AI MEDIA TOGGLES */}
+            <div className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+              <div className="space-y-0.5">
+                <Label className="text-base">Generate Images</Label>
+                <p className="text-sm text-gray-500">
+                  Instruct the AI to generate image URLs/prompts for this variation.
+                </p>
+              </div>
+              <Switch
+                checked={generateImages}
+                onCheckedChange={setGenerateImages}
+              />
+            </div>
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-            {/* Submit Button */}
             <Button
               type="submit"
               disabled={isSubmitting}
