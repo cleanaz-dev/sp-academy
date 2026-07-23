@@ -2,8 +2,28 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Languages } from '@prisma/client';
+import { Loader2 } from 'lucide-react';
 
-const LANGUAGES = ['ENGLISH', 'SPANISH', 'FRENCH', 'GERMAN', 'JAPANESE', 'MANDARIN'];
+// shadcn/ui components
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 // 1. Define the Props interface
 interface Props {
@@ -14,14 +34,14 @@ interface Props {
 export default function NewVariationPage({ gameId, gameName }: Props) {
   const router = useRouter();
 
-  // 2. Form States (No Game Context state needed!)
-  const [language, setLanguage] = useState('ENGLISH');
+  // 2. Form States
+  const [language, setLanguage] = useState<string>('ENGLISH');
   const [variation, setVariation] = useState('Default');
   const [count, setCount] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // 3. Submit Handler (Still hits the API for the AI generation)
+  // 3. Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -35,7 +55,7 @@ export default function NewVariationPage({ gameId, gameName }: Props) {
       });
 
       if (!res.ok) throw new Error('Failed to generate');
-      router.push('/admin/games'); 
+      router.push('/admin/games');
     } catch (err) {
       setError('Generation failed. Check API logs.');
     } finally {
@@ -44,59 +64,90 @@ export default function NewVariationPage({ gameId, gameName }: Props) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow mt-10">
-      <h1 className="text-2xl font-bold mb-2">Create Variation</h1>
-      {/* 4. Use the prop directly! Instant load, no spinner */}
-      <p className="text-gray-600 mb-6">
-        For Base Game: <span className="font-semibold text-blue-600">{gameName}</span>
-      </p>
+    <div className="p-6 mt-10">
+      <Card className="max-w-2xl mx-auto shadow-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Create Variation</CardTitle>
+          <CardDescription className="text-base">
+            For Base Game:{' '}
+            <span className="font-semibold text-blue-600">{gameName}</span>
+          </CardDescription>
+        </CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Target Language</label>
-          <select 
-            value={language} 
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-full border p-2 rounded mt-1 bg-white"
-          >
-            {LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
-          </select>
-        </div>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Target Language Select */}
+            <div className="space-y-2">
+              <Label htmlFor="language">Target Language</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger id="language" className="w-full bg-white">
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Convert Prisma Enum object to array to map over it */}
+                  {Object.values(Languages).map((lang) => (
+                    <SelectItem key={lang} value={lang}>
+                      {/* Optional: Format "ENGLISH" to "English" */}
+                      {lang.charAt(0) + lang.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium">Variation Theme/Name</label>
-          <input 
-            type="text" 
-            value={variation} 
-            onChange={(e) => setVariation(e.target.value)}
-            placeholder="e.g. Animals, Level 1"
-            className="w-full border p-2 rounded mt-1"
-            required
-          />
-        </div>
+            {/* Variation Theme/Name Input */}
+            <div className="space-y-2">
+              <Label htmlFor="variation">Variation Theme/Name</Label>
+              <Input
+                id="variation"
+                type="text"
+                value={variation}
+                onChange={(e) => setVariation(e.target.value)}
+                placeholder="e.g. Animals, Level 1"
+                required
+              />
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium">Number of Rounds (Count)</label>
-          <input 
-            type="number" 
-            value={count} 
-            onChange={(e) => setCount(Number(e.target.value))}
-            min={1} max={100}
-            className="w-full border p-2 rounded mt-1"
-            required
-          />
-        </div>
+            {/* Count Input */}
+            <div className="space-y-2">
+              <Label htmlFor="count">Number of Rounds (Count)</Label>
+              <Input
+                id="count"
+                type="number"
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                min={1}
+                max={100}
+                required
+              />
+            </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+            {/* Error Message */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        <button 
-          type="submit" 
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Generating & Saving...' : 'Generate Variation via AI'}
-        </button>
-      </form>
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full font-semibold"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating & Saving...
+                </>
+              ) : (
+                'Generate Variation via AI'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
