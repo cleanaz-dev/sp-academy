@@ -1507,14 +1507,14 @@ export async function getGameById(gameId:string) {
 
 export async function getGameForVariations(gameId: string) {
   try {
-    // Lean select: Only grab what the form UI and future Lambda need
     const gameData = await prisma.game.findUnique({
       where: { id: gameId },
       select: {
         id: true,
         title: true,
         type: true,
-        // code: true, // Uncomment later when passing to Lambda
+        imageUrl: true,
+        contexts: true, // Grab the contexts we just seeded!
       },
     });
     return gameData;
@@ -1523,6 +1523,7 @@ export async function getGameForVariations(gameId: string) {
     throw new Error("Failed to fetch game");
   }
 }
+
 
 
 export async function getLimitedGameData() {

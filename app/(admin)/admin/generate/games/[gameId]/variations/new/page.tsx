@@ -15,6 +15,6 @@ export default async function Page({ params }: Params) {
     return <div className="p-6">Error: Game not found.</div>;
   }
 
-  
-  return <NewVariationPage gameId={gameId} gameName={game.title} />;
+  // Pass the whole game object as a single prop
+  return <NewVariationPage game={game} />;
 }

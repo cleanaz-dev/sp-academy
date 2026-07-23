@@ -5,9 +5,10 @@ model Game {
   rules       String
   imageUrl    String?
   difficulty  Int      @default(1)
-  type        GameType // e.g., Speech_Describe
-  code        String? // e.g., "DUCK_A_WEAR" (Used to pick the engine)
-  theme       String?
+  type        GameType 
+  code        String? 
+ 
+  contexts    GameContext[] 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,11 +54,32 @@ model GameVariation {
   game   Game   @relation(fields: [gameId], references: [id])
 
   language  Languages @default(ENGLISH)
-  variation String    @default("default") // e.g., "Animals", "Level 1", "Default"
-  gameData  Json[] // The actual localized content (words, images) goes here!
+  variation String    @default("default") 
+  gameData  Json[]
+  difficulty GameDifficulty @default(EASY)
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([gameId, variation, language]) // Ensures you don't duplicate a language+variation combo
 }
+
+enum GameContext {
+  SPEAKING
+  LISTENING
+  READING
+  WRITING
+  IMAGES
+  AUDIO
+  MULTIPLE_CHOICE
+}
+
+enum GameDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  INSANE
+}
+
+

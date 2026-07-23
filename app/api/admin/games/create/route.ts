@@ -61,13 +61,10 @@ export async function POST(req: Request) {
         description,
         rules,
         imageUrl: finalImageUrl, // Now stores something like "lessons/uuid.png"
-        difficulty,
         type,
         code,
-        theme,
       },
     });
-
 
     return NextResponse.json(newGame, { status: 201 });
 
