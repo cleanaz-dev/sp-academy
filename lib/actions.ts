@@ -10,6 +10,7 @@ import { Prisma } from "@prisma/client";
 import { createBookReportSchema } from "./zod/books/create-book-report-schema";
 import { generateNovitaImage } from "@/lib/novita"
 import { auth } from "@clerk/nextjs/server"
+import { createCommand, lambda } from "./aws/lambda";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -1613,6 +1614,34 @@ export async function patchGameCode(gameId: string, code: string) {
       where: { id: gameId },
       data: { code },
     });
+
+    const task = await prisma.systemTask.create({
+      data: {
+        type: "GAME_SCHEMA_GENERATION",
+        status: "IN_PROGRESS",
+        metadata: {
+          gameId
+        }
+      }
+    })
+
+    const url = process.env.NEXT_PUBLIC_URL
+
+    const payload = {
+      taskId: task.id,
+      code,
+      webhookUrl: `${url}/api/webhooks/system-tasks/${task.id}`
+    }
+
+    const command = createCommand({
+      functionName: "spoon-game-schema-generator",
+      payload,
+      invocationType: "Event"
+    })
+
+    await lambda.send(command)
+
+    
     
     // Refresh the admin page so the "Generate" button unlocks
     revalidatePath("/admin/games");

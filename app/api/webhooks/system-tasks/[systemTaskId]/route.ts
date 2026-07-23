@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -40,7 +41,9 @@ export async function POST(req: Request, { params }: Params) {
         return await handleSpeechAnalysisTask(task, body);
       }
 
-      // Future task handlers can easily be plugged in here:
+      case SystemTaskType.GAME_SCHEMA_GENERATION: {
+        return await handleGameSchema(task,body)
+      }
       // case SystemTaskType.OTHER_TASK:
       //   return await handleOtherTask(task, body);
 
