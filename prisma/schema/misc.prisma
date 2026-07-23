@@ -176,17 +176,19 @@ enum SystemTaskType {
   COURSE_GENERTATION
   BOOK_GENERATION
   CONVERSATION_GENERATION
+  GAME_VARIATION_GENERATION
 }
 
 model SystemTask {
-  id      String         @id @default(auto()) @map("_id") @db.ObjectId
-  type    SystemTaskType @default(SPEECH_PRONUNCIATION_ANALYSIS)
-  status  TaskStatus     @default(PENDING)
-  payload Json? // Initial params sent to Lambda
-  error   String?
+  id       String         @id @default(auto()) @map("_id") @db.ObjectId
+  type     SystemTaskType @default(SPEECH_PRONUNCIATION_ANALYSIS)
+  status   TaskStatus     @default(PENDING)
+  payload  Json? // Initial params sent to Lambda
+  error    String?
+  metadata Json?
 
-  journalId String       @db.ObjectId
-  journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  journalId String?       @db.ObjectId
+  journal   DailyJournal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

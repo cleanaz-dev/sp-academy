@@ -1,21 +1,21 @@
 model Game {
-  id               String             @id @default(auto()) @map("_id") @db.ObjectId
-  title            String             // e.g., "Duck a Wear"
-  description      String?
-  rules            String
-  imageUrl         String?
-  difficulty       Int                @default(1)
-  type             GameType           // e.g., Speech_Describe
-  code             String?            // e.g., "DUCK_A_WEAR" (Used to pick the engine)
-  theme            String?
-  
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String // e.g., "Duck a Wear"
+  description String?
+  rules       String
+  imageUrl    String?
+  difficulty  Int      @default(1)
+  type        GameType // e.g., Speech_Describe
+  code        String? // e.g., "DUCK_A_WEAR" (Used to pick the engine)
+  theme       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  scores           GameScore[]
-  soundEffects     GameSoundEffects[]
-  variations       GameVariation[]    // A game can have many variations (languages/levels)
+  scores       GameScore[]
+  soundEffects GameSoundEffects[]
+  variations   GameVariation[] // A game can have many variations (languages/levels)
 }
 
 model GameScore {
@@ -48,16 +48,16 @@ model GameSoundEffects {
 }
 
 model GameVariation {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  gameId    String   @db.ObjectId
-  game      Game     @relation(fields: [gameId], references: [id])
-  
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  gameId String @db.ObjectId
+  game   Game   @relation(fields: [gameId], references: [id])
+
   language  Languages @default(ENGLISH)
   variation String    @default("default") // e.g., "Animals", "Level 1", "Default"
-  gameData  Json[]    // The actual localized content (words, images) goes here!
-  
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  gameData  Json[] // The actual localized content (words, images) goes here!
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([gameId, variation, language]) // Ensures you don't duplicate a language+variation combo
 }
