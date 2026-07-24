@@ -69,7 +69,7 @@ export default function GameCard({ game, isLoading }: { game: any; isLoading?: b
           </span>
           {game.variations?.length > 0 && (
             <span className="flex items-center gap-1 rounded bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800">
-              <Globe className="h-3 w-3" /> {game.variations.length} Languages
+              <Globe className="h-3 w-3" /> {game.variations.length} Variations
             </span>
           )}
         </div>
