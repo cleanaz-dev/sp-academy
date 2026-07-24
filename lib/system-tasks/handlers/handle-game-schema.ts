@@ -26,7 +26,7 @@ export async function handleGameSchema(task: SystemTask, body: any) {
 
     // 2. Handle Success
     if (status === "COMPLETED") {
-      // Use a transaction to ensure both updates succeed together
+      console.log("gameDataSchema result:", JSON.stringify(result, null, 2));
       await prisma.$transaction([
         prisma.game.update({
           where: { id: gameId },
