@@ -11,21 +11,19 @@ const GameLoadingSkeleton = () => (
   </div>
 );
 
-// 1. Dynamically import your game engines (Code Splitting)
+// Dynamically import your game engines
 const DuckAWearEngine = dynamic(
   () => import("@/components/games/engines/duck-a-wear-engine"),
   { loading: () => <GameLoadingSkeleton /> },
 );
 
-// Add future game engines here as you create them:
 const PictureGameEngine = dynamic(
   () => import("@/components/games/engines/picture-game-engine"),
   { loading: () => <GameLoadingSkeleton /> },
 );
-// const FlashcardsEngine = dynamic(() => import("@/components/games/flashcards/flashcards-engine"), { loading: () => <GameLoadingSkeleton /> });
 
 interface GameEngineRegistryProps {
-  gameCode: string;
+  gameTitle: string; // 🟢 FIX: Accept title instead of code
   gameData: any;
   targetLanguage: string;
   nativeLanguage: string;
@@ -33,16 +31,19 @@ interface GameEngineRegistryProps {
 }
 
 export function GameEngineRegistry({
-  gameCode,
+  gameTitle,
   gameData,
   targetLanguage,
   nativeLanguage,
   onGameOver,
 }: GameEngineRegistryProps) {
-  // Normalize the code to handle lowercase or uppercase variations
-  const normalizedCode = gameCode.toUpperCase().replace(/-/g, "_");
+  
+  // 🟢 FIX: Takes "Duck a Wear" or "Picture Game" and normalizes it to "DUCK_A_WEAR" or "PICTURE_GAME"
+  const normalizedTitle = (gameTitle || "")
+    .toUpperCase()
+    .replace(/[-\s]+/g, "_");
 
-  switch (normalizedCode) {
+  switch (normalizedTitle) {
     case "DUCK_A_WEAR":
     case "DUCK_WEAR":
       return (
@@ -63,7 +64,6 @@ export function GameEngineRegistry({
           onGameOver={onGameOver}
         />
       );
-    //   return <WordMatchEngine gameData={gameData} ... />;
 
     default:
       return (
@@ -72,10 +72,13 @@ export function GameEngineRegistry({
             Unknown Game Engine
           </h3>
           <p className="text-slate-500">
-            No component found for game code:{" "}
-            <code className="rounded bg-slate-100 px-2 py-1 text-red-500">
-              {gameCode}
+            No component found for game title:{" "}
+            <code className="rounded bg-slate-100 px-2 py-1 text-red-500 font-mono">
+              {gameTitle || "UNDEFINED"}
             </code>
+          </p>
+          <p className="text-xs text-slate-400 mt-2">
+            (Evaluated as: {normalizedTitle})
           </p>
         </div>
       );
