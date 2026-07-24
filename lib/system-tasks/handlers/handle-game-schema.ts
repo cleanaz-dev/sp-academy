@@ -6,7 +6,7 @@ export async function handleGameSchema(task: SystemTask, body: any) {
   try {
     const { status, result, error } = body;
 
-    // 1. Extract gameId from metadata (Prisma stores JSON fields as generic objects)
+    // 1. Extract gameId from metadata
     const metadata = task.metadata as Record<string, any> | null;
     const gameId = metadata?.gameId;
 
@@ -28,12 +28,16 @@ export async function handleGameSchema(task: SystemTask, body: any) {
     if (status === "COMPLETED") {
       console.log("gameDataSchema result:", JSON.stringify(result, null, 2));
 
-      // Update Game
-      await prisma.game.update({
-        where: { id: gameId },
-        data: {
-          gameDataSchema: result, // Saves the generated JSON schema to the game
-        },
+      // Raw MongoDB update: bypasses Prisma schema validation completely
+      // Stores 'result' directly as a native JSON object in MongoDB
+      await prisma.$runCommandRaw({
+        update: "Game",
+        updates: [
+          {
+            q: { _id: { $oid: gameId } },
+            u: { $set: { gameDataSchema: result } },
+          },
+        ],
       });
 
       // Update SystemTask
@@ -41,7 +45,7 @@ export async function handleGameSchema(task: SystemTask, body: any) {
         where: { id: task.id },
         data: {
           status: "COMPLETED",
-          result: result, // Save the output directly on the task
+          result: result,
         },
       });
 
