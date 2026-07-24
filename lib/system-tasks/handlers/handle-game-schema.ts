@@ -31,7 +31,7 @@ export async function handleGameSchema(task: SystemTask, body: any) {
         prisma.game.update({
           where: { id: gameId },
           data: {
-            gameDataSchema: result, // Saves the generated JSON schema to the game
+            gameDataSchema: JSON.stringify(result), // Saves the generated JSON schema to the game
           },
         }),
         prisma.systemTask.update({

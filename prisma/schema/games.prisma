@@ -7,7 +7,7 @@ model Game {
   difficulty     Int      @default(1)
   type           GameType
   code           String?
-  gameDataSchema Json?
+  gameDataSchema String?
 
   contexts GameContext[]
 
@@ -81,3 +81,4 @@ enum GameDifficulty {
   HARD
   INSANE
 }
+
