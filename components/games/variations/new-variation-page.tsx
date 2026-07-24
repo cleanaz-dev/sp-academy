@@ -84,7 +84,7 @@ export default function NewVariationPage({ game }: Props) {
 
       if (!res.ok)
         throw new Error("Failed to generate variation. Please try again.");
-      router.push("/admin/games");
+      router.push("/admin/generate/games");
     } catch (err: any) {
       setError(err.message || "Generation failed. Check API logs.");
     } finally {
