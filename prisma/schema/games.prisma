@@ -7,7 +7,7 @@ model Game {
   difficulty     Int      @default(1)
   type           GameType
   code           String?
-  gameDataSchema String?
+  gameDataSchema Json?
   randomString   String?
 
   contexts GameContext[]
