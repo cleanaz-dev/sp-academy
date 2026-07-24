@@ -41,6 +41,10 @@ export async function POST(req: Request, { params }: Params) {
         type: "GAME_VARIATION_GENERATION",
         metadata: {
           gameId: baseGame.id,
+          targetLanguage,
+          nativeLanguage,
+          difficulty,
+          variation,
         },
       },
     });
