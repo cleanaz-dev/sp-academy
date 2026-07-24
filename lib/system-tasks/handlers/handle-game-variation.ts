@@ -7,7 +7,7 @@ export async function handleGameVariation(task: SystemTask, body: any) {
   try {
     const { status, result, error } = body;
 
-    // 1. Validate metadata with Zod
+
     const metaParse = gameVariationTaskMetaSchema.safeParse(task.metadata);
     if (!metaParse.success) {
       await prisma.systemTask.update({
@@ -25,22 +25,18 @@ export async function handleGameVariation(task: SystemTask, body: any) {
     if (status === "COMPLETED") {
       console.log("gameVariation result:", JSON.stringify(result, null, 2));
 
-      // 2. Update the existing GameVariation (created in the POST route)
-      // Make sure your GameVariation model has a JSON/Text field to store the generated data
+   
       await prisma.gameVariation.update({
         where: { id: gameVariationId },
         data: {
-          gameData: result, // <-- rename `data` to whatever your Prisma field is (e.g., `gameData`, `content`)
+          gameData: result, 
         },
       });
 
-      // 3. Mark the SystemTask as COMPLETED
       await prisma.systemTask.update({
         where: { id: task.id },
         data: {
           status: "COMPLETED",
-          // optionally store the result in the task too
-          // result: result 
         },
       });
 
