@@ -40,7 +40,7 @@ export async function handleGameSchema(task: SystemTask, body: any) {
             status: "COMPLETED",
             result: result
 
-             // Optional: save the output directly on the task too
+             // Optional: save the output dirJsonectly on the task too
           },
         }),
       ]);
