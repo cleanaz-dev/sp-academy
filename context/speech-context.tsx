@@ -7,6 +7,10 @@ export const LANGUAGES: Record<string, string> = {
   "en-US": "🇺🇸 English",
   "fr-FR": "🇫🇷 French",
   "es-ES": "🇪🇸 Spanish",
+  "de-DE": "🇩🇪 German",
+  "it-IT": "🇮🇹 Italian",
+  "ja-JP": "🇯🇵 Japanese",
+  "zh-CN": "🇨🇳 Chinese",
 };
 
 interface SpeechContextType {
@@ -17,7 +21,8 @@ interface SpeechContextType {
   audioBlob: Blob | null;
   audioStream: MediaStream | null;
   error: string | null;
-  startRecording: () => Promise<void>;
+  // 🟢 Update signature to accept an optional language override code
+  startRecording: (overrideLanguage?: string) => Promise<void>; 
   stopRecording: () => Promise<Blob | null>;
   resetSpeechState: () => void;
 }
@@ -32,14 +37,12 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // References taken from production useConversation hook
   const deepgramConnectionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const mimeTypeRef = useRef<string>("audio/webm");
 
-  // Helper: Detect browser-supported MIME type (WebM vs MP4/AAC for iOS)
   const getSupportedMimeType = (): string => {
     const supportedTypes = [
       "audio/webm;codecs=opus",
@@ -57,17 +60,21 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     return "audio/webm";
   };
 
-  const startRecording = async () => {
+  // 🟢 Accept optional overrideLanguage
+  const startRecording = async (overrideLanguage?: string) => {
     resetSpeechState();
 
-    // 1. Check for HTTPS / Secure context
+    const activeLanguage = overrideLanguage || language;
+    if (overrideLanguage) {
+      setLanguage(overrideLanguage);
+    }
+
     if (typeof window !== "undefined" && !window.isSecureContext) {
       setError("Recording requires an HTTPS connection.");
       return;
     }
 
     try {
-      // 2. Request Mic Stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -80,11 +87,11 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
       });
       setAudioStream(stream);
 
-      // 3. Get Ephemeral Token from your secure API Route
+      // 🟢 Send activeLanguage to token route
       const tokenResponse = await fetch("/api/deepgram/stt-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetLanguage: language }),
+        body: JSON.stringify({ targetLanguage: activeLanguage }),
       });
 
       if (!tokenResponse.ok) {
@@ -94,11 +101,12 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
       const { token } = await tokenResponse.json();
       if (!token) throw new Error("No authorization token returned.");
 
-      // 4. Initialize Deepgram Client via SDK
       const deepgram = createClient(token);
+      
+      // 🟢 Initialize Deepgram with activeLanguage
       const connection = deepgram.listen.live({
         model: "nova-3",
-        language: language,
+        language: activeLanguage,
         smart_format: true,
         interim_results: true,
         endpointing: 500,
@@ -106,7 +114,6 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
 
       deepgramConnectionRef.current = connection;
 
-      // 5. Detect MimeType & Configure MediaRecorder
       const mimeType = getSupportedMimeType();
       mimeTypeRef.current = mimeType;
 
@@ -116,7 +123,6 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
       });
       mediaRecorderRef.current = mediaRecorder;
 
-      // Send audio data to Deepgram socket & collect chunks
       mediaRecorder.ondataavailable = async (e) => {
         if (e.data.size > 0 && connection.getReadyState() === 1) {
           const arrayBuffer = await e.data.arrayBuffer();
@@ -125,12 +131,10 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
         }
       };
 
-      // Wire Deepgram Events
       connection.on(LiveTranscriptionEvents.Open, () => {
-        mediaRecorder.start(250); // Send 250ms audio slices
+        mediaRecorder.start(250);
         setIsRecording(true);
 
-        // Keep-alive ping every 5s
         audioIntervalRef.current = setInterval(() => {
           if (connection.getReadyState() === 1) {
             connection.keepAlive();
@@ -171,13 +175,11 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     return new Promise((resolve) => {
       setIsRecording(false);
 
-      // Clear Keep-alive
       if (audioIntervalRef.current) {
         clearInterval(audioIntervalRef.current);
         audioIntervalRef.current = null;
       }
 
-      // Finish Deepgram socket
       if (deepgramConnectionRef.current) {
         try {
           deepgramConnectionRef.current.finish();
@@ -187,13 +189,11 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
         deepgramConnectionRef.current = null;
       }
 
-      // Stop Mic Stream Tracks
       if (audioStream) {
         audioStream.getTracks().forEach((track) => track.stop());
         setAudioStream(null);
       }
 
-      // Finalize MediaRecorder Blob
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.onstop = () => {
           const finalBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });

@@ -48,3 +48,18 @@ function writeString(view, offset, string) {
     view.setUint8(offset + i, string.charCodeAt(i));
   }
 }
+
+
+export function getDeepgramLanguageCode(prismaLanguage: string): string {
+  const map: Record<string, string> = {
+    ENGLISH: "en-US",
+    FRENCH: "fr-FR",
+    SPANISH: "es-ES",
+    GERMAN: "de-DE",
+    ITALIAN: "it-IT",
+    JAPANESE: "ja-JP",
+    CHINESE: "zh-CN",
+  };
+
+  return map[prismaLanguage.toUpperCase()] || "en-US";
+}

@@ -8,15 +8,15 @@ import { headers } from "next/headers";
 
 import { Prisma } from "@prisma/client";
 import { createBookReportSchema } from "./zod/books/create-book-report-schema";
-import { generateNovitaImage } from "@/lib/novita"
-import { auth } from "@clerk/nextjs/server"
+import { generateNovitaImage } from "@/lib/novita";
+import { auth } from "@clerk/nextjs/server";
 import { createCommand, lambda } from "./aws/lambda";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
 });
 
-export async function getLessonById(id:string) {
+export async function getLessonById(id: string) {
   try {
     const lesson = await prisma.lesson.findUnique({
       where: { id },
@@ -43,7 +43,7 @@ export async function getAllLessons() {
   }
 }
 
-export async function getUserbyUserId(userId:string) {
+export async function getUserbyUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -55,7 +55,7 @@ export async function getUserbyUserId(userId:string) {
   }
 }
 
-export const recordJournal = async (formData:FormData) => {
+export const recordJournal = async (formData: FormData) => {
   try {
     const name = formData.get("name");
     const phoneNumber = formData.get("phoneNumber");
@@ -89,7 +89,7 @@ export const recordJournal = async (formData:FormData) => {
   redirect("/home");
 };
 
-export const recordConversation = async (formData:FormData) => {
+export const recordConversation = async (formData: FormData) => {
   try {
     const name = formData.get("name");
     const phoneNumber = formData.get("phoneNumber");
@@ -126,7 +126,7 @@ export const recordConversation = async (formData:FormData) => {
   redirect("/home");
 };
 
-export const getJournalByUserId = async (userId:string) => {
+export const getJournalByUserId = async (userId: string) => {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -144,7 +144,7 @@ export const getJournalByUserId = async (userId:string) => {
   }
 };
 
-export const deleteJournalById = async (id:string) => {
+export const deleteJournalById = async (id: string) => {
   try {
     await prisma.journal.delete({
       where: { id: id },
@@ -257,7 +257,7 @@ export async function generateStory(formData: FormData) {
   }
 }
 
-export async function getStoryById(id:string) {
+export async function getStoryById(id: string) {
   const story = await prisma.story.findUnique({
     where: { id },
     include: {
@@ -283,7 +283,7 @@ export async function getAllShortStories() {
   }
 }
 
-export async function recordStoryQuestions(formData:FormData) {
+export async function recordStoryQuestions(formData: FormData) {
   try {
     // Extract values from formData
     const name = formData.get("name");
@@ -327,7 +327,7 @@ export async function recordStoryQuestions(formData:FormData) {
   }
 }
 
- // adjust path to match your file location
+// adjust path to match your file location
 
 export async function createBookReport(formData: FormData) {
   try {
@@ -441,15 +441,13 @@ export async function addReadingLog(data: any) {
   }
 }
 
-
-
 // Export the type so you can reuse it
 export type BookWithReadingLogs = Prisma.BookGetPayload<{
   include: { readingLogs: true };
 }>;
 
 export async function getBooksByUserId(
-  userId: string | null
+  userId: string | null,
 ): Promise<BookWithReadingLogs[]> {
   // Guard clause so we don't crash if userId is null (from Clerk)
   if (!userId) return [];
@@ -474,15 +472,14 @@ export async function getBooksByUserId(
   }
 }
 
-
-export async function getBookReportById(bookReportId:string) {
+export async function getBookReportById(bookReportId: string) {
   try {
     // console.log("Book Report ID:", bookReportId);
     const bookReport = await prisma.bookReport.findUnique({
       where: { id: bookReportId },
       include: {
         book: true,
-        user: true
+        user: true,
       },
     });
     return bookReport;
@@ -860,8 +857,8 @@ export async function getSharedActivity() {
                 select: {
                   AccountSettings: {
                     select: {
-                      avatarUrl: true
-                    }
+                      avatarUrl: true,
+                    },
                   },
                 },
               },
@@ -961,7 +958,7 @@ export async function getUserDataByUserId(userId: string) {
   }
 }
 
-export async function getReadingLogsByBookId(bookId:string) {
+export async function getReadingLogsByBookId(bookId: string) {
   try {
     const book = await prisma.book.findFirst({
       where: { id: bookId },
@@ -971,7 +968,7 @@ export async function getReadingLogsByBookId(bookId:string) {
         pages: true,
         id: true,
         readingLogs: true,
-        BookReport: true
+        BookReport: true,
       },
     });
 
@@ -985,7 +982,7 @@ export async function getReadingLogsByBookId(bookId:string) {
       title: book.title,
       author: book.author,
       id: book.id,
-      bookReports:book.BookReport
+      bookReports: book.BookReport,
     };
   } catch (error) {
     console.error("Error fetching reading logs by book ID:", error.message);
@@ -1120,7 +1117,10 @@ export async function getIdByUserId(userId) {
   }
 }
 
-export async function getCourseByEnrolledUser(userId: string, courseId:string) {
+export async function getCourseByEnrolledUser(
+  userId: string,
+  courseId: string,
+) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1291,7 +1291,10 @@ export async function updateLessonAndCourseProgress({
   }
 }
 
-export async function getExercisesByEnrolledUser(userId:string, exerciseId: string) {
+export async function getExercisesByEnrolledUser(
+  userId: string,
+  exerciseId: string,
+) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1404,7 +1407,7 @@ export async function getLessonExercisesByEnrolledUser(
   }
 }
 
-export async function getAllCoursesByUserId(userId:string) {
+export async function getAllCoursesByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1490,7 +1493,7 @@ export async function getAllGames() {
   }
 }
 
-export async function getGameById(gameId:string) {
+export async function getGameById(gameId: string) {
   try {
     const gameData = await prisma.game.findFirst({
       where: { id: gameId },
@@ -1525,8 +1528,6 @@ export async function getGameForVariations(gameId: string) {
   }
 }
 
-
-
 export async function getLimitedGameData() {
   try {
     const games = await prisma.game.findMany({
@@ -1543,7 +1544,7 @@ export async function getLimitedGameData() {
   }
 }
 
-export async function isAdmin(userId:string) {
+export async function isAdmin(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1607,7 +1608,6 @@ export async function getEmailSchedules() {
   }
 }
 
-
 export async function patchGameCode(gameId: string, code: string) {
   try {
     await prisma.game.update({
@@ -1620,32 +1620,30 @@ export async function patchGameCode(gameId: string, code: string) {
         type: "GAME_SCHEMA_GENERATION",
         status: "IN_PROGRESS",
         metadata: {
-          gameId
-        }
-      }
-    })
+          gameId,
+        },
+      },
+    });
 
-    const url = process.env.NEXT_PUBLIC_URL
+    const url = process.env.NEXT_PUBLIC_URL;
 
     const payload = {
       taskId: task.id,
       code,
-      webhookUrl: `${url}/api/webhooks/system-tasks/${task.id}`
-    }
+      webhookUrl: `${url}/api/webhooks/system-tasks/${task.id}`,
+    };
 
     const command = createCommand({
       functionName: "spoon-game-schema-generator",
       payload,
-      invocationType: "Event"
-    })
+      invocationType: "Event",
+    });
 
-    await lambda.send(command)
+    await lambda.send(command);
 
-    
-    
     // Refresh the admin page so the "Generate" button unlocks
     revalidatePath("/admin/games");
-    
+
     return { success: true };
   } catch (error: any) {
     console.error("Error patching game code:", error.message);
@@ -1655,40 +1653,121 @@ export async function patchGameCode(gameId: string, code: string) {
 
 type GenerateThumbnailResult =
   | { success: true; imageUrl: string }
-  | { success: false; error: string }
+  | { success: false; error: string };
 
 export async function generateGameThumbnail(
-  prompt: string
+  prompt: string,
 ): Promise<GenerateThumbnailResult> {
   try {
-    const { userId } = await auth()
+    const { userId } = await auth();
     if (!userId) {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "Unauthorized" };
     }
 
     const user = await prisma.user.findUnique({
       where: { userId },
       select: { role: true },
-    })
+    });
 
     if (!user || user.role !== "ADMIN") {
-      return { success: false, error: "Forbidden" }
+      return { success: false, error: "Forbidden" };
     }
 
     if (!prompt || !prompt.trim()) {
-      return { success: false, error: "Prompt is required" }
+      return { success: false, error: "Prompt is required" };
     }
 
     const imageUrl = await generateNovitaImage(
-      `${prompt}, detailed, vibrant colors, high quality`
-    )
+      `${prompt}, detailed, vibrant colors, high quality`,
+    );
 
-    return { success: true, imageUrl }
+    return { success: true, imageUrl };
   } catch (error: any) {
-    console.error("[generateGameThumbnail] Error:", error)
+    console.error("[generateGameThumbnail] Error:", error);
     return {
       success: false,
       error: error.message || "Failed to generate image",
-    }
+    };
   }
+}
+
+export async function getGameVariation(gameId: string, variationId: string) {
+  const gameVariation = await prisma.gameVariation.findFirst({
+    where: {
+      id: variationId,
+      gameId,
+    },
+    include: {
+      game: true,
+    },
+  });
+  return gameVariation;
+}
+
+interface SaveScoreParams {
+  gameId: string;
+  variationId?: string; // Optional if you want to track variation context later
+  score: number | string;
+}
+
+export async function saveGameScore({
+  gameId,
+  score,
+}: SaveScoreParams) {
+  // 1. Ensure User is Authenticated
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Unauthorized: You must be logged in to save scores.");
+  }
+
+  // 2. Safely parse score to an Integer
+  const numericScore = typeof score === "string" ? parseInt(score, 10) : score;
+
+  if (isNaN(numericScore)) {
+    throw new Error("Invalid score value.");
+  }
+
+  // 3. Look up existing score using Prisma's composite unique key (userId_gameId)
+  const existingRecord = await prisma.gameScore.findUnique({
+    where: {
+      userId_gameId: {
+        userId,
+        gameId,
+      },
+    },
+  });
+
+  // 4. Create record if user has no score yet for this game
+  if (!existingRecord) {
+    const newRecord = await prisma.gameScore.create({
+      data: {
+        userId,
+        gameId,
+        score: numericScore,
+      },
+    });
+    return { success: true, record: newRecord, isNewHighScore: true };
+  }
+
+  // 5. Update record ONLY if the new score is a HIGH SCORE
+  if (numericScore > existingRecord.score) {
+    const updatedRecord = await prisma.gameScore.update({
+      where: {
+        id: existingRecord.id,
+      },
+      data: {
+        score: numericScore,
+      },
+    });
+    return { success: true, record: updatedRecord, isNewHighScore: true };
+  }
+
+  // 6. Score was lower than existing high score
+  return { 
+    success: true, 
+    record: existingRecord, 
+    isNewHighScore: false,
+    message: "Score submitted, but didn't beat previous high score." 
+  };
 }
