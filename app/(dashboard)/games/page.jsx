@@ -1,5 +1,5 @@
 import { Dice3 } from "lucide-react";
-import GameCard from "@/components/games/GameCard";
+import GameCard from "@/components/games/game-card";
 import { getAllGames } from "@/lib/actions";
 
 export default async function page() {

@@ -1483,6 +1483,7 @@ export async function getAllGames() {
             },
           },
         },
+        variations: true
       },
     });
 
