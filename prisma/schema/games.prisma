@@ -8,6 +8,7 @@ model Game {
   type           GameType
   code           String?
   gameDataSchema String?
+  
 
   contexts GameContext[]
 
