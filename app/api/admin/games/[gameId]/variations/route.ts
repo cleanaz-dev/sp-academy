@@ -76,7 +76,8 @@ export async function POST(req: Request, { params }: Params) {
       difficulty,
       variation,
       count,
-      ...(generateImages ? { gameReferenceImage: baseGame.imageUrl } : {}),
+      generateImages, // 🟢 FIX: Actually pass the boolean!
+      gameReferenceImage: baseGame.imageUrl || null, // 🟢 FIX: Pass the URL if it exists
     };
 
     // 4. Fire and forget
