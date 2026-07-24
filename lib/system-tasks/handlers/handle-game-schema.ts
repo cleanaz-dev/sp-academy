@@ -41,7 +41,6 @@ export async function handleGameSchema(task: SystemTask, body: any) {
         where: { id: task.id },
         data: {
           status: "COMPLETED",
-          result: JSON.stringify(result), // Save the output directly on the task
         },
       });
 
