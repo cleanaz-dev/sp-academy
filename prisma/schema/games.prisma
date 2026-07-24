@@ -58,7 +58,7 @@ model GameVariation {
   targetLanguage  Languages      @default(ENGLISH)
   nativeLanguage  Languages      @default(FRENCH)
   variation  String        @default("default")
-  gameData   Json[]
+  gameData   Json?
   difficulty GameDifficulty @default(EASY)
 
   createdAt DateTime @default(now())
