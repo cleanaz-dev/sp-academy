@@ -7,7 +7,7 @@ import { useSpeech } from "@/context/speech-context";
 // 1. Build a Registry of all your hard-coded game engines
 // Using Next.js `dynamic` means it only loads the JS for the specific game being played!
 const ENGINE_REGISTRY: Record<string, React.ElementType> = {
-  DUCK_A_WEAR: dynamic(() => import("./engines/duck-a-wear")),
+  DUCK_A_WEAR: dynamic(() => import("./engines/duck-a-wear-engine")),
   // Future games you build will just get added here:
   // MEMORY_MATCH: dynamic(() => import("./engines/memory-match")),
   // FLASHCARDS: dynamic(() => import("./engines/flashcards")),

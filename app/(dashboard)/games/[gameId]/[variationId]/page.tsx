@@ -1,7 +1,6 @@
-//app/(dashboard)/games/[gameId]/[variationId]/page.tsx
-
 import { getGameVariation } from "@/lib/actions";
 import { notFound } from "next/navigation";
+import { GameRunner } from "@/components/games/game-runner";
 
 interface Params {
   params: Promise<{
@@ -9,15 +8,21 @@ interface Params {
     variationId: string;
   }>;
 }
-export async function Page({ params }: Params) {
+
+export default async function GameVariationPage({ params }: Params) {
   const { gameId, variationId } = await params;
 
-  const gameVariation = getGameVariation(gameId,variationId)
+  // Make sure your getGameVariation server function includes the game model:
+  // e.g. prisma.gameVariation.findUnique({ where: { id: variationId }, include: { game: true } })
+  const gameVariation = await getGameVariation(gameId, variationId);
 
-  if(!gameVariation) return notFound()
+  if (!gameVariation || !gameVariation.game) {
+    return notFound();
+  }
 
-// some sort of game engine selector here or something
-
-return 
-
+  return (
+    <main className="min-h-screen bg-slate-50 p-4">
+      <GameRunner gameVariation={gameVariation} />
+    </main>
+  );
 }
