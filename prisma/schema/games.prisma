@@ -55,7 +55,8 @@ model GameVariation {
   gameId String @db.ObjectId
   game   Game   @relation(fields: [gameId], references: [id])
 
-  language   Languages      @default(ENGLISH)
+  targetLanguage  Languages      @default(ENGLISH)
+  nativeLanguage  Languages      @default(FRENCH)
   variation  String         @default("default")
   gameData   Json[]
   difficulty GameDifficulty @default(EASY)
@@ -63,7 +64,7 @@ model GameVariation {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([gameId, variation, language]) // Ensures you don't duplicate a language+variation combo
+  @@unique([gameId, variation, targetLanguage, nativeLanguage]) 
 }
 
 enum GameContext {

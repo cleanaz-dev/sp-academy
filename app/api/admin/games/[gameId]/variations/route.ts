@@ -10,17 +10,29 @@ export async function POST(req: Request, { params }: Params) {
   try {
     const { gameId } = await params;
 
-    const { language, difficulty, variation, count, generateImages } =
-      await req.json();
+    const {
+      targetLanguage,
+      nativeLanguage,
+      difficulty,
+      variation,
+      count,
+      generateImages,
+    } = await req.json();
 
-    // 1. Fetch only the code (Lambda uses this to pick the prompt template)
+    // 1. Fetch schema + imageUrl (imageUrl only used if generateImages is true)
     const baseGame = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, code: true, imageUrl: true },
+      select: { id: true, imageUrl: true, gameDataSchema: true },
     });
 
     if (!baseGame)
       return NextResponse.json({ error: "Game not found" }, { status: 404 });
+
+    if (!baseGame.gameDataSchema)
+      return NextResponse.json(
+        { error: "Game has no gameDataSchema defined" },
+        { status: 400 },
+      );
 
     // 2. Create tracking task
     const task = await prisma.systemTask.create({
@@ -34,19 +46,21 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "https://spoon-academy.vercel.app";
+      process.env.NEXT_PUBLIC_URL || "https://spoon-academy.vercel.app";
 
-    // 3. Lean Payload - Only exactly what Lambda needs to process & return
+    // 3. Lean Payload - only exactly what Lambda needs.
+    // generateImages boolean is not passed through; its only effect
+    // is whether gameReferenceImage gets included at all.
     const payload = {
       taskId: task.id,
       webhookUrl: `${appUrl}/api/webhook/system-tasks/${task.id}`,
-      code: baseGame.code,
-      language,
+      gameDataSchema: baseGame.gameDataSchema,
+      targetLanguage,
+      nativeLanguage,
       difficulty,
       variation,
       count,
-      generateImages,
-      gameReferenceImage: baseGame.imageUrl
+      ...(generateImages ? { gameReferenceImage: baseGame.imageUrl } : {}),
     };
 
     // 4. Fire and forget
