@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,14 +9,10 @@ import { Skeleton } from "../ui/skeleton";
 import { Medal, Globe } from "lucide-react";
 
 export default function GameCard({ game, isLoading }: { game: any; isLoading?: boolean }) {
-  // 🟢 FIX 1: Use game.scores instead of game.GameScore
   const scoreData = game.scores?.[0];
   
-  // Get first available variation ID if available
-  const firstVariation = game.variations?.[0];
-  const playHref = firstVariation 
-    ? `/games/${game.id}/${firstVariation.id}` 
-    : `/games/${game.id}`;
+  // 🟢 FIX: Always link to the Game Variations Page instead of the first variation
+  const playHref = `/games/${game.id}`;
 
   if (isLoading) {
     return (
@@ -105,7 +101,7 @@ export default function GameCard({ game, isLoading }: { game: any; isLoading?: b
         {/* Play Button */}
         <Link href={playHref}>
           <Button className="w-full rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors duration-300 hover:bg-blue-700">
-            Play Game
+            View Game Modes
           </Button>
         </Link>
       </div>
