@@ -57,7 +57,7 @@ export async function POST(req: Request, { params }: Params) {
     // is whether gameReferenceImage gets included at all.
     const payload = {
       taskId: task.id,
-      webhookUrl: `${appUrl}/api/webhook/system-tasks/${task.id}`,
+      webhookUrl: `${appUrl}/api/webhooks/system-tasks/${task.id}`,
       gameDataSchema: baseGame.gameDataSchema,
       targetLanguage,
       nativeLanguage,
