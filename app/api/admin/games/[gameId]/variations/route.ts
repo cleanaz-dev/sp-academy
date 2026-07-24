@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { lambda, createCommand } from "@/lib/aws/lambda";
+import { GameVariationTaskMeta } from "@/lib/schema/games/game-variation-task-metadata-schema";
 
 interface Params {
   params: Promise<{ gameId: string }>;
@@ -34,6 +35,16 @@ export async function POST(req: Request, { params }: Params) {
         { status: 400 },
       );
 
+    const gameVariation = await prisma.gameVariation.create({
+      data: {
+        difficulty,
+        targetLanguage,
+        nativeLanguage,
+        variation,
+        game: { connect: { id: baseGame.id } },
+      },
+    });
+
     // 2. Create tracking task
     const task = await prisma.systemTask.create({
       data: {
@@ -41,11 +52,12 @@ export async function POST(req: Request, { params }: Params) {
         type: "GAME_VARIATION_GENERATION",
         metadata: {
           gameId: baseGame.id,
+          gameVariationId: gameVariation.id,
           targetLanguage,
           nativeLanguage,
           difficulty,
           variation,
-        },
+        } satisfies GameVariationTaskMeta
       },
     });
 

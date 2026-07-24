@@ -57,14 +57,13 @@ model GameVariation {
 
   targetLanguage  Languages      @default(ENGLISH)
   nativeLanguage  Languages      @default(FRENCH)
-  variation  String         @default("default")
+  variation  String        @default("default")
   gameData   Json[]
   difficulty GameDifficulty @default(EASY)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([gameId, variation, targetLanguage, nativeLanguage]) 
 }
 
 enum GameContext {
