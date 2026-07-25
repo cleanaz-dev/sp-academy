@@ -52,9 +52,15 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: '**.amazonaws.com',
+        hostname: "**.amazonaws.com",
         port: "",
-      }
+      },
+      {
+        protocol: "https",
+        hostname: "*.gstatic.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };
