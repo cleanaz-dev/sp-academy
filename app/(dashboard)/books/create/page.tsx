@@ -31,7 +31,7 @@ import { uploadBookCover } from "@/lib/aws/services/s3-upload-book-cover";
 export default function CreateBookReportPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [searchLanguage, setSearchLanguage] = useState("en");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
@@ -98,15 +98,13 @@ export default function CreateBookReportPage() {
   async function handleSubmit(formData) {
     setIsSubmitting(true);
     try {
-      // Create a new FormData object
       const form = new FormData();
 
-      // Add all the fields
       form.append("userId", user.id);
       form.append("title", bookData.title);
       form.append("author", bookData.author);
-      form.append("genre", formData.get("genre")); // If this comes from the form
-      form.append("language", formData.get("language")); // If this comes from the form
+      form.append("genre", formData.get("genre"));
+      form.append("language", formData.get("language"));
       form.append("pages", bookData.pages);
       form.append("description", bookData.description);
       form.append("coverUrl", bookData.coverUrl);
@@ -118,6 +116,14 @@ export default function CreateBookReportPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (!isLoaded) {
+    return <Spinner className="mx-auto mt-20" />;
+  }
+
+  if (!user) {
+    return <p className="text-center mt-20">You must be signed in.</p>;
   }
 
   return (
@@ -137,7 +143,6 @@ export default function CreateBookReportPage() {
       </header>
       <div className="">
         <Card className="relative w-full max-w-4xl overflow-hidden">
-          {/* Decorative rings inside the card */}
           <div className="absolute -top-6 left-24 z-0 h-10 w-10 rounded-full border-4 border-sky-400"></div>
           <div className="absolute -right-12 bottom-36 z-0 h-16 w-16 rounded-full border-4 border-emerald-400"></div>
           <div className="absolute -left-12 top-36 z-0 h-16 w-16 rounded-full border-4 border-amber-400"></div>
@@ -152,14 +157,10 @@ export default function CreateBookReportPage() {
             <input type="hidden" name="coverUrl" value={bookData.coverUrl} />
 
             <CardContent className="relative z-10 space-y-6">
-              {/* Top Section: Search + Image */}
               <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                {/* Left Column: Search and Details */}
                 <div className="col-span-2 space-y-6">
-                  {/* Book Search Section */}
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      {/* Search Language */}
                       <div className="space-y-2">
                         <Label>Search Language</Label>
                         <Select
@@ -177,7 +178,6 @@ export default function CreateBookReportPage() {
                         </Select>
                       </div>
 
-                      {/* Book Search Input */}
                       <div className="space-y-2">
                         <Label htmlFor="bookSearch">Search for a book</Label>
                         <div className="relative">
@@ -195,7 +195,6 @@ export default function CreateBookReportPage() {
                       </div>
                     </div>
 
-                    {/* Search Results Dropdown */}
                     {searchResults.length > 0 && (
                       <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg md:w-2/3">
                         {searchResults.map((book) => (
@@ -225,7 +224,6 @@ export default function CreateBookReportPage() {
                     )}
                   </div>
 
-                  {/* Book Details */}
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
@@ -287,7 +285,6 @@ export default function CreateBookReportPage() {
                   </div>
                 </div>
 
-                {/* Right Column: Book Image */}
                 <div className="col-span-1 flex flex-col items-center gap-3 md:items-end">
                   <div className="w-full max-w-[200px] rounded-md border border-dashed border-gray-200 bg-gray-50 p-4">
                     {bookData.coverUrl ? (
@@ -323,7 +320,6 @@ export default function CreateBookReportPage() {
                 </div>
               </div>
 
-              {/* Full-width Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
