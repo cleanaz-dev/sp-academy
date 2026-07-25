@@ -1,3 +1,4 @@
+"use server"
 import { s3Client, PutObjectCommand } from "../client";
 import { randomUUID } from "crypto";
 
