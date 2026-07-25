@@ -78,22 +78,25 @@ export default function CreateBookReportPage() {
     setSearchResults([]);
   };
 
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+const handleCoverUpload = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    setIsUploadingCover(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const { url } = await uploadBookCover(form);
-      setBookData((prev) => ({ ...prev, coverUrl: url }));
-    } catch (error) {
-      console.error("Cover upload failed:", error);
-    } finally {
-      setIsUploadingCover(false);
-    }
-  };
+  const localPreview = URL.createObjectURL(file);
+  setBookData((prev) => ({ ...prev, coverUrl: localPreview }));
+
+  setIsUploadingCover(true);
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    const { url } = await uploadBookCover(form);
+    setBookData((prev) => ({ ...prev, coverUrl: url }));
+  } catch (error) {
+    console.error("Cover upload failed:", error);
+  } finally {
+    setIsUploadingCover(false);
+  }
+};
 
   async function handleSubmit(formData) {
     setIsSubmitting(true);
