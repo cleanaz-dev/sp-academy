@@ -26,12 +26,14 @@ import { CreateBookReportButton } from "@/components/SubmitButton";
 import debounce from "lodash/debounce";
 import { Spinner } from "@/components/ui/spinner";
 import { LibraryBig } from "lucide-react";
+import { uploadBookCover } from "@/lib/aws/services/s3-upload-book-cover";
 
 export default function CreateBookReportPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useUser();
   const [searchLanguage, setSearchLanguage] = useState("en");
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   const [searchResults, setSearchResults] = useState([]);
   const [bookData, setBookData] = useState({
@@ -74,6 +76,23 @@ export default function CreateBookReportPage() {
         volumeInfo.mainCategory || volumeInfo.categories?.[0] || "Other",
     });
     setSearchResults([]);
+  };
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingCover(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const { url } = await uploadBookCover(form);
+      setBookData((prev) => ({ ...prev, coverUrl: url }));
+    } catch (error) {
+      console.error("Cover upload failed:", error);
+    } finally {
+      setIsUploadingCover(false);
+    }
   };
 
   async function handleSubmit(formData) {
@@ -269,7 +288,7 @@ export default function CreateBookReportPage() {
                 </div>
 
                 {/* Right Column: Book Image */}
-                <div className="col-span-1 flex justify-center md:justify-end">
+                <div className="col-span-1 flex flex-col items-center gap-3 md:items-end">
                   <div className="w-full max-w-[200px] rounded-md border border-dashed border-gray-200 bg-gray-50 p-4">
                     {bookData.coverUrl ? (
                       <img
@@ -283,6 +302,24 @@ export default function CreateBookReportPage() {
                       </p>
                     )}
                   </div>
+
+                  <Label htmlFor="coverUpload" className="w-full max-w-[200px]">
+                    <div className="flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-gray-50">
+                      {isUploadingCover ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      {isUploadingCover ? "Uploading..." : "Upload cover"}
+                    </div>
+                  </Label>
+                  <input
+                    id="coverUpload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleCoverUpload}
+                  />
                 </div>
               </div>
 
