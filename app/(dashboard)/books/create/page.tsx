@@ -25,7 +25,7 @@ import { useUser } from "@clerk/nextjs";
 import { CreateBookReportButton } from "@/components/SubmitButton";
 import debounce from "lodash/debounce";
 import { Spinner } from "@/components/ui/spinner";
-import { LibraryBig } from "lucide-react";
+import { LibraryBig, Upload } from "lucide-react";
 import { uploadBookCover } from "@/lib/aws/services/s3-upload-book-cover";
 
 export default function CreateBookReportPage() {
