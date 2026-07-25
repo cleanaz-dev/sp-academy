@@ -8,7 +8,9 @@ export const createBookReportSchema = z.object({
   language: z.string().min(1, "Language is required"),
   pages: z.coerce.number().int().positive("Pages must be a positive number"),
   description: z.string().min(1, "Description is required"),
-  coverUrl: z.string().url("Cover URL must be a valid URL"),
+  coverUrl: z
+    .union([z.url("Cover URL must be a valid URL"), z.literal("")])
+    .optional(),
 });
 
 export type CreateBookReportInput = z.infer<typeof createBookReportSchema>;
