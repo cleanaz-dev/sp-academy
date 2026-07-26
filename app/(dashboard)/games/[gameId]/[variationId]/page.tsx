@@ -9,7 +9,7 @@ interface Params {
   }>;
 }
 
-export default async function GameVariationPage({ params }: Params) {
+export default async function Page({ params }: Params) {
   const { gameId, variationId } = await params;
 
   // Make sure your getGameVariation server function includes the game model:
