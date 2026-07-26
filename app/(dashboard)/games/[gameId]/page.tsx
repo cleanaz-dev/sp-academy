@@ -56,7 +56,7 @@ export default async function GameVariationsPage({ params }: Params) {
             alt={game.title}
             fill
             priority
-            className="object-cover"
+            className="object-contain"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950" />
