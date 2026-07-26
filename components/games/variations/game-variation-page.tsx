@@ -81,14 +81,14 @@ export default function GameVariationsPage({ game }: GameVariationsPageProps) {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Hero Header */}
-      <div className="relative w-full h-[30vh] bg-slate-900 border-b border-slate-200">
+      <div className="relative w-full h-[30vh]  ">
         {game.imageUrl ? (
           <Image
             src={game.imageUrl}
             alt={game.title}
             fill
             priority
-            className="object-cover opacity-60"
+            className="object-cover"
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950" />

@@ -12,8 +12,6 @@ interface Params {
 export default async function Page({ params }: Params) {
   const { gameId, variationId } = await params;
 
-  // Make sure your getGameVariation server function includes the game model:
-  // e.g. prisma.gameVariation.findUnique({ where: { id: variationId }, include: { game: true } })
   const gameVariation = await getGameVariation(gameId, variationId);
 
   if (!gameVariation || !gameVariation.game) {
@@ -21,7 +19,7 @@ export default async function Page({ params }: Params) {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4">
+    <main className="min-h-screen animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-4">
       <GameRunner gameVariation={gameVariation} />
     </main>
   );
