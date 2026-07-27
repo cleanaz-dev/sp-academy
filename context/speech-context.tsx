@@ -7,10 +7,10 @@ export const LANGUAGES: Record<string, string> = {
   "en-US": "🇺🇸 English",
   "fr-FR": "🇫🇷 French",
   "es-ES": "🇪🇸 Spanish",
-  "de-DE": "🇩🇪 German",
-  "it-IT": "🇮🇹 Italian",
-  "ja-JP": "🇯🇵 Japanese",
-  "zh-CN": "🇨🇳 Chinese",
+  // "de-DE": "🇩🇪 German",
+  // "it-IT": "🇮🇹 Italian",
+  // "ja-JP": "🇯🇵 Japanese",
+  // "zh-CN": "🇨🇳 Chinese",
 };
 
 interface SpeechContextType {

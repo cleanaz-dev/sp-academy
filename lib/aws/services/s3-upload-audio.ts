@@ -34,3 +34,36 @@ export async function uploadAudioToS3Bucket(
     throw error;
   }
 }
+
+export async function uploadPrivateAudioToS3Bucket(
+  audioBuffer: Buffer,
+  fileNameParam?: string,
+  contentType: string = "audio/mpeg",
+): Promise<{ url: string; key: string }> {
+  try {
+    if (!audioBuffer) {
+      throw new Error("No audio data provided");
+    }
+
+    // Default to a journals folder if no filename is provided
+    const fileName = fileNameParam || `journals/${uuidv4()}.webm`;
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: process.env.SPOONFED_AUDIO_BUCKET_NAME,
+        Key: fileName,
+        Body: audioBuffer,
+        ContentType: contentType,
+        ACL: "private", 
+      }),
+    );
+
+    const uploadedAudioUrl = `https://${process.env.SPOONFED_AUDIO_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    console.log("Successfully uploaded private file to S3:", uploadedAudioUrl);
+
+    return { url: uploadedAudioUrl, key: fileName };
+  } catch (error) {
+    console.error("Error uploading private file to S3:", error);
+    throw error;
+  }
+}

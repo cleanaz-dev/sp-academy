@@ -148,7 +148,6 @@ model DailyJournal {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   transcript  String
   s3Key       String?
-  audioUrl    String?
   language    String   @default("en-US")
   isCompleted Boolean  @default(true)
   entryDate   DateTime @default(now())
