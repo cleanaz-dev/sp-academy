@@ -1,9 +1,11 @@
+// app/journal/page.tsx (or wherever this lives)
 "use client";
 
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
-import { SpeechProvider } from "@/context/speech-context"; // Adjust path
-import JournalModal from "./journal-modal"; // Adjust path
+import { SpeechProvider } from "@/context/speech-context"; 
+import JournalModal from "./journal-modal"; 
+import CompletedJournalsSidebar from "./completed-journal-sidebar";
 import { 
   BookAudio, 
   ChevronLeft, 
@@ -14,7 +16,6 @@ import {
   Quote
 } from "lucide-react";
 
-// Helper to format date safely to YYYY-MM-DD (local time)
 const formatDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -35,11 +36,9 @@ function JournalPageContent({ journals }: { journals: any[] }) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Map completed journals by date string for easy lookup
   const completedDates = useMemo(() => {
     const map = new Map<string, any>();
     journals.forEach((j) => {
-      // Use entryDate if it exists, fallback to createdAt
       const d = new Date(j.entryDate || j.createdAt);
       map.set(formatDate(d), j);
     });
@@ -56,7 +55,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
     setSelectedDate(null);
   };
 
-  // --- Calendar Logic ---
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
@@ -72,7 +70,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Hero Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -99,18 +96,15 @@ function JournalPageContent({ journals }: { journals: any[] }) {
         </div>
       </motion.header>
 
-      {/* Main Content */}
       <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-8 lg:flex-row items-start">
           
-          {/* BIG CALENDAR SECTION */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
             className="flex-1 w-full rounded-xl bg-white shadow-sm border border-gray-200 flex flex-col overflow-hidden"
           >
-            {/* Calendar Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
               <h2 className="text-2xl font-bold text-gray-800">
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
@@ -137,7 +131,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
               </div>
             </div>
 
-            {/* Weekday headers */}
             <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div key={d} className="py-3 text-center text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider border-r last:border-r-0 border-gray-200">
@@ -147,18 +140,17 @@ function JournalPageContent({ journals }: { journals: any[] }) {
               ))}
             </div>
 
-            {/* Days grid - Large layout */}
             <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)] bg-gray-200 gap-px">
               {calendarDays.map((date, idx) => {
-                if (!date) return <div key={idx} className="bg-gray-50/50" />; // Empty cells
+                if (!date) return <div key={idx} className="bg-gray-50/50" />;
                 
                 const dateStr = formatDate(date);
                 const journalData = completedDates.get(dateStr);
                 const isCompleted = !!journalData;
                 const isToday = formatDate(new Date()) === dateStr;
                 
-                // Extract useful fields from your Prisma model
-                const hasAudio = journalData?.audioUrl || journalData?.s3Key;
+                // Adjusted to check ONLY for s3Key now
+                const hasAudio = !!journalData?.s3Key;
                 const langCode = journalData?.language?.split("-")[0].toUpperCase() || "EN";
                 const transcriptPreview = journalData?.transcript;
 
@@ -170,7 +162,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                       isCompleted ? "bg-white hover:bg-emerald-50/30" : "bg-white hover:bg-sky-50"
                     }`}
                   >
-                    {/* Top Row: Date & Icons */}
                     <div className="flex justify-between items-start w-full">
                       <span
                         className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
@@ -184,12 +175,10 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                         {date.getDate()}
                       </span>
                       
-                      {/* Empty state '+' icon on hover */}
                       {!isCompleted && (
                          <Plus className="w-4 h-4 text-sky-300 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
                       )}
 
-                      {/* Filled state: audio indicator */}
                       {isCompleted && hasAudio && (
                         <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 shadow-sm">
                           <Mic className="w-3 h-3" />
@@ -197,7 +186,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                       )}
                     </div>
 
-                    {/* Middle: Transcript Snippet (Desktop Only) */}
                     {isCompleted && transcriptPreview && (
                       <div className="mt-2 hidden sm:block w-full flex-1">
                         <div className="flex gap-1 text-gray-500">
@@ -209,7 +197,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                       </div>
                     )}
 
-                    {/* Bottom Row: Tags & Badges */}
                     {isCompleted && (
                       <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
                         <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
@@ -219,7 +206,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                         <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
                           {langCode}
                         </span>
-                        {/* Optional: Add a star icon if `journalData.review` exists */}
                         {journalData?.review && (
                            <span className="text-[10px] bg-yellow-100 border border-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-sm font-medium">
                              Reviewed
@@ -233,57 +219,15 @@ function JournalPageContent({ journals }: { journals: any[] }) {
             </div>
           </motion.div>
 
-          {/* RIGHT SIDEBAR (Completed Days) */}
-          <div className="w-full shrink-0 lg:w-80">
-            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 sticky top-8">
-              <h3 className="mb-4 text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Completed Journals
-              </h3>
-              {Array.from(completedDates.keys()).length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {Array.from(completedDates.entries())
-                    .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()) // Sort newest first
-                    .map(([dateStr, journal]) => (
-                    <button
-                      key={dateStr}
-                      onClick={() => openModal(new Date(dateStr))}
-                      className="group flex flex-col items-start rounded-lg bg-gray-50 border border-gray-100 p-3 text-left hover:border-emerald-200 hover:bg-emerald-50/50 transition-all"
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-700">
-                          {new Date(dateStr).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric"
-                          })}
-                        </span>
-                        {(journal.audioUrl || journal.s3Key) && (
-                           <Mic className="w-3 h-3 text-emerald-500" />
-                        )}
-                      </div>
-                      {journal.transcript && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-1 italic">
-                          "{journal.transcript}"
-                        </p>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center bg-gray-50">
-                  <BookAudio className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-600">No journals yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Click a day on the calendar to start your first entry.</p>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* RIGHT SIDEBAR - Now cleanly imported */}
+          <CompletedJournalsSidebar 
+            completedDates={completedDates} 
+            openModal={openModal} 
+          />
 
         </div>
       </main>
 
-      {/* Modal */}
       {isModalOpen && (
         <JournalModal
           date={selectedDate}
