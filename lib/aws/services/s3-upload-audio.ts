@@ -54,7 +54,6 @@ export async function uploadPrivateAudioToS3Bucket(
         Key: fileName,
         Body: audioBuffer,
         ContentType: contentType,
-        ACL: "private", 
       }),
     );
 
