@@ -10,7 +10,7 @@ export async function getSignedAudioUrl(s3Key: string) {
 
   try {
     const command = new GetObjectCommand({
-      Bucket: process.env.SPOONFED_AUDIO_BUCKET_NAME,
+      Bucket: process.env.AWS_BUCKET_NAME,
       Key: s3Key,
     });
 
