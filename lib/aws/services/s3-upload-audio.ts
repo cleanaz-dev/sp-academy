@@ -17,7 +17,7 @@ export async function uploadAudioToS3Bucket(
     // Upload directly using the provided buffer
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: process.env.SPOONFED_AUDIO_BUCKET_NAME,
+        Bucket: process.env.AWS_BUCKET_NAME,
         Key: fileName,
         Body: audioBuffer,
         ContentType: contentType,
@@ -25,7 +25,7 @@ export async function uploadAudioToS3Bucket(
       }),
     );
 
-    const uploadedAudioUrl = `https://${process.env.SPOONFED_AUDIO_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    const uploadedAudioUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     console.log("Successfully uploaded to S3:", uploadedAudioUrl);
 
     return uploadedAudioUrl;
@@ -50,14 +50,14 @@ export async function uploadPrivateAudioToS3Bucket(
 
     await s3Client.send(
       new PutObjectCommand({
-        Bucket: process.env.SPOONFED_AUDIO_BUCKET_NAME,
+        Bucket: process.env.AWS_BUCKET_NAME,
         Key: fileName,
         Body: audioBuffer,
         ContentType: contentType,
       }),
     );
 
-    const uploadedAudioUrl = `https://${process.env.SPOONFED_AUDIO_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    const uploadedAudioUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     console.log("Successfully uploaded private file to S3:", uploadedAudioUrl);
 
     return { url: uploadedAudioUrl, key: fileName };
