@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React from "react";
+import DetectiveCapybaraEngine from "./engines/detective-capybara-engine";
 
 // Loading Fallback
 const GameLoadingSkeleton = () => (
@@ -37,7 +38,6 @@ export function GameEngineRegistry({
   nativeLanguage,
   onGameOver,
 }: GameEngineRegistryProps) {
-  
   // 🟢 FIX: Takes "Duck a Wear" or "Picture Game" and normalizes it to "DUCK_A_WEAR" or "PICTURE_GAME"
   const normalizedTitle = (gameTitle || "")
     .toUpperCase()
@@ -65,6 +65,16 @@ export function GameEngineRegistry({
         />
       );
 
+    case "DETECTIVE_CAPYBARA":
+      return (
+        <DetectiveCapybaraEngine
+          gameData={gameData}
+          targetLanguage={targetLanguage}
+          nativeLanguage={nativeLanguage}
+          onGameOver={onGameOver}
+        />
+      );
+
     default:
       return (
         <div className="flex h-96 flex-col items-center justify-center space-y-2 text-center">
@@ -73,11 +83,11 @@ export function GameEngineRegistry({
           </h3>
           <p className="text-slate-500">
             No component found for game title:{" "}
-            <code className="rounded bg-slate-100 px-2 py-1 text-red-500 font-mono">
+            <code className="rounded bg-slate-100 px-2 py-1 font-mono text-red-500">
               {gameTitle || "UNDEFINED"}
             </code>
           </p>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="mt-2 text-xs text-slate-400">
             (Evaluated as: {normalizedTitle})
           </p>
         </div>
