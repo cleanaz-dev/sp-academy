@@ -11,7 +11,6 @@ export function useMiniAudioPlayer() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Initialize a single Audio element for the sidebar
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
@@ -23,30 +22,31 @@ export function useMiniAudioPlayer() {
       setProgress(0);
       setCurrentS3Key(null);
     };
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
 
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("loadedmetadata", handleLoadedMetadata);
     audio.addEventListener("ended", handleEnded);
-    audio.addEventListener("play", () => setIsPlaying(true));
-    audio.addEventListener("pause", () => setIsPlaying(false));
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
 
     return () => {
       audio.pause();
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
       audio.removeEventListener("ended", handleEnded);
-      audio.removeEventListener("play", () => setIsPlaying(true));
-      audio.removeEventListener("pause", () => setIsPlaying(false));
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
       audioRef.current = null;
     };
   }, []);
 
   const play = useCallback(async (s3Key: string) => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !s3Key) return;
 
-    // If clicking the same track, toggle play/pause
-    if (currentS3Key === s3Key) {
+    if (currentS3Key === s3Key && audio.src) {
       if (audio.paused) {
         audio.play().catch(console.error);
       } else {
@@ -55,15 +55,16 @@ export function useMiniAudioPlayer() {
       return;
     }
 
-    // Load and play a new track
     setIsLoading(true);
     try {
       const res = await getSignedAudioUrl(s3Key);
-      if ("error" in res) {
-        console.error("Could not get audio URL:", res.error);
+      if (!res || "error" in res) {
+        console.error("Could not get audio URL:", res && "error" in res ? res.error : "no response");
         return;
       }
+      audio.pause();
       audio.src = res.url;
+      audio.load();
       setCurrentS3Key(s3Key);
       setProgress(0);
       await audio.play();
