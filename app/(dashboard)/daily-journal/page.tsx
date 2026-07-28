@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export default async function Page() {
   const { userId } = await auth();
 
-//   if(!userId) return redirect('/sign-in')
+  if(!userId) return redirect('/sign-in')
 
   const dailyJournals = await getDailyJournals(userId);
 
