@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React from "react";
-import DetectiveCapybaraEngine from "./engines/detective-capybara-engine";
+
 
 // Loading Fallback
 const GameLoadingSkeleton = () => (
@@ -22,6 +22,12 @@ const PictureGameEngine = dynamic(
   () => import("@/components/games/engines/picture-game-engine"),
   { loading: () => <GameLoadingSkeleton /> },
 );
+
+const DetectiveCapybaraEngine = dynamic(
+  () => import("@/components/games/engines/detective-capybara-engine"),
+  { loading: () => <GameLoadingSkeleton /> }
+)
+
 
 interface GameEngineRegistryProps {
   gameTitle: string; // 🟢 FIX: Accept title instead of code
