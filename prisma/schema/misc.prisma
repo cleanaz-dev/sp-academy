@@ -155,12 +155,13 @@ model DailyJournal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   User   User?   @relation(fields: [userId], references: [id])
   userId String? @db.ObjectId
 
   systemTasks SystemTask[]
   review      JournalReview?
+
+  @@unique([userId, entryDate])
 }
 
 enum TaskStatus {
