@@ -7,10 +7,6 @@ export const LANGUAGES: Record<string, string> = {
   "en-US": "🇺🇸 English",
   "fr-FR": "🇫🇷 French",
   "es-ES": "🇪🇸 Spanish",
-  // "de-DE": "🇩🇪 German",
-  // "it-IT": "🇮🇹 Italian",
-  // "ja-JP": "🇯🇵 Japanese",
-  // "zh-CN": "🇨🇳 Chinese",
 };
 
 interface SpeechContextType {
@@ -21,7 +17,6 @@ interface SpeechContextType {
   audioBlob: Blob | null;
   audioStream: MediaStream | null;
   error: string | null;
-  // 🟢 Update signature to accept an optional language override code
   startRecording: (overrideLanguage?: string) => Promise<void>; 
   stopRecording: () => Promise<Blob | null>;
   resetSpeechState: () => void;
@@ -42,6 +37,7 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
   const audioIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
   const mimeTypeRef = useRef<string>("audio/webm");
+  const finalTranscriptRef = useRef<string>(""); // 🟢 Tracks full accumulated text
 
   const getSupportedMimeType = (): string => {
     const supportedTypes = [
@@ -60,7 +56,6 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     return "audio/webm";
   };
 
-  // 🟢 Accept optional overrideLanguage
   const startRecording = async (overrideLanguage?: string) => {
     resetSpeechState();
 
@@ -87,7 +82,6 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
       });
       setAudioStream(stream);
 
-      // 🟢 Send activeLanguage to token route
       const tokenResponse = await fetch("/api/deepgram/stt-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,7 +97,6 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
 
       const deepgram = createClient(token);
       
-      // 🟢 Initialize Deepgram with activeLanguage
       const connection = deepgram.listen.live({
         model: "nova-3",
         language: activeLanguage,
@@ -142,10 +135,24 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
         }, 5000);
       });
 
+      // 🟢 UPDATED: Accumulate finalized transcript + show live interim
       connection.on(LiveTranscriptionEvents.Transcript, (data) => {
         const receivedTranscript = data.channel?.alternatives?.[0]?.transcript;
-        if (receivedTranscript) {
-          setTranscript(receivedTranscript);
+
+        if (receivedTranscript && receivedTranscript.trim() !== "") {
+          if (data.is_final) {
+            finalTranscriptRef.current = finalTranscriptRef.current
+              ? `${finalTranscriptRef.current.trim()} ${receivedTranscript.trim()}`
+              : receivedTranscript.trim();
+            
+            setTranscript(finalTranscriptRef.current);
+          } else {
+            setTranscript(
+              finalTranscriptRef.current
+                ? `${finalTranscriptRef.current} ${receivedTranscript.trim()}`
+                : receivedTranscript.trim()
+            );
+          }
         }
       });
 
@@ -216,6 +223,7 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
     setError(null);
     setAudioBlob(null);
     audioChunksRef.current = [];
+    finalTranscriptRef.current = ""; // 🟢 Reset accumulated text
   };
 
   return (
@@ -245,3 +253,4 @@ export function useSpeech() {
   }
   return context;
 }
+
