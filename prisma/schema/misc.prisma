@@ -198,15 +198,20 @@ model SystemTask {
 
 model JournalReview {
   id                String @id @default(auto()) @map("_id") @db.ObjectId
-  overallScore      Float // Azure PronScore
-  accuracyScore     Float // Azure AccuracyScore
-  fluencyScore      Float // Azure FluencyScore
-  completenessScore Float // Azure CompletenessScore
-  prosodyScore      Float? // Azure ProsodyScore
-
-  // Detailed word-level breakdown from Azure / AssemblyAI
-  wordAnalysis    Json // Array of { word, accuracyScore, errorType, phonemes }
-  summaryFeedback String? // Optional AssemblyAI/LLM summary or tips
+  overallScore          Float?
+  accuracyScore         Float?
+  fluencyScore          Float?
+  completenessScore     Float?
+  prosodyScore          Float?
+  wordAnalysis          Json?    // Word-by-word pronunciation
+  
+  // New LLM Fields
+  summaryFeedback       String?  @db.String
+  finalTranscript       String?  @db.String
+  translation           String?  @db.String
+  grammarMistakes       Json?    // Array of grammar mistake objects
+  vocabularySuggestions Json?    // Array of vocab objects
+  
 
   journalId String       @unique @db.ObjectId
   journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
