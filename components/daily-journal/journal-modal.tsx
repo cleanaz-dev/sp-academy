@@ -9,7 +9,7 @@ interface JournalModalProps {
   onClose: () => void;
   existingEntry: any;
   onSaveSuccess?: () => void;
-  nativeLanguage: string; // <-- ADD THIS
+  nativeLanguage: string; 
 }
 
 export default function JournalModal({
@@ -17,7 +17,7 @@ export default function JournalModal({
   onClose,
   existingEntry,
   onSaveSuccess,
-  nativeLanguage, // <-- ADD THIS
+  nativeLanguage, 
 }: JournalModalProps) {
   const {
     language,
@@ -40,7 +40,7 @@ export default function JournalModal({
 
   // 1. Handle Start Recording
   const handleStartRecording = async () => {
-    handleRetry(); // Reset previous recording if any
+    handleRetry(); 
     setModalState("recording");
     await startRecording();
   };
@@ -61,7 +61,7 @@ export default function JournalModal({
   // 3. Handle Retry -> Reset state back to idle
   const handleRetry = () => {
     if (audioPreviewUrl) {
-      URL.revokeObjectURL(audioPreviewUrl); // Clean up memory
+      URL.revokeObjectURL(audioPreviewUrl);
     }
     setAudioBlob(null);
     setAudioPreviewUrl(null);
@@ -78,8 +78,8 @@ export default function JournalModal({
       const formData = new FormData();
       formData.append("audio", audioBlob, `journal-${date?.toISOString()}.webm`);
       formData.append("transcript", transcript);
-      formData.append("targetLanguage", language); // <-- CHANGED
-      formData.append("nativeLanguage", nativeLanguage); // <-- ADDED
+      formData.append("targetLanguage", language); 
+      formData.append("nativeLanguage", nativeLanguage); 
       if (date) formData.append("entryDate", date.toISOString());
 
       const res = await fetch("/api/daily-journal/record", {
@@ -138,7 +138,7 @@ export default function JournalModal({
 
       for (let i = 0; i < dataArray.length; i++) {
         const barHeight = dataArray[i] / 3;
-        ctx.fillStyle = "#10b981"; // emerald-500
+        ctx.fillStyle = "#10b981"; 
         ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
         x += barWidth + 2;
       }
@@ -151,6 +151,9 @@ export default function JournalModal({
       audioCtx.close();
     };
   }, [modalState, audioStream]);
+
+  // Helper to get native language label if it matches our LANGUAGES object, otherwise fallback to the string
+  const nativeLanguageLabel = LANGUAGES[nativeLanguage as keyof typeof LANGUAGES] || nativeLanguage;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -179,7 +182,7 @@ export default function JournalModal({
         </div>
 
         {/* Existing Entry / Instructions */}
-        <div className="mb-3">
+        <div className="mb-5 text-center">
           {existingEntry && modalState === "idle" ? (
             <p className="text-sm font-medium text-emerald-600">
               ✓ Journal entry completed for this day. Re-record below to update.
@@ -200,23 +203,34 @@ export default function JournalModal({
           </div>
         )}
 
-        {/* Language Selection */}
-        <div className="mb-4 flex justify-center gap-2">
-          {Object.entries(LANGUAGES).map(([code, label]) => (
-            <button
-              key={code}
-              disabled={modalState !== "idle"}
-              onClick={() => setLanguage(code)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                language === code
-                  ? "border-2 border-emerald-500 bg-emerald-50 text-emerald-800"
-                  : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              } ${modalState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {label}
-            </button>
-          ))}
+        {/* --- CLARIFIED LANGUAGE SELECTION UI --- */}
+        <div className="mb-6 flex flex-col items-center rounded-lg bg-gray-50 p-4 border border-gray-100">
+          <label className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
+            Target Language (Speaking In)
+          </label>
+          
+          <div className="flex flex-wrap justify-center gap-2">
+            {Object.entries(LANGUAGES).map(([code, label]) => (
+              <button
+                key={code}
+                disabled={modalState !== "idle"}
+                onClick={() => setLanguage(code)}
+                className={`rounded-lg px-4 py-1.5 text-xs font-semibold transition-all ${
+                  language === code
+                    ? "border-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
+                    : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                } ${modalState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <p className="mt-3 text-[11px] font-medium text-gray-400">
+            Translating to Native Language: <span className="text-gray-600">{nativeLanguageLabel}</span>
+          </p>
         </div>
+        {/* --------------------------------------- */}
 
         {/* Teleprompter / Transcript Area */}
         <div className="mb-4 flex min-h-[120px] max-h-[180px] overflow-y-auto items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-4 text-center text-lg font-medium text-gray-700">
@@ -288,7 +302,7 @@ export default function JournalModal({
           {modalState === "saving" && (
             <button
               disabled
-              className="rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white opacity-70 cursor-wait"
+              className="cursor-wait rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white opacity-70"
             >
               💾 Saving Journal...
             </button>
