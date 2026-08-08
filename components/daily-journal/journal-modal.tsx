@@ -31,21 +31,18 @@ export default function JournalModal({
     resetSpeechState,
   } = useSpeech();
 
-  // Modal local state: "idle" | "recording" | "review" | "saving"
   const [modalState, setModalState] = useState<"idle" | "recording" | "review" | "saving">("idle");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 1. Handle Start Recording
   const handleStartRecording = async () => {
     handleRetry(); 
     setModalState("recording");
     await startRecording();
   };
 
-  // 2. Handle Stop Recording -> Enter Review State
   const handleStopRecording = async () => {
     const blob = await stopRecording();
     if (blob) {
@@ -58,7 +55,6 @@ export default function JournalModal({
     }
   };
 
-  // 3. Handle Retry -> Reset state back to idle
   const handleRetry = () => {
     if (audioPreviewUrl) {
       URL.revokeObjectURL(audioPreviewUrl);
@@ -69,7 +65,6 @@ export default function JournalModal({
     setModalState("idle");
   };
 
-  // 4. Handle Complete & Save -> Submit to API Endpoint
   const handleCompleteAndSave = async () => {
     if (!audioBlob) return;
 
@@ -109,7 +104,6 @@ export default function JournalModal({
     onClose();
   };
 
-  // Canvas Visualizer (Active during "recording" state)
   useEffect(() => {
     if (modalState !== "recording" || !audioStream || !canvasRef.current) return;
 
@@ -152,7 +146,7 @@ export default function JournalModal({
     };
   }, [modalState, audioStream]);
 
-  // Helper to get native language label if it matches our LANGUAGES object, otherwise fallback to the string
+  // Helper to get native language label
   const nativeLanguageLabel = LANGUAGES[nativeLanguage as keyof typeof LANGUAGES] || nativeLanguage;
 
   return (
@@ -206,7 +200,7 @@ export default function JournalModal({
         {/* --- CLARIFIED LANGUAGE SELECTION UI --- */}
         <div className="mb-6 flex flex-col items-center rounded-lg bg-gray-50 p-4 border border-gray-100">
           <label className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-            Target Language (Speaking In)
+            Select Language to Speak In
           </label>
           
           <div className="flex flex-wrap justify-center gap-2">
@@ -227,7 +221,7 @@ export default function JournalModal({
           </div>
 
           <p className="mt-3 text-[11px] font-medium text-gray-400">
-            Translating to Native Language: <span className="text-gray-600">{nativeLanguageLabel}</span>
+            Your Native Language: <span className="text-gray-600">{nativeLanguageLabel}</span>
           </p>
         </div>
         {/* --------------------------------------- */}
