@@ -9,6 +9,7 @@ interface JournalModalProps {
   onClose: () => void;
   existingEntry: any;
   onSaveSuccess?: () => void;
+  nativeLanguage: string; // <-- ADD THIS
 }
 
 export default function JournalModal({
@@ -16,6 +17,7 @@ export default function JournalModal({
   onClose,
   existingEntry,
   onSaveSuccess,
+  nativeLanguage, // <-- ADD THIS
 }: JournalModalProps) {
   const {
     language,
@@ -76,7 +78,8 @@ export default function JournalModal({
       const formData = new FormData();
       formData.append("audio", audioBlob, `journal-${date?.toISOString()}.webm`);
       formData.append("transcript", transcript);
-      formData.append("language", language);
+      formData.append("targetLanguage", language); // <-- CHANGED
+      formData.append("nativeLanguage", nativeLanguage); // <-- ADDED
       if (date) formData.append("entryDate", date.toISOString());
 
       const res = await fetch("/api/daily-journal/record", {

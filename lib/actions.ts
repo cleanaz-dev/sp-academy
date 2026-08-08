@@ -756,7 +756,7 @@ export async function updateAccountSettings(data) {
   }
 }
 
-export async function getAccountSettingsByUserId(userId) {
+export async function getAccountSettingsByUserId(userId:string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1033,7 +1033,7 @@ export async function updateAllBooksProgress() {
   }
 }
 
-export async function getCourseByEnrolledUsers(userId) {
+export async function getCourseByEnrolledUsers(userId:string) {
   console.log("User ID:", userId);
   try {
     // Assuming the userId is directly passed to the function, no need to fetch the user first
@@ -1074,7 +1074,7 @@ export async function getAllCourses() {
   }
 }
 
-export async function getCourseById(courseId) {
+export async function getCourseById(courseId: string) {
   try {
     const course = await prisma.course.findFirst({
       where: { id: courseId },
@@ -1097,7 +1097,7 @@ export async function getCourseById(courseId) {
   }
 }
 
-export async function getIdByUserId(userId) {
+export async function getIdByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1166,7 +1166,7 @@ export async function getCourseByEnrolledUser(
   }
 }
 
-export async function getReadNotificationsByUserId(userId) {
+export async function getReadNotificationsByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1325,7 +1325,7 @@ export async function getExercisesByEnrolledUser(
   }
 }
 
-export async function getEnrolledCourseExercises(userId) {
+export async function getEnrolledCourseExercises(userId: string) {
   try {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
@@ -1363,9 +1363,9 @@ export async function getEnrolledCourseExercises(userId) {
 }
 
 export async function getLessonExercisesByEnrolledUser(
-  userId,
-  lessonId,
-  courseId,
+  userId: string,
+  lessonId: string,
+  courseId: string,
 ) {
   try {
     const user = await prisma.user.findFirst({

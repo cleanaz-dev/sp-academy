@@ -3,8 +3,6 @@ import { SpeechAnalysisPayloadSchema } from "@/lib/schema/speech-analysis-schema
 import { TaskStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-
-
 export async function handleSpeechAnalysisTask(task: any, body: any) {
   // Validate incoming payload from Python Lambda
   const parseResult = SpeechAnalysisPayloadSchema.safeParse(body);
@@ -12,7 +10,6 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
   if (!parseResult.success) {
     console.error("Invalid Speech Analysis Payload:", parseResult.error.format());
 
-    // Mark task as failed due to payload mismatch
     await prisma.systemTask.update({
       where: { id: task.id },
       data: {
@@ -27,6 +24,7 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
     );
   }
 
+  // NOTE: Ensure your Python Lambda sends "review" (not "reviewData") to match this!
   const { status, errorMessage, review } = parseResult.data;
 
   // Case A: Lambda reported an execution failure
@@ -38,7 +36,6 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
         error: errorMessage || "Speech analysis failed on Lambda.",
       },
     });
-
     return NextResponse.json({ message: "Task marked as failed." });
   }
 
@@ -54,7 +51,7 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
         },
       }),
 
-      // 2. Upsert JournalReview
+      // 2. Upsert JournalReview (Now including the LLM Data!)
       prisma.journalReview.upsert({
         where: { journalId: task.journalId },
         update: {
@@ -64,7 +61,13 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
           completenessScore: review.completenessScore,
           prosodyScore: review.prosodyScore,
           wordAnalysis: review.wordAnalysis,
+          
+          // NEW LLM FIELDS
           summaryFeedback: review.summaryFeedback,
+          finalTranscript: review.correctedTranscript || review.finalTranscript,
+          translation: review.translation,
+          grammarMistakes: review.grammarMistakes, // Store as JSON in Prisma
+          vocabularySuggestions: review.vocabularySuggestions // Store as JSON in Prisma
         },
         create: {
           journalId: task.journalId,
@@ -74,7 +77,13 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
           completenessScore: review.completenessScore,
           prosodyScore: review.prosodyScore,
           wordAnalysis: review.wordAnalysis,
+          
+          // NEW LLM FIELDS
           summaryFeedback: review.summaryFeedback,
+          finalTranscript: review.correctedTranscript || review.finalTranscript,
+          translation: review.translation,
+          grammarMistakes: review.grammarMistakes, 
+          vocabularySuggestions: review.vocabularySuggestions 
         },
       }),
     ]);

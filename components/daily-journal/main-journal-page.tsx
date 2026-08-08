@@ -1,10 +1,11 @@
-// app/journal/page.tsx (or wherever this lives)
+// app/journal/page.tsx
 "use client";
 
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { SpeechProvider } from "@/context/speech-context"; 
 import JournalModal from "./journal-modal"; 
+import InteractiveReviewModal from "./interactive-review-modal"; // <-- NEW IMPORT
 import CompletedJournalsSidebar from "./completed-journal-sidebar";
 import { 
   BookAudio, 
@@ -23,18 +24,20 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export default function MainJournalPage({ journals = [] }: { journals: any[] }) {
+export default function MainJournalPage({ journals = [], nativeLanguage = "en-US" }: { journals: any[], nativeLanguage?: string }) {
   return (
     <SpeechProvider>
-      <JournalPageContent journals={journals} />
+      <JournalPageContent journals={journals} nativeLanguage={nativeLanguage} />
     </SpeechProvider>
   );
 }
-
-function JournalPageContent({ journals }: { journals: any[] }) {
+function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nativeLanguage?: string }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // NEW: We now have TWO separate states for our two different modals
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   const completedDates = useMemo(() => {
     const map = new Map<string, any>();
@@ -46,12 +49,23 @@ function JournalPageContent({ journals }: { journals: any[] }) {
   }, [journals]);
 
   const openModal = (date: Date) => {
+    const dateStr = formatDate(date);
+    const journalData = completedDates.get(dateStr);
+    
     setSelectedDate(date);
-    setIsModalOpen(true);
+
+    // NEW LOGIC: Check if this journal entry has a review attached to it.
+    // If it does, open the Interactive Review Room. If not, open the standard Recorder.
+    if (journalData?.review) {
+      setIsReviewModalOpen(true);
+    } else {
+      setIsRecordModalOpen(true);
+    }
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeModals = () => {
+    setIsRecordModalOpen(false);
+    setIsReviewModalOpen(false);
     setSelectedDate(null);
   };
 
@@ -149,7 +163,6 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                 const isCompleted = !!journalData;
                 const isToday = formatDate(new Date()) === dateStr;
                 
-                // Adjusted to check ONLY for s3Key now
                 const hasAudio = !!journalData?.s3Key;
                 const langCode = journalData?.language?.split("-")[0].toUpperCase() || "EN";
                 const transcriptPreview = journalData?.transcript;
@@ -206,9 +219,11 @@ function JournalPageContent({ journals }: { journals: any[] }) {
                         <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
                           {langCode}
                         </span>
+                        
+                        {/* NEW: Make it obvious on the calendar that a review is ready! */}
                         {journalData?.review && (
-                           <span className="text-[10px] bg-yellow-100 border border-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-sm font-medium">
-                             Reviewed
+                           <span className="text-[10px] bg-yellow-100 border border-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-sm font-bold tracking-wider animate-pulse">
+                             REVIEW READY!
                            </span>
                         )}
                       </div>
@@ -219,20 +234,32 @@ function JournalPageContent({ journals }: { journals: any[] }) {
             </div>
           </motion.div>
 
-          {/* RIGHT SIDEBAR - Now cleanly imported */}
           <CompletedJournalsSidebar 
             completedDates={completedDates} 
             openModal={openModal} 
           />
-
         </div>
       </main>
 
-      {isModalOpen && (
-        <JournalModal
+      {/* RENDER MODAL 1: The standard recording modal */}
+      {isRecordModalOpen && (
+         <JournalModal
           date={selectedDate}
-          onClose={closeModal}
+          onClose={closeModals}
           existingEntry={selectedDate ? completedDates.get(formatDate(selectedDate)) : null}
+          nativeLanguage={nativeLanguage} // <-- ADDED THIS
+        />
+      )}
+
+      {/* RENDER MODAL 2: The new interactive review modal */}
+      {isReviewModalOpen && (
+        <InteractiveReviewModal
+          onClose={closeModals}
+          onComplete={() => {
+            console.log("Review saved!");
+            closeModals();
+          }}
+          journal={selectedDate ? completedDates.get(formatDate(selectedDate)) : null}
         />
       )}
     </div>
