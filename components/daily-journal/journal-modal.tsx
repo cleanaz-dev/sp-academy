@@ -221,7 +221,7 @@ export default function JournalModal({
           </div>
 
           <p className="mt-3 text-[11px] font-medium text-gray-400">
-            Your Native Language: <span className="text-gray-600">{nativeLanguageLabel}</span>
+            Your Native Language: <span className="text-gray-700">{nativeLanguageLabel}</span>
           </p>
         </div>
         {/* --------------------------------------- */}
