@@ -24,7 +24,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   
   // NEW: State for the prosody speed
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(0.8);
 
   const review = journal?.review || {};
   const originalTranscript = journal?.transcript || "No transcript available.";
