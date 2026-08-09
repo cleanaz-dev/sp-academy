@@ -86,6 +86,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       await stopRecording();
       setPracticeCompleted(true);
     } else {
+      // Reset completion if they decide to record again
+      setPracticeCompleted(false);
       await startRecording(targetLanguage);
     }
   };
@@ -99,6 +101,17 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     if (score >= 70) return "text-yellow-600 bg-yellow-50 border-yellow-200";
     return "text-red-600 bg-red-50 border-red-200";
   };
+
+  // Logic for the bottom bar dynamic status text
+  const getStatusText = () => {
+    if (!hasPlayedAudio) return "1. Listen to the audio to continue";
+    if (!allCardsActioned) return "2. Acknowledge all grammar rules";
+    if (isRecording) return "Recording... Tap mic to stop";
+    if (!practiceCompleted) return "3. Tap mic to practice speaking";
+    return "Ready to save!";
+  };
+
+  const canRecord = hasPlayedAudio && allCardsActioned;
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 overflow-y-auto">
@@ -259,8 +272,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </section>
         )}
 
-        {/* --- STEP 3: Try It Out --- */}
-        <section className={`space-y-4 transition-opacity duration-500 ${allCardsActioned ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
+        {/* --- STEP 3: Try It Out (Live Transcript Area) --- */}
+        <section className={`space-y-4 transition-opacity duration-500 ${canRecord ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
            <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
               {grammarSuggestions.length > 0 ? "3" : "2"}
@@ -268,20 +281,21 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             <h3 className="text-lg font-bold text-gray-800">Try it out</h3>
           </div>
           
-          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-center shadow-sm">
-             <p className="mb-6 text-sm text-sky-800 font-medium">Read the improved transcript aloud to practice your new phrasing and pronunciation.</p>
-             <button onClick={handlePracticeToggle} className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all ${isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-sky-500 hover:bg-sky-600 hover:scale-105"}`}>
-                <Mic className="h-8 w-8 text-white" />
-             </button>
+          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-center shadow-sm flex flex-col items-center justify-center min-h-[180px]">
+             <p className="mb-4 text-sm text-sky-800 font-medium">
+               {isRecording ? "Listening to you... Tap the mic below to stop." 
+                : practiceCompleted ? "Great job! You can finalize your review now." 
+                : "Read the improved transcript aloud using the mic button below to practice."}
+             </p>
              <AnimatePresence>
                  {transcript && (
-                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 rounded-xl border border-sky-200 bg-white p-4 text-sky-900">
+                     <motion.div 
+                       initial={{ opacity: 0, y: 10 }} 
+                       animate={{ opacity: 1, y: 0 }} 
+                       exit={{ opacity: 0 }}
+                       className="mt-2 w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 text-sky-900 italic"
+                     >
                          "{transcript}"
-                     </motion.div>
-                 )}
-                 {practiceCompleted && (
-                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 text-sm font-bold text-emerald-600 flex items-center justify-center gap-1">
-                        <CheckCircle2 className="h-4 w-4" /> Practice Complete!
                      </motion.div>
                  )}
              </AnimatePresence>
@@ -289,19 +303,50 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-        <div className="mx-auto flex max-w-4xl items-center justify-between">
-            <p className="text-sm font-medium text-gray-500">
-                {!hasPlayedAudio ? "Listen to the audio to continue." 
-                 : !allCardsActioned ? "Acknowledge all grammar rules to continue." 
-                 : !practiceCompleted ? "Try recording the new phrase to continue."
-                 : "Ready to save!"}
-            </p>
-            <button onClick={onComplete} disabled={!isReviewComplete} className={`flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-bold shadow-sm transition-all ${isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
-              Finish Review <ArrowRight className="h-5 w-5" />
+      {/* --- STICKY BOTTOM ACTION BAR --- */}
+      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+          
+          {/* Left Side: Mic & Status */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button 
+              onClick={handlePracticeToggle} 
+              disabled={!canRecord}
+              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm transition-all ${
+                isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse text-white"
+                : practiceCompleted ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                : !canRecord ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                : "bg-sky-500 hover:bg-sky-600 hover:scale-105 text-white"
+              }`}
+            >
+              {practiceCompleted && !isRecording ? <CheckCircle2 className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+              {isRecording && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
+                </span>
+              )}
             </button>
+            
+            <p className="text-sm font-medium text-gray-500 truncate">
+              {getStatusText()}
+            </p>
+          </div>
+
+          {/* Right Side: Finish Button */}
+          <button 
+            onClick={onComplete} 
+            disabled={!isReviewComplete} 
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold shadow-sm transition-all ${
+              isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105" 
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Finish <ArrowRight className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
