@@ -6,7 +6,7 @@ import { useMiniAudioPlayer } from "@/hooks/use-mini-audio-player";
 
 interface CompletedJournalsSidebarProps {
   completedDates: Map<string, any>;
-  openModal: (date: Date) => void;
+  openModal: (dateOrStr: string) => void;
 }
 
 export default function CompletedJournalsSidebar({ 
@@ -36,16 +36,24 @@ export default function CompletedJournalsSidebar({
               const isThisLoading = isCurrent && audioPlayer.isLoading;
               const hasReview = !!journal.review;
 
+              // Parse "YYYY-MM-DD" safely without triggering timezone shifts
+              const [year, month, day] = dateStr.split("-").map(Number);
+              const displayDate = new Date(year, month - 1, day).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+              });
+
               return (
                 <div
                   key={dateStr}
                   role="button"
                   tabIndex={0}
-                  onClick={() => openModal(new Date(dateStr))}
+                  onClick={() => openModal(dateStr)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      openModal(new Date(dateStr));
+                      openModal(dateStr);
                     }
                   }}
                   className={`group flex flex-col items-start rounded-xl border p-3 text-left transition-all cursor-pointer ${
@@ -56,14 +64,9 @@ export default function CompletedJournalsSidebar({
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900">
-                      {new Date(dateStr).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                      })}
+                      {displayDate}
                     </span>
                     
-                    {/* Play / Pause Toggle Button */}
                     {journal.s3Key && !hasReview && (
                       <button
                         type="button"
@@ -91,7 +94,6 @@ export default function CompletedJournalsSidebar({
                     </p>
                   )}
 
-                  {/* INDICATOR: Review Ready */}
                   {hasReview && (
                     <div className="mt-auto w-full pt-1">
                       <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-200 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
@@ -100,7 +102,6 @@ export default function CompletedJournalsSidebar({
                     </div>
                   )}
 
-                  {/* Mini Progress Bar */}
                   {isCurrent && audioPlayer.duration > 0 && !hasReview && (
                     <div className="w-full mt-2 h-1 bg-gray-200 rounded-full overflow-hidden">
                       <div 

@@ -5,25 +5,36 @@ import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { SpeechProvider } from "@/context/speech-context"; 
 import JournalModal from "./journal-modal"; 
-import InteractiveReviewModal from "./interactive-review-modal"; // <-- NEW IMPORT
+import InteractiveReviewModal from "./interactive-review-modal";
 import CompletedJournalsSidebar from "./completed-journal-sidebar";
 import { 
-  BookAudio, 
-  ChevronLeft, 
-  ChevronRight, 
-  CheckCircle2,
-  Mic,
-  Plus,
-  Quote,
-  SparklesIcon
+  BookAudio, ChevronLeft, ChevronRight, CheckCircle2, Mic, Plus, Quote, Sparkles
 } from "lucide-react";
 
-const formatDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+// --- TIMEZONE HELPERS (Hardcoded to EST for now) ---
+const TIMEZONE = "America/New_York";
+
+// 1. Formats any date (UTC or local) into a strict EST "YYYY-MM-DD" string
+const formatDateEST = (date: Date | string) => {
+  const d = new Date(date);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(d);
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
   return `${year}-${month}-${day}`;
 };
+
+// 2. Returns a Date object shifted to represent the current time in EST
+const getESTDate = (date: Date = new Date()) => {
+  return new Date(date.toLocaleString("en-US", { timeZone: TIMEZONE }));
+};
+
 
 export default function MainJournalPage({ journals = [], nativeLanguage = "en-US" }: { journals: any[], nativeLanguage?: string }) {
   return (
@@ -32,31 +43,46 @@ export default function MainJournalPage({ journals = [], nativeLanguage = "en-US
     </SpeechProvider>
   );
 }
+
 function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nativeLanguage?: string }) {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  // Initialize calendar with current EST time
+  const [currentDate, setCurrentDate] = useState(getESTDate());
   
-  // NEW: We now have TWO separate states for our two different modals
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedJournal, setSelectedJournal] = useState<any>(null); 
+
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
+  // Map journals using their exact EST date
   const completedDates = useMemo(() => {
     const map = new Map<string, any>();
     journals.forEach((j) => {
-      const d = new Date(j.entryDate || j.createdAt);
-      map.set(formatDate(d), j);
+      // Convert database UTC date into an EST YYYY-MM-DD string
+      const estString = formatDateEST(j.entryDate || j.createdAt);
+      map.set(estString, j);
     });
     return map;
   }, [journals]);
 
-  const openModal = (date: Date) => {
-    const dateStr = formatDate(date);
+  const openModal = (dateOrStr: Date | string) => {
+    let dateStr: string;
+    let actualDate: Date;
+
+    if (typeof dateOrStr === "string") {
+      dateStr = dateOrStr;
+      // To prevent timezone shifting, parse the string as local time by adding T12:00:00
+      actualDate = new Date(`${dateStr}T12:00:00`); 
+    } else {
+      dateStr = formatDateEST(dateOrStr);
+      actualDate = new Date(`${dateStr}T12:00:00`);
+    }
+
     const journalData = completedDates.get(dateStr);
     
-    setSelectedDate(date);
+    setSelectedDate(actualDate);
+    setSelectedJournal(journalData || null);
 
-    // NEW LOGIC: Check if this journal entry has a review attached to it.
-    // If it does, open the Interactive Review Room. If not, open the standard Recorder.
     if (journalData?.review) {
       setIsReviewModalOpen(true);
     } else {
@@ -68,6 +94,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
     setIsRecordModalOpen(false);
     setIsReviewModalOpen(false);
     setSelectedDate(null);
+    setSelectedJournal(null);
   };
 
   const year = currentDate.getFullYear();
@@ -82,6 +109,8 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
   const changeMonth = (delta: number) => {
     setCurrentDate(new Date(year, month + delta, 1));
   };
+
+  const todayStr = formatDateEST(new Date());
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -125,22 +154,13 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                 {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
               </h2>
               <div className="flex gap-2">
-                <button
-                  onClick={() => changeMonth(-1)}
-                  className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-                >
+                <button onClick={() => changeMonth(-1)} className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
-                <button
-                  onClick={() => setCurrentDate(new Date())}
-                  className="rounded-md bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors hidden sm:block"
-                >
+                <button onClick={() => setCurrentDate(getESTDate())} className="rounded-md bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors hidden sm:block">
                   Today
                 </button>
-                <button
-                  onClick={() => changeMonth(1)}
-                  className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-                >
+                <button onClick={() => changeMonth(1)} className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -159,10 +179,10 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
               {calendarDays.map((date, idx) => {
                 if (!date) return <div key={idx} className="bg-gray-50/50" />;
                 
-                const dateStr = formatDate(date);
+                const dateStr = formatDateEST(date);
                 const journalData = completedDates.get(dateStr);
                 const isCompleted = !!journalData;
-                const isToday = formatDate(new Date()) === dateStr;
+                const isToday = todayStr === dateStr;
                 
                 const hasAudio = !!journalData?.s3Key;
                 const langCode = journalData?.language?.split("-")[0].toUpperCase() || "EN";
@@ -177,13 +197,8 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                     }`}
                   >
                     <div className="flex justify-between items-start w-full">
-                      <span
-                        className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
-                          isToday
-                            ? "bg-sky-500 text-white"
-                            : isCompleted
-                            ? "text-emerald-700" 
-                            : "text-gray-600 group-hover:text-sky-700"
+                      <span className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
+                          isToday ? "bg-sky-500 text-white" : isCompleted ? "text-emerald-700" : "text-gray-600 group-hover:text-sky-700"
                         }`}
                       >
                         {date.getDate()}
@@ -211,27 +226,24 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                       </div>
                     )}
 
-                   {isCompleted && (
-  <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
-    {!journalData?.review && (
-      <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
-        <CheckCircle2 className="w-3 h-3" /> 
-        <span className="hidden md:inline">Logged</span>
-      </span>
-    )}
-    
-    <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
-      {langCode}
-    </span>
-    
-    {/* NEW: Make it obvious on the calendar that a review is ready! */}
-    {journalData?.review && (
-       <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-         <SparklesIcon className="w-3 h-3" /> REVIEW READY
-       </span>
-    )}
-  </div>
-)}
+                    {isCompleted && (
+                      <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
+                        {!journalData?.review && (
+                          <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
+                            <CheckCircle2 className="w-3 h-3" /> <span className="hidden md:inline">Logged</span>
+                          </span>
+                        )}
+                        <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
+                          {langCode}
+                        </span>
+                        
+                        {journalData?.review && (
+                           <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                             <Sparkles className="w-3 h-3" /> REVIEW READY
+                           </span>
+                        )}
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -245,25 +257,20 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
         </div>
       </main>
 
-      {/* RENDER MODAL 1: The standard recording modal */}
       {isRecordModalOpen && (
          <JournalModal
           date={selectedDate}
           onClose={closeModals}
-          existingEntry={selectedDate ? completedDates.get(formatDate(selectedDate)) : null}
-          nativeLanguage={nativeLanguage} // <-- ADDED THIS
+          existingEntry={selectedJournal}
+          nativeLanguage={nativeLanguage}
         />
       )}
 
-      {/* RENDER MODAL 2: The new interactive review modal */}
-      {isReviewModalOpen && (
+      {isReviewModalOpen && selectedJournal && (
         <InteractiveReviewModal
           onClose={closeModals}
-          onComplete={() => {
-            console.log("Review saved!");
-            closeModals();
-          }}
-          journal={selectedDate ? completedDates.get(formatDate(selectedDate)) : null}
+          onComplete={closeModals}
+          journal={selectedJournal}
         />
       )}
     </div>
