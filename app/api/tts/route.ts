@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { text, language } = await request.json();
+    // Extract speed from the request body (default to 1.0 if not provided)
+    const { text, language, speed = 1.0 } = await request.json();
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
         format: "mp3",
         latency: "normal",
         prosody: {
-          speed: 1,
+          speed: Number(speed), // Dynamically set the speed here
           volume: 0,
           normalize_loudness: true,
         },

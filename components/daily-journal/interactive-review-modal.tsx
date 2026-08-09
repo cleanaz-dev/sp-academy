@@ -4,9 +4,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { useSpeech } from "@/context/speech-context";
-import { useSpeak } from "@/hooks/use-speak";
+import { useSpeak } from "@/hooks/use-speak"; // Updated hook
 import {
-  X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity
+  X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity, Turtle, Rabbit
 } from "lucide-react";
 
 interface InteractiveReviewModalProps {
@@ -22,26 +22,22 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
   const [actionedCards, setActionedCards] = useState<Set<string>>(new Set());
   const [practiceCompleted, setPracticeCompleted] = useState(false);
+  
+  // NEW: State for the prosody speed
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
 
-  // ==========================================
-  // NO MORE SPANISH MOCK DATA! 
-  // WE ARE READING STRICTLY FROM YOUR DATABASE
-  // ==========================================
   const review = journal?.review || {};
   const originalTranscript = journal?.transcript || "No transcript available.";
   const improvedTranscript = review?.finalTranscript || originalTranscript;
   const translation = review?.translation;
   
-  // Gets the target language from the journal (e.g., "fr" for French, "es" for Spanish)
   const targetLanguage = journal?.language?.split("-")[0] || "en";
   const summaryFeedback = review?.summaryFeedback;
   
-  // Scores
   const overallScore = review?.overallScore || 0;
   const accuracyScore = review?.accuracyScore || 0;
   const fluencyScore = review?.fluencyScore || 0;
 
-  // Safely Parse Grammar from your DB
   const grammarSuggestions = useMemo(() => {
     if (!review?.grammarMistakes) return [];
     let parsed = review.grammarMistakes;
@@ -57,7 +53,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     }));
   }, [review?.grammarMistakes]);
 
-  // Safely Parse Word Analysis from your DB
   const mispronouncedWords = useMemo(() => {
     if (!review?.wordAnalysis) return [];
     let parsed = review.wordAnalysis;
@@ -68,14 +63,14 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     return parsed.filter((w: any) => w.errorType && w.errorType !== "None");
   }, [review?.wordAnalysis]);
 
-  // --- PROGRESS LOGIC ---
   const allCardsActioned = grammarSuggestions.length === 0 || actionedCards.size === grammarSuggestions.length;
   const isReviewComplete = hasPlayedAudio && allCardsActioned && practiceCompleted;
 
   // Handlers
   const handlePlayImprovedAudio = async () => {
     setHasPlayedAudio(true);
-    await speak(improvedTranscript, targetLanguage);
+    // Pass the playbackSpeed down into the hook
+    await speak(improvedTranscript, targetLanguage, playbackSpeed);
   };
 
   const handleCardAcknowledge = (id: string) => {
@@ -99,7 +94,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     return () => stop();
   }, [stop]);
 
-  // Helper for score colors
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-emerald-600 bg-emerald-50 border-emerald-200";
     if (score >= 70) return "text-yellow-600 bg-yellow-50 border-yellow-200";
@@ -196,16 +190,34 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                 )}
               </div>
               
-              <button
-                onClick={handlePlayImprovedAudio}
-                disabled={isLoading}
-                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all mt-auto ${
-                  hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"
-                }`}
-              >
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
-                {isPlaying ? "Playing AI Voice..." : hasPlayedAudio ? "Listen Again" : "Play Native Audio"}
-              </button>
+              <div className="mt-auto pt-4 space-y-4">
+                {/* NEW: Speed Slider Control */}
+                <div className="flex items-center gap-3 rounded-xl bg-white/60 p-2 text-sm border border-indigo-100/50 shadow-inner">
+                  <Turtle className="h-5 w-5 text-indigo-400 shrink-0" />
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.1"
+                    value={playbackSpeed}
+                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                    className="flex-1 h-1.5 appearance-none rounded-lg bg-indigo-200 accent-indigo-600 cursor-pointer"
+                  />
+                  <Rabbit className="h-5 w-5 text-indigo-400 shrink-0" />
+                  <span className="w-8 text-right font-bold text-indigo-900 text-xs">{playbackSpeed.toFixed(1)}x</span>
+                </div>
+
+                <button
+                  onClick={handlePlayImprovedAudio}
+                  disabled={isLoading}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all ${
+                    hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"
+                  }`}
+                >
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
+                  {isPlaying ? "Playing AI Voice..." : hasPlayedAudio ? "Listen Again" : "Play Native Audio"}
+                </button>
+              </div>
             </div>
           </div>
         </section>

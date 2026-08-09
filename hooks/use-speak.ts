@@ -1,3 +1,4 @@
+// hooks/use-speak.ts
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -7,20 +8,20 @@ export function useSpeak() {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const speak = useCallback(async (text: string, targetLanguage: string) => {
+  // Added speed parameter with a default of 1.0
+  const speak = useCallback(async (text: string, targetLanguage: string, speed: number = 1.0) => {
     try {
       setIsLoading(true);
       
-      // Stop anything currently playing
       if (audioRef.current) {
         audioRef.current.pause();
       }
 
-      // Hit your Next.js API route which calls Deepgram/OpenAI TTS
+      // Pass the speed parameter in the body
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, language: targetLanguage }),
+        body: JSON.stringify({ text, language: targetLanguage, speed }),
       });
 
       if (!response.ok) throw new Error("Failed to generate speech");
