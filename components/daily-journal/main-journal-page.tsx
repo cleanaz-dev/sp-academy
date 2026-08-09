@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Mic,
   Plus,
-  Quote
+  Quote,
+  SparklesIcon
 } from "lucide-react";
 
 const formatDate = (date: Date) => {
@@ -210,24 +211,27 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                       </div>
                     )}
 
-                    {isCompleted && (
-                      <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
-                        <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
-                          <CheckCircle2 className="w-3 h-3" /> 
-                          <span className="hidden md:inline">Logged</span>
-                        </span>
-                        <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
-                          {langCode}
-                        </span>
-                        
-                        {/* NEW: Make it obvious on the calendar that a review is ready! */}
-                        {journalData?.review && (
-                           <span className="text-[10px] bg-yellow-100 border border-yellow-200 text-yellow-700 px-1.5 py-0.5 rounded-sm font-bold tracking-wider animate-pulse">
-                             REVIEW READY!
-                           </span>
-                        )}
-                      </div>
-                    )}
+                   {isCompleted && (
+  <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
+    {!journalData?.review && (
+      <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
+        <CheckCircle2 className="w-3 h-3" /> 
+        <span className="hidden md:inline">Logged</span>
+      </span>
+    )}
+    
+    <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
+      {langCode}
+    </span>
+    
+    {/* NEW: Make it obvious on the calendar that a review is ready! */}
+    {journalData?.review && (
+       <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+         <SparklesIcon className="w-3 h-3" /> REVIEW READY
+       </span>
+    )}
+  </div>
+)}
                   </button>
                 );
               })}

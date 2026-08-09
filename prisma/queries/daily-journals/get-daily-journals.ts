@@ -5,7 +5,10 @@ export async function getDailyJournals(userId:string) {
         where: {
             User: {
                 userId
-            }
+            },
+        },
+        include: {
+            review: true
         }
     })
     return dailyJournals
