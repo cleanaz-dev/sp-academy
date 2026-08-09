@@ -24,7 +24,9 @@ export const GrammarMistakeSchema = z.object({
 });
 
 // 3. Novita / DeepSeek Vocabulary Schema
+
 export const VocabularySuggestionSchema = z.object({
+  original: z.string(),
   word: z.string(),
   meaning: z.string(),
   example: z.string(),
