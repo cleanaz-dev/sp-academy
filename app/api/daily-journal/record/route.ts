@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     };
 
     const command = createCommand({
-      functionName: process.env.AWS_LAMBDA_JOURNAL_ANALYSIS_FUNCTION!,
+      functionName: "spoon-speech-analysis",
       invocationType: "Event",
       payload: Buffer.from(JSON.stringify(lambdaPayload)),
     });
