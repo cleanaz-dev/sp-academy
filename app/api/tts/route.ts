@@ -10,18 +10,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const apiKey = process.env.NOVITA_API_KEY;
-    
+    const apiKey = process.env.FISH_AUDIO_API_KEY;
+
     if (!apiKey) {
       return NextResponse.json({ error: "Missing API Key" }, { status: 500 });
     }
 
-    // Call Novita Fish Audio API
-    const response = await fetch("https://api.novita.ai/v3/fish-audio-s2-pro-text-to-speech", {
+    // Call Fish Audio API directly
+    const response = await fetch("https://api.fish.audio/v1/tts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
+        "model": "s2.1-pro-free", // or "s2.1-pro" once you're on the paid tier
       },
       body: JSON.stringify({
         text: text,
@@ -43,16 +44,17 @@ export async function POST(request: Request) {
         repetition_penalty: 1.2,
         early_stop_threshold: 1,
         condition_on_previous_chunks: true,
-        
-        // NOTE: If Novita requires a specific voice ID/reference, 
-        // you may need to add "reference_id": "YOUR_VOICE_ID" here depending on their docs.
+
+        // Fish Audio uses "reference_id" for voice selection, not a "language" param.
+        // If you have a cloned/uploaded voice, set it here:
+        // "reference_id": "YOUR_VOICE_ID",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Novita Error:", errorText);
-      return NextResponse.json({ error: "Novita API Failed" }, { status: response.status });
+      console.error("Fish Audio Error:", errorText);
+      return NextResponse.json({ error: "Fish Audio API Failed" }, { status: response.status });
     }
 
     // Get the binary audio data
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
         "Content-Length": buffer.length.toString(),
       },
     });
-    
+
   } catch (error) {
     console.error("TTS Route Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
