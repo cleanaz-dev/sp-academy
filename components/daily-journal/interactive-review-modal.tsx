@@ -40,7 +40,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const accuracyScore = review?.accuracyScore || 0;
   const fluencyScore = review?.fluencyScore || 0;
 
-  // Resolve audio URL (assuming pre-signed URL is passed on journal object or constructed from s3Key)
+  // Resolve audio URL
   const originalAudioUrl = journal?.audioUrl || (journal?.s3Key ? `/api/audio?key=${journal.s3Key}` : undefined);
 
   const grammarSuggestions = useMemo(() => {
@@ -72,13 +72,13 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const canRecord = hasPlayedAudio && allCardsActioned;
   const isReviewComplete = hasPlayedAudio && allCardsActioned && practiceCompleted;
   
-  // Determine if it is time to indicate to the user to hit record
+  // Determine if it is time to clearly indicate to the user to hit record
   const timeToRecord = canRecord && !practiceCompleted && !isRecording;
 
   // Handlers
   const toggleOriginalAudio = () => {
     if (isPlaying) {
-      stop(); // Stop AI voice if playing
+      stop(); 
     }
     
     if (isOriginalPlaying) {
@@ -141,8 +141,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const getStatusText = () => {
     if (!hasPlayedAudio) return "1. Listen to the AI audio to continue";
     if (!allCardsActioned) return "2. Acknowledge all grammar rules";
+    if (timeToRecord) return "3. Tap the mic icon to practice!";
     if (isRecording) return "Recording... Tap mic to stop";
-    if (!practiceCompleted) return "3. Tap mic to practice speaking";
     return "Ready to save!";
   };
 
@@ -175,7 +175,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
         </button>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 md:p-6 pb-32">
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 md:p-6 pb-36">
         
         {/* --- SUMMARY & METRICS CARD --- */}
         <div className="rounded-2xl border border-indigo-100 bg-white p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
@@ -339,8 +339,10 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             <h3 className="text-lg font-bold text-gray-800">Try it out</h3>
           </div>
           
-          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-center shadow-sm flex flex-col items-center justify-center min-h-[180px]">
-             <p className="mb-4 text-sm text-sky-800 font-medium">
+          <div className={`rounded-2xl border p-6 text-center shadow-sm flex flex-col items-center justify-center min-h-[180px] transition-all duration-500 ${
+            timeToRecord ? "border-sky-300 bg-sky-100/50 shadow-[0_0_20px_rgba(56,189,248,0.15)]" : "border-sky-100 bg-sky-50"
+          }`}>
+             <p className={`mb-4 text-sm font-medium transition-colors ${timeToRecord ? "text-sky-900" : "text-sky-800"}`}>
                {isRecording ? "Listening to you... Tap the mic below to stop." 
                 : practiceCompleted ? "Great job! You can finalize your review now." 
                 : "Read the improved transcript aloud using the mic button below to practice."}
@@ -362,32 +364,49 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       </main>
 
       {/* --- STICKY BOTTOM ACTION BAR --- */}
-      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
+      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 relative">
           
           {/* Left Side: Mic & Status */}
           <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-            <button 
-              onClick={handlePracticeToggle} 
-              disabled={!canRecord}
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
-                isRecording ? "bg-red-500 text-white animate-pulse ring-4 ring-red-500/30"
-                : practiceCompleted ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
-                : !canRecord ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                : timeToRecord ? "bg-sky-500 text-white animate-pulse ring-4 ring-sky-400/50 hover:bg-sky-600"
-                : "bg-sky-500 hover:bg-sky-600 hover:scale-105 text-white"
-              }`}
-            >
-              {practiceCompleted && !isRecording ? <CheckCircle2 className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+            
+            {/* CTA Mic Button Container */}
+            <div className="relative flex shrink-0 items-center justify-center">
               
-              {/* Secondary visual indicator for active recording */}
-              {isRecording && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
-                </span>
+              {/* Background Ping Effect */}
+              {timeToRecord && (
+                <span className="absolute inline-flex h-[130%] w-[130%] animate-ping rounded-full bg-sky-400 opacity-60 duration-1000"></span>
               )}
-            </button>
+              
+              {/* Floating Tooltip Call-to-action */}
+              <AnimatePresence>
+                {timeToRecord && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, x: "-50%" }}
+                    animate={{ opacity: 1, y: 0, x: "-50%" }}
+                    exit={{ opacity: 0, y: 10, x: "-50%" }}
+                    className="absolute -top-16 left-1/2 whitespace-nowrap rounded-lg bg-sky-600 px-3 py-2 text-xs font-bold text-white shadow-xl animate-bounce z-[100]"
+                  >
+                    Tap to practice!
+                    <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-sky-600"></div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <button 
+                onClick={handlePracticeToggle} 
+                disabled={!canRecord}
+                className={`relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
+                  isRecording ? "bg-red-500 text-white animate-[pulse_1.5s_ease-in-out_infinite] ring-4 ring-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
+                  : practiceCompleted ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                  : !canRecord ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                  : timeToRecord ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)] hover:bg-sky-600 hover:scale-105"
+                  : "bg-sky-500 hover:bg-sky-600 hover:scale-105 text-white"
+                }`}
+              >
+                {practiceCompleted && !isRecording ? <CheckCircle2 className="h-7 w-7" /> : <Mic className="h-7 w-7" />}
+              </button>
+            </div>
             
             <p className="text-sm font-medium text-gray-500 truncate">
               {getStatusText()}
@@ -398,8 +417,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           <button 
             onClick={onComplete} 
             disabled={!isReviewComplete} 
-            className={`flex shrink-0 items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold shadow-sm transition-all ${
-              isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105" 
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-6 py-4 text-sm font-bold shadow-sm transition-all ${
+              isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105 shadow-md" 
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
           >
