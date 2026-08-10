@@ -2,11 +2,11 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSpeech } from "@/context/speech-context";
-import { useSpeak } from "@/hooks/use-speak"; // Updated hook
+import { useSpeak } from "@/hooks/use-speak";
 import {
-  X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity, Turtle, Rabbit
+  X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity, Turtle, Rabbit, Play, Pause
 } from "lucide-react";
 
 interface InteractiveReviewModalProps {
@@ -23,8 +23,10 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const [actionedCards, setActionedCards] = useState<Set<string>>(new Set());
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   
-  // NEW: State for the prosody speed
+  // Audio configuration states
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(0.8);
+  const originalAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isOriginalPlaying, setIsOriginalPlaying] = useState(false);
 
   const review = journal?.review || {};
   const originalTranscript = journal?.transcript || "No transcript available.";
@@ -37,6 +39,9 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const overallScore = review?.overallScore || 0;
   const accuracyScore = review?.accuracyScore || 0;
   const fluencyScore = review?.fluencyScore || 0;
+
+  // Resolve audio URL (assuming pre-signed URL is passed on journal object or constructed from s3Key)
+  const originalAudioUrl = journal?.audioUrl || (journal?.s3Key ? `/api/audio?key=${journal.s3Key}` : undefined);
 
   const grammarSuggestions = useMemo(() => {
     if (!review?.grammarMistakes) return [];
@@ -64,12 +69,38 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   }, [review?.wordAnalysis]);
 
   const allCardsActioned = grammarSuggestions.length === 0 || actionedCards.size === grammarSuggestions.length;
+  const canRecord = hasPlayedAudio && allCardsActioned;
   const isReviewComplete = hasPlayedAudio && allCardsActioned && practiceCompleted;
+  
+  // Determine if it is time to indicate to the user to hit record
+  const timeToRecord = canRecord && !practiceCompleted && !isRecording;
 
   // Handlers
+  const toggleOriginalAudio = () => {
+    if (isPlaying) {
+      stop(); // Stop AI voice if playing
+    }
+    
+    if (isOriginalPlaying) {
+      originalAudioRef.current?.pause();
+      setIsOriginalPlaying(false);
+    } else {
+      originalAudioRef.current?.play();
+      setIsOriginalPlaying(true);
+    }
+  };
+
+  const handleOriginalAudioEnded = () => {
+    setIsOriginalPlaying(false);
+  };
+
   const handlePlayImprovedAudio = async () => {
+    if (isOriginalPlaying) {
+      originalAudioRef.current?.pause();
+      setIsOriginalPlaying(false);
+    }
+    
     setHasPlayedAudio(true);
-    // Pass the playbackSpeed down into the hook
     await speak(improvedTranscript, targetLanguage, playbackSpeed);
   };
 
@@ -86,14 +117,19 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       await stopRecording();
       setPracticeCompleted(true);
     } else {
-      // Reset completion if they decide to record again
       setPracticeCompleted(false);
       await startRecording(targetLanguage);
     }
   };
 
+  // Cleanup effects
   useEffect(() => {
-    return () => stop();
+    return () => {
+      stop();
+      if (originalAudioRef.current) {
+        originalAudioRef.current.pause();
+      }
+    };
   }, [stop]);
 
   const getScoreColor = (score: number) => {
@@ -102,40 +138,47 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     return "text-red-600 bg-red-50 border-red-200";
   };
 
-  // Logic for the bottom bar dynamic status text
   const getStatusText = () => {
-    if (!hasPlayedAudio) return "1. Listen to the audio to continue";
+    if (!hasPlayedAudio) return "1. Listen to the AI audio to continue";
     if (!allCardsActioned) return "2. Acknowledge all grammar rules";
     if (isRecording) return "Recording... Tap mic to stop";
     if (!practiceCompleted) return "3. Tap mic to practice speaking";
     return "Ready to save!";
   };
 
-  const canRecord = hasPlayedAudio && allCardsActioned;
-
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 overflow-y-auto">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
+      {/* Hidden audio element for user's original recording */}
+      {originalAudioUrl && (
+        <audio
+          ref={originalAudioRef}
+          src={originalAudioUrl}
+          onEnded={handleOriginalAudioEnded}
+          className="hidden"
+        />
+      )}
+
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 md:px-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
             <Sparkles className="h-5 w-5" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">Journal Review</h2>
-            <p className="text-xs font-medium text-gray-500">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-gray-800 truncate">Journal Review</h2>
+            <p className="text-xs font-medium text-gray-500 truncate">
               Analyze your pronunciation and grammar.
             </p>
           </div>
         </div>
-        <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
+        <button onClick={onClose} className="shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
           <X className="h-6 w-6" />
         </button>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-6 pb-32">
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-4 md:p-6 pb-32">
         
         {/* --- SUMMARY & METRICS CARD --- */}
-        <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
+        <div className="rounded-2xl border border-indigo-100 bg-white p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
           <div className="flex-1 space-y-3">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Activity className="w-5 h-5 text-indigo-500" />
@@ -146,16 +189,16 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             </p>
           </div>
           
-          <div className="flex gap-3 shrink-0">
-            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(overallScore)} min-w-[80px]`}>
+          <div className="flex gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(overallScore)} min-w-[80px] flex-1 sm:flex-none`}>
               <span className="text-2xl font-black">{overallScore}</span>
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Overall</span>
             </div>
-            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(accuracyScore)} min-w-[80px] hidden sm:flex`}>
+            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(accuracyScore)} min-w-[80px] flex-1 sm:flex-none`}>
               <span className="text-2xl font-black">{accuracyScore}</span>
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Accuracy</span>
             </div>
-            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(fluencyScore)} min-w-[80px] hidden sm:flex`}>
+            <div className={`flex flex-col items-center justify-center p-3 rounded-xl border ${getScoreColor(fluencyScore)} min-w-[80px] flex-1 sm:flex-none`}>
               <span className="text-2xl font-black">{fluencyScore}</span>
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Fluency</span>
             </div>
@@ -165,29 +208,44 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
         {/* --- STEP 1: Listen & Compare --- */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">1</span>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">1</span>
             <h3 className="text-lg font-bold text-gray-800">Listen & Compare</h3>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 md:gap-6">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col">
-              <span className="mb-2 inline-block rounded bg-gray-100 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-500 w-max">What you said</span>
-              <p className="text-lg text-gray-600 line-through decoration-red-400/50 decoration-2 mb-4">
-                {originalTranscript}
-              </p>
+              <div>
+                <span className="mb-2 inline-block rounded bg-gray-100 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-500 w-max">What you said</span>
+                <p className="text-lg text-gray-600 line-through decoration-red-400/50 decoration-2 mb-4">
+                  {originalTranscript}
+                </p>
+              </div>
               
-              {mispronouncedWords.length > 0 && (
-                <div className="mt-auto pt-4 border-t border-gray-100">
-                  <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 block">Pronunciation Errors</span>
-                  <div className="flex flex-wrap gap-2">
-                    {mispronouncedWords.map((w: any, i: number) => (
-                      <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-sm flex items-center gap-1">
-                        {w.word} <span className="opacity-50 text-[10px]">({w.errorType})</span>
-                      </span>
-                    ))}
+              <div className="mt-auto pt-4 space-y-4 border-t border-gray-100">
+                {mispronouncedWords.length > 0 && (
+                  <div>
+                    <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 block">Pronunciation Errors</span>
+                    <div className="flex flex-wrap gap-2">
+                      {mispronouncedWords.map((w: any, i: number) => (
+                        <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-sm flex items-center gap-1">
+                          {w.word} <span className="opacity-50 text-[10px]">({w.errorType})</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Original Audio Playback */}
+                {originalAudioUrl && (
+                  <button
+                    onClick={toggleOriginalAudio}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  >
+                    {isOriginalPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    {isOriginalPlaying ? "Playing..." : "Play My Audio"}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-5 shadow-sm">
@@ -204,7 +262,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
               </div>
               
               <div className="mt-auto pt-4 space-y-4">
-                {/* NEW: Speed Slider Control */}
+                {/* Speed Slider Control */}
                 <div className="flex items-center gap-3 rounded-xl bg-white/60 p-2 text-sm border border-indigo-100/50 shadow-inner">
                   <Turtle className="h-5 w-5 text-indigo-400 shrink-0" />
                   <input
@@ -239,7 +297,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
         {grammarSuggestions.length > 0 && (
           <section className={`space-y-4 transition-opacity duration-500 ${hasPlayedAudio ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">2</span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">2</span>
               <h3 className="text-lg font-bold text-gray-800">Grammar & Phrasing</h3>
             </div>
 
@@ -272,10 +330,10 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </section>
         )}
 
-        {/* --- STEP 3: Try It Out (Live Transcript Area) --- */}
+        {/* --- STEP 3: Try It Out --- */}
         <section className={`space-y-4 transition-opacity duration-500 ${canRecord ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
            <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
               {grammarSuggestions.length > 0 ? "3" : "2"}
             </span>
             <h3 className="text-lg font-bold text-gray-800">Try it out</h3>
@@ -293,7 +351,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                        initial={{ opacity: 0, y: 10 }} 
                        animate={{ opacity: 1, y: 0 }} 
                        exit={{ opacity: 0 }}
-                       className="mt-2 w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 text-sky-900 italic"
+                       className="mt-2 w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 text-sky-900 italic shadow-sm"
                      >
                          "{transcript}"
                      </motion.div>
@@ -304,22 +362,25 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       </main>
 
       {/* --- STICKY BOTTOM ACTION BAR --- */}
-      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
+      <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4">
           
           {/* Left Side: Mic & Status */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
             <button 
               onClick={handlePracticeToggle} 
               disabled={!canRecord}
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm transition-all ${
-                isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse text-white"
+              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
+                isRecording ? "bg-red-500 text-white animate-pulse ring-4 ring-red-500/30"
                 : practiceCompleted ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
                 : !canRecord ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                : timeToRecord ? "bg-sky-500 text-white animate-pulse ring-4 ring-sky-400/50 hover:bg-sky-600"
                 : "bg-sky-500 hover:bg-sky-600 hover:scale-105 text-white"
               }`}
             >
               {practiceCompleted && !isRecording ? <CheckCircle2 className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+              
+              {/* Secondary visual indicator for active recording */}
               {isRecording && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
@@ -349,4 +410,3 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     </div>
   );
 }
-
