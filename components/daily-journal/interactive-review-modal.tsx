@@ -2,8 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo, useRef } from "react";
-// 1. Swapped useSpeech with your new usePronunciation context
-import { usePronunciation } from "@/context/pronunciation-context"; // <-- Adjust path if needed
+import { usePronunciation } from "@/context/pronunciation-context"; 
 import { useSpeak } from "@/hooks/use-speak";
 import {
   X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity, Turtle, Rabbit, Play, Pause
@@ -16,17 +15,13 @@ interface InteractiveReviewModalProps {
 }
 
 export default function InteractiveReviewModal({ onClose, onComplete, journal }: InteractiveReviewModalProps) {
-  // 2. Using your new Pronunciation Hook for the mic
   const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
-  
-  // 3. Your existing TTS hook (completely untouched)
   const { speak, stop, isPlaying, isLoading } = useSpeak();
   
   const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
   const [actionedCards, setActionedCards] = useState<Set<string>>(new Set());
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   
-  // Audio configuration states
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(0.8);
   const originalAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isOriginalPlaying, setIsOriginalPlaying] = useState(false);
@@ -36,8 +31,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const improvedTranscript = review?.finalTranscript || originalTranscript;
   const translation = review?.translation;
   
-  // Azure usually expects a full locale like "en-US" or "es-ES"
-  const targetLanguage = journal?.language || "en-US";
+  // 🟢 UPDATED: Now grabs your newly saved targetLanguage from the database!
+  const targetLanguage = journal?.targetLanguage || journal?.language || "en-US";
   const summaryFeedback = review?.summaryFeedback;
   
   const overallScore = review?.overallScore || 0;
@@ -77,7 +72,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   
   const timeToRecord = canRecord && !practiceCompleted && !isRecording;
 
-  // Audio Handlers
   const toggleOriginalAudio = () => {
     if (isPlaying) stop(); 
     if (isOriginalPlaying) {
@@ -97,6 +91,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       setIsOriginalPlaying(false);
     }
     setHasPlayedAudio(true);
+    // 🟢 Uses your target language for the AI Text-to-Speech
     await speak(improvedTranscript, targetLanguage, playbackSpeed);
   };
 
@@ -108,26 +103,23 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     });
   };
 
-  // 4. Integrated your new Azure Pronunciation Logic here
   const handlePracticeToggle = async () => {
     if (isRecording) {
       cancelAssessment();
     } else {
       reset();
       setPracticeCompleted(false);
-      // Evaluates the user reading the *improved* transcript
+      // 🟢 Uses your target language for the Azure Pronunciation Assessment!
       await assessSpeech(improvedTranscript, targetLanguage);
     }
   };
 
-  // Watch for successful scores to mark practice as complete
   useEffect(() => {
     if (score && !error) {
       setPracticeCompleted(true);
     }
   }, [score, error]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       stop();
@@ -309,7 +301,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </section>
         )}
 
-        {/* --- STEP 3: Try It Out (Now fully hooked to your Pronunciation Context) --- */}
+        {/* --- STEP 3: Try It Out --- */}
         <section className={`space-y-4 transition-opacity duration-500 ${canRecord ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
            <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
@@ -333,7 +325,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                </div>
              )}
 
-             {/* This dynamically renders your Azure scores in real time once complete! */}
              <AnimatePresence>
                  {score && (
                      <motion.div 
@@ -357,7 +348,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                           </div>
                         </div>
 
-                        {/* Visual breakdown of words colored by accuracy */}
                         <div className="rounded-xl border border-sky-200 bg-white p-5 text-lg flex flex-wrap justify-center gap-x-1.5 shadow-sm leading-relaxed">
                           {score.words.map((w, i) => (
                             <span 
