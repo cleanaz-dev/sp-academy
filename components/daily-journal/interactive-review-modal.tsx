@@ -121,94 +121,88 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 md:p-8">
+    // 🟢 FULL PAGE WRAPPER: Fixed inset-0 taking up entire viewport
+    <div className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-slate-50 overflow-hidden">
       
-      <div className="w-full max-w-6xl h-[90vh] bg-slate-50 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+      {/* 🟢 Vertical Sidebar (Full Height on Desktop) */}
+      <ProgressSidebar steps={steps} currentStepIndex={currentStepIndex} setStep={setCurrentStepIndex} />
+
+      {/* 🟢 Main Content Area (Takes up remaining width & handles scrolling) */}
+      <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50/50">
         
-        {/* Mobile Close Button */}
-        <button onClick={onClose} className="absolute right-4 top-4 z-50 rounded-full p-2 bg-white/80 text-gray-500 hover:bg-gray-100 hover:text-gray-900 shadow-sm transition-colors md:hidden">
-          <X className="h-5 w-5" />
-        </button>
+        {/* Header - Stays glued to top of content area */}
+        <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 md:px-10 shrink-0 shadow-sm z-10">
+          <h3 className="text-xl font-bold text-gray-800">{steps[currentStepIndex].title}</h3>
+          <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
+            <X className="h-7 w-7" />
+          </button>
+        </header>
 
-        {/* Vertical Sidebar */}
-        <ProgressSidebar steps={steps} currentStepIndex={currentStepIndex} setStep={setCurrentStepIndex} />
-
-        {/* Content Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-          
-          <header className="hidden md:flex h-20 items-center justify-between border-b border-gray-200 bg-white px-8 shrink-0">
-            <h3 className="text-xl font-bold text-gray-800">{steps[currentStepIndex].title}</h3>
-            <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
-              <X className="h-6 w-6" />
-            </button>
-          </header>
-
-          {/* Active Step Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-32">
-            <AnimatePresence mode="wait">
-              {steps[currentStepIndex].id === 'listen' && (
-                <ListenCompareStep 
-                  key="listen"
-                  originalTranscript={originalTranscript} improvedTranscript={improvedTranscript}
-                  translation={translation} mispronouncedWords={mispronouncedWords}
-                  targetLanguage={targetLanguage} originalAudioUrl={originalAudioUrl}
-                  hasPlayedAudio={hasPlayedAudio} setHasPlayedAudio={setHasPlayedAudio}
-                  summaryData={{ 
-                    summaryFeedback: review?.summaryFeedback, 
-                    overallScore: review?.overallScore, 
-                    accuracyScore: review?.accuracyScore, 
-                    fluencyScore: review?.fluencyScore 
-                  }}
-                />
-              )}
-
-              {steps[currentStepIndex].id === 'grammar' && (
-                <GrammarStep 
-                  key="grammar"
-                  grammarSuggestions={grammarSuggestions} actionedCards={actionedCards}
-                  handlePracticeCard={handlePracticeCard} 
-                  handleCardAcknowledge={(id: string) => setActionedCards(prev => new Set(prev).add(id))}
-                  isRecording={isRecording} activeRecordingTarget={activeRecordingTarget}
-                  cardScores={cardScores} error={error}
-                />
-              )}
-
-              {steps[currentStepIndex].id === 'final' && (
-                <FinalReadStep 
-                  key="final"
-                  improvedTranscript={improvedTranscript}
-                  isRecording={isRecording} activeRecordingTarget={activeRecordingTarget}
-                  practiceCompleted={practiceCompleted} score={score} error={error}
-                  handlePracticeToggle={handlePracticeToggle}
-                />
-              )}
-            </AnimatePresence>
-          </main>
-
-          {/* Bottom Actions inside the right pane */}
-          <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent border-t border-gray-100 flex justify-end">
-            {!isLastStep ? (
-              <button 
-                onClick={nextStep} 
-                disabled={!canProceed}
-                className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold shadow-sm transition-all ${
-                  canProceed ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                Next Step <ChevronRight className="h-5 w-5" />
-              </button>
-            ) : (
-              <button 
-                onClick={onComplete} 
-                disabled={!practiceCompleted}
-                className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold shadow-sm transition-all ${
-                  practiceCompleted ? "bg-gray-900 text-white hover:bg-black hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                Finish Review <ArrowRight className="h-5 w-5" />
-              </button>
+        {/* Scrollable Main Area - Content gets injected here */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-10 pb-40">
+          <AnimatePresence mode="wait">
+            {steps[currentStepIndex].id === 'listen' && (
+              <ListenCompareStep 
+                key="listen"
+                originalTranscript={originalTranscript} improvedTranscript={improvedTranscript}
+                translation={translation} mispronouncedWords={mispronouncedWords}
+                targetLanguage={targetLanguage} originalAudioUrl={originalAudioUrl}
+                hasPlayedAudio={hasPlayedAudio} setHasPlayedAudio={setHasPlayedAudio}
+                summaryData={{ 
+                  summaryFeedback: review?.summaryFeedback, 
+                  overallScore: review?.overallScore, 
+                  accuracyScore: review?.accuracyScore, 
+                  fluencyScore: review?.fluencyScore 
+                }}
+              />
             )}
-          </div>
+
+            {steps[currentStepIndex].id === 'grammar' && (
+              <GrammarStep 
+                key="grammar"
+                grammarSuggestions={grammarSuggestions} actionedCards={actionedCards}
+                handlePracticeCard={handlePracticeCard} 
+                handleCardAcknowledge={(id: string) => setActionedCards(prev => new Set(prev).add(id))}
+                isRecording={isRecording} activeRecordingTarget={activeRecordingTarget}
+                cardScores={cardScores} error={error}
+              />
+            )}
+
+            {steps[currentStepIndex].id === 'final' && (
+              <FinalReadStep 
+                key="final"
+                improvedTranscript={improvedTranscript}
+                isRecording={isRecording} activeRecordingTarget={activeRecordingTarget}
+                practiceCompleted={practiceCompleted} score={score} error={error}
+                handlePracticeToggle={handlePracticeToggle}
+              />
+            )}
+          </AnimatePresence>
+        </main>
+
+        {/* Bottom Actions - Sticky at bottom of content area */}
+        <div className="absolute bottom-0 left-0 w-full p-5 md:p-8 bg-white border-t border-gray-200 flex justify-end shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
+          {!isLastStep ? (
+            <button 
+              onClick={nextStep} 
+              disabled={!canProceed}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-4 text-base font-bold shadow-sm transition-all ${
+                canProceed ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Next Step <ChevronRight className="h-6 w-6" />
+            </button>
+          ) : (
+            <button 
+              onClick={onComplete} 
+              disabled={!practiceCompleted}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-4 text-base font-bold shadow-sm transition-all ${
+                practiceCompleted ? "bg-gray-900 text-white hover:bg-black hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Finish Review <ArrowRight className="h-6 w-6" />
+            </button>
+          )}
         </div>
       </div>
     </div>

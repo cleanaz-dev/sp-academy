@@ -17,7 +17,7 @@ export default function ReviewSummary({ summaryFeedback, overallScore, accuracyS
   };
 
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start mb-6">
+    <div className="rounded-2xl border border-indigo-100 bg-white p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start mb-8">
       <div className="flex-1 space-y-3">
         <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
           <Activity className="w-5 h-5 text-indigo-500" /> AI Feedback
