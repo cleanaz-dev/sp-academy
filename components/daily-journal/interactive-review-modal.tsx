@@ -22,6 +22,11 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const [actionedCards, setActionedCards] = useState<Set<string>>(new Set());
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   
+  // 🟢 State to track WHICH card (or the full transcript) is currently being recorded
+  const [activeRecordingTarget, setActiveRecordingTarget] = useState<string | "full" | null>(null);
+  // 🟢 State to store the specific Azure scores for individual grammar cards
+  const [cardScores, setCardScores] = useState<Record<string, any>>({});
+  
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(0.8);
   const originalAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isOriginalPlaying, setIsOriginalPlaying] = useState(false);
@@ -31,7 +36,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const improvedTranscript = review?.finalTranscript || originalTranscript;
   const translation = review?.translation;
   
-  // 🟢 UPDATED: Now grabs your newly saved targetLanguage from the database!
+  // Target language from the database
   const targetLanguage = journal?.targetLanguage || journal?.language || "en-US";
   const summaryFeedback = review?.summaryFeedback;
   
@@ -83,15 +88,12 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     }
   };
 
-  const handleOriginalAudioEnded = () => setIsOriginalPlaying(false);
-
   const handlePlayImprovedAudio = async () => {
     if (isOriginalPlaying) {
       originalAudioRef.current?.pause();
       setIsOriginalPlaying(false);
     }
     setHasPlayedAudio(true);
-    // 🟢 Uses your target language for the AI Text-to-Speech
     await speak(improvedTranscript, targetLanguage, playbackSpeed);
   };
 
@@ -103,29 +105,47 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     });
   };
 
+  // 🟢 NEW: Handles practicing a specific grammar card
+  const handlePracticeCard = async (id: string, textToRead: string) => {
+    if (isRecording) {
+      cancelAssessment();
+      return;
+    }
+    setActiveRecordingTarget(id);
+    reset();
+    await assessSpeech(textToRead, targetLanguage);
+  };
+
+  // Handles the final full transcript practice (Step 3)
   const handlePracticeToggle = async () => {
     if (isRecording) {
       cancelAssessment();
     } else {
+      setActiveRecordingTarget("full");
       reset();
       setPracticeCompleted(false);
-      // 🟢 Uses your target language for the Azure Pronunciation Assessment!
       await assessSpeech(improvedTranscript, targetLanguage);
     }
   };
 
+  // 🟢 UPDATED: Watches for successful scores and assigns them to the correct card (or Step 3)
   useEffect(() => {
     if (score && !error) {
-      setPracticeCompleted(true);
+      if (activeRecordingTarget === "full") {
+        setPracticeCompleted(true);
+      } else if (activeRecordingTarget) {
+        // Save the score for this specific card
+        setCardScores((prev) => ({ ...prev, [activeRecordingTarget]: score }));
+        // Automatically acknowledge the card so the user can proceed!
+        handleCardAcknowledge(activeRecordingTarget);
+      }
     }
-  }, [score, error]);
+  }, [score, error]); // activeRecordingTarget is omitted from deps intentionally by React design here
 
   useEffect(() => {
     return () => {
       stop();
-      if (originalAudioRef.current) {
-        originalAudioRef.current.pause();
-      }
+      if (originalAudioRef.current) originalAudioRef.current.pause();
       cancelAssessment();
     };
   }, [stop, cancelAssessment]);
@@ -138,18 +158,18 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
 
   const getStatusText = () => {
     if (!hasPlayedAudio) return "1. Listen to the AI audio to continue";
-    if (!allCardsActioned) return "2. Acknowledge all grammar rules";
-    if (timeToRecord) return "3. Tap the mic icon to practice!";
+    if (!allCardsActioned) return "2. Practice or acknowledge all grammar rules";
+    if (timeToRecord) return "3. Tap the mic icon to practice the full text!";
     if (isRecording) return "Evaluating... Read the text aloud.";
     if (error) return "Error during assessment. Try again.";
-    if (score) return "Evaluation complete! Review your score.";
+    if (score && activeRecordingTarget === "full") return "Evaluation complete! Review your score.";
     return "Ready to save!";
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 overflow-y-auto">
       {originalAudioUrl && (
-        <audio ref={originalAudioRef} src={originalAudioUrl} onEnded={handleOriginalAudioEnded} className="hidden" />
+        <audio ref={originalAudioRef} src={originalAudioUrl} onEnded={() => setIsOriginalPlaying(false)} className="hidden" />
       )}
 
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 md:px-6 shadow-sm">
@@ -264,7 +284,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </div>
         </section>
 
-        {/* --- STEP 2: Grammar & Phrasing --- */}
+        {/* --- STEP 2: Grammar & Phrasing (NOW WITH PRONUNCIATION PRACTICE) --- */}
         {grammarSuggestions.length > 0 && (
           <section className={`space-y-4 transition-opacity duration-500 ${hasPlayedAudio ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
             <div className="flex items-center gap-2">
@@ -275,24 +295,77 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             <div className="grid gap-4">
               {grammarSuggestions.map((item: any) => {
                 const isActioned = actionedCards.has(item.id);
+                const isRecordingThis = isRecording && activeRecordingTarget === item.id;
+                const cardScore = cardScores[item.id];
+                const cardError = error && activeRecordingTarget === item.id;
+
                 return (
                   <div key={item.id} className={`flex flex-col gap-4 rounded-2xl border p-5 shadow-sm transition-all md:flex-row md:items-center md:justify-between ${isActioned ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"}`}>
+                    
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start gap-4">
                          <div className="flex-1">
                             <p className="text-sm font-medium text-red-500 line-through">{item.original}</p>
-                            <p className="mt-1 text-lg font-semibold text-emerald-700">{item.improved}</p>
+                            
+                            {/* If they practiced this phrase, we show the color-coded words! */}
+                            {cardScore ? (
+                               <div className="mt-2 flex flex-wrap gap-x-1.5 text-lg shadow-sm bg-white p-3 rounded-lg border border-emerald-100">
+                                 {cardScore.words.map((w: any, i: number) => (
+                                   <span 
+                                     key={i} 
+                                     className={`font-semibold ${w.accuracyScore >= 80 ? "text-emerald-600" : w.accuracyScore >= 60 ? "text-yellow-500" : "text-red-500 underline decoration-red-300"}`}
+                                   >
+                                     {w.word}
+                                   </span>
+                                 ))}
+                               </div>
+                            ) : (
+                               <p className="mt-1 text-lg font-semibold text-emerald-700">{item.improved}</p>
+                            )}
                          </div>
                       </div>
+                      
                       <div className="flex items-start gap-2 rounded-lg bg-gray-50 p-3">
                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                          <p className="text-sm text-gray-600">{item.explanation}</p>
                       </div>
+
+                      {cardError && (
+                        <p className="text-xs text-red-500 font-medium">Error: {error}</p>
+                      )}
                     </div>
-                    <div className="shrink-0 md:pl-6">
-                      <button onClick={() => handleCardAcknowledge(item.id)} className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all md:w-auto ${isActioned ? "bg-emerald-100 text-emerald-700 cursor-default" : "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:-translate-y-0.5"}`}>
-                        {isActioned ? <><CheckCircle2 className="h-5 w-5" /> Got it!</> : "Acknowledge"}
+
+                    <div className="shrink-0 md:pl-6 flex flex-col items-center gap-3 w-full md:w-auto">
+                      {/* Dynamic Practice Button */}
+                      <button 
+                        onClick={() => handlePracticeCard(item.id, item.improved)}
+                        disabled={isRecording && !isRecordingThis}
+                        className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all md:w-auto ${
+                          isRecordingThis 
+                            ? "bg-red-500 text-white animate-pulse shadow-md ring-4 ring-red-500/20" 
+                            : cardScore 
+                              ? "bg-emerald-100 text-emerald-700 cursor-default"
+                              : "bg-sky-500 text-white shadow-sm hover:bg-sky-600 hover:-translate-y-0.5"
+                        } ${(isRecording && !isRecordingThis) ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        {isRecordingThis ? (
+                          <><Mic className="h-5 w-5" /> Listening...</>
+                        ) : cardScore ? (
+                          <><CheckCircle2 className="h-5 w-5" /> Score: {cardScore.pronunciationScore}%</>
+                        ) : (
+                          <><Mic className="h-5 w-5" /> Practice</>
+                        )}
                       </button>
+
+                      {/* Manual Acknowledge Fallback (Skip practicing) */}
+                      {!cardScore && !isActioned && (
+                        <button 
+                          onClick={() => handleCardAcknowledge(item.id)} 
+                          className="text-xs font-medium text-gray-400 hover:text-gray-600 hover:underline transition-colors"
+                        >
+                          Skip & Acknowledge
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -301,32 +374,34 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </section>
         )}
 
-        {/* --- STEP 3: Try It Out --- */}
+        {/* --- STEP 3: Final Full Transcript Practice --- */}
         <section className={`space-y-4 transition-opacity duration-500 ${canRecord ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
            <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
               {grammarSuggestions.length > 0 ? "3" : "2"}
             </span>
-            <h3 className="text-lg font-bold text-gray-800">Try it out</h3>
+            <h3 className="text-lg font-bold text-gray-800">Final Read-Through</h3>
           </div>
           
           <div className={`rounded-2xl border p-6 text-center shadow-sm flex flex-col items-center justify-center min-h-[180px] transition-all duration-500 ${
             timeToRecord ? "border-sky-300 bg-sky-100/50 shadow-[0_0_20px_rgba(56,189,248,0.15)]" : "border-sky-100 bg-sky-50"
           }`}>
              <p className={`mb-4 text-sm font-medium transition-colors ${timeToRecord ? "text-sky-900" : "text-sky-800"}`}>
-               {isRecording ? "Listening to you... Read the improved text aloud." 
-                : practiceCompleted ? "Great job! Here is how you sounded." 
-                : "Read the improved transcript aloud using the mic button below to practice."}
+               {isRecording && activeRecordingTarget === "full" 
+                ? "Listening to you... Read the improved text aloud." 
+                : practiceCompleted 
+                  ? "Great job! Here is how you sounded." 
+                  : "Read the entire improved transcript aloud using the mic button below to finish."}
              </p>
              
-             {error && (
+             {error && activeRecordingTarget === "full" && (
                <div className="mt-2 text-sm text-red-500 bg-red-50 p-3 rounded-lg border border-red-200">
                  {error}
                </div>
              )}
 
              <AnimatePresence>
-                 {score && (
+                 {score && activeRecordingTarget === "full" && (
                      <motion.div 
                        initial={{ opacity: 0, y: 10 }} 
                        animate={{ opacity: 1, y: 0 }} 
@@ -397,16 +472,20 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
 
               <button 
                 onClick={handlePracticeToggle} 
-                disabled={!canRecord}
+                disabled={!canRecord || (isRecording && activeRecordingTarget !== "full")}
                 className={`relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
-                  isRecording ? "bg-red-500 text-white animate-[pulse_1.5s_ease-in-out_infinite] ring-4 ring-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
-                  : practiceCompleted ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
-                  : !canRecord ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                  : timeToRecord ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)] hover:bg-sky-600 hover:scale-105"
+                  isRecording && activeRecordingTarget === "full" 
+                    ? "bg-red-500 text-white animate-[pulse_1.5s_ease-in-out_infinite] ring-4 ring-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
+                  : practiceCompleted 
+                    ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                  : !canRecord 
+                    ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                  : timeToRecord 
+                    ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)] hover:bg-sky-600 hover:scale-105"
                   : "bg-sky-500 hover:bg-sky-600 hover:scale-105 text-white"
                 }`}
               >
-                {practiceCompleted && !isRecording ? <CheckCircle2 className="h-7 w-7" /> : <Mic className="h-7 w-7" />}
+                {practiceCompleted && !(isRecording && activeRecordingTarget === "full") ? <CheckCircle2 className="h-7 w-7" /> : <Mic className="h-7 w-7" />}
               </button>
             </div>
             
