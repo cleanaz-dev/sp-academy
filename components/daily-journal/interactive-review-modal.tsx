@@ -11,6 +11,7 @@ import ListenCompareStep from "./review/listen-compare-step";
 import GrammarStep from "./review/grammar-step"
 import FinalReadStep from "./review/final-read-step";
 
+
 interface InteractiveReviewModalProps {
   onClose: () => void;
   onComplete: () => void;
@@ -112,22 +113,20 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     await assessSpeech(improvedTranscript, targetLanguage);
   };
 
-  const currentStepData = steps[currentStepIndex];
-  const canProceed = currentStepData.isComplete;
-  const isLastStep = currentStepIndex === steps.length - 1;
-
-  const nextStep = () => {
-    if (canProceed && !isLastStep) setCurrentStepIndex(prev => prev + 1);
-  };
-
   return (
-    // 🟢 FULL PAGE WRAPPER: Fixed inset-0 taking up entire viewport
+    // FULL PAGE WRAPPER: Fixed inset-0 taking up entire viewport
     <div className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-slate-50 overflow-hidden">
       
-      {/* 🟢 Vertical Sidebar (Full Height on Desktop) */}
-      <ProgressSidebar steps={steps} currentStepIndex={currentStepIndex} setStep={setCurrentStepIndex} />
+      {/* Vertical Sidebar (Full Height on Desktop) - Passes Finish Logic */}
+      <ProgressSidebar 
+        steps={steps} 
+        currentStepIndex={currentStepIndex} 
+        setStep={setCurrentStepIndex} 
+        onComplete={onComplete}
+        canFinish={practiceCompleted} // Requires last step to be completed
+      />
 
-      {/* 🟢 Main Content Area (Takes up remaining width & handles scrolling) */}
+      {/* Main Content Area (Takes up remaining width & handles scrolling) */}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50/50">
         
         {/* Header - Stays glued to top of content area */}
@@ -138,8 +137,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </button>
         </header>
 
-        {/* Scrollable Main Area - Content gets injected here */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-10 pb-40">
+        {/* Scrollable Main Area - Bottom padding reduced since there's no bottom bar */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-10 pb-10">
           <AnimatePresence mode="wait">
             {steps[currentStepIndex].id === 'listen' && (
               <ListenCompareStep 
@@ -179,31 +178,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             )}
           </AnimatePresence>
         </main>
-
-        {/* Bottom Actions - Sticky at bottom of content area */}
-        <div className="absolute bottom-0 left-0 w-full p-5 md:p-8 bg-white border-t border-gray-200 flex justify-end shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
-          {!isLastStep ? (
-            <button 
-              onClick={nextStep} 
-              disabled={!canProceed}
-              className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-4 text-base font-bold shadow-sm transition-all ${
-                canProceed ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Next Step <ChevronRight className="h-6 w-6" />
-            </button>
-          ) : (
-            <button 
-              onClick={onComplete} 
-              disabled={!practiceCompleted}
-              className={`flex shrink-0 items-center gap-2 rounded-xl px-8 py-4 text-base font-bold shadow-sm transition-all ${
-                practiceCompleted ? "bg-gray-900 text-white hover:bg-black hover:scale-105 shadow-md" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Finish Review <ArrowRight className="h-6 w-6" />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
