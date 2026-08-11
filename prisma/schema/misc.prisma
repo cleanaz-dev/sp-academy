@@ -204,6 +204,7 @@ model JournalReview {
   completenessScore     Float?
   prosodyScore          Float?
   wordAnalysis          Json?    // Word-by-word pronunciation
+  targetLanguage        String?
   
   // New LLM Fields
   summaryFeedback       String?  @db.String

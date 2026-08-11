@@ -55,6 +55,7 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
       prisma.journalReview.upsert({
         where: { journalId: task.journalId },
         update: {
+          targetLanguage: parseResult.data.targetLanguage,
           overallScore: review.overallScore,
           accuracyScore: review.accuracyScore,
           fluencyScore: review.fluencyScore,
@@ -70,6 +71,7 @@ export async function handleSpeechAnalysisTask(task: any, body: any) {
           vocabularySuggestions: review.vocabularySuggestions // Store as JSON in Prisma
         },
         create: {
+          targetLanguage: parseResult.data.targetLanguage,
           journalId: task.journalId,
           overallScore: review.overallScore,
           accuracyScore: review.accuracyScore,

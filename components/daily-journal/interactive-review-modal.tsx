@@ -1,9 +1,9 @@
-// app/journal/interactive-review-modal.tsx
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useSpeech } from "@/context/speech-context";
+// 1. Swapped useSpeech with your new usePronunciation context
+import { usePronunciation } from "@/context/pronunciation-context"; // <-- Adjust path if needed
 import { useSpeak } from "@/hooks/use-speak";
 import {
   X, Volume2, CheckCircle2, AlertCircle, Mic, ArrowRight, Sparkles, Loader2, Quote, Activity, Turtle, Rabbit, Play, Pause
@@ -16,7 +16,10 @@ interface InteractiveReviewModalProps {
 }
 
 export default function InteractiveReviewModal({ onClose, onComplete, journal }: InteractiveReviewModalProps) {
-  const { startRecording, stopRecording, isRecording, transcript } = useSpeech();
+  // 2. Using your new Pronunciation Hook for the mic
+  const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
+  
+  // 3. Your existing TTS hook (completely untouched)
   const { speak, stop, isPlaying, isLoading } = useSpeak();
   
   const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
@@ -33,14 +36,14 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const improvedTranscript = review?.finalTranscript || originalTranscript;
   const translation = review?.translation;
   
-  const targetLanguage = journal?.language?.split("-")[0] || "en";
+  // Azure usually expects a full locale like "en-US" or "es-ES"
+  const targetLanguage = journal?.language || "en-US";
   const summaryFeedback = review?.summaryFeedback;
   
   const overallScore = review?.overallScore || 0;
   const accuracyScore = review?.accuracyScore || 0;
   const fluencyScore = review?.fluencyScore || 0;
 
-  // Resolve audio URL
   const originalAudioUrl = journal?.audioUrl || (journal?.s3Key ? `/api/audio?key=${journal.s3Key}` : undefined);
 
   const grammarSuggestions = useMemo(() => {
@@ -72,15 +75,11 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   const canRecord = hasPlayedAudio && allCardsActioned;
   const isReviewComplete = hasPlayedAudio && allCardsActioned && practiceCompleted;
   
-  // Determine if it is time to clearly indicate to the user to hit record
   const timeToRecord = canRecord && !practiceCompleted && !isRecording;
 
-  // Handlers
+  // Audio Handlers
   const toggleOriginalAudio = () => {
-    if (isPlaying) {
-      stop(); 
-    }
-    
+    if (isPlaying) stop(); 
     if (isOriginalPlaying) {
       originalAudioRef.current?.pause();
       setIsOriginalPlaying(false);
@@ -90,16 +89,13 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     }
   };
 
-  const handleOriginalAudioEnded = () => {
-    setIsOriginalPlaying(false);
-  };
+  const handleOriginalAudioEnded = () => setIsOriginalPlaying(false);
 
   const handlePlayImprovedAudio = async () => {
     if (isOriginalPlaying) {
       originalAudioRef.current?.pause();
       setIsOriginalPlaying(false);
     }
-    
     setHasPlayedAudio(true);
     await speak(improvedTranscript, targetLanguage, playbackSpeed);
   };
@@ -112,25 +108,35 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     });
   };
 
+  // 4. Integrated your new Azure Pronunciation Logic here
   const handlePracticeToggle = async () => {
     if (isRecording) {
-      await stopRecording();
-      setPracticeCompleted(true);
+      cancelAssessment();
     } else {
+      reset();
       setPracticeCompleted(false);
-      await startRecording(targetLanguage);
+      // Evaluates the user reading the *improved* transcript
+      await assessSpeech(improvedTranscript, targetLanguage);
     }
   };
 
-  // Cleanup effects
+  // Watch for successful scores to mark practice as complete
+  useEffect(() => {
+    if (score && !error) {
+      setPracticeCompleted(true);
+    }
+  }, [score, error]);
+
+  // Cleanup
   useEffect(() => {
     return () => {
       stop();
       if (originalAudioRef.current) {
         originalAudioRef.current.pause();
       }
+      cancelAssessment();
     };
-  }, [stop]);
+  }, [stop, cancelAssessment]);
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-emerald-600 bg-emerald-50 border-emerald-200";
@@ -142,20 +148,16 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
     if (!hasPlayedAudio) return "1. Listen to the AI audio to continue";
     if (!allCardsActioned) return "2. Acknowledge all grammar rules";
     if (timeToRecord) return "3. Tap the mic icon to practice!";
-    if (isRecording) return "Recording... Tap mic to stop";
+    if (isRecording) return "Evaluating... Read the text aloud.";
+    if (error) return "Error during assessment. Try again.";
+    if (score) return "Evaluation complete! Review your score.";
     return "Ready to save!";
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 overflow-y-auto">
-      {/* Hidden audio element for user's original recording */}
       {originalAudioUrl && (
-        <audio
-          ref={originalAudioRef}
-          src={originalAudioUrl}
-          onEnded={handleOriginalAudioEnded}
-          className="hidden"
-        />
+        <audio ref={originalAudioRef} src={originalAudioUrl} onEnded={handleOriginalAudioEnded} className="hidden" />
       )}
 
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-4 md:px-6 shadow-sm">
@@ -165,9 +167,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </div>
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-gray-800 truncate">Journal Review</h2>
-            <p className="text-xs font-medium text-gray-500 truncate">
-              Analyze your pronunciation and grammar.
-            </p>
+            <p className="text-xs font-medium text-gray-500 truncate">Analyze your pronunciation and grammar.</p>
           </div>
         </div>
         <button onClick={onClose} className="shrink-0 rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
@@ -235,12 +235,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                   </div>
                 )}
 
-                {/* Original Audio Playback */}
                 {originalAudioUrl && (
-                  <button
-                    onClick={toggleOriginalAudio}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  >
+                  <button onClick={toggleOriginalAudio} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
                     {isOriginalPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                     {isOriginalPlaying ? "Playing..." : "Play My Audio"}
                   </button>
@@ -251,9 +247,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-5 shadow-sm">
               <div>
                 <span className="mb-2 inline-block rounded bg-indigo-200 px-2 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700">How a native says it</span>
-                <p className="text-xl font-medium text-indigo-950 mb-2">
-                  {improvedTranscript}
-                </p>
+                <p className="text-xl font-medium text-indigo-950 mb-2">{improvedTranscript}</p>
                 {translation && (
                   <p className="text-sm text-indigo-700/70 italic flex items-start gap-1 mb-6">
                     <Quote className="w-3 h-3 mt-1 shrink-0" /> {translation}
@@ -262,29 +256,14 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
               </div>
               
               <div className="mt-auto pt-4 space-y-4">
-                {/* Speed Slider Control */}
                 <div className="flex items-center gap-3 rounded-xl bg-white/60 p-2 text-sm border border-indigo-100/50 shadow-inner">
                   <Turtle className="h-5 w-5 text-indigo-400 shrink-0" />
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="1.5"
-                    step="0.1"
-                    value={playbackSpeed}
-                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                    className="flex-1 h-1.5 appearance-none rounded-lg bg-indigo-200 accent-indigo-600 cursor-pointer"
-                  />
+                  <input type="range" min="0.5" max="1.5" step="0.1" value={playbackSpeed} onChange={(e) => setPlaybackSpeed(Number(e.target.value))} className="flex-1 h-1.5 appearance-none rounded-lg bg-indigo-200 accent-indigo-600 cursor-pointer" />
                   <Rabbit className="h-5 w-5 text-indigo-400 shrink-0" />
                   <span className="w-8 text-right font-bold text-indigo-900 text-xs">{playbackSpeed.toFixed(1)}x</span>
                 </div>
 
-                <button
-                  onClick={handlePlayImprovedAudio}
-                  disabled={isLoading}
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all ${
-                    hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"
-                  }`}
-                >
+                <button onClick={handlePlayImprovedAudio} disabled={isLoading} className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all ${hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"}`}>
                   {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
                   {isPlaying ? "Playing AI Voice..." : hasPlayedAudio ? "Listen Again" : "Play Native Audio"}
                 </button>
@@ -330,7 +309,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </section>
         )}
 
-        {/* --- STEP 3: Try It Out --- */}
+        {/* --- STEP 3: Try It Out (Now fully hooked to your Pronunciation Context) --- */}
         <section className={`space-y-4 transition-opacity duration-500 ${canRecord ? "opacity-100" : "opacity-30 pointer-events-none"}`}>
            <div className="flex items-center gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
@@ -343,19 +322,57 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             timeToRecord ? "border-sky-300 bg-sky-100/50 shadow-[0_0_20px_rgba(56,189,248,0.15)]" : "border-sky-100 bg-sky-50"
           }`}>
              <p className={`mb-4 text-sm font-medium transition-colors ${timeToRecord ? "text-sky-900" : "text-sky-800"}`}>
-               {isRecording ? "Listening to you... Tap the mic below to stop." 
-                : practiceCompleted ? "Great job! You can finalize your review now." 
+               {isRecording ? "Listening to you... Read the improved text aloud." 
+                : practiceCompleted ? "Great job! Here is how you sounded." 
                 : "Read the improved transcript aloud using the mic button below to practice."}
              </p>
+             
+             {error && (
+               <div className="mt-2 text-sm text-red-500 bg-red-50 p-3 rounded-lg border border-red-200">
+                 {error}
+               </div>
+             )}
+
+             {/* This dynamically renders your Azure scores in real time once complete! */}
              <AnimatePresence>
-                 {transcript && (
+                 {score && (
                      <motion.div 
                        initial={{ opacity: 0, y: 10 }} 
                        animate={{ opacity: 1, y: 0 }} 
                        exit={{ opacity: 0 }}
-                       className="mt-2 w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 text-sky-900 italic shadow-sm"
+                       className="mt-2 w-full max-w-2xl flex flex-col items-center"
                      >
-                         "{transcript}"
+                        <div className="flex gap-4 mb-4">
+                          <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm border border-sky-100 min-w-[80px]">
+                            <span className="text-2xl font-black text-sky-600">{score.pronunciationScore}</span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">Pronunciation</span>
+                          </div>
+                          <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm border border-sky-100 min-w-[80px]">
+                            <span className="text-2xl font-black text-sky-600">{score.accuracyScore}</span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">Accuracy</span>
+                          </div>
+                          <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm border border-sky-100 min-w-[80px]">
+                            <span className="text-2xl font-black text-sky-600">{score.fluencyScore}</span>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase">Fluency</span>
+                          </div>
+                        </div>
+
+                        {/* Visual breakdown of words colored by accuracy */}
+                        <div className="rounded-xl border border-sky-200 bg-white p-5 text-lg flex flex-wrap justify-center gap-x-1.5 shadow-sm leading-relaxed">
+                          {score.words.map((w, i) => (
+                            <span 
+                              key={i} 
+                              className={`
+                                font-medium transition-colors
+                                ${w.accuracyScore >= 80 ? "text-emerald-600" : 
+                                  w.accuracyScore >= 60 ? "text-yellow-500" : "text-red-500 underline underline-offset-4 decoration-red-300"}
+                              `}
+                              title={`Accuracy: ${w.accuracyScore}%`}
+                            >
+                              {w.word}
+                            </span>
+                          ))}
+                        </div>
                      </motion.div>
                  )}
              </AnimatePresence>
@@ -367,18 +384,13 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       <div className="fixed bottom-0 left-0 w-full border-t border-gray-200 bg-white p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 relative">
           
-          {/* Left Side: Mic & Status */}
           <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-            
-            {/* CTA Mic Button Container */}
             <div className="relative flex shrink-0 items-center justify-center">
               
-              {/* Background Ping Effect */}
               {timeToRecord && (
                 <span className="absolute inline-flex h-[130%] w-[130%] animate-ping rounded-full bg-sky-400 opacity-60 duration-1000"></span>
               )}
               
-              {/* Floating Tooltip Call-to-action */}
               <AnimatePresence>
                 {timeToRecord && (
                   <motion.div 
@@ -413,7 +425,6 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             </p>
           </div>
 
-          {/* Right Side: Finish Button */}
           <button 
             onClick={onComplete} 
             disabled={!isReviewComplete} 

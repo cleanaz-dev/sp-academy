@@ -38,6 +38,7 @@ export const SpeechAnalysisPayloadSchema = z.object({
   journalId: z.string().optional(),
   status: z.enum(["SUCCESS", "FAILED"]),
   errorMessage: z.string().optional(),
+  targetLanguage: z.string(),
   
   review: z
     .object({
