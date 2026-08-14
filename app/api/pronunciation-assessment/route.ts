@@ -1,13 +1,50 @@
 import { NextResponse } from "next/server";
 
+// Helper to convert any format ("French", "fr", "fr-fr") to Azure standard locale ("fr-FR")
+function normalizeAzureLocale(lang: string = "fr-FR"): string {
+  const clean = lang.toLowerCase().trim();
+  const map: Record<string, string> = {
+    french: "fr-FR",
+    fr: "fr-FR",
+    "fr-fr": "fr-FR",
+    spanish: "es-ES",
+    es: "es-ES",
+    "es-es": "es-ES",
+    english: "en-US",
+    en: "en-US",
+    "en-us": "en-US",
+    german: "de-DE",
+    de: "de-DE",
+    italian: "it-IT",
+    it: "it-IT",
+    japanese: "ja-JP",
+    ja: "ja-JP",
+    chinese: "zh-CN",
+    zh: "zh-CN",
+  };
+  return map[clean] || lang;
+}
+
 export async function POST(req: Request) {
+  console.log("🚀 [Azure Pronunciation] Request received");
+
   try {
     const formData = await req.formData();
     const audioFile = formData.get("audio") as Blob | null;
     const referenceText = formData.get("transcript") as string;
-    const language = (formData.get("language") as string) || "fr-FR";
+    const rawLanguage = (formData.get("language") as string) || "fr-FR";
+    const language = normalizeAzureLocale(rawLanguage);
+
+    console.log("📋 [Azure Pronunciation] Details:", {
+      referenceText,
+      rawLanguage,
+      normalizedLanguage: language,
+      audioFileSize: audioFile?.size,
+      audioFileType: audioFile?.type,
+    });
 
     if (!audioFile || !referenceText) {
+      console.error("❌ Missing audio or transcript");
       return NextResponse.json(
         { error: "Audio and transcript are required" },
         { status: 400 }
@@ -18,6 +55,7 @@ export async function POST(req: Request) {
     const speechRegion = process.env.AZURE_SPEECH_REGION;
 
     if (!speechKey || !speechRegion) {
+      console.error("❌ Missing AZURE_SPEECH_KEY or AZURE_SPEECH_REGION in .env");
       return NextResponse.json(
         { error: "Azure Speech credentials not configured" },
         { status: 500 }
@@ -41,11 +79,16 @@ export async function POST(req: Request) {
     // 2. Read the audio bytes directly
     const audioBuffer = await audioFile.arrayBuffer();
 
-    // 3. Detect the MIME type from the incoming blob (defaults to audio/webm; codecs=opus)
-    const contentType = audioFile.type || "audio/webm; codecs=opus";
+    // 3. Azure short-audio REST format
+    // For WebM from browser MediaRecorder:
+    let contentType = "audio/webm; codecs=opus";
+    if (audioFile.type && audioFile.type.includes("mp4")) {
+      contentType = "audio/mp4";
+    }
 
-    // 4. Send directly to Azure STT REST endpoint
+    // 4. Send to Azure STT REST endpoint
     const url = `https://${speechRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed`;
+    console.log("🌐 Calling Azure URL:", url);
 
     const azureResponse = await fetch(url, {
       method: "POST",
@@ -58,9 +101,11 @@ export async function POST(req: Request) {
       body: audioBuffer,
     });
 
+    console.log("📡 Azure Status Code:", azureResponse.status);
+
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text();
-      console.error("❌ Azure API error response:", errorText);
+      console.error("❌ Azure API Error Body:", errorText);
       return NextResponse.json(
         { error: `Azure error (${azureResponse.status}): ${errorText}` },
         { status: azureResponse.status }
@@ -68,11 +113,7 @@ export async function POST(req: Request) {
     }
 
     const data = await azureResponse.json();
-
-    // 5. Check if recognition succeeded
-    if (data.RecognitionStatus !== "Success" && data.RecognitionStatus !== "NoMatch") {
-      console.warn("⚠️ Azure STT status:", data.RecognitionStatus);
-    }
+    console.log("✅ Azure Raw Response:", JSON.stringify(data, null, 2));
 
     const nBest = data.NBest?.[0];
     const pronData = nBest?.PronAssessment || {};
@@ -99,9 +140,10 @@ export async function POST(req: Request) {
         })) || [],
     };
 
+    console.log("🎯 Parsed Assessment to return:", assessment);
     return NextResponse.json(assessment);
   } catch (error: any) {
-    console.error("❌ Azure Pronunciation Assessment Error:", error);
+    console.error("❌ Uncaught Azure Pronunciation Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
