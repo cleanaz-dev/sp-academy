@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
+import { getAzureSpeechToken } from "@/app/actions/azure-speech"; // <-- Adjust path to wherever your file is located
 
-// Helper to convert any format ("French", "fr", "fr-fr") to Azure standard locale ("fr-FR")
 function normalizeAzureLocale(lang: string = "fr-FR"): string {
   const clean = lang.toLowerCase().trim();
   const map: Record<string, string> = {
@@ -26,8 +26,6 @@ function normalizeAzureLocale(lang: string = "fr-FR"): string {
 }
 
 export async function POST(req: Request) {
-  console.log("🚀 [Azure Pronunciation] Request received");
-
   try {
     const formData = await req.formData();
     const audioFile = formData.get("audio") as Blob | null;
@@ -35,34 +33,31 @@ export async function POST(req: Request) {
     const rawLanguage = (formData.get("language") as string) || "fr-FR";
     const language = normalizeAzureLocale(rawLanguage);
 
-    console.log("📋 [Azure Pronunciation] Details:", {
-      referenceText,
-      rawLanguage,
-      normalizedLanguage: language,
-      audioFileSize: audioFile?.size,
-      audioFileType: audioFile?.type,
-    });
-
     if (!audioFile || !referenceText) {
-      console.error("❌ Missing audio or transcript");
       return NextResponse.json(
         { error: "Audio and transcript are required" },
         { status: 400 }
       );
     }
 
-    const speechKey = process.env.AZURE_SPEECH_KEY;
-    const speechRegion = process.env.AZURE_SPEECH_REGION;
+    const speechRegion =
+      process.env.AZURE_SPEECH_REGION ||
+      process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION ||
+      "canadacentral";
 
-    if (!speechKey || !speechRegion) {
-      console.error("❌ Missing AZURE_SPEECH_KEY or AZURE_SPEECH_REGION in .env");
+    // 1. Obtain Azure Access Token using your server function
+    let accessToken: string;
+    try {
+      accessToken = await getAzureSpeechToken();
+    } catch (err: any) {
+      console.error("❌ Failed to get Azure token via helper:", err);
       return NextResponse.json(
-        { error: "Azure Speech credentials not configured" },
-        { status: 500 }
+        { error: `Auth failed: ${err.message}` },
+        { status: 401 }
       );
     }
 
-    // 1. Build the Pronunciation Assessment Config header
+    // 2. Build Pronunciation Assessment Header
     const pronConfig = {
       ReferenceText: referenceText,
       GradingSystem: "HundredMark",
@@ -76,36 +71,30 @@ export async function POST(req: Request) {
       JSON.stringify(pronConfig)
     ).toString("base64");
 
-    // 2. Read the audio bytes directly
+    // 3. Audio payload setup
     const audioBuffer = await audioFile.arrayBuffer();
-
-    // 3. Azure short-audio REST format
-    // For WebM from browser MediaRecorder:
     let contentType = "audio/webm; codecs=opus";
     if (audioFile.type && audioFile.type.includes("mp4")) {
       contentType = "audio/mp4";
     }
 
-    // 4. Send to Azure STT REST endpoint
+    // 4. Send to Speech STT using Bearer Token
     const url = `https://${speechRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed`;
-    console.log("🌐 Calling Azure URL:", url);
 
     const azureResponse = await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": contentType,
-        "Ocp-Apim-Subscription-Key": speechKey,
+        Authorization: `Bearer ${accessToken}`,
         "Pronunciation-Assessment": pronAssessmentHeader,
       },
       body: audioBuffer,
     });
 
-    console.log("📡 Azure Status Code:", azureResponse.status);
-
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text();
-      console.error("❌ Azure API Error Body:", errorText);
+      console.error("❌ Azure Speech STT Error:", errorText);
       return NextResponse.json(
         { error: `Azure error (${azureResponse.status}): ${errorText}` },
         { status: azureResponse.status }
@@ -113,7 +102,7 @@ export async function POST(req: Request) {
     }
 
     const data = await azureResponse.json();
-    console.log("✅ Azure Raw Response:", JSON.stringify(data, null, 2));
+    console.log("✅ Azure Result:", JSON.stringify(data, null, 2));
 
     const nBest = data.NBest?.[0];
     const pronData = nBest?.PronAssessment || {};
@@ -140,10 +129,9 @@ export async function POST(req: Request) {
         })) || [],
     };
 
-    console.log("🎯 Parsed Assessment to return:", assessment);
     return NextResponse.json(assessment);
   } catch (error: any) {
-    console.error("❌ Uncaught Azure Pronunciation Error:", error);
+    console.error("❌ Route error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
