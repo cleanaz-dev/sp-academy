@@ -13,15 +13,11 @@ import {
   Info,
   Sparkles,
   MessageSquareQuote,
-  CircleCheck,
-  GraduationCap,
-  Book,
-  PenTool,
   Volume2,
   Mic2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ImprovementTooltipProps, WordScore } from "./types";
+import type { ImprovementTooltipProps, WordAssessment } from "./types";
 import { capitalizeFirstLetter } from "./utils";
 import { speakPhrase } from "./utils";
 
@@ -49,39 +45,10 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
     pronunciationScore.words && 
     pronunciationScore.words.length > 0;
 
-  const renderCorrectionCategory = (
-    title: string,
-    correction: string | { correction: string; reason?: string } | undefined,
-    icon: React.ReactNode,
-  ) => {
-    if (!correction) return null;
-
-    return (
-      <div className="mb-3 pl-2">
-        <div className="mb-1 flex items-center gap-2 text-sm text-slate-300">
-          {icon}
-          {title}:
-        </div>
-        <div className="space-y-1 pl-6">
-          <div className="text-white">
-            {typeof correction === "object"
-              ? correction.correction
-              : correction}
-          </div>
-          {typeof correction === "object" && correction.reason && (
-            <div className="text-xs italic text-emerald-400">
-              Why: {correction.reason}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="flex animate-pulse items-center space-x-1 text-blue-500 white shadow-2xl shadow-white transition-transform hover:scale-110">
+        <button className="flex animate-pulse items-center space-x-1 text-blue-500 shadow-2xl shadow-white transition-transform hover:scale-110">
           <Info className="h-4 w-4" />
         </button>
       </DialogTrigger>
@@ -125,8 +92,8 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
                 </p>
                 
                 <div className="flex flex-wrap gap-2">
-                  {pronunciationScore.words!.map((word: WordScore, idx: number) => {
-                    const scoreColor = getScoreColor(word.quality_score);
+                  {pronunciationScore.words!.map((word: WordAssessment, idx: number) => {
+                    const scoreColor = getScoreColor(word.accuracyScore);
                     
                     return (
                       <div
@@ -135,14 +102,15 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
                           "rounded px-2 py-1 text-sm font-medium border",
                           scoreColor
                         )}
-                        title={word.sound_most_like 
-                          ? `Sounded like: ${word.sound_most_like}` 
-                          : undefined
+                        title={
+                          word.errorType && word.errorType !== "None"
+                            ? `Issue: ${word.errorType}`
+                            : undefined
                         }
                       >
                         <span className="block">{word.word}</span>
                         <span className="block text-xs opacity-75">
-                          {word.quality_score}/100
+                          {word.accuracyScore}/100
                         </span>
                       </div>
                     );
@@ -183,7 +151,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
         {corrections?.finalNotes && (
           <p className="mt-4 flex items-center gap-2 text-xs text-slate-200">
             <Info className="h-4 w-4 text-sky-300" />
-            <span>{corrections.finalNotes}</span>
+            <span>{typeof corrections.finalNotes === 'string' ? corrections.finalNotes : ''}</span>
           </p>
         )}
       </DialogContent>
