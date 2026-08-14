@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { useMobileDetection } from "@/hooks/use-mobile-detection";
+import { convertBlobToWav } from "@/lib/audio-utils";
 
 export const useSuggestions = (
   conversationHistory: Message[],
@@ -631,31 +632,36 @@ export const useConversation = ({
   };
 
   // Replace analyzeSpeechAce with this:
-  const analyzeAzurePronunciation = useCallback(
-    async (audioBlob: Blob, transcript: string) => {
-      try {
-        const pronFormData = new FormData();
-        pronFormData.append("audio", audioBlob, "recording.webm");
-        pronFormData.append("transcript", transcript);
-        pronFormData.append("language", getFullLanguageCode(targetLanguage));
-        pronFormData.append("conversationId", id);
+const analyzeAzurePronunciation = useCallback(
+  async (audioBlob: Blob, transcript: string) => {
+    try {
+      // 🎯 Convert WebM to 16kHz Mono WAV for Azure
+      const wavBlob = await convertBlobToWav(audioBlob);
 
-        const response = await fetch("/api/pronunciation-assessment", {
-          method: "POST",
-          body: pronFormData,
-        });
+      const formData = new FormData();
+      formData.append("audio", wavBlob, "recording.wav");
+      formData.append("transcript", transcript);
+      formData.append("language", getFullLanguageCode(targetLanguage));
+      formData.append("conversationId", id);
 
-        if (!response.ok) throw new Error("Azure Assessment failed");
+      const response = await fetch("/api/pronunciation-assessment", {
+        method: "POST",
+        body: formData,
+      });
 
-        const result = await response.json();
-        return result;
-      } catch (err) {
-        console.error("❌ Azure pronunciation grading error:", err);
-        return null;
+      if (!response.ok) {
+        throw new Error(`Azure Assessment failed with status ${response.status}`);
       }
-    },
-    [id, targetLanguage, getFullLanguageCode],
-  );
+
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      console.error("❌ Azure pronunciation grading error:", err);
+      return null;
+    }
+  },
+  [id, targetLanguage, getFullLanguageCode]
+);
 
   const stopRecording = () => {
     setIsRecording(false);

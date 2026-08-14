@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAzureSpeechToken } from "@/app/actions/azure-speech"; // <-- Adjust path to wherever your file is located
+import { getAzureSpeechToken } from "@/app/actions/azure-speech";
 
 function normalizeAzureLocale(lang: string = "fr-FR"): string {
   const clean = lang.toLowerCase().trim();
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION ||
       "canadacentral";
 
-    // 1. Obtain Azure Access Token using your server function
+    // 1. Obtain Azure Access Token using the server action
     let accessToken: string;
     try {
       accessToken = await getAzureSpeechToken();
@@ -71,14 +71,17 @@ export async function POST(req: Request) {
       JSON.stringify(pronConfig)
     ).toString("base64");
 
-    // 3. Audio payload setup
+    // 3. Audio payload setup (WAV 16kHz PCM mono)
     const audioBuffer = await audioFile.arrayBuffer();
-    let contentType = "audio/webm; codecs=opus";
+    
+    let contentType = "audio/wav; codecs=audio/pcm; samplerate=16000";
     if (audioFile.type && audioFile.type.includes("mp4")) {
       contentType = "audio/mp4";
+    } else if (audioFile.type && audioFile.type.includes("webm")) {
+      contentType = "audio/webm; codecs=opus";
     }
 
-    // 4. Send to Speech STT using Bearer Token
+    // 4. Send to Azure Speech STT REST endpoint
     const url = `https://${speechRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed`;
 
     const azureResponse = await fetch(url, {
