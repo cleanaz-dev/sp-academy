@@ -117,6 +117,7 @@ export const MessageBubble: React.FC<Props> = ({
             )}
 
             {/* USER FOOTER (Scores) */}
+            {/* USER FOOTER (Scores & Feedback) */}
             {isUser && (
               <div
                 className={cn(
@@ -127,6 +128,7 @@ export const MessageBubble: React.FC<Props> = ({
               >
                 <div className="flex min-h-[24px] items-center justify-between">
                   <div className="flex items-center gap-4">
+                    {/* Pronunciation score badge */}
                     {message.pronunciationScore && (
                       <div
                         className={cn(
@@ -145,6 +147,7 @@ export const MessageBubble: React.FC<Props> = ({
                       </div>
                     )}
 
+                    {/* Grammar check status */}
                     {isGrading ? (
                       <div className="flex items-center gap-2 text-xs text-slate-600">
                         <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
@@ -154,7 +157,8 @@ export const MessageBubble: React.FC<Props> = ({
                       <span
                         className={cn(
                           "flex items-center gap-1 text-xs font-bold",
-                          message.label === "Excellent" || message.label === "Great"
+                          message.label === "Excellent" ||
+                            message.label === "Great"
                             ? "text-emerald-500"
                             : message.label === "Good"
                               ? "text-green-600"
@@ -168,15 +172,19 @@ export const MessageBubble: React.FC<Props> = ({
                     ) : null}
                   </div>
 
-                  {!isGrading && message.improvedResponse && (
-                    <ImprovementTooltip
-                      improvedResponse={message.improvedResponse}
-                      originalText={message.content}
-                      corrections={message.corrections}
-                      speakPhrase={speakPhrase}
-                      pronunciationScore={message.pronunciationScore}
-                    />
-                  )}
+                  {/* ✅ NEW: Show tooltip if ANY feedback exists (Grammar OR Pronunciation) */}
+                  {!isGrading &&
+                    (message.improvedResponse ||
+                      message.corrections ||
+                      message.pronunciationScore) && (
+                      <ImprovementTooltip
+                        improvedResponse={message.improvedResponse || ""}
+                        originalText={message.content}
+                        corrections={message.corrections}
+                        speakPhrase={speakPhrase}
+                        pronunciationScore={message.pronunciationScore}
+                      />
+                    )}
                 </div>
               </div>
             )}
