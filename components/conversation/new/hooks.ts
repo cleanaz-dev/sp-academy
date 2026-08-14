@@ -5,6 +5,7 @@ import {
   Message,
   VoiceGender,
   Corrections,
+  PronunciationScore,
 } from "./types";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import { useMobileDetection } from "@/hooks/use-mobile-detection";
@@ -42,7 +43,7 @@ export const useSuggestions = (
       setIsLoading(false);
     }
   };
- const clearSuggestions = () => {
+  const clearSuggestions = () => {
     setSuggestions([]);
   };
 
@@ -120,21 +121,20 @@ export const useConversation = ({
   // Mobile Detection
   const isMobile = useMobileDetection();
 
-
   interface ReplyApiResponse {
-  messageTranslation: string;
-  targetLanguage: string;   
-  nativeLanguage: string;   
-  audio: string | null;     
-}
+    messageTranslation: string;
+    targetLanguage: string;
+    nativeLanguage: string;
+    audio: string | null;
+  }
 
-interface ScoreApiResponse {
-  label?: 'Excellent' | 'Great' | 'Good' | 'OK' | 'Poor';
-  score?: number;
-  explanation?: string;
-  improvedResponse?: string;
-  corrections?: Corrections; // Uses your existing Corrections type
-}
+  interface ScoreApiResponse {
+    label?: "Excellent" | "Great" | "Good" | "OK" | "Poor";
+    score?: number;
+    explanation?: string;
+    improvedResponse?: string;
+    corrections?: Corrections; // Uses your existing Corrections type
+  }
 
   // NEW: Cleanup function for old audio
   const cleanupOldAudio = useCallback((currentMessageIds: string[]) => {
@@ -349,167 +349,179 @@ interface ScoreApiResponse {
   }, [targetLanguage, getFullLanguageCode]);
 
   // Handlers
-// Inside useConversation.ts
+  // Inside useConversation.ts
 
-const handleConversation = async (message: string) => {
-  setIsProcessing(true);
-  setError(null);
+  const handleConversation = async (message: string, audioBlob?: Blob) => {
+    setIsProcessing(true);
+    setError(null);
 
-  const userMessageId = `user-${Date.now()}`;
-  const aiMessageId = `ai-${Date.now()}`;
+    const userMessageId = `user-${Date.now()}`;
+    const aiMessageId = `ai-${Date.now()}`;
 
-  // Optimistic UI update
-  const initialUserMessage: Message = {
-    id: userMessageId,
-    role: "user",
-    content: message,
-    pronunciationScore: speechAceResult,
-  };
+    // Optimistic UI update
+    const initialUserMessage: Message = {
+      id: userMessageId,
+      role: "user",
+      content: message,
+      pronunciationScore: null,
+      isAnalyzingPronunciation: !!audioBlob,
+    };
 
-  // Typing indicator
-  const typingMessage: Message = {
-    id: aiMessageId,
-    role: "assistant",
-    content: "",
-    isTyping: true,
-  };
-
-  setConversationHistory((prev) => [...prev, initialUserMessage, typingMessage]);
-
-  try {
-    if (!conversationRecordId) throw new Error("No active conversation");
-
-    // --- PARALLEL REQUESTS ---
-
-    // 1. Reply API
-    const replyPromise = fetch("/api/conversation/reply", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message,
-        history: conversationHistory,
-        title,
-        vocabulary,
-        dialogue,
-        voiceGender,
-        targetLanguage,
-        nativeLanguage,
-      }),
-    });
-
-    // 2. Score API
-    const scorePromise = fetch("/api/conversation/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message,
-        history: conversationHistory,
-        targetLanguage,
-        vocabulary,
-        title,
-        conversationId: id,
-        userId: user.id,
-      }),
-    });
-
-    // --- HANDLING RESPONSES ---
-
-    // Handle Reply (Audio + Translation)
-    const replyResponse = await replyPromise;
-    if (!replyResponse.ok) throw new Error("Failed to get reply");
-
-    const replyData: ReplyApiResponse = await replyResponse.json();
-
-    const aiMessage: Message = {
+    const typingMessage: Message = {
       id: aiMessageId,
       role: "assistant",
-      content: replyData.targetLanguage,
-      translation: replyData.nativeLanguage,
-      isTyping: false,
+      content: "",
+      isTyping: true,
     };
 
-    setConversationHistory((prev) =>
-      prev.map((msg) => {
-        if (msg.id === userMessageId) {
-          return { ...msg, translation: replyData.messageTranslation };
-        }
-        if (msg.id === aiMessageId) {
-          return aiMessage; // swap typing bubble with real message
-        }
-        return msg;
-      })
-    );
-
-    setIsGeneratingAudio(true);
-    if (!isMuted && replyData.audio) {
-      handleAudioPlayback(replyData.audio, aiMessageId).catch((err) =>
-        console.error("Audio playback error:", err)
-      );
-    }
-
-    // Handle Score
-    let scoreData: ScoreApiResponse = {};
+    setConversationHistory((prev) => [
+      ...prev,
+      initialUserMessage,
+      typingMessage,
+    ]);
 
     try {
-      const scoreResponse = await scorePromise;
-      if (scoreResponse.ok) {
-        scoreData = await scoreResponse.json();
+      if (!conversationRecordId) throw new Error("No active conversation");
+
+      // --- PARALLEL REQUESTS ---
+
+      // 1. Reply API
+      const replyPromise = fetch("/api/conversation/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          history: conversationHistory,
+          title,
+          vocabulary,
+          dialogue,
+          voiceGender,
+          targetLanguage,
+          nativeLanguage,
+        }),
+      });
+
+      // 2. Grammar/Semantic Score API
+      const scorePromise = fetch("/api/conversation/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          history: conversationHistory,
+          targetLanguage,
+          vocabulary,
+          title,
+          conversationId: id,
+          userId: user.id,
+        }),
+      });
+
+      // 3. Azure Pronunciation Assessment (Uses the function above)
+      const pronPromise = audioBlob
+        ? analyzeAzurePronunciation(audioBlob, message)
+        : Promise.resolve(null);
+
+      // --- HANDLE RESPONSES ---
+
+      // 1. AI Reply
+      const replyResponse = await replyPromise;
+      if (!replyResponse.ok) throw new Error("Failed to get reply");
+
+      const replyData: ReplyApiResponse = await replyResponse.json();
+
+      const aiMessage: Message = {
+        id: aiMessageId,
+        role: "assistant",
+        content: replyData.targetLanguage,
+        translation: replyData.nativeLanguage,
+        isTyping: false,
+      };
+
+      setConversationHistory((prev) =>
+        prev.map((msg) => {
+          if (msg.id === userMessageId) {
+            return { ...msg, translation: replyData.messageTranslation };
+          }
+          if (msg.id === aiMessageId) {
+            return aiMessage;
+          }
+          return msg;
+        }),
+      );
+
+      setIsGeneratingAudio(true);
+      if (!isMuted && replyData.audio) {
+        handleAudioPlayback(replyData.audio, aiMessageId).catch((err) =>
+          console.error("Audio playback error:", err),
+        );
       }
-    } catch (scoreError) {
-      console.warn("Scoring failed, continuing without score:", scoreError);
-    }
 
-    const finalUserMessage: Message = {
-      ...initialUserMessage,
-      translation: replyData.messageTranslation,
-      score: scoreData.score,
-      label: scoreData.label ?? "OK",
-      improvedResponse: scoreData.improvedResponse,
-      corrections: scoreData.corrections,
-    };
-
-    setConversationHistory((prev) =>
-      prev.map((msg) => {
-        if (msg.id === userMessageId) {
-          return finalUserMessage;
+      // 2. Grammar Score
+      let scoreData: ScoreApiResponse = {};
+      try {
+        const scoreResponse = await scorePromise;
+        if (scoreResponse.ok) {
+          scoreData = await scoreResponse.json();
         }
-        return msg;
-      })
-    );
+      } catch (scoreError) {
+        console.warn("Scoring failed, continuing without score:", scoreError);
+      }
 
-    // Save history to DB
-    const finalMessagesForDb = [
-      ...conversationHistory,
-      finalUserMessage,
-      aiMessage,
-    ];
+      // 3. Azure Pronunciation Score
+      const azureScore = await pronPromise;
 
-    const updateResponse = await fetch("/api/conversation/update", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversationRecordId,
-        messages: finalMessagesForDb,
-        pronunciationScore: speechAceResult,
-      }),
-    });
+      // Build Final User Message
+      const finalUserMessage: Message = {
+        ...initialUserMessage,
+        translation: replyData.messageTranslation,
+        score: scoreData.score,
+        label: scoreData.label ?? "OK",
+        improvedResponse: scoreData.improvedResponse,
+        corrections: scoreData.corrections,
+        pronunciationScore: azureScore,
+        isAnalyzingPronunciation: false,
+      };
 
-    if (!updateResponse.ok) console.warn("Background DB save failed");
+      setConversationHistory((prev) =>
+        prev.map((msg) => {
+          if (msg.id === userMessageId) {
+            return finalUserMessage;
+          }
+          return msg;
+        }),
+      );
 
-  } catch (error) {
-    console.error("Conversation Error:", error);
-    setError("Failed to process conversation");
-    // Remove typing indicator on error
-    setConversationHistory((prev) =>
-      prev.filter((msg) => msg.id !== aiMessageId)
-    );
-  } finally {
-    setIsProcessing(false);
-    setIsGeneratingAudio(false);
-    setSuggestions([]);
-    setTranslationResult("");
-  }
-};
+      // Save to Database
+      const finalMessagesForDb = [
+        ...conversationHistory,
+        finalUserMessage,
+        aiMessage,
+      ];
+
+      const updateResponse = await fetch("/api/conversation/update", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationRecordId,
+          messages: finalMessagesForDb,
+          pronunciationScore: azureScore,
+        }),
+      });
+
+      if (!updateResponse.ok) console.warn("Background DB save failed");
+    } catch (error) {
+      console.error("Conversation Error:", error);
+      setError("Failed to process conversation");
+      setConversationHistory((prev) =>
+        prev.filter((msg) => msg.id !== aiMessageId),
+      );
+    } finally {
+      setIsProcessing(false);
+      setIsGeneratingAudio(false);
+      setSuggestions([]);
+      setTranslationResult("");
+    }
+  };
 
   const handleStartConversation = async () => {
     try {
@@ -618,49 +630,32 @@ const handleConversation = async (message: string) => {
     setIsMuted(!isMuted);
   };
 
- const analyzeSpeechAce = useCallback(async () => {
-  if (!lastAudioBlobRef.current || !lastTranscriptRef.current) {
-    setError("No recording available for analysis");
-    return null;
-  }
+  // Replace analyzeSpeechAce with this:
+  const analyzeAzurePronunciation = useCallback(
+    async (audioBlob: Blob, transcript: string) => {
+      try {
+        const pronFormData = new FormData();
+        pronFormData.append("audio", audioBlob, "recording.webm");
+        pronFormData.append("transcript", transcript);
+        pronFormData.append("language", getFullLanguageCode(targetLanguage));
+        pronFormData.append("conversationId", id);
 
-  setIsAnalyzingSpeech(true);
-  try {
-    const formData = new FormData();
-    const dialect = getFullLanguageCode(targetLanguage);
-    
-    formData.append("audio", lastAudioBlobRef.current, "recording.webm");
-    formData.append("transcript", lastTranscriptRef.current);
-    formData.append("dialect", dialect);
-    
-    // ✅ CRITICAL FIX: Send the generic template ID for the Review DB logic
-    formData.append("conversationId", id); 
-    
-    // Keep this if you want to link it to the specific record in the future
-    if (conversationRecordId) {
-      formData.append("conversationRecordId", conversationRecordId);
-    }
+        const response = await fetch("/api/pronunciation-assessment", {
+          method: "POST",
+          body: pronFormData,
+        });
 
-    const response = await fetch("/api/analyze-speechace", {
-      method: "POST",
-      body: formData,
-    });
+        if (!response.ok) throw new Error("Azure Assessment failed");
 
-    if (!response.ok) {
-      throw new Error(`SpeechAce API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    setSpeechAceResult(result);
-    return result; // ✅ Return result so we can use it immediately
-  } catch (error) {
-    console.error("❌ SpeechAce error:", error);
-    setError("Failed to analyze speech");
-    return null;
-  } finally {
-    setIsAnalyzingSpeech(false);
-  }
-}, [id, conversationRecordId, targetLanguage, getFullLanguageCode]);
+        const result = await response.json();
+        return result;
+      } catch (err) {
+        console.error("❌ Azure pronunciation grading error:", err);
+        return null;
+      }
+    },
+    [id, targetLanguage, getFullLanguageCode],
+  );
 
   const stopRecording = () => {
     setIsRecording(false);
@@ -810,9 +805,8 @@ const handleConversation = async (message: string) => {
 
             stopRecording();
 
-            // 🎯 Run SpeechAce in parallel - don't await it
-            analyzeSpeechAce();
-            await handleConversation(transcript);
+            // ✅ Passes transcript AND audioBlob to handleConversation
+            await handleConversation(transcript, audioBlob);
             isProcessingTranscriptRef.current = false;
           }
         });
@@ -910,7 +904,6 @@ const handleConversation = async (message: string) => {
     setTextInput,
     setError,
     speechAceResult,
-    analyzeSpeechAce,
     isAnalyzingSpeech,
     isMobile,
     createAudioUrl,

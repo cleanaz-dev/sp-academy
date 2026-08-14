@@ -1,25 +1,53 @@
-import type { SpeechAceResults } from "@/lib/moonshot/types";
+export type VoiceGender = "male" | "female";
+export type ClassValue = string | number | boolean | undefined | null;
 
-// 🔥 NEW: Word-level pronunciation scoring
-export interface WordScore {
-  word: string;
-  quality_score: number; // 0-100
-  phone_score_list?: Array<{
-    phone: string;
-    quality_score: number;
-    sound_most_like?: string;
-  }>;
-  syllable_score_list?: any[];
-  stress_level?: number;
-  sound_most_like?: string;
+export interface PhonemeAssessment {
+  phoneme: string;
+  accuracyScore: number;
 }
 
-// 🔥 UPDATED: Add words array to pronunciation score
+export interface WordAssessment {
+  word: string;
+  accuracyScore: number;
+  errorType?: "None" | "Omission" | "Insertion" | "Mispronunciation";
+  phonemes?: PhonemeAssessment[];
+}
+
 export interface PronunciationScore {
-  score: number;
-  cerf_score: string;
-  words?: WordScore[]; // NEW
-  overall_fluency?: number;
+  score: number; // Azure overall PronunciationScore (0-100)
+  accuracyScore?: number;
+  fluencyScore?: number;
+  completenessScore?: number;
+  prosodyScore?: number;
+  words?: WordAssessment[];
+}
+
+export interface CorrectionDetail {
+  correction: string;
+  reason?: string;
+}
+
+export interface Corrections {
+  genderAgreement?: string | CorrectionDetail;
+  vocabulary?: string | CorrectionDetail;
+  article?: string | CorrectionDetail;
+  finalNotes?: string;
+  additionalNotes?: string;
+}
+
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  translation?: string;
+  score?: number;
+  label?: "Excellent" | "Great" | "Good" | "OK" | "Poor";
+  improvedResponse?: string;
+  corrections?: Corrections;
+  isTyping?: boolean;
+  timestamp?: number;
+  pronunciationScore?: PronunciationScore | null;
+  isAnalyzingPronunciation?: boolean;
 }
 
 export interface Suggestion {
@@ -36,41 +64,12 @@ export interface UseSuggestionsReturn {
   conversationHistory: Array<{ role: string; content: string }>;
 }
 
-export interface CorrectionDetail {
-  correction: string;
-  reason?: string;
-}
-
-export interface Corrections {
-  genderAgreement?: string | CorrectionDetail;
-  vocabulary?: string | CorrectionDetail;
-  article?: string | CorrectionDetail;
-  finalNotes?: string;
-  additionalNotes?: string;
-}
-
 export interface ImprovementTooltipProps {
   improvedResponse: string;
   originalText: string;
   corrections?: Corrections;
   speakPhrase?: (text: string) => void;
-  pronunciationScore?: PronunciationScore; // 🔥 CHANGED from SpeechAceResults
-}
-
-export type VoiceGender = 'male' | 'female';
-
-export interface Message {
-  id?: string;
-  role: 'user' | 'assistant';
-  content: string;
-  translation?: string;
-  label?: 'Excellent' | 'Great' | 'Good' | 'OK' | 'Poor';
-  improvedResponse?: string;
-  corrections?: Corrections;
-  score?: number;
-  timestamp?: number;
-  pronunciationScore?: PronunciationScore;
-  isTyping?: boolean; // 👈 add this
+  pronunciationScore?: PronunciationScore | null;
 }
 
 export interface VoiceGenderToggleProps {
@@ -85,6 +84,8 @@ export interface MessageBubbleProps {
   aiAvatarFemaleUrl: string;
   userAvatarUrl?: string;
   speakPhrase: (text: string) => void;
+  audioBase64Map: Record<string, string>;
+  createAudioUrl: (base64: string) => string;
 }
 
 export interface InputControlsProps {
@@ -97,14 +98,11 @@ export interface InputControlsProps {
   onSend: (text: string) => void;
   onToggleRecording: () => void;
   onStartConversation: () => void;
+  targetLanguage: string;
 }
 
 export interface SuggestionsPanelProps {
   conversationHistory: Message[];
-  getSuggestions: () => void;
-  isLoadingSuggestions: boolean;
-  suggestions: Suggestion[];
-  error: string | null;
   speakPhrase: (text: string) => void;
   usePhrase: (text: string) => void;
 }
@@ -122,18 +120,27 @@ export interface UseConversationReturn {
   conversationRecordId: string | null;
   translationResult: string | null;
   error: string | null;
-  originalText: string;
-  
-  // Actions
-  toggleVoiceGender: () => void;
-  handleStartConversation: () => void;
-  handleTranslation: (text: string) => void;
-  handleSendMessage: (text: string) => void;
-  toggleRecording: () => void;
-  clearConversationHistory: () => void;
-  analyzeAndSaveConversation: () => void;
-  speakPhrase: (text: string) => void;
-  usePhrase: (text: string) => void;
-}
+  suggestions: Suggestion[];
+  isLoadingSuggestions: boolean;
+  isGeneratingAudio: boolean;
+  isMuted: boolean;
+  userMessage: string;
+  isAnalyzingSpeech: boolean;
+  isMobile: boolean;
+  audioBase64Map: Record<string, string>;
 
-export type ClassValue = string | number | boolean | undefined | null;
+  // Actions / Helpers
+  handleConversation: (message: string, audioBlob?: Blob) => Promise<void>;
+  handleStartConversation: () => Promise<void>;
+  toggleRecording: () => Promise<void>;
+  clearConversationHistory: () => Promise<void>;
+  getSuggestions: () => Promise<void>;
+  analyzeAndSaveConversation: () => Promise<void>;
+  usePhrase: (phrase: string) => void;
+  speakPhrase: (text: string) => void;
+  toggleVoiceGender: (checked: boolean) => void;
+  toggleMute: () => void;
+  setTextInput: (value: string) => void;
+  setError: (error: string | null) => void;
+  createAudioUrl: (base64: string) => string;
+}
