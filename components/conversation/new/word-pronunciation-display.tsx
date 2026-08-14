@@ -1,11 +1,11 @@
 // components/conversation/word-pronunciation-display.tsx
 import React from "react";
 import { cn } from "@/lib/utils";
-import type { WordScore } from "./types";
+import type { WordAssessment } from "./types";
 
 interface Props {
   text: string;
-  wordScores?: WordScore[];
+  wordScores?: WordAssessment[];
 }
 
 export const WordPronunciationDisplay: React.FC<Props> = ({ text, wordScores }) => {
@@ -23,7 +23,7 @@ export const WordPronunciationDisplay: React.FC<Props> = ({ text, wordScores }) 
   return (
     <p className="font-medium leading-relaxed">
       {wordScores.map((wordData, idx) => {
-        const scoreColor = getScoreColor(wordData.quality_score);
+        const scoreColor = getScoreColor(wordData.accuracyScore);
         
         return (
           <span
@@ -32,10 +32,10 @@ export const WordPronunciationDisplay: React.FC<Props> = ({ text, wordScores }) 
               "mx-0.5 inline-block rounded border px-1.5 py-0.5 transition-all hover:scale-105 cursor-help",
               scoreColor
             )}
-            title={`Score: ${wordData.quality_score}/100${
-              wordData.sound_most_like 
-                ? `\nSounded like: ${wordData.sound_most_like}` 
-                : ''
+            title={`Score: ${wordData.accuracyScore}/100${
+              wordData.errorType && wordData.errorType !== "None"
+                ? `\nIssue: ${wordData.errorType}` 
+                : ""
             }`}
           >
             {wordData.word}
