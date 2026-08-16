@@ -42,7 +42,7 @@ model ConversationReview {
   user           User         @relation(fields: [userId], references: [id])
   conversationId String       @unique @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])
-  mistakes       Json[]       @default([])
+  mistakes       Json[]       // <-- Change from Json? to Json[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
