@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
-const model = "deepseek/deepseek-v4-flash-0731"
+
 
 
 export async function POST(req: Request) {
+  const model = "deepseek/deepseek-v4-flash-0731"
   try {
     const {
       languages,
