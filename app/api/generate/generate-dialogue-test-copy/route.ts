@@ -1,6 +1,9 @@
 // api/generate/generate-dialogue-test-copy/route.ts
 import { NextResponse } from "next/server";
 
+
+export const maxDuration = 60;
+
 const model = "deepseek/deepseek-v4-flash-0731"
 
 
