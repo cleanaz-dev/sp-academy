@@ -1,4 +1,4 @@
-// api/generate-dialogue-test-copy/route.ts
+// api/generate/generate-dialogue-test-copy/route.ts
 import { NextResponse } from "next/server";
 
 const model = "deepseek/deepseek-v4-flash-0731"
