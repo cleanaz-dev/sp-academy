@@ -1,8 +1,10 @@
-//api/generate-dialogue-test-copy/route.js
-import Anthropic from "@anthropic-ai/sdk";
+// api/generate-dialogue-test-copy/route.ts
 import { NextResponse } from "next/server";
 
-export async function POST(req) {
+const model = "deepseek/deepseek-v4-flash-0731"
+
+
+export async function POST(req: Request) {
   try {
     const {
       languages,
@@ -17,21 +19,9 @@ export async function POST(req) {
       focus: { type: focusType, objectives },
     } = await req.json();
 
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY, // Make sure to add this to your env variables
-    });
-
     const systemPrompt = `You are a language learning assistant. Create a structured dialogue scenario for learning ${languages.target}. The learner's native language is ${languages.native}.`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-haiku-latest", // Using haiku as it's cheaper
-      max_tokens: 2500,
-      temperature: 0.7,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: `
+    const userPrompt = `
           CRITICAL FORMAT REQUIREMENT:
           - All language content MUST use "targetLanguage" and "nativeLanguage" as keys
           - DO NOT use specific language codes (like "es", "en", etc.)
@@ -133,14 +123,36 @@ export async function POST(req) {
           - The response MUST include EXACTLY 10 vocabulary items with full details for each.
           - Always use "targetLanguage" and "nativeLanguage" as keys in ALL responses.
           
-          Please provide the response in valid JSON format.`,
-        },
-      ],
+          Please provide the response in valid JSON format.`;
+
+    const novitaRes = await fetch("https://api.novita.ai/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NOVITA_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: model, // swap for whatever Novita model you want
+        max_tokens: 5000,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
     });
+
+    if (!novitaRes.ok) {
+      const errText = await novitaRes.text();
+      throw new Error(`Novita API error (${novitaRes.status}): ${errText}`);
+    }
+
+    const novitaData = await novitaRes.json();
+    const rawText = novitaData.choices?.[0]?.message?.content ?? "";
 
     let scenarioContent;
     try {
-      const jsonMatch = message.content[0].text.match(/\{[\s\S]*\}/);
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         scenarioContent = JSON.parse(jsonMatch[0]);
       } else {
