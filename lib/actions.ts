@@ -595,21 +595,23 @@ export async function deleteReadingLog(readingLogId) {
   }
 }
 
+const LANGUAGE_ENUM_MAP = {
+  en: "ENGLISH",
+  fr: "FRENCH",
+  es: "SPANISH",
+  english: "ENGLISH",
+  french: "FRENCH",
+  spanish: "SPANISH",
+};
+
+const LEVEL_ENUM_MAP = {
+  beginner: "BEGINNER",
+  intermediate: "INTERMEDIATE",
+  advanced: "ADVANCED",
+};
+
 export async function saveConversationDialogue(data) {
-  const languageEnumMap = {
-    en: "ENGLISH",
-    fr: "FRENCH",
-    es: "SPANISH",
-  };
-
-  const levelEnumMap = {
-    beginner: "BEGINNER",
-    intermediate: "INTERMEDIATE",
-    advanced: "ADVANCED",
-  };
-
   try {
-    console.log("Action.JS :", data);
     const {
       userId,
       introduction,
@@ -617,27 +619,33 @@ export async function saveConversationDialogue(data) {
       characters,
       dialogue,
       title,
-      imageUrl,
-      metadata,
-      aiAvatarUrl,
-      maleAiAvatarUrl,
-      femaleAiAvatarUrl,
+      imageUrl = null,
+      metadata = {},
+      aiAvatarUrl = null,
+      maleAiAvatarUrl = null,
+      femaleAiAvatarUrl = null,
       level,
     } = data;
 
+    // 1. Find user (or connect directly if userId is @unique in Prisma)
     const user = await prisma.user.findFirst({
       where: { userId: userId },
     });
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error(`User with ID ${userId} not found`);
     }
 
-    // Convert language codes (en, fr, es) to Prisma enum values (ENGLISH, FRENCH, SPANISH)
-    const nativeLanguage = languageEnumMap[metadata.languages.native] || null;
-    const tutorLanguage = languageEnumMap[metadata.languages.target] || null;
-    const levelEnum = levelEnumMap[level] || null;
+    // 2. Safe Enum mapping (case-insensitive)
+    const nativeKey = metadata?.languages?.native?.toLowerCase();
+    const targetKey = metadata?.languages?.target?.toLowerCase();
+    const levelKey = level?.toLowerCase();
 
+    const nativeLanguage = LANGUAGE_ENUM_MAP[nativeKey] || null;
+    const tutorLanguage = LANGUAGE_ENUM_MAP[targetKey] || null;
+    const levelEnum = LEVEL_ENUM_MAP[levelKey] || null;
+
+    // 3. Create the record in Prisma
     const savedConversation = await prisma.conversation.create({
       data: {
         user: { connect: { id: user.id } },
@@ -651,20 +659,22 @@ export async function saveConversationDialogue(data) {
         dialogue,
         imageUrl,
         aiAvatarUrl,
-        aiAvatarFemaleUrl: femaleAiAvatarUrl,
-        aiAvatarMaleUrl: maleAiAvatarUrl,
+        aiAvatarMaleUrl: maleAiAvatarUrl,     // Prisma column name
+        aiAvatarFemaleUrl: femaleAiAvatarUrl, // Prisma column name
         level: levelEnum,
       },
     });
 
-    return { success: true, conversation: savedConversation };
+    // Revalidate only on success
+    revalidatePath("/conversations");
+
+    return { success: true, conversationId: savedConversation.id};
   } catch (error) {
     console.error("Error saving conversation dialogue:", error);
-    throw new Error("Failed to save conversation dialogue");
-  } finally {
-    revalidatePath("/conversations");
+    throw new Error(error.message || "Failed to save conversation dialogue");
   }
 }
+
 
 export async function getAllConversations() {
   try {

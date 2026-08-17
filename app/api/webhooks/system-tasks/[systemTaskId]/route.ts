@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-conversation-images";
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
@@ -45,8 +46,13 @@ export async function POST(req: Request, { params }: Params) {
       case SystemTaskType.GAME_SCHEMA_GENERATION: {
         return await handleGameSchema(task,body)
       }
-      case SystemTaskType.GAME_VARIATION_GENERATION:
+      case SystemTaskType.GAME_VARIATION_GENERATION: {
          return await handleGameVariation(task, body);
+      }
+      case SystemTaskType.CONVERSATION_IMAGE_GENERATION: {
+        return await handleConversationImages(task,body)
+      }
+
 
       default:
         return NextResponse.json(
