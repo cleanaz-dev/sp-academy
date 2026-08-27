@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Mic, Timer, Sparkles } from "lucide-react";
 
 export default function FreestyleCard() {
@@ -12,14 +13,20 @@ export default function FreestyleCard() {
           
           {/* Top Hero Section of the Card */}
           <div className="group relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+            
+            {/* Cover Image */}
+            <Image
+              src="/freestyle-cover.png"
+              alt="Freestyle Arena"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 400px"
+              className="object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+
             {/* Decorative background glowing orbs */}
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
             <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-black/20 blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
-            
-            {/* Background Icon */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white/10">
-               <Mic className="h-32 w-32 transition-transform duration-700 group-hover:scale-110 group-hover:text-white/20 group-hover:-rotate-6" />
-            </div>
 
             {/* Gradient Overlay & Text */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
