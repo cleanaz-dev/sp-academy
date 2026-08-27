@@ -1,8 +1,7 @@
 // app/(dashboard)/conversation/page.jsx
 
-import ConversationCard from "@/components/conversation/archive/ConversationCard";
 import ConversationCardCopy from "@/components/conversation/ConversationCardCopy";
-import CreateConversationCard from "@/components/conversation/CreateConversationCard";
+import FreestyleCard from "@/components/conversation/freestyle-card";
 import { getAllConversations } from "@/lib/actions";
 import { MessagesSquare } from "lucide-react";
 
@@ -28,11 +27,11 @@ export default async function Page() {
           </p>
         </div>
       </header>
-      {/* <ConvAi />     */}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* <CreateConversationCard /> */}
-
+        
+        {/* 👈 Add the Freestyle Card at the very front of the grid */}
+        <FreestyleCard /> 
 
         {conversations &&
           conversations
