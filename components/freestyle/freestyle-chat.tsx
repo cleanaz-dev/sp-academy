@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import {
-  Clock,
-  Square,
-  Mic,
-  Send,
-  Volume2,
-  Loader2,
-} from "lucide-react";
+import { Clock, Square, Mic, Send, Volume2, Loader2 } from "lucide-react";
 
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak";
@@ -100,7 +93,7 @@ export default function FreestyleChat({
   const analyzePronunciation = async (
     audioBlob: Blob,
     text: string,
-    messageId: number
+    messageId: number,
   ) => {
     try {
       const wavBlob = await convertBlobToWav(audioBlob);
@@ -137,8 +130,8 @@ export default function FreestyleChat({
 
                 isAnalyzingPronunciation: false,
               }
-            : message
-        )
+            : message,
+        ),
       );
     } catch (err) {
       console.error("Pronunciation assessment failed", err);
@@ -150,8 +143,8 @@ export default function FreestyleChat({
                 ...message,
                 isAnalyzingPronunciation: false,
               }
-            : message
-        )
+            : message,
+        ),
       );
     }
   };
@@ -185,20 +178,13 @@ export default function FreestyleChat({
     resetSpeechState();
 
     if (audioBlob) {
-      analyzePronunciation(
-        audioBlob,
-        userText,
-        newMsgId
-      );
+      analyzePronunciation(audioBlob, userText, newMsgId);
     }
 
     handleAiTurn(false, updatedMessages);
   };
 
-  const handleAiTurn = async (
-    isOpening = false,
-    chatHistory: any[] = []
-  ) => {
+  const handleAiTurn = async (isOpening = false, chatHistory: any[] = []) => {
     setIsAiProcessing(true);
 
     try {
@@ -229,12 +215,7 @@ export default function FreestyleChat({
 
       setIsAiProcessing(false);
 
-      await speak(
-        data.text,
-        session.targetLanguage,
-        1.0,
-        session.voiceGender
-      );
+      await speak(data.text, session.targetLanguage, 1.0, session.voiceGender);
     } catch (err) {
       console.error(err);
       setIsAiProcessing(false);
@@ -246,19 +227,21 @@ export default function FreestyleChat({
       .toString()
       .padStart(2, "0");
 
-    const s = (secs % 60)
-      .toString()
-      .padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
 
     return `${m}:${s}`;
   };
 
+  const handleReplay = (text: string) => {
+    speak(text, session.targetLanguage, 1.0, session.voiceGender);
+  };
+
   return (
-    <div className="h-full max-h-[85vh] flex flex-col bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden relative">
+    <div className="relative flex h-full max-h-[85vh] flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-2xl">
       {/* Header */}
-      <div className="bg-white px-6 py-4 border-b flex justify-between items-center shadow-sm z-10">
+      <div className="z-10 flex items-center justify-between border-b bg-white px-6 py-4 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="relative w-12 h-12 bg-gray-100 rounded-full overflow-hidden border-2 border-indigo-100">
+          <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-indigo-100 bg-gray-100">
             <Image
               src={session.aiAvatarUrl}
               alt="AI Avatar"
@@ -268,68 +251,67 @@ export default function FreestyleChat({
           </div>
 
           <div>
-            <h3 className="font-bold text-gray-900 capitalize">
+            <h3 className="font-bold capitalize text-gray-900">
               {session.mode.toLowerCase()} Mode
             </h3>
 
-            <p className="text-xs font-medium text-gray-500 capitalize">
+            <p className="text-xs font-medium capitalize text-gray-500">
               {session.voiceGender} Tutor
             </p>
           </div>
         </div>
 
         <div
-          className={`px-4 py-2 rounded-xl flex items-center gap-2 font-bold font-mono tracking-wider transition-colors ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 font-mono font-bold tracking-wider transition-colors ${
             timeLeft < 30
-              ? "bg-red-50 text-red-600 animate-pulse"
+              ? "animate-pulse bg-red-50 text-red-600"
               : "bg-blue-50 text-blue-700"
           }`}
         >
-          <Clock className="w-4 h-4" />
+          <Clock className="h-4 w-4" />
           {formatTime(timeLeft)}
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+      <div className="flex-1 space-y-6 overflow-y-auto bg-slate-50/50 p-6">
         {/* Chat messages are now rendered ONLY by FreestyleChatBubble */}
         {messages.map((message) => (
           <FreestyleChatBubble
             key={message.id}
             message={message}
+            onReplay={message.role === "assistant" ? handleReplay : undefined}
           />
         ))}
 
         {/* Live Transcript Bubble */}
         {isRecording && transcript && (
           <div className="flex flex-col items-end animate-in slide-in-from-bottom-2">
-            <div className="max-w-[85%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm opacity-90 shadow-inner text-[15px]">
+            <div className="max-w-[85%] rounded-3xl rounded-br-sm bg-blue-500 p-4 text-[15px] text-white opacity-90 shadow-inner">
               {transcript}
 
-              <span className="animate-pulse">
-                ...
-              </span>
+              <span className="animate-pulse">...</span>
             </div>
           </div>
         )}
 
         {/* AI Typing / TTS Loading Indicator */}
         {(isAiProcessing || isPlaying || isSpeechLoading) && (
-          <div className="flex items-start gap-2 animate-in fade-in zoom-in duration-300">
-            <div className="bg-white border border-gray-100 p-4 rounded-3xl rounded-bl-sm shadow-sm flex items-center gap-3">
+          <div className="flex items-start gap-2 duration-300 animate-in fade-in zoom-in">
+            <div className="flex items-center gap-3 rounded-3xl rounded-bl-sm border border-gray-100 bg-white p-4 shadow-sm">
               {isPlaying ? (
                 <>
-                  <Volume2 className="w-5 h-5 text-indigo-500 animate-pulse" />
+                  <Volume2 className="h-5 w-5 animate-pulse text-indigo-500" />
 
-                  <span className="text-gray-500 text-sm font-medium">
+                  <span className="text-sm font-medium text-gray-500">
                     Speaking...
                   </span>
                 </>
               ) : (
                 <>
-                  <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
 
-                  <span className="text-gray-500 text-sm font-medium">
+                  <span className="text-sm font-medium text-gray-500">
                     Thinking...
                   </span>
                 </>
@@ -338,53 +320,38 @@ export default function FreestyleChat({
           </div>
         )}
 
-        <div
-          ref={messagesEndRef}
-          className="h-4"
-        />
+        <div ref={messagesEndRef} className="h-4" />
       </div>
 
       {/* Footer Controls */}
-      <div className="bg-white border-t border-gray-100 p-4 px-6 z-10 flex justify-between items-center bg-white/80 backdrop-blur-md">
+      <div className="z-10 flex items-center justify-between border-t border-gray-100 bg-white bg-white/80 p-4 px-6 backdrop-blur-md">
         <button
           onClick={handleEndSession}
-          className="p-4 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all"
+          className="rounded-2xl p-4 text-red-400 transition-all hover:bg-red-50 hover:text-red-600"
         >
-          <Square className="w-6 h-6 fill-current" />
+          <Square className="h-6 w-6 fill-current" />
         </button>
 
-        <div className="flex-1 flex justify-center">
+        <div className="flex flex-1 justify-center">
           {isRecording ? (
             <button
               onClick={submitTurn}
-              className="bg-green-500 text-white rounded-full p-5 shadow-[0_0_40px_rgba(34,197,94,0.4)] animate-bounce"
+              className="animate-bounce rounded-full bg-green-500 p-5 text-white shadow-[0_0_40px_rgba(34,197,94,0.4)]"
             >
-              <Send className="w-8 h-8" />
+              <Send className="h-8 w-8" />
             </button>
           ) : (
             <button
-              onClick={() =>
-                startRecording(session.targetLanguage)
-              }
-              disabled={
-                isPlaying ||
-                isAiProcessing ||
-                isSpeechLoading
-              }
+              onClick={() => startRecording(session.targetLanguage)}
+              disabled={isPlaying || isAiProcessing || isSpeechLoading}
               className={`rounded-full p-6 transition-all duration-300 ${
-                isPlaying ||
-                isAiProcessing ||
-                isSpeechLoading
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed scale-95"
-                  : "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-110 shadow-[0_10px_40px_rgba(79,70,229,0.3)]"
+                isPlaying || isAiProcessing || isSpeechLoading
+                  ? "scale-95 cursor-not-allowed bg-gray-200 text-gray-400"
+                  : "bg-indigo-600 text-white shadow-[0_10px_40px_rgba(79,70,229,0.3)] hover:scale-110 hover:bg-indigo-700"
               }`}
             >
               <Mic
-                className={`w-8 h-8 ${
-                  isRecording
-                    ? "animate-pulse"
-                    : ""
-                }`}
+                className={`h-8 w-8 ${isRecording ? "animate-pulse" : ""}`}
               />
             </button>
           )}

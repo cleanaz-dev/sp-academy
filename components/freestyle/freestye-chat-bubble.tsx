@@ -1,115 +1,70 @@
-import {
-  Languages,
-  Activity,
-  Loader2,
-  Target,
-  Wind,
-} from "lucide-react";
+"use client";
+
+import { Volume2 } from "lucide-react";
+
+interface FreestyleChatBubbleProps {
+  message: any;
+  onReplay?: (text: string) => void;
+}
 
 export function FreestyleChatBubble({
   message,
-}: {
-  message: any;
-}) {
-  const isUser = message.role === "user";
+  onReplay,
+}: FreestyleChatBubbleProps) {
+  // User message
+  if (message.role === "user") {
+    return (
+      <div className="flex flex-col items-end animate-in slide-in-from-bottom-1">
+        <div className="max-w-[85%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm shadow-sm text-[15px] leading-relaxed">
+          {message.text}
+        </div>
 
-  const overallScore = message.pronunciationScore?.score;
-  const accuracyScore =
-    message.pronunciationScore?.accuracyScore;
-  const fluencyScore =
-    message.pronunciationScore?.fluencyScore;
+        {message.isAnalyzingPronunciation && (
+          <span className="text-xs text-gray-400 mt-1.5 animate-pulse">
+            Scoring pronunciation...
+          </span>
+        )}
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) {
-      return "text-green-500 bg-green-50";
-    }
+        {message.pronunciationScore && (
+          <div className="mt-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">
+            <span>
+              Accuracy: {message.pronunciationScore.accuracyScore}
+            </span>
+            <span className="text-gray-300">|</span>
+            <span>
+              Fluency: {message.pronunciationScore.fluencyScore}
+            </span>
+            <span className="text-gray-300">|</span>
+            <span className="text-indigo-600">
+              Overall: {message.pronunciationScore.score}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-    if (score >= 60) {
-      return "text-yellow-600 bg-yellow-50";
-    }
-
-    return "text-red-500 bg-red-50";
-  };
-
+  // Assistant message
   return (
-    <div
-      className={`flex w-full flex-col ${
-        isUser
-          ? "items-end"
-          : "items-start"
-      } duration-300 animate-in fade-in slide-in-from-bottom-2`}
-    >
-      {/* Main Chat Bubble */}
-      <div
-        className={`max-w-[85%] rounded-3xl p-4 text-[15px] leading-relaxed shadow-sm ${
-          isUser
-            ? "rounded-br-sm bg-blue-600 text-white"
-            : "rounded-bl-sm border border-gray-100 bg-white text-gray-800"
-        }`}
-      >
-        {message.text}
+    <div className="flex flex-col items-start gap-1 animate-in slide-in-from-bottom-1">
+      <div className="max-w-[85%] p-4 rounded-3xl bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm text-[15px] leading-relaxed">
+        <p>{message.text}</p>
+
+        {message.translation && (
+          <p className="mt-2 text-sm text-gray-500 italic border-t border-gray-50 pt-2">
+            {message.translation}
+          </p>
+        )}
       </div>
 
-      {/* AI Translation */}
-      {!isUser && message.translation && (
-        <div className="ml-2 mt-2 flex items-center gap-1.5 text-xs font-medium text-gray-500">
-          <Languages className="h-3.5 w-3.5 text-indigo-400" />
-
-          {message.translation}
-        </div>
-      )}
-
-      {/* User Pronunciation */}
-      {isUser && (
-        <div className="mr-2 mt-2">
-          {message.isAnalyzingPronunciation ? (
-            <span className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-500">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-
-              Scoring pronunciation...
-            </span>
-          ) : overallScore !== undefined ? (
-            <div className="flex flex-col items-end gap-1.5">
-              {/* Overall Score */}
-              <div
-                className={`flex items-center gap-1.5 rounded-full border border-white/50 px-3 py-1.5 text-xs font-bold shadow-sm ${getScoreColor(
-                  Number(overallScore)
-                )}`}
-              >
-                <Activity className="h-3.5 w-3.5" />
-
-                Pronunciation:{" "}
-                {Number(overallScore).toFixed(1)}
-                /100
-              </div>
-
-              {/* Accuracy + Fluency */}
-              <div className="mr-1 flex gap-2 text-[10px] font-semibold text-gray-500">
-                {accuracyScore !== undefined && (
-                  <span
-                    className="flex items-center gap-1"
-                    title="Accuracy"
-                  >
-                    <Target className="h-3 w-3 text-gray-400" />
-
-                    {Number(accuracyScore).toFixed(1)}
-                  </span>
-                )}
-
-                {fluencyScore !== undefined && (
-                  <span
-                    className="flex items-center gap-1"
-                    title="Fluency"
-                  >
-                    <Wind className="h-3 w-3 text-gray-400" />
-
-                    {Number(fluencyScore).toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : null}
-        </div>
+      {onReplay && (
+        <button
+          onClick={() => onReplay(message.text)}
+          className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 hover:text-indigo-700 transition-colors px-3 py-1.5 rounded-full hover:bg-indigo-50 active:scale-95"
+        >
+          <Volume2 className="w-3.5 h-3.5" />
+          Replay
+        </button>
       )}
     </div>
   );
