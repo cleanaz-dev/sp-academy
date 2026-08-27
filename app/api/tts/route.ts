@@ -6,11 +6,19 @@ export const maxDuration = 60;
 // 💡 Map your languages and genders to your Fish Audio reference_ids here.
 // Find these IDs in your Fish Audio dashboard for the voices you created/saved.
 const VOICE_MAP: Record<string, Record<string, string>> = {
-  "en-US": { male: "YOUR_EN_MALE_ID", female: "YOUR_EN_FEMALE_ID" },
-  "fr-FR": { male: "YOUR_FR_MALE_ID", female: "YOUR_FR_FEMALE_ID" },
-  "es-ES": { male: "YOUR_ES_MALE_ID", female: "YOUR_ES_FEMALE_ID" },
+  "en-US": { 
+    male: "933563129e564b19a115bedd57b7406a",    // Example male English ID
+    female: "802e3bc2b27e49c2995d23ef70e6ac89"   // Example female English ID
+  },
+  "fr-FR": { 
+    male: "83154314d3d64d56b8a434583a659a91", 
+    female: "690813f2df56491b82ee02a22d1c67fd" 
+  },
+  "es-ES": { 
+    male: "43e1948b1a544700bd88250916cd31e8", 
+    female: "0118a35dcb604837abe7961a43e13ba8" 
+  },
 };
-
 // A fallback if the language isn't in the map, or for older components that don't pass gender.
 const FALLBACK_VOICE_ID = "YOUR_DEFAULT_VOICE_ID"; 
 
