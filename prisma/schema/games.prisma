@@ -55,15 +55,14 @@ model GameVariation {
   gameId String @db.ObjectId
   game   Game   @relation(fields: [gameId], references: [id])
 
-  targetLanguage  Languages      @default(ENGLISH)
-  nativeLanguage  Languages      @default(FRENCH)
-  variation  String        @default("default")
-  gameData   Json?
-  difficulty GameDifficulty @default(EASY)
+  targetLanguage Languages      @default(ENGLISH)
+  nativeLanguage Languages      @default(FRENCH)
+  variation      String         @default("default")
+  gameData       Json?
+  difficulty     GameDifficulty @default(EASY)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
 
 enum GameContext {
@@ -84,8 +83,8 @@ enum GameDifficulty {
 }
 
 model UselessGameModel {
-   id     String @id @default(auto()) @map("_id") @db.ObjectId
-   uselessJson Json?
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  uselessJson Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

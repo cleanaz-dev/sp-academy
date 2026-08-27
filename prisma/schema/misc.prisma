@@ -188,7 +188,7 @@ model SystemTask {
   payload  Json? // Initial params sent to Lambda
   error    String?
   metadata Json?
-  result  String?
+  result   String?
 
   journalId String?       @db.ObjectId
   journal   DailyJournal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
@@ -198,22 +198,21 @@ model SystemTask {
 }
 
 model JournalReview {
-  id                String @id @default(auto()) @map("_id") @db.ObjectId
-  overallScore          Float?
-  accuracyScore         Float?
-  fluencyScore          Float?
-  completenessScore     Float?
-  prosodyScore          Float?
-  wordAnalysis          Json?    // Word-by-word pronunciation
-  targetLanguage        String?
-  
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  overallScore      Float?
+  accuracyScore     Float?
+  fluencyScore      Float?
+  completenessScore Float?
+  prosodyScore      Float?
+  wordAnalysis      Json? // Word-by-word pronunciation
+  targetLanguage    String?
+
   // New LLM Fields
-  summaryFeedback       String?  @db.String
-  finalTranscript       String?  @db.String
-  translation           String?  @db.String
-  grammarMistakes       Json?    // Array of grammar mistake objects
-  vocabularySuggestions Json?    // Array of vocab objects
-  
+  summaryFeedback       String? @db.String
+  finalTranscript       String? @db.String
+  translation           String? @db.String
+  grammarMistakes       Json? // Array of grammar mistake objects
+  vocabularySuggestions Json? // Array of vocab objects
 
   journalId String       @unique @db.ObjectId
   journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)

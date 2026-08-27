@@ -42,7 +42,61 @@ model ConversationReview {
   user           User         @relation(fields: [userId], references: [id])
   conversationId String       @unique @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])
-  mistakes       Json[]       // <-- Change from Json? to Json[]
+  mistakes       Json[] // <-- Change from Json? to Json[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Add this to your schema.prisma
+
+enum FreestyleMode {
+  INTRODUCTION
+  SPECIFIC
+  RANDOM
+  ARGUMENTATIVE
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  REVIEW_PENDING
+  REVIEWED
+}
+
+model FreestyleSession {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String        @db.ObjectId
+  user           User          @relation(fields: [userId], references: [id])
+  mode           FreestyleMode
+  topic          String? // Used if mode == SPECIFIC
+  nativeLanguage String // Or use your existing Languages enum
+  targetLanguage String // Or use your existing Languages enum
+
+  duration Int           @default(0) // Time recorded in seconds (max 180)
+  status   SessionStatus @default(IN_PROGRESS)
+
+  // Array of { role: 'user' | 'assistant', text: string, audioUrl?: string }
+  messages       Json[]
+  fullTranscript String? // Combined transcript for Lambda to analyze
+  s3AudioKey     String? // If you upload the combined user audio to S3
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  review FreestyleReview?
+}
+
+model FreestyleReview {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  freestyleSessionId String           @unique @db.ObjectId
+  session            FreestyleSession @relation(fields: [freestyleSessionId], references: [id], onDelete: Cascade)
+
+  mistakes        Json[] // Corrections from DeepSeek
+  overallFeedback String? // General advice
+  metrics         Json? // e.g. { fluency: 80, vocabulary: 75 }
+
+  lambdaStatus String? // e.g., PENDING, SUCCESS, FAILED
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

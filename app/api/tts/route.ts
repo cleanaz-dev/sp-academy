@@ -3,10 +3,21 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
+// 💡 Map your languages and genders to your Fish Audio reference_ids here.
+// Find these IDs in your Fish Audio dashboard for the voices you created/saved.
+const VOICE_MAP: Record<string, Record<string, string>> = {
+  "en-US": { male: "YOUR_EN_MALE_ID", female: "YOUR_EN_FEMALE_ID" },
+  "fr-FR": { male: "YOUR_FR_MALE_ID", female: "YOUR_FR_FEMALE_ID" },
+  "es-ES": { male: "YOUR_ES_MALE_ID", female: "YOUR_ES_FEMALE_ID" },
+};
+
+// A fallback if the language isn't in the map, or for older components that don't pass gender.
+const FALLBACK_VOICE_ID = "YOUR_DEFAULT_VOICE_ID"; 
+
 export async function POST(request: Request) {
   try {
-    // Extract speed from the request body (default to 1.0 if not provided)
-    const { text, language, speed = 1.0 } = await request.json();
+    // 💡 Added gender with a default value of "female" so legacy code doesn't break
+    const { text, language, speed = 1.0, gender = "female" } = await request.json();
 
     if (!text) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -18,13 +29,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing API Key" }, { status: 500 });
     }
 
-    // Call Fish Audio API directly
+    // Determine the reference ID based on the map, or fallback
+    const referenceId = VOICE_MAP[language]?.[gender] || FALLBACK_VOICE_ID;
+
     const response = await fetch("https://api.fish.audio/v1/tts", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "model": "s2.1-pro-free", // or "s2.1-pro" once you're on the paid tier
+        "model": "s2.1-pro-free", 
       },
       body: JSON.stringify({
         text: text,
@@ -32,7 +45,7 @@ export async function POST(request: Request) {
         format: "mp3",
         latency: "normal",
         prosody: {
-          speed: Number(speed), // Dynamically set the speed here
+          speed: Number(speed),
           volume: 0,
           normalize_loudness: true,
         },
@@ -46,10 +59,8 @@ export async function POST(request: Request) {
         repetition_penalty: 1.2,
         early_stop_threshold: 1,
         condition_on_previous_chunks: true,
-
-        // Fish Audio uses "reference_id" for voice selection, not a "language" param.
-        // If you have a cloned/uploaded voice, set it here:
-        // "reference_id": "YOUR_VOICE_ID",
+        // 💡 Pass the selected voice ID here
+        reference_id: referenceId,
       }),
     });
 
@@ -59,11 +70,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Fish Audio API Failed" }, { status: response.status });
     }
 
-    // Get the binary audio data
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Return it to the frontend player
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": "audio/mpeg",

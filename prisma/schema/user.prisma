@@ -33,6 +33,7 @@ model User {
   ConversationReview    ConversationReview[]
   ReadingLog            ReadingLog[]
   dailyJournals         DailyJournal[]
+  FreestyleSession      FreestyleSession[]
 }
 
 model BillingInformation {
