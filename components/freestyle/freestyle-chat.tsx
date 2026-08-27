@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSpeech } from "@/context/speech-context";
-import { useSpeak } from "@/hooks/use-speak"; // YOUR exact hook
-import { Clock, Square, Mic, Send, Volume2, Loader2, Languages, Activity } from "lucide-react";
+import { useSpeak } from "@/hooks/use-speak"; 
+import { Clock, Square, Mic, Send, Volume2, Loader2 } from "lucide-react";
 import { FreestyleSessionConfig } from "./freestyle-wrapper";
-import { convertBlobToWav } from "@/lib/audio-utils"; // From your monster hook
+import { convertBlobToWav } from "@/lib/audio-utils"; 
+import { FreestyleChatBubble } from "./freestye-chat-bubble";
 
 export default function FreestyleChat({ 
   session, 
@@ -20,8 +21,6 @@ export default function FreestyleChat({
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   
   const { startRecording, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
-  
-  // Destructured directly from your provided useSpeak hook!
   const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -61,7 +60,6 @@ export default function FreestyleChat({
     onEnd(); 
   };
 
-  // --- AZURE PRONUNCIATION (Matches your monster hook setup) ---
   const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
     try {
       const wavBlob = await convertBlobToWav(audioBlob);
@@ -76,10 +74,10 @@ export default function FreestyleChat({
       });
 
       if (res.ok) {
-        const score = await res.json();
+        const scoreData = await res.json();
         setMessages((prev) => prev.map((m) => 
           m.id === messageId 
-            ? { ...m, pronunciationScore: score, isAnalyzingPronunciation: false } 
+            ? { ...m, pronunciationScore: scoreData, isAnalyzingPronunciation: false } 
             : m
         ));
       }
@@ -91,7 +89,6 @@ export default function FreestyleChat({
     }
   };
 
-  // Called when user hits the send button
   const submitTurn = async () => {
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
@@ -102,23 +99,20 @@ export default function FreestyleChat({
       id: newMsgId, 
       role: "user", 
       text: userText,
-      isAnalyzingPronunciation: !!audioBlob // Triggers UI loading state for score
+      isAnalyzingPronunciation: !!audioBlob
     };
     
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     resetSpeechState();
 
-    // 1. Get Pronunciation Score in the background
     if (audioBlob) {
       analyzePronunciation(audioBlob, userText, newMsgId);
     }
 
-    // 2. Pass context to AI for reply
     handleAiTurn(false, updatedMessages);
   };
 
-  // Fetches AI response and triggers TTS
   const handleAiTurn = async (isOpening = false, chatHistory = []) => {
     setIsAiProcessing(true);
     try {
@@ -137,8 +131,6 @@ export default function FreestyleChat({
       }]);
       
       setIsAiProcessing(false);
-      
-      // CALLS YOUR TTS HOOK
       await speak(data.text, session.targetLanguage, 1.0, session.voiceGender);
       
     } catch (err) {
@@ -175,47 +167,16 @@ export default function FreestyleChat({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+        
+        {/* Render Extracted Chat Bubbles */}
         {messages.map((m) => (
-          <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`max-w-[80%] p-4 rounded-3xl shadow-sm text-[15px] leading-relaxed ${
-              m.role === 'user' 
-                ? 'bg-blue-600 text-white rounded-br-sm' 
-                : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
-            }`}>
-              {m.text}
-            </div>
-
-            {/* AI Translation Subtitle */}
-            {m.role === 'assistant' && m.translation && (
-              <div className="text-xs text-gray-400 mt-2 ml-2 flex items-center gap-1">
-                <Languages className="w-3 h-3" /> {m.translation}
-              </div>
-            )}
-
-            {/* User Pronunciation Score Badge */}
-            {m.role === 'user' && (
-              <div className="text-xs mt-2 mr-2 flex items-center gap-1 font-medium">
-                {m.isAnalyzingPronunciation ? (
-                  <span className="text-blue-400 flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Scoring pronunciation...
-                  </span>
-                ) : m.pronunciationScore ? (
-                  <span className={`flex items-center gap-1 ${
-                    m.pronunciationScore.pronunciationScore >= 80 ? 'text-green-500' :
-                    m.pronunciationScore.pronunciationScore >= 60 ? 'text-yellow-500' : 'text-red-500'
-                  }`}>
-                    <Activity className="w-3 h-3" /> Score: {m.pronunciationScore.pronunciationScore}/100
-                  </span>
-                ) : null}
-              </div>
-            )}
-          </div>
+          <FreestyleChatBubble key={m.id} message={m} />
         ))}
 
-        {/* Live Transcript Bubble */}
+        {/* Live Transcript Bubble (When speaking) */}
         {isRecording && transcript && (
           <div className="flex flex-col items-end animate-in slide-in-from-bottom-2">
-            <div className="max-w-[80%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm opacity-90 shadow-inner">
+            <div className="max-w-[85%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm opacity-90 shadow-inner text-[15px]">
               {transcript} <span className="animate-pulse">...</span>
             </div>
           </div>
@@ -226,9 +187,9 @@ export default function FreestyleChat({
           <div className="flex items-start gap-2 animate-in fade-in zoom-in duration-300">
             <div className="bg-white border border-gray-100 p-4 rounded-3xl rounded-bl-sm shadow-sm flex items-center gap-3">
               {isPlaying ? (
-                <><Volume2 className="w-5 h-5 text-indigo-500 animate-pulse" /><span className="text-gray-500 text-sm">Speaking...</span></>
+                <><Volume2 className="w-5 h-5 text-indigo-500 animate-pulse" /><span className="text-gray-500 text-sm font-medium">Speaking...</span></>
               ) : (
-                <><Loader2 className="w-5 h-5 text-gray-400 animate-spin" /><span className="text-gray-500 text-sm">Thinking...</span></>
+                <><Loader2 className="w-5 h-5 text-gray-400 animate-spin" /><span className="text-gray-500 text-sm font-medium">Thinking...</span></>
               )}
             </div>
           </div>
