@@ -1,3 +1,4 @@
+import { PronunciationProvider } from "@/context/pronunciation-context";
 import { SpeechProvider } from "@/context/speech-context";
 
 export default function ConversationLayout({
@@ -7,7 +8,7 @@ export default function ConversationLayout({
 }) {
   return (
     <SpeechProvider>
-      {children}
+      <PronunciationProvider>{children}</PronunciationProvider>
     </SpeechProvider>
   );
 }

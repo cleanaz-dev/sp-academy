@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSpeech } from "@/context/speech-context";
-import { useSpeak } from "@/hooks/use-speak";
-import { Clock, Square, Mic, Send, Volume2, Loader2, Languages } from "lucide-react";
+import { useSpeak } from "@/hooks/use-speak"; // YOUR exact hook
+import { Clock, Square, Mic, Send, Volume2, Loader2, Languages, Activity } from "lucide-react";
 import { FreestyleSessionConfig } from "./freestyle-wrapper";
-
+import { convertBlobToWav } from "@/lib/audio-utils"; // From your monster hook
 
 export default function FreestyleChat({ 
   session, 
@@ -20,7 +20,9 @@ export default function FreestyleChat({
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   
   const { startRecording, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
-  const { speak, isPlaying, stop: stopAudio } = useSpeak();
+  
+  // Destructured directly from your provided useSpeak hook!
+  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,28 +53,72 @@ export default function FreestyleChat({
     stopRecording();
     stopAudio();
 
-    // Trigger lambda review here using session.id
     await fetch("/api/freestyle/review", {
       method: "POST",
       body: JSON.stringify({ sessionId: session.id, messages, duration: 180 - timeLeft })
     });
     
-    onEnd(); // Return to setup
+    onEnd(); 
   };
 
+  // --- AZURE PRONUNCIATION (Matches your monster hook setup) ---
+  const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
+    try {
+      const wavBlob = await convertBlobToWav(audioBlob);
+      const formData = new FormData();
+      formData.append("audio", wavBlob, "recording.wav");
+      formData.append("transcript", text);
+      formData.append("language", session.targetLanguage);
+
+      const res = await fetch("/api/pronunciation-assessment", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const score = await res.json();
+        setMessages((prev) => prev.map((m) => 
+          m.id === messageId 
+            ? { ...m, pronunciationScore: score, isAnalyzingPronunciation: false } 
+            : m
+        ));
+      }
+    } catch (err) {
+      console.error("Pronunciation assessment failed", err);
+      setMessages((prev) => prev.map((m) => 
+        m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m
+      ));
+    }
+  };
+
+  // Called when user hits the send button
   const submitTurn = async () => {
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
     if (!userText) return;
 
-    const newMsg = { id: Date.now(), role: "user", text: userText };
+    const newMsgId = Date.now();
+    const newMsg = { 
+      id: newMsgId, 
+      role: "user", 
+      text: userText,
+      isAnalyzingPronunciation: !!audioBlob // Triggers UI loading state for score
+    };
+    
     const updatedMessages = [...messages, newMsg];
     setMessages(updatedMessages);
     resetSpeechState();
 
+    // 1. Get Pronunciation Score in the background
+    if (audioBlob) {
+      analyzePronunciation(audioBlob, userText, newMsgId);
+    }
+
+    // 2. Pass context to AI for reply
     handleAiTurn(false, updatedMessages);
   };
 
+  // Fetches AI response and triggers TTS
   const handleAiTurn = async (isOpening = false, chatHistory = []) => {
     setIsAiProcessing(true);
     try {
@@ -85,22 +131,22 @@ export default function FreestyleChat({
         })
       });
       const data = await res.json(); 
-      // Expected { text: "...", translation: "..." }
 
       setMessages(prev => [...prev, { 
         id: Date.now(), role: "assistant", text: data.text, translation: data.translation 
       }]);
       
       setIsAiProcessing(false);
-      // NOTE: pass gender to useSpeak if your TTS API requires it!
+      
+      // CALLS YOUR TTS HOOK
       await speak(data.text, session.targetLanguage, 1.0, session.voiceGender);
+      
     } catch (err) {
       console.error(err);
       setIsAiProcessing(false);
     }
   };
 
-  // UI Helpers
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
@@ -138,9 +184,29 @@ export default function FreestyleChat({
             }`}>
               {m.text}
             </div>
+
+            {/* AI Translation Subtitle */}
             {m.role === 'assistant' && m.translation && (
-              <div className="text-xs text-gray-400 mt-2 ml-2 flex items-center gap-1 cursor-pointer hover:text-blue-500">
-                <Languages className="w-3 h-3" /> Translation available (add toggle logic)
+              <div className="text-xs text-gray-400 mt-2 ml-2 flex items-center gap-1">
+                <Languages className="w-3 h-3" /> {m.translation}
+              </div>
+            )}
+
+            {/* User Pronunciation Score Badge */}
+            {m.role === 'user' && (
+              <div className="text-xs mt-2 mr-2 flex items-center gap-1 font-medium">
+                {m.isAnalyzingPronunciation ? (
+                  <span className="text-blue-400 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Scoring pronunciation...
+                  </span>
+                ) : m.pronunciationScore ? (
+                  <span className={`flex items-center gap-1 ${
+                    m.pronunciationScore.pronunciationScore >= 80 ? 'text-green-500' :
+                    m.pronunciationScore.pronunciationScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                  }`}>
+                    <Activity className="w-3 h-3" /> Score: {m.pronunciationScore.pronunciationScore}/100
+                  </span>
+                ) : null}
               </div>
             )}
           </div>
@@ -155,9 +221,9 @@ export default function FreestyleChat({
           </div>
         )}
 
-        {/* AI Typing Indicator */}
-        {(isAiProcessing || isPlaying) && (
-          <div className="flex items-start gap-2">
+        {/* AI Typing / TTS Loading Indicator */}
+        {(isAiProcessing || isPlaying || isSpeechLoading) && (
+          <div className="flex items-start gap-2 animate-in fade-in zoom-in duration-300">
             <div className="bg-white border border-gray-100 p-4 rounded-3xl rounded-bl-sm shadow-sm flex items-center gap-3">
               {isPlaying ? (
                 <><Volume2 className="w-5 h-5 text-indigo-500 animate-pulse" /><span className="text-gray-500 text-sm">Speaking...</span></>
@@ -187,9 +253,9 @@ export default function FreestyleChat({
           ) : (
              <button 
                onClick={() => startRecording(session.targetLanguage)}
-               disabled={isPlaying || isAiProcessing}
+               disabled={isPlaying || isAiProcessing || isSpeechLoading}
                className={`rounded-full p-6 transition-all duration-300 ${
-                 isPlaying || isAiProcessing 
+                 isPlaying || isAiProcessing || isSpeechLoading
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed scale-95' 
                   : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-110 shadow-[0_10px_40px_rgba(79,70,229,0.3)]'
                }`}
@@ -199,7 +265,7 @@ export default function FreestyleChat({
           )}
         </div>
         
-        <div className="w-14"> {/* Spacer to keep mic centered */} </div>
+        <div className="w-14"></div>
       </div>
     </div>
   );

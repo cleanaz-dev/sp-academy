@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mic2, Settings2, User2, Play, Sparkles } from "lucide-react";
+import { Mic2, Settings2, User2, Play, Sparkles, Globe2 } from "lucide-react";
 
 const MODES = [
   { id: "INTRODUCTION", label: "Introduction", icon: "👋" },
@@ -10,10 +10,20 @@ const MODES = [
   { id: "ARGUMENTATIVE", label: "Debate", icon: "⚖️" }
 ];
 
-export default function FreestyleSetup({ onStart, defaultNative, defaultTarget }: any) {
+const SUPPORTED_LANGUAGES = [
+  { code: "en-US", label: "English (US)" },
+  { code: "es-ES", label: "Spanish" },
+  { code: "fr-FR", label: "French" },
+  { code: "de-DE", label: "German" },
+  { code: "it-IT", label: "Italian" },
+];
+
+export default function FreestyleSetup({ onStart, defaultNative = "en-US", defaultTarget = "es-ES" }: any) {
   const [mode, setMode] = useState("RANDOM");
   const [topic, setTopic] = useState("");
   const [voiceGender, setVoiceGender] = useState<"male" | "female">("female");
+  const [nativeLang, setNativeLang] = useState(defaultNative);
+  const [targetLang, setTargetLang] = useState(defaultTarget);
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = async () => {
@@ -25,8 +35,8 @@ export default function FreestyleSetup({ onStart, defaultNative, defaultTarget }
     await onStart({
       mode,
       topic: mode === "SPECIFIC" ? topic : undefined,
-      nativeLanguage: defaultNative,
-      targetLanguage: defaultTarget,
+      nativeLanguage: nativeLang,
+      targetLanguage: targetLang,
       voiceGender,
     });
   };
@@ -44,6 +54,39 @@ export default function FreestyleSetup({ onStart, defaultNative, defaultTarget }
       </div>
 
       <div className="space-y-8">
+        {/* Language Selectors */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Globe2 className="w-4 h-4 text-blue-500" /> Native Language
+            </label>
+            <select
+              value={nativeLang}
+              onChange={(e) => setNativeLang(e.target.value)}
+              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-gray-700 cursor-pointer appearance-none"
+            >
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Globe2 className="w-4 h-4 text-indigo-500" /> Target Language
+            </label>
+            <select
+              value={targetLang}
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="w-full p-4 bg-indigo-50/30 border-2 border-indigo-100 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium text-indigo-900 cursor-pointer appearance-none"
+            >
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* Mode Selector */}
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
