@@ -1,12 +1,14 @@
 // app/api/freestyle/create/route.ts
 import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server"; // Or your auth
+import { auth } from "@clerk/nextjs/server"; // Or your auth
 import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const user = await currentUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await request.json();
     const { mode, topic, nativeLanguage, targetLanguage, aiAvatarUrl } = body;
@@ -14,8 +16,8 @@ export async function POST(request: Request) {
     // Create the Session row in Prisma
     const session = await prisma.freestyleSession.create({
       data: {
-        userId: user.id,
-        mode: mode, 
+        user: { connect: { userId: clerkUserId } },
+        mode: mode,
         topic: topic || null,
         nativeLanguage: nativeLanguage,
         targetLanguage: targetLanguage,
@@ -28,6 +30,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {
     console.error("Create Session Error:", error);
-    return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create session" },
+      { status: 500 },
+    );
   }
 }
