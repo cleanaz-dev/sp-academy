@@ -50,7 +50,7 @@ CRITICAL RULES:
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "zai-org/glm-5.3-flash",
+        model: "deepseek/deepseek-v4-flash-0731",
         messages: messages,
         response_format: { type: "json_object" }, // FORCE JSON
         max_tokens: 4000,
