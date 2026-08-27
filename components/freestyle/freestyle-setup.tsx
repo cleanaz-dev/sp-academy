@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Mic2, Settings2, User2, Play, Sparkles, Globe2 } from "lucide-react";
+import { Mic2, Settings2, User2, Play, Sparkles, Globe2, BarChart3 } from "lucide-react";
 
 const MODES = [
   { id: "INTRODUCTION", label: "Introduction", icon: "👋" },
   { id: "SPECIFIC", label: "Specific Topic", icon: "🎯" },
   { id: "RANDOM", label: "Random", icon: "🎲" },
   { id: "ARGUMENTATIVE", label: "Debate", icon: "⚖️" }
+];
+
+const LEVELS = [
+  { id: "EASY", label: "Easy", desc: "Simple vocab, slow pace", color: "emerald" },
+  { id: "MEDIUM", label: "Medium", desc: "Natural speed, some idioms", color: "amber" },
+  { id: "FLUENT", label: "Fluent", desc: "Native speed, complex topics", color: "rose" },
 ];
 
 const SUPPORTED_LANGUAGES = [
@@ -20,6 +26,7 @@ const SUPPORTED_LANGUAGES = [
 
 export default function FreestyleSetup({ onStart, defaultNative = "en-US", defaultTarget = "es-ES" }: any) {
   const [mode, setMode] = useState("RANDOM");
+  const [level, setLevel] = useState("EASY");                    // <-- ADD
   const [topic, setTopic] = useState("");
   const [voiceGender, setVoiceGender] = useState<"male" | "female">("female");
   const [nativeLang, setNativeLang] = useState(defaultNative);
@@ -27,13 +34,13 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = async () => {
-    // Mobile Safari Audio Hack - unlocks audio context on first user click
-    const silentAudio = new Audio("data:audio/mp3;base64,//MkxAA..."); 
+    const silentAudio = new Audio("data:audio/mp3;base64,//MkxAA...");
     silentAudio.play().catch(() => {});
 
     setIsStarting(true);
     await onStart({
       mode,
+      level,                                                    // <-- PASS LEVEL
       topic: mode === "SPECIFIC" ? topic : undefined,
       nativeLanguage: nativeLang,
       targetLanguage: targetLang,
@@ -87,6 +94,29 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
           </div>
         </div>
 
+        {/* Level Selector — NEW */}
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-500" /> Difficulty Level
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {LEVELS.map((l) => (
+              <button
+                key={l.id}
+                onClick={() => setLevel(l.id)}
+                className={`p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-1 ${
+                  level === l.id
+                  ? `border-${l.color}-600 bg-${l.color}-50/50 shadow-md ring-4 ring-${l.color}-600/10`
+                  : "border-gray-100 bg-white hover:border-gray-200"
+                }`}
+              >
+                <span className="font-bold text-sm text-gray-800">{l.label}</span>
+                <span className="text-xs text-gray-500 leading-tight">{l.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Mode Selector */}
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -110,7 +140,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
           </div>
         </div>
 
-        {/* Specific Topic Input (Animated) */}
+        {/* Specific Topic Input */}
         {mode === "SPECIFIC" && (
           <div className="animate-in slide-in-from-top-2 fade-in duration-300">
             <input

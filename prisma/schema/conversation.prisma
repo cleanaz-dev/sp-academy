@@ -50,6 +50,12 @@ model ConversationReview {
 
 // Add this to your schema.prisma
 
+enum FreestyleLevel {
+  EASY
+  MEDIUM
+  FLUENT
+}
+
 enum FreestyleMode {
   INTRODUCTION
   SPECIFIC
@@ -64,27 +70,36 @@ enum SessionStatus {
   REVIEWED
 }
 
+enum VoiceGender {
+  MALE
+  FEMALE
+}
+
 model FreestyleSession {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String        @db.ObjectId
-  user           User          @relation(fields: [userId], references: [id])
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String         @db.ObjectId
+  user           User           @relation(fields: [userId], references: [id])
   mode           FreestyleMode
-  topic          String? // Used if mode == SPECIFIC
-  nativeLanguage String // Or use your existing Languages enum
-  targetLanguage String // Or use your existing Languages enum
+  level          FreestyleLevel @default(EASY) // <-- ADD THIS
+  topic          String?
+  nativeLanguage String
+  targetLanguage String
+  voiceGender    VoiceGender    @default(FEMALE) // <-- ADD THIS (from your UI)
 
-  duration Int           @default(0) // Time recorded in seconds (max 180)
-  status   SessionStatus @default(IN_PROGRESS)
-
-  // Array of { role: 'user' | 'assistant', text: string, audioUrl?: string }
+  duration       Int           @default(0)
+  status         SessionStatus @default(IN_PROGRESS)
   messages       Json[]
-  fullTranscript String? // Combined transcript for Lambda to analyze
-  s3AudioKey     String? // If you upload the combined user audio to S3
+  fullTranscript String?
+  s3AudioKey     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   review FreestyleReview?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model FreestyleReview {
@@ -92,12 +107,17 @@ model FreestyleReview {
   freestyleSessionId String           @unique @db.ObjectId
   session            FreestyleSession @relation(fields: [freestyleSessionId], references: [id], onDelete: Cascade)
 
-  mistakes        Json[] // Corrections from DeepSeek
-  overallFeedback String? // General advice
-  metrics         Json? // e.g. { fluency: 80, vocabulary: 75 }
-
-  lambdaStatus String? // e.g., PENDING, SUCCESS, FAILED
+  mistakes        Json[]
+  overallFeedback String?
+  metrics         Json?
+  lambdaStatus    LambdaStatus? @default(PENDING) // <-- enum instead of raw string
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum LambdaStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }
