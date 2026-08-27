@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak"; 
-import { Clock, Square, Mic, Send, Volume2, Loader2 } from "lucide-react";
+import { Clock, Square, Mic, Send, Volume2, Loader2, Activity, Languages } from "lucide-react";
 import { FreestyleSessionConfig } from "./freestyle-wrapper";
 import { convertBlobToWav } from "@/lib/audio-utils"; 
 import { FreestyleChatBubble } from "./freestye-chat-bubble";
@@ -169,10 +169,57 @@ export default function FreestyleChat({
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
         
         {/* Render Extracted Chat Bubbles */}
-        {messages.map((m) => (
-          <FreestyleChatBubble key={m.id} message={m} />
-        ))}
+        {messages.map((m) => {
+          // 💡 Extract exact Azure Data Path safely
+          const azureScore = m.pronunciationScore?.NBest?.[0]?.PronScore;
+          const accuracyScore = m.pronunciationScore?.NBest?.[0]?.AccuracyScore;
+          const fluencyScore = m.pronunciationScore?.NBest?.[0]?.FluencyScore;
 
+          return (
+            <div key={m.id} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[80%] p-4 rounded-3xl shadow-sm text-[15px] leading-relaxed ${
+                m.role === 'user' 
+                  ? 'bg-blue-600 text-white rounded-br-sm' 
+                  : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm'
+              }`}>
+                {m.text}
+              </div>
+
+              {/* AI Translation Subtitle */}
+              {m.role === 'assistant' && m.translation && (
+                <div className="text-xs text-gray-400 mt-2 ml-2 flex items-center gap-1">
+                  <Languages className="w-3 h-3" /> {m.translation}
+                </div>
+              )}
+
+              {/* User Pronunciation Score Badge */}
+              {m.role === 'user' && (
+                <div className="text-xs mt-2 mr-2 flex items-center gap-2 font-medium">
+                  {m.isAnalyzingPronunciation ? (
+                    <span className="text-blue-400 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Scoring...
+                    </span>
+                  ) : azureScore !== undefined ? (
+                    <>
+                      <span className={`flex items-center gap-1 ${
+                        azureScore >= 80 ? 'text-green-500' :
+                        azureScore >= 60 ? 'text-yellow-500' : 'text-red-500'
+                      }`}>
+                        <Activity className="w-3 h-3" /> Pronunciation: {azureScore}/100
+                      </span>
+                      {accuracyScore && (
+                        <span className="text-gray-400">| Acc: {accuracyScore}</span>
+                      )}
+                      {fluencyScore && (
+                        <span className="text-gray-400">| Flu: {fluencyScore}</span>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {/* Live Transcript Bubble (When speaking) */}
         {isRecording && transcript && (
           <div className="flex flex-col items-end animate-in slide-in-from-bottom-2">
