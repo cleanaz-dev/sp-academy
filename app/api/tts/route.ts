@@ -20,7 +20,7 @@ const VOICE_MAP: Record<string, Record<string, string>> = {
   },
 };
 // A fallback if the language isn't in the map, or for older components that don't pass gender.
-const FALLBACK_VOICE_ID = "YOUR_DEFAULT_VOICE_ID"; 
+const FALLBACK_VOICE_ID = "690813f2df56491b82ee02a22d1c67fd"; 
 
 export async function POST(request: Request) {
   try {
