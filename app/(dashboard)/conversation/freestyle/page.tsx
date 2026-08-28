@@ -8,11 +8,9 @@ export default async function FreestylePage() {
   const defaultTarget = "fr-FR";
 
   return (
-
-     
-    // 'h-full flex-1' ensures it seamlessly docks into your existing layout's main area
-    // without creating a double scrollbar.
-    <div className="flex-1 w-full h-full animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%]  overflow-hidden flex flex-col">
+    // 1. Removed 'h-full'
+    // 2. Added 'h-[calc(100dvh-72px)]' <-- Adjust 72px to the exact height of your top nav!
+    <div className="flex-1 w-full h-[calc(100dvh-72px)] animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] overflow-hidden flex flex-col">
       <FreestyleWrapper
         userId={user?.id}
         defaultNative={defaultNative}
