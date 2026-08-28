@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { z } from "zod"; // npm install zod if you haven't
+import { z } from "zod";
 
 export const maxDuration = 60;
 
 // ─── Validation Schema ─────────────────────────────────────────
 const ChatBodySchema = z.object({
   mode: z.enum(["INTRODUCTION", "SPECIFIC", "RANDOM", "ARGUMENTATIVE"]),
-  level: z.enum(["EASY", "MEDIUM", "FLUENT"]).default("EASY"),        // <-- NEW
+  level: z.enum(["EASY", "MEDIUM", "FLUENT"]).default("EASY"),
   topic: z.string().optional(),
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
-  voiceGender: z.enum(["male", "female"]).optional(),                // <-- NEW (for future TTS)
+  voiceGender: z.enum(["male", "female"]).optional(),
   chatHistory: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     text: z.string(),
@@ -21,33 +21,33 @@ const ChatBodySchema = z.object({
 // ─── Level-Based Prompt Injections ─────────────────────────────
 const LEVEL_INSTRUCTIONS: Record<string, string> = {
   EASY: `
-DIFFICULTY: EASY
-- Use simple, high-frequency vocabulary (A1-A2).
-- Speak in short, clear sentences. Avoid idioms and slang.
-- Ask straightforward questions that require simple answers.
-- Be patient and encouraging. If the user struggles, rephrase simply.`,
+DIFFICULTY: EASY (A1-A2)
+- Be warm, patient, and highly supportive.
+- Speak in short, clear sentences. Avoid idioms, slang, and complex grammar.
+- React happily to their input before asking the next simple question.
+- If they struggle, gently steer the conversation to something very familiar (hobbies, food, weather).`,
   
   MEDIUM: `
-DIFFICULTY: MEDIUM
-- Use natural, conversational vocabulary (B1-B2).
-- Use some common idioms and colloquialisms.
-- Ask open-ended questions that require explanation.
-- Correct subtle mistakes gently by rephrasing.`,
+DIFFICULTY: MEDIUM (B1-B2)
+- Be casually conversational and curious, like a friendly acquaintance.
+- Use natural vocabulary, some common idioms, and transitional phrases.
+- Acknowledge their ideas and share a brief perspective of your own before asking a thoughtful follow-up question.
+- Correct subtle mistakes naturally by just using the right word in your response.`,
   
   FLUENT: `
-DIFFICULTY: FLUENT
-- Use sophisticated, native-level vocabulary (C1-C2).
-- Employ nuance, humor, cultural references, and complex sentence structures.
-- Challenge the user's assumptions. Push them to defend opinions.
-- Speak at a natural native pace (your text should feel dense and rapid).`,
+DIFFICULTY: FLUENT (C1-C2)
+- Be highly engaging and dynamic, like speaking with a native friend or colleague.
+- Speak at a natural native pace using nuance, humor, cultural references, and complex sentence structures.
+- Don't just ask questions—debate, joke, or deeply agree with them. 
+- Challenge their assumptions and push them to expand on their opinions.`,
 };
 
 // ─── Mode-Based Opening Prompts ────────────────────────────────
 const MODE_OPENING_TASKS: Record<string, (topic?: string) => string> = {
-  INTRODUCTION: () => `TASK: Introduce yourself warmly and ask an easy warm-up question.`,
-  SPECIFIC: (topic) => `TASK: Start a roleplay about: "${topic}". Set the scene and ask a question.`,
-  RANDOM: () => `TASK: Ask a unique, thought-provoking open-ended question.`,
-  ARGUMENTATIVE: () => `TASK: Make a controversial statement and challenge them to debate you.`,
+  INTRODUCTION: () => `TASK: Warmly introduce yourself, share a brief, friendly detail about your day, and ask a simple warm-up question to get them talking.`,
+  SPECIFIC: (topic) => `TASK: Start a natural roleplay or conversation about: "${topic}". Set the scene conversationally, make a statement, and ask a question to draw them in.`,
+  RANDOM: () => `TASK: Share a brief, interesting thought about a completely random everyday topic, then ask them an engaging, open-ended question about it.`,
+  ARGUMENTATIVE: () => `TASK: Make a strong, slightly controversial statement. Briefly explain your stance and challenge them to share their perspective.`,
 };
 
 export async function POST(req: Request) {
@@ -72,26 +72,33 @@ export async function POST(req: Request) {
     console.log(`[CHAT-${requestId}] Params: Mode=${mode}, Level=${level}, Target=${targetLanguage}, Native=${nativeLanguage}`);
 
     // 2. Build dynamic system prompt
-    let systemPrompt = `You are a conversational language tutor leading a fast-paced speaking challenge.
+    // CHANGED: We tell the AI to be a "friendly conversational partner" rather than leading a "fast-paced challenge".
+    let systemPrompt = `You are a friendly, conversational native speaker having a natural voice chat with a learner.
 Target Language: ${targetLanguage}. Native Language: ${nativeLanguage}.
 
-CRITICAL RULES:
+CRITICAL FORMATTING RULES:
 1. You MUST respond in valid JSON with EXACTLY two keys:
-   - "text": Your response in ${targetLanguage} (1-3 sentences max. NO emojis. Always end with a question).
+   - "text": Your response in ${targetLanguage}.
    - "translation": The exact translation of your response into ${nativeLanguage}.
 2. Do not wrap in markdown. Return raw JSON only.
-3. Stay in character as a language tutor.`;
+3. NO emojis in your text (it messes up text-to-speech).
+
+CONVERSATIONAL RULES:
+- Keep your response brief but conversational (2-4 sentences max).
+- ALWAYS react to what the user just said first (e.g., "That's interesting!", "I totally agree").
+- Share a brief thought of your own to make it feel like a real dialogue.
+- End your turn by naturally passing the conversation back to them, usually with a relevant question.`;
 
     // Inject level-specific instructions
-    systemPrompt += LEVEL_INSTRUCTIONS[level];
+    systemPrompt += `\n${LEVEL_INSTRUCTIONS[level]}`;
 
-    // Inject mode-specific task (only on opening, but keep persona consistent)
+    // Inject mode-specific task or follow-up prompt
     if (isOpening) {
       const taskFn = MODE_OPENING_TASKS[mode];
-      systemPrompt += `\n${taskFn(topic)}`;
+      systemPrompt += `\n\n${taskFn(topic)}`;
     } else {
-      // For follow-ups, remind the AI of the mode context
-      systemPrompt += `\nCONTINUE THE CONVERSATION: Keep the ${mode.toLowerCase()} dynamic going naturally.`;
+      // CHANGED: Ensure the AI builds on the user's input rather than pivoting abruptly.
+      systemPrompt += `\n\nTASK: CONTINUE THE CONVERSATION. Acknowledge what the user just said, add a natural conversational thought of your own, and ask a follow-up question to keep the ${mode.toLowerCase()} dynamic alive.`;
     }
 
     const messages = [
@@ -118,8 +125,8 @@ CRITICAL RULES:
         model: "deepseek/deepseek-v4-flash-0731",
         messages: messages,
         response_format: { type: "json_object" },
-        max_tokens: level === "FLUENT" ? 600 : 400,   // Fluent gets more tokens for complex structures
-        temperature: level === "FLUENT" ? 0.9 : 0.7,   // More creative at fluent level
+        max_tokens: level === "FLUENT" ? 600 : 400,
+        temperature: level === "FLUENT" ? 0.9 : 0.7, 
       }),
     });
 
@@ -146,7 +153,6 @@ CRITICAL RULES:
       parsedContent = JSON.parse(cleaned);
     }
 
-    // Validate expected keys exist
     if (!parsedContent.text || !parsedContent.translation) {
       throw new Error("AI response missing required 'text' or 'translation' fields");
     }
@@ -156,7 +162,7 @@ CRITICAL RULES:
     return NextResponse.json({ 
       text: parsedContent.text, 
       translation: parsedContent.translation,
-      meta: { level, mode, requestId }  // Return metadata for frontend tracking
+      meta: { level, mode, requestId }  
     });
 
   } catch (error: any) {
