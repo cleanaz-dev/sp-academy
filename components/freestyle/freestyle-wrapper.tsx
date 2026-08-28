@@ -51,9 +51,7 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             className="w-full h-full flex flex-col items-center justify-center overflow-y-auto p-6"
           >
             <div className="w-full max-w-2xl">
-              <h1 className="text-2xl font-semibold mb-8 text-slate-800 text-center">
-                Start a Freestyle Session
-              </h1>
+              
               <FreestyleSetup
                 onStart={handleStartSession}
                 defaultNative={defaultNative}
