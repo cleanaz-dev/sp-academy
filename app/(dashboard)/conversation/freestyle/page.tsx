@@ -1,22 +1,21 @@
 import FreestyleWrapper from "@/components/freestyle/freestyle-wrapper";
-import { currentUser } from "@clerk/nextjs/server"; // Or your auth provider
+import { currentUser } from "@clerk/nextjs/server";
 
 export default async function FreestylePage() {
   const user = await currentUser();
   
-  // You can fetch user's saved preferences from your DB here
   const defaultNative = "en-US";
-  const defaultTarget = "es-ES";
+  const defaultTarget = "fr-FR";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 py-8">
-      <div className="container mx-auto w-full max-w-5xl px-4">
-        <FreestyleWrapper
-          userId={user?.id}
-          defaultNative={defaultNative}
-          defaultTarget={defaultTarget}
-        />
-      </div>
+    // 'h-full flex-1' ensures it seamlessly docks into your existing layout's main area
+    // without creating a double scrollbar.
+    <div className="flex-1 w-full h-full bg-white overflow-hidden flex flex-col">
+      <FreestyleWrapper
+        userId={user?.id}
+        defaultNative={defaultNative}
+        defaultTarget={defaultTarget}
+      />
     </div>
   );
 }

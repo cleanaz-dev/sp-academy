@@ -20,50 +20,55 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
   const [activeSession, setActiveSession] = useState<FreestyleSessionConfig | null>(null);
 
   const handleStartSession = async (config: Omit<FreestyleSessionConfig, "id" | "aiAvatarUrl">) => {
-    // 1. Generate a premium random avatar based on gender
     const seed = Math.random().toString(36).substring(7);
     const aiAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&style=circle&top=${config.voiceGender === 'female' ? 'longHair' : 'shortHair'}`;
 
-    // 2. Create the session in the database
     const res = await fetch("/api/freestyle/create", {
       method: "POST",
       body: JSON.stringify({ ...config, aiAvatarUrl })
     });
     const data = await res.json();
 
-    // 3. Instantly swap the UI to the chat (No router.push delays!)
     setActiveSession({
-      id: data.sessionId, // Returned from your DB
+      id: data.sessionId,
       ...config,
       aiAvatarUrl,
     });
   };
 
   return (
-    <div className="w-full h-[85vh] relative flex flex-col justify-center">
+    // Takes up the exact space provided by the page.tsx wrapper
+    <div className="flex-1 w-full h-full relative flex flex-col">
       <AnimatePresence mode="wait">
         {!activeSession ? (
           <motion.div
             key="setup"
-            initial={{ opacity: 0, y: 20 }}
+            // Subtle, professional fade and slide (no zooming or blurring)
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
-            transition={{ duration: 0.3 }}
-            className="w-full max-w-3xl mx-auto"
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="w-full h-full flex flex-col items-center justify-center overflow-y-auto p-6"
           >
-            <FreestyleSetup
-              onStart={handleStartSession}
-              defaultNative={defaultNative}
-              defaultTarget={defaultTarget}
-            />
+            <div className="w-full max-w-2xl">
+              <h1 className="text-2xl font-semibold mb-8 text-slate-800 text-center">
+                Start a Freestyle Session
+              </h1>
+              <FreestyleSetup
+                onStart={handleStartSession}
+                defaultNative={defaultNative}
+                defaultTarget={defaultTarget}
+              />
+            </div>
           </motion.div>
         ) : (
           <motion.div
             key="chat"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="w-full max-w-4xl mx-auto h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            // Full bleed—forces the chat to touch the edges of the parent layout
+            className="w-full h-full flex flex-col"
           >
             <FreestyleChat
               session={activeSession}
