@@ -3,6 +3,7 @@ import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-con
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
+import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -51,6 +52,9 @@ export async function POST(req: Request, { params }: Params) {
       }
       case SystemTaskType.CONVERSATION_IMAGE_GENERATION: {
         return await handleConversationImages(task,body)
+      }
+      case SystemTaskType.FREESTYLE_REVIEW: {
+        return await handleFreestyleReview(task,body)
       }
 
 
