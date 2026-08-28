@@ -24,7 +24,7 @@ const SUPPORTED_LANGUAGES = [
   { code: "it-IT", label: "Italian" },
 ];
 
-export default function FreestyleSetup({ onStart, defaultNative = "en-US", defaultTarget = "es-ES" }: any) {
+export default function FreestyleSetup({ onStart, defaultNative = "en-US", defaultTarget = "fr-FR" }: any) {
   const [mode, setMode] = useState("RANDOM");
   const [level, setLevel] = useState("EASY");                    // <-- ADD
   const [topic, setTopic] = useState("");

@@ -13,6 +13,7 @@ export type FreestyleSessionConfig = {
   targetLanguage: string;
   voiceGender: "male" | "female";
   aiAvatarUrl: string;
+  level: "EASY" | "MEDIUM" | "FLUENT";
 };
 
 export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) {
@@ -51,7 +52,7 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             className="w-full max-w-3xl mx-auto"
           >
             <FreestyleSetup
-              onStart={handleStartSession} 
+              onStart={handleStartSession}
               defaultNative={defaultNative}
               defaultTarget={defaultTarget}
             />
@@ -65,8 +66,8 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             className="w-full max-w-4xl mx-auto h-full"
           >
             <FreestyleChat
-              session={activeSession} 
-              onEnd={() => setActiveSession(null)} 
+              session={activeSession}
+              onEnd={() => setActiveSession(null)}
             />
           </motion.div>
         )}

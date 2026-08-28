@@ -78,14 +78,20 @@ export default function FreestyleChat({
     stopRecording();
     stopAudio();
 
-    await fetch("/api/freestyle/review", {
-      method: "POST",
-      body: JSON.stringify({
-        sessionId: session.id,
-        messages,
-        duration: 180 - timeLeft,
-      }),
-    });
+    try {
+      await fetch("/api/freestyle/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...session, // full config: mode, topic, level, nativeLanguage, targetLanguage, voiceGender, aiAvatarUrl, id
+          sessionId: session.id, // route destructures `sessionId`, not `id`
+          messages,
+          duration: 180 - timeLeft,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to submit session for review:", err);
+    }
 
     onEnd();
   };
