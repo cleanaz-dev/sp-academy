@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const webhookUrl = `${process.env.NEXT_APP_PUBLIC_URL}/webhooks/system-tasks/${task.id}`;
+    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/webhooks/system-tasks/${task.id}`;
 
     // 3. The Payload for Lambda
     const payload = {
