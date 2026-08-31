@@ -144,7 +144,7 @@ CONVERSATIONAL RULES:
     console.log(`[CHAT-${requestId}] 📝 Raw AI Content:`, rawContent);
 
     // Parse JSON with fallback cleanup
-    let parsedContent;
+    let parsedContent: any
     try {
       parsedContent = JSON.parse(rawContent);
     } catch (e) {
