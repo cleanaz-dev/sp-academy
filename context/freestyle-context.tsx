@@ -41,6 +41,7 @@ export function FreestyleProvider({
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
+  const isSubmittingRef = useRef(false);
 
   const { startRecording: startSpeech, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
   const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
@@ -54,30 +55,38 @@ export function FreestyleProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEndSession = async () => {
-    stopRecording();
-    stopAudio();
+const handleEndSession = async () => {
+  // 2. Add the lock check immediately!
+  // If it's already submitting, ignore all other attempts.
+  if (isSubmittingRef.current) return;
+  isSubmittingRef.current = true; // Lock the door
+
+  stopRecording();
+  stopAudio();
+  
+  // Calculate accurate duration based on timestamps, not the timer UI
+  const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
+
+  try {
+    await fetch("/api/freestyle/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...session,
+        sessionId: session.id,
+        messages,
+        duration,
+      }),
+    });
     
-    // Calculate accurate duration based on timestamps, not the timer UI
-    const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
-
-    try {
-      await fetch("/api/freestyle/review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...session,
-          sessionId: session.id,
-          messages,
-          duration,
-        }),
-      });
-    } catch (err) {
-      console.error("Failed to submit session for review:", err);
-    }
-
-    onEnd();
-  };
+    // Call onEnd ONLY if the fetch succeeds
+    onEnd(); 
+  } catch (err) {
+    console.error("Failed to submit session for review:", err);
+    // If it fails (e.g. network error), unlock it so the user can try clicking the button again
+    isSubmittingRef.current = false;
+  }
+};
 
   const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
     try {

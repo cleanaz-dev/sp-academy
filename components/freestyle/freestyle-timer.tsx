@@ -7,6 +7,8 @@ import { useFreestyle } from "@/context/freestyle-context";
 export function FreestyleTimer({ initialTime = 300 }: { initialTime?: number }) {
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasEndedRef = useRef(false); // 1. Add this ref
+  
   const { handleEndSession } = useFreestyle();
 
   useEffect(() => {
@@ -14,7 +16,9 @@ export function FreestyleTimer({ initialTime = 300 }: { initialTime?: number }) 
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && !hasEndedRef.current) {
+      // 2. Lock it so this block can NEVER run twice
+      hasEndedRef.current = true;
       handleEndSession();
     }
 
