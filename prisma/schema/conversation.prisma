@@ -48,7 +48,7 @@ model ConversationReview {
   updatedAt DateTime @updatedAt
 }
 
-// Add this to your schema.prisma
+
 
 enum FreestyleLevel {
   EASY
@@ -108,7 +108,7 @@ model FreestyleReview {
   session            FreestyleSession @relation(fields: [freestyleSessionId], references: [id], onDelete: Cascade)
 
   mistakes        Json[]
-  overallFeedback String?
+  overallFeedback Json?
   metrics         Json?
   lambdaStatus    LambdaStatus? @default(PENDING)
 

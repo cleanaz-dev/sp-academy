@@ -1,27 +1,40 @@
 import { z } from "zod";
 
-// Flexible schema for mistakes since LLM output might vary slightly.
-// z.record() requires an explicit key schema in Zod v4 — the old
-// single-argument form (z.record(z.unknown())) was removed, not just
-// deprecated, and silently throws at parse time for non-empty objects.
-export const FreestyleMistakeSchema = z.record(z.string(), z.unknown());
-
-export const FreestyleMetricsSchema = z
-  .object({
-    pronunciationScore: z.number().min(0).max(100).optional(),
-    grammarScore: z.number().min(0).max(100).optional(),
-    vocabScore: z.number().min(0).max(100).optional(),
-    overallScore: z.number().min(0).max(100).optional(),
-  })
-  .loose(); // Allows extra fields if the LLM adds them (replaces deprecated .passthrough())
-
-export const FreestyleReviewDataSchema = z.object({
-  mistakes: z.array(FreestyleMistakeSchema).default([]),
-  overallFeedback: z.string().nullable().optional(),
-  metrics: FreestyleMetricsSchema.optional(),
+// Individual mistake — strict shape so frontend components don't crash
+export const FreestyleMistakeSchema = z.object({
+  type: z.enum(["grammar", "vocabulary", "pronunciation", "fluency"]),
+  severity: z.enum(["minor", "major", "critical"]),
+  original: z.string().min(1),
+  correction: z.string().min(1),
+  explanation: z.string().min(1),
+  context: z.string().optional(),
 });
 
-// The main payload expected from the Python Lambda
+// Metrics — now includes fluencyScore
+export const FreestyleMetricsSchema = z.object({
+  overallScore: z.number().min(0).max(100),
+  grammarScore: z.number().min(0).max(100),
+  vocabScore: z.number().min(0).max(100),
+  pronunciationScore: z.number().min(0).max(100).nullable(),
+  fluencyScore: z.number().min(0).max(100),
+});
+
+// overallFeedback is now an object, not a string
+export const FreestyleOverallFeedbackSchema = z.object({
+  summary: z.string().min(1),
+  strengths: z.array(z.string()).max(3),
+  focusAreas: z.array(z.string()).max(3),
+  encouragement: z.string().min(1),
+});
+
+// The review data itself
+export const FreestyleReviewDataSchema = z.object({
+  metrics: FreestyleMetricsSchema,
+  mistakes: z.array(FreestyleMistakeSchema).max(5),
+  overallFeedback: FreestyleOverallFeedbackSchema,
+});
+
+// Main webhook payload from Lambda
 export const FreestyleReviewWebhookSchema = z.object({
   taskId: z.string(),
   sessionId: z.string(),
@@ -30,6 +43,9 @@ export const FreestyleReviewWebhookSchema = z.object({
   review: FreestyleReviewDataSchema.optional(),
 });
 
-// Export inferred types for TypeScript support
+// Types
 export type FreestyleReviewWebhookPayload = z.infer<typeof FreestyleReviewWebhookSchema>;
 export type FreestyleReviewData = z.infer<typeof FreestyleReviewDataSchema>;
+export type FreestyleMistake = z.infer<typeof FreestyleMistakeSchema>;
+export type FreestyleMetrics = z.infer<typeof FreestyleMetricsSchema>;
+export type FreestyleOverallFeedback = z.infer<typeof FreestyleOverallFeedbackSchema>;

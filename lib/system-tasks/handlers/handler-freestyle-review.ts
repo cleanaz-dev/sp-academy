@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-// 1. Import the Enums and Prisma namespace for correct typing
 import { 
   SystemTask, 
   LambdaStatus, 
@@ -16,19 +15,19 @@ export async function handleFreestyleReview(
 ) {
   try {
     const parsedResult = FreestyleReviewWebhookSchema.safeParse(body);
-    console.log("Parsed Freestlye Review:", parsedResult)
+    console.log("Parsed Freestyle Review:", parsedResult.success);
 
     if (!parsedResult.success) {
-      console.error("Invalid Webhook Payload:", z.flattenError(parsedResult.error));
+      console.error("Invalid Webhook Payload:", parsedResult.error.flatten());
       return NextResponse.json(
-        { message: "Invalid payload", errors: z.flattenError(parsedResult.error)},
+        { message: "Invalid payload", errors: parsedResult.error.flatten() },
         { status: 400 }
       );
     }
 
     const { sessionId, status, review, error } = parsedResult.data;
 
-    // 2. Handle Lambda Failures (Using LambdaStatus enum)
+    // Handle Lambda Failures
     if (status === "FAILED") {
       console.error(`Lambda failed for session ${sessionId}:`, error);
 
@@ -40,48 +39,44 @@ export async function handleFreestyleReview(
 
       await prisma.systemTask.update({
         where: { id: task.id },
-        // NOTE: If SystemTask uses an enum for status, import and use it here (e.g., SystemTaskStatus.FAILED)
         data: { status: "FAILED" }, 
       });
 
       return NextResponse.json({ message: "Handled failure" }, { status: 200 });
     }
 
-    // 3. Handle Successful Execution
-    const mistakes = review?.mistakes || []; 
-    const overallFeedback = review?.overallFeedback || null;
-    const metrics = review?.metrics || {};
+    // Handle Success — review is guaranteed to exist here because of Zod
+    if (!review) {
+      throw new Error("SUCCESS status but no review data");
+    }
+
+    const { mistakes, overallFeedback, metrics } = review;
 
     await prisma.$transaction(async (tx) => {
-      // Upsert the review data
       await tx.freestyleReview.upsert({
         where: { freestyleSessionId: sessionId },
         update: {
           lambdaStatus: LambdaStatus.SUCCESS,
-          // 4. Cast Zod objects to Prisma.InputJsonValue to satisfy strict TS rules
           mistakes: mistakes as Prisma.InputJsonValue[],
-          overallFeedback: overallFeedback, 
+          overallFeedback: overallFeedback as Prisma.InputJsonValue, // Now an object
           metrics: metrics as Prisma.InputJsonValue,
         },
         create: {
           freestyleSessionId: sessionId,
           lambdaStatus: LambdaStatus.SUCCESS,
           mistakes: mistakes as Prisma.InputJsonValue[],
-          overallFeedback: overallFeedback,
+          overallFeedback: overallFeedback as Prisma.InputJsonValue,
           metrics: metrics as Prisma.InputJsonValue,
         },
       });
 
-      // Mark the Session as REVIEWED (Using SessionStatus enum)
       await tx.freestyleSession.update({
         where: { id: sessionId },
         data: { status: SessionStatus.REVIEWED },
       });
 
-      // Complete the Task
       await tx.systemTask.update({
         where: { id: task.id },
-        // NOTE: Same here, use your enum if applicable (e.g., SystemTaskStatus.COMPLETED)
         data: { status: "COMPLETED" },
       });
     });
