@@ -56,7 +56,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
         </div>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Configure Freestyle</h2>
-          <p className="text-gray-500">3-minute unscripted fluency challenge</p>
+          <p className="text-gray-500">5-minute unscripted fluency challenge</p>
         </div>
       </div>
 

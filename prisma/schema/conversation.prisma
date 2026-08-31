@@ -51,6 +51,7 @@ model ConversationReview {
 
 
 enum FreestyleLevel {
+  ZERO
   EASY
   MEDIUM
   FLUENT
