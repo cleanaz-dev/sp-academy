@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       targetLanguage,
       duration,
       fullTranscript,
-      messages, // <--- ADD THIS HERE! Now the Lambda has the pre-computed mistakes!
+      messages,
     };
 
     const command = createCommand({
