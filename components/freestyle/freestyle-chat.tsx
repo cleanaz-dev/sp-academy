@@ -49,7 +49,7 @@ export default function FreestyleChat() {
           <div className="flex items-center gap-4">
             <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-50 shadow-sm">
               <Image
-                src={session.aiAvatarUrl}
+                src="https://res.cloudinary.com/dmllgn0t7/image/upload/v1788189464/ai-avatar.png"
                 alt="AI Avatar"
                 fill
                 className="object-cover"

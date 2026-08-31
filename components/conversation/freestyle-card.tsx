@@ -38,7 +38,7 @@ export default function FreestyleCard() {
                 </h3>
               </div>
               <p className="mt-1 line-clamp-2 text-sm text-gray-200 sm:mt-2">
-                Test your unscripted fluency against our AI.
+                Practie your fluency with our new AI feature.
               </p>
             </div>
           </div>
@@ -47,14 +47,14 @@ export default function FreestyleCard() {
           <div className="flex flex-col p-4">
             <div className="mb-3 flex items-center gap-2">
               <span className="flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-                <Timer className="h-3.5 w-3.5" /> 3 Minutes
+                <Timer className="h-3.5 w-3.5" /> 5 Minutes
               </span>
               <span className="flex items-center gap-1 rounded-full bg-pink-100 px-3 py-1 text-sm font-medium text-pink-700 dark:bg-pink-900 dark:text-pink-300">
-                Advanced AI
+                Friendly AI
               </span>
             </div>
             <p className="min-h-[5rem] flex-grow text-sm italic text-gray-600 dark:text-gray-300">
-              No scripts. No safety nets. Just you and the AI for 180 seconds. Get a comprehensive review from DeepSeek when you finish!
+              No scripts. No safety nets. Just you and the AI for 5 minutes!
             </p>
           </div>
         </div>
