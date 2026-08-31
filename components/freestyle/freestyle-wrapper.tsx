@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import FreestyleSetup from "./freestyle-setup";
 import FreestyleChat from "./freestyle-chat";
+import { FreestyleProvider } from "@/context/freestyle-context";
 
 export type FreestyleSessionConfig = {
   id: string;
@@ -59,19 +60,21 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
               />
             </div>
           </motion.div>
+        
         ) : (
           <motion.div
             key="chat"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            // Full bleed—forces the chat to touch the edges of the parent layout
             className="w-full h-full flex flex-col"
           >
-            <FreestyleChat
-              session={activeSession}
+            <FreestyleProvider
+              session={activeSession} 
               onEnd={() => setActiveSession(null)}
-            />
+            >
+              <FreestyleChat />
+            </FreestyleProvider>
           </motion.div>
         )}
       </AnimatePresence>
