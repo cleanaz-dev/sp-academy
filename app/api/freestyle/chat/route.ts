@@ -125,7 +125,7 @@ CONVERSATIONAL RULES:
         model: "deepseek/deepseek-v4-flash-0731",
         messages: messages,
         response_format: { type: "json_object" },
-        max_tokens: level === "FLUENT" ? 600 : 400,
+        max_tokens: level === "FLUENT" ? 2000 : 1000,
         temperature: level === "FLUENT" ? 0.9 : 0.7, 
       }),
     });
