@@ -12,10 +12,11 @@ import z from "zod";
 
 export async function handleFreestyleReview(
   task: SystemTask,
-  body: unknown // Replaced 'any' with 'unknown' for stricter type safety
+  body: unknown
 ) {
   try {
     const parsedResult = FreestyleReviewWebhookSchema.safeParse(body);
+    console.log("Parsed Freestlye Review:", parsedResult)
 
     if (!parsedResult.success) {
       console.error("Invalid Webhook Payload:", z.flattenError(parsedResult.error));
