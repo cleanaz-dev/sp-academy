@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useRef, useEffect, ReactNod
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { convertBlobToWav } from "@/lib/audio-utils";
-import { FreestyleSessionConfig } from "@/components/freestyle/freestyle-wrapper"; // Adjust path if needed
+import { FreestyleSessionConfig } from "@/components/freestyle/freestyle-wrapper";
+import { toast } from "sonner";
 
 interface FreestyleContextType {
   session: FreestyleSessionConfig;
@@ -56,19 +57,21 @@ export function FreestyleProvider({
   }, []);
 
 const handleEndSession = async () => {
-  // 2. Add the lock check immediately!
-  // If it's already submitting, ignore all other attempts.
   if (isSubmittingRef.current) return;
-  isSubmittingRef.current = true; // Lock the door
+  isSubmittingRef.current = true;
 
   stopRecording();
   stopAudio();
   
-  // Calculate accurate duration based on timestamps, not the timer UI
   const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
 
+  // 1. Show a loading toast immediately
+  const toastId = toast.loading("Saving session...", {
+    description: "Sending your conversation to the AI for review."
+  });
+
   try {
-    await fetch("/api/freestyle/review", {
+    const res = await fetch("/api/freestyle/review", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -78,12 +81,25 @@ const handleEndSession = async () => {
         duration,
       }),
     });
+
+    if (!res.ok) throw new Error("Failed to submit");
+
+    // 2. Update to Success!
+    toast.success("Session Complete!", {
+      id: toastId, // This replaces the loading toast
+      description: "Your review is being generated in the background.",
+    });
     
-    // Call onEnd ONLY if the fetch succeeds
     onEnd(); 
   } catch (err) {
     console.error("Failed to submit session for review:", err);
-    // If it fails (e.g. network error), unlock it so the user can try clicking the button again
+    
+    // 3. Update to Error
+    toast.error("Uh oh! Something went wrong.", {
+      id: toastId,
+      description: "We couldn't save your session. Please try again.",
+    });
+    
     isSubmittingRef.current = false;
   }
 };
