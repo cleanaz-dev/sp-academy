@@ -6,7 +6,7 @@ interface FreestyleSuggestionsPanelProps {
 
 export function FreestyleSuggestionsPanel({ suggestions }: FreestyleSuggestionsPanelProps) {
   return (
-    <div className="hidden w-1/4 min-w-[280px] max-w-[340px] flex-col rounded-xl border border-gray-200 bg-white shadow-sm lg:flex">
+    <div className="hidden w-1/4 max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-xl shadow-black/5 ring-1 ring-black/5 lg:flex">
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-gray-100 bg-white px-5 py-4">
         <Lightbulb className="h-4 w-4 text-amber-500" />
