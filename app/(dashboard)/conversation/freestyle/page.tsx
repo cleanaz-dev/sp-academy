@@ -7,6 +7,8 @@ export default async function FreestylePage() {
   const defaultNative = "en-US";
   const defaultTarget = "fr-FR";
 
+  // const userReviews = getUserReview() need to add this here or somewhere else....
+
   return (
     // 1. Removed 'h-full'
     // 2. Added 'h-[calc(100dvh-72px)]' <-- Adjust 72px to the exact height of your top nav!

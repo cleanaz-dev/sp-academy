@@ -5,9 +5,8 @@ import confetti from "canvas-confetti";
 import { FreestyleAvatarReview } from "./freestyle-avatar-review";
 import { FreestyleGrammarReview } from "./freestyle-grammar-review";
 import { FreestylePronunciationReview } from "./freestyle-pronunciation-review";
-
-import type { ReviewData, SessionData } from "@/lib/types/review";
 import { useReviewTTS } from "@/hooks/use-review-tts";
+import type { ReviewData, SessionData } from "@/lib/types/review";
 
 type Phase =
   | "landing"
@@ -24,7 +23,12 @@ interface ApiResponse {
   review: ReviewData;
 }
 
-export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
+interface Props {
+  sessionId: string;
+  onComplete?: () => void; // <-- NEW: Called when user finishes review
+}
+
+export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
   const [phase, setPhase] = useState<Phase>("landing");
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +54,7 @@ export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="min-h-full flex items-center justify-center">
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
           <p className="text-gray-500 font-medium">Loading your review...</p>
@@ -61,8 +65,16 @@ export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
-        <p className="text-gray-500">Review not available yet. Check back in a moment!</p>
+      <div className="min-h-full flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-gray-500">Review is still being prepared...</p>
+          <button
+            onClick={onComplete}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-2 rounded-lg transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
@@ -72,15 +84,12 @@ export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
 
   const grammarMistakes = review.mistakes.filter((m) => m.type === "grammar");
   
-  // For pronunciation practice, use corrections from all mistakes (they need to say it right)
-  // Or if there are pronunciation-specific mistakes, use those. Fallback to corrections.
   const pronunciationPhrases =
     review.mistakes
       .filter((m) => m.type === "pronunciation")
       .map((m) => m.correction)
       .slice(0, 3);
 
-  // If no pronunciation-specific mistakes, use grammar corrections as practice phrases
   const fallbackPhrases = review.mistakes.map((m) => m.correction).slice(0, 3);
   const practicePhrases = pronunciationPhrases.length > 0 ? pronunciationPhrases : fallbackPhrases;
 
@@ -136,7 +145,7 @@ export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+    <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4">
       <div className="max-w-lg mx-auto pt-6 space-y-6">
         <div className="flex justify-center">
           <FreestyleAvatarReview isSpeaking={isSpeaking} />
@@ -234,7 +243,7 @@ export function FreestyleReviewHub({ sessionId }: { sessionId: string }) {
               <span>🎯</span>
             </div>
             <button
-              onClick={() => (window.location.href = "/dashboard")}
+              onClick={onComplete}
               className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
             >
               Back to Dashboard
