@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { convertBlobToWav } from "@/lib/audio-utils";
@@ -25,7 +32,9 @@ interface FreestyleContextType {
   handleReplay: (text: string) => void;
 }
 
-const FreestyleContext = createContext<FreestyleContextType | undefined>(undefined);
+const FreestyleContext = createContext<FreestyleContextType | undefined>(
+  undefined,
+);
 
 export function FreestyleProvider({
   session,
@@ -44,11 +53,23 @@ export function FreestyleProvider({
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
 
-  const { startRecording: startSpeech, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
-  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
+  const {
+    startRecording: startSpeech,
+    stopRecording,
+    isRecording,
+    transcript,
+    resetSpeechState,
+  } = useSpeech();
+  const {
+    speak,
+    isPlaying,
+    isLoading: isSpeechLoading,
+    stop: stopAudio,
+  } = useSpeak();
 
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
-  const canRetry = retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
+  const canRetry =
+    retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
 
   // Initial greeting
   useEffect(() => {
@@ -56,55 +77,59 @@ export function FreestyleProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-const handleEndSession = async () => {
-  if (isSubmittingRef.current) return;
-  isSubmittingRef.current = true;
+  const handleEndSession = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
-  stopRecording();
-  stopAudio();
-  
-  const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
+    stopRecording();
+    stopAudio();
 
-  // 1. Show a loading toast immediately
-  const toastId = toast.loading("Saving session...", {
-    description: "Sending your conversation to the AI for review."
-  });
+    const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
 
-  try {
-    const res = await fetch("/api/freestyle/review", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...session,
-        sessionId: session.id,
-        messages,
-        duration,
-      }),
+    // 1. Show a loading toast immediately
+    const toastId = toast.loading("Saving session...", {
+      description: "Sending your conversation to the AI for review.",
     });
 
-    if (!res.ok) throw new Error("Failed to submit");
+    try {
+      const res = await fetch("/api/freestyle/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...session,
+          sessionId: session.id,
+          messages,
+          duration,
+        }),
+      });
 
-    // 2. Update to Success!
-    toast.success("Session Complete!", {
-      id: toastId, // This replaces the loading toast
-      description: "Your review is being generated in the background.",
-    });
-    
-    onEnd(); 
-  } catch (err) {
-    console.error("Failed to submit session for review:", err);
-    
-    // 3. Update to Error
-    toast.error("Uh oh! Something went wrong.", {
-      id: toastId,
-      description: "We couldn't save your session. Please try again.",
-    });
-    
-    isSubmittingRef.current = false;
-  }
-};
+      if (!res.ok) throw new Error("Failed to submit");
 
-  const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
+      // 2. Update to Success!
+      toast.success("Session Complete!", {
+        id: toastId, // This replaces the loading toast
+        description: "Your review is being generated in the background.",
+      });
+
+      onEnd();
+    } catch (err) {
+      console.error("Failed to submit session for review:", err);
+
+      // 3. Update to Error
+      toast.error("Uh oh! Something went wrong.", {
+        id: toastId,
+        description: "We couldn't save your session. Please try again.",
+      });
+
+      isSubmittingRef.current = false;
+    }
+  };
+
+  const analyzePronunciation = async (
+    audioBlob: Blob,
+    text: string,
+    messageId: number,
+  ) => {
     try {
       const wavBlob = await convertBlobToWav(audioBlob);
       const formData = new FormData();
@@ -112,18 +137,31 @@ const handleEndSession = async () => {
       formData.append("transcript", text);
       formData.append("language", session.targetLanguage);
 
-      const res = await fetch("/api/pronunciation-assessment", { method: "POST", body: formData });
+      const res = await fetch("/api/pronunciation-assessment", {
+        method: "POST",
+        body: formData,
+      });
       if (!res.ok) throw new Error("Pronunciation assessment failed");
-      
+
       const scoreData = await res.json();
 
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, pronunciationScore: scoreData, isAnalyzingPronunciation: false } : m))
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                pronunciationScore: scoreData,
+                isAnalyzingPronunciation: false,
+              }
+            : m,
+        ),
       );
     } catch (err) {
       console.error("Pronunciation assessment failed", err);
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m))
+        prev.map((m) =>
+          m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m,
+        ),
       );
     }
   };
@@ -134,28 +172,74 @@ const handleEndSession = async () => {
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
 
-    try {
-      const res = await fetch("/api/freestyle/chat", {
-        method: "POST",
-        body: JSON.stringify({ ...session, chatHistory, isOpening }),
-        signal: abortControllerRef.current.signal,
-      });
+    let attempt = 0;
+    const maxRetries = 3;
 
-      if (!res.ok) throw new Error("Failed to get AI response");
+    while (attempt < maxRetries) {
+      attempt++;
+      try {
+        const res = await fetch("/api/freestyle/chat", {
+          method: "POST",
+          body: JSON.stringify({ ...session, chatHistory, isOpening }),
+          signal: abortControllerRef.current.signal,
+        });
 
-      const data = await res.json();
+        if (!res.ok) throw new Error("Network/API failure");
 
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now(), role: "assistant", text: data.text, translation: data.translation },
-      ]);
+        const data = await res.json();
 
-      setIsAiProcessing(false);
-      await speak(data.text, session.targetLanguage, 1.0, session.voiceGender);
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
-        console.error(err);
+        // 🚨 Catches the AI dropping or returning blank text
+        if (!data || !data.text || data.text.trim() === "") {
+          throw new Error("AI returned empty text");
+        }
+
+        // Success: Push the message to the chat
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            role: "assistant",
+            text: data.text,
+            translation: data.translation,
+          },
+        ]);
+
         setIsAiProcessing(false);
+
+        // Play the voice
+        await speak(
+          data.text,
+          session.targetLanguage,
+          1.0,
+          session.voiceGender,
+        );
+
+        // Exit the function entirely on success
+        return;
+      } catch (err: any) {
+        if (err.name === "AbortError") return; // User manually stopped it
+
+        console.error(`AI Turn attempt ${attempt} failed:`, err);
+
+        // If it failed 3 times, reset properly so the user can speak again without it breaking
+        if (attempt >= maxRetries) {
+          setIsAiProcessing(false);
+          toast.error("Connection failed", {
+            description: "Please try speaking again.",
+          });
+
+          if (!isOpening) {
+            setMessages((prev) => {
+              const newMsgs = [...prev];
+              if (newMsgs[newMsgs.length - 1]?.role === "user") {
+                newMsgs.pop();
+              }
+              return newMsgs;
+            });
+          }
+          return;
+        }
+        // Loops back instantly for the next retry
       }
     }
   };
@@ -219,7 +303,8 @@ const handleEndSession = async () => {
         handleRetry,
         handleEndSession,
         startRecording: () => startSpeech(session.targetLanguage),
-        handleReplay: (text: string) => speak(text, session.targetLanguage, 1.0, session.voiceGender),
+        handleReplay: (text: string) =>
+          speak(text, session.targetLanguage, 1.0, session.voiceGender),
       }}
     >
       {children}

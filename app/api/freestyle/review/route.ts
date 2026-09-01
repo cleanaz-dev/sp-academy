@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       sessionId,
-      messages, // <-- This contains all the hidden grammar & pronunciation data!
+      messages, 
       duration,
       mode,
       topic,
