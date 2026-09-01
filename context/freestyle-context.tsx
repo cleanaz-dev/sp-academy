@@ -1,18 +1,12 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useRef,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from "react";
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { convertBlobToWav } from "@/lib/audio-utils";
 import { FreestyleSessionConfig } from "@/components/freestyle/freestyle-wrapper";
 import { toast } from "sonner";
+import { SuggestionData } from "@/components/freestyle/freestyle-suggestions-panel"; // adjust import path if needed
 
 interface FreestyleContextType {
   session: FreestyleSessionConfig;
@@ -25,6 +19,8 @@ interface FreestyleContextType {
   isPlaying: boolean;
   isSpeechLoading: boolean;
   transcript: string;
+  suggestions: SuggestionData | null;
+  isSuggestionsLoading: boolean;
   submitTurn: () => Promise<void>;
   handleRetry: () => void;
   handleEndSession: () => Promise<void>;
@@ -32,9 +28,7 @@ interface FreestyleContextType {
   handleReplay: (text: string) => void;
 }
 
-const FreestyleContext = createContext<FreestyleContextType | undefined>(
-  undefined,
-);
+const FreestyleContext = createContext<FreestyleContextType | undefined>(undefined);
 
 export function FreestyleProvider({
   session,
@@ -48,28 +42,20 @@ export function FreestyleProvider({
   const [messages, setMessages] = useState<any[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [retriesLeft, setRetriesLeft] = useState(3);
+  
+  // New States for Suggestions
+  const [suggestions, setSuggestions] = useState<SuggestionData | null>(null);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
 
-  const {
-    startRecording: startSpeech,
-    stopRecording,
-    isRecording,
-    transcript,
-    resetSpeechState,
-  } = useSpeech();
-  const {
-    speak,
-    isPlaying,
-    isLoading: isSpeechLoading,
-    stop: stopAudio,
-  } = useSpeak();
+  const { startRecording: startSpeech, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
+  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
 
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
-  const canRetry =
-    retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
+  const canRetry = retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
 
   // Initial greeting
   useEffect(() => {
@@ -83,12 +69,10 @@ export function FreestyleProvider({
 
     stopRecording();
     stopAudio();
-
+    
     const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
-
-    // 1. Show a loading toast immediately
     const toastId = toast.loading("Saving session...", {
-      description: "Sending your conversation to the AI for review.",
+      description: "Sending your conversation to the AI for review."
     });
 
     try {
@@ -105,31 +89,23 @@ export function FreestyleProvider({
 
       if (!res.ok) throw new Error("Failed to submit");
 
-      // 2. Update to Success!
       toast.success("Session Complete!", {
-        id: toastId, // This replaces the loading toast
+        id: toastId,
         description: "Your review is being generated in the background.",
       });
-
-      onEnd();
+      
+      onEnd(); 
     } catch (err) {
       console.error("Failed to submit session for review:", err);
-
-      // 3. Update to Error
       toast.error("Uh oh! Something went wrong.", {
         id: toastId,
         description: "We couldn't save your session. Please try again.",
       });
-
       isSubmittingRef.current = false;
     }
   };
 
-  const analyzePronunciation = async (
-    audioBlob: Blob,
-    text: string,
-    messageId: number,
-  ) => {
+  const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
     try {
       const wavBlob = await convertBlobToWav(audioBlob);
       const formData = new FormData();
@@ -137,35 +113,47 @@ export function FreestyleProvider({
       formData.append("transcript", text);
       formData.append("language", session.targetLanguage);
 
-      const res = await fetch("/api/pronunciation-assessment", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/pronunciation-assessment", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Pronunciation assessment failed");
-
+      
       const scoreData = await res.json();
 
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? {
-                ...m,
-                pronunciationScore: scoreData,
-                isAnalyzingPronunciation: false,
-              }
-            : m,
-        ),
+        prev.map((m) => (m.id === messageId ? { ...m, pronunciationScore: scoreData, isAnalyzingPronunciation: false } : m))
       );
     } catch (err) {
       console.error("Pronunciation assessment failed", err);
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m,
-        ),
+        prev.map((m) => (m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m))
       );
     }
   };
 
+  // 🚨 New Function to Fetch Suggestions in the background
+  const generateSuggestions = async (updatedHistory: any[]) => {
+    setIsSuggestionsLoading(true);
+    try {
+      const res = await fetch("/api/freestyle/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetLanguage: session.targetLanguage,
+          nativeLanguage: session.nativeLanguage,
+          chatHistory: updatedHistory,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSuggestions(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch suggestions", e);
+    } finally {
+      setIsSuggestionsLoading(false);
+    }
+  };
+
+  // 🚨 Updated Retry Loop with Suggestions Trigger
   const handleAiTurn = async (isOpening = false, chatHistory: any[] = []) => {
     setIsAiProcessing(true);
 
@@ -188,25 +176,26 @@ export function FreestyleProvider({
 
         const data = await res.json();
 
-        // 🚨 Catches the AI dropping or returning blank text
         if (!data || !data.text || data.text.trim() === "") {
           throw new Error("AI returned empty text");
         }
 
-        // Success: Push the message to the chat
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            role: "assistant",
-            text: data.text,
-            translation: data.translation,
-          },
-        ]);
+        // Create the new message object
+        const newAiMessage = {
+          id: Date.now(),
+          role: "assistant",
+          text: data.text,
+          translation: data.translation,
+        };
 
+        // Push to messages
+        setMessages((prev) => [...prev, newAiMessage]);
         setIsAiProcessing(false);
 
-        // Play the voice
+        // 🚨 Fetch suggestions in the background right now
+        generateSuggestions([...chatHistory, newAiMessage]);
+        
+        // 🚨 Play the voice (this happens at the exact same time as generating hints)
         await speak(
           data.text,
           session.targetLanguage,
@@ -214,14 +203,12 @@ export function FreestyleProvider({
           session.voiceGender,
         );
 
-        // Exit the function entirely on success
-        return;
+        return; // Exit on success
       } catch (err: any) {
-        if (err.name === "AbortError") return; // User manually stopped it
+        if (err.name === "AbortError") return;
 
         console.error(`AI Turn attempt ${attempt} failed:`, err);
 
-        // If it failed 3 times, reset properly so the user can speak again without it breaking
         if (attempt >= maxRetries) {
           setIsAiProcessing(false);
           toast.error("Connection failed", {
@@ -239,7 +226,6 @@ export function FreestyleProvider({
           }
           return;
         }
-        // Loops back instantly for the next retry
       }
     }
   };
@@ -249,6 +235,9 @@ export function FreestyleProvider({
     const userText = transcript.trim();
 
     if (!userText) return;
+
+    // Clear old suggestions while user is submitting
+    setSuggestions(null);
 
     const newMsgId = Date.now();
     const newMsg = {
@@ -299,12 +288,13 @@ export function FreestyleProvider({
         isPlaying,
         isSpeechLoading,
         transcript,
+        suggestions, // Passed down to the UI
+        isSuggestionsLoading, // Passed down to the UI
         submitTurn,
         handleRetry,
         handleEndSession,
         startRecording: () => startSpeech(session.targetLanguage),
-        handleReplay: (text: string) =>
-          speak(text, session.targetLanguage, 1.0, session.voiceGender),
+        handleReplay: (text: string) => speak(text, session.targetLanguage, 1.0, session.voiceGender),
       }}
     >
       {children}

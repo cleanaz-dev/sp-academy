@@ -27,7 +27,9 @@ export default function FreestyleChat() {
     isProcessing,
     isPlaying,
     isSpeechLoading,
-    handleReplay
+    handleReplay,
+    suggestions, 
+    isSuggestionsLoading
   } = useFreestyle();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,7 +127,7 @@ export default function FreestyleChat() {
       </div>
 
       {/* SUGGESTIONS PANEL */}
-      <FreestyleSuggestionsPanel suggestions={MOCK_SUGGESTIONS} />
+      <FreestyleSuggestionsPanel suggestions={suggestions} isLoading={isSuggestionsLoading} />
     </div>
   );
 }
