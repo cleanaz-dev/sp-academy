@@ -164,11 +164,11 @@ CONVERSATIONAL RULES:
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "zai-org/glm-5.3-flash",
+          model: "qwen/qwen3.8-flash",
           messages: messages,
           response_format: { type: "json_object" },
           // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
-          max_tokens: 3000,
+          max_tokens: 2000,
           temperature: 0.9
         }),
       },
