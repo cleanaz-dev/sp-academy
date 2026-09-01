@@ -11,6 +11,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.52",
     "@anthropic-ai/sdk": "^0.74.0",
     "@aws-sdk/client-bedrock-runtime": "^3.726.1",
     "@aws-sdk/client-lambda": "^3.1091.0",
@@ -63,7 +64,7 @@
     "@types/fluent-ffmpeg": "^2.1.27",
     "@uiw/react-md-editor": "^4.0.4",
     "@uiw/react-textarea-code-editor": "^3.1.0",
-    "ai": "^4.1.47",
+    "ai": "^4.3.19",
     "assemblyai": "^4.9.0",
     "axios": "^1.7.7",
     "bottleneck": "^2.19.5",

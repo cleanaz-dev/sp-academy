@@ -288,8 +288,8 @@ export function FreestyleProvider({
         isPlaying,
         isSpeechLoading,
         transcript,
-        suggestions, // Passed down to the UI
-        isSuggestionsLoading, // Passed down to the UI
+        suggestions, 
+        isSuggestionsLoading, 
         submitTurn,
         handleRetry,
         handleEndSession,

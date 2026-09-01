@@ -6,7 +6,7 @@ export const maxDuration = 60;
 // ─── Validation Schema ─────────────────────────────────────────
 const ChatBodySchema = z.object({
   mode: z.enum(["INTRODUCTION", "SPECIFIC", "RANDOM", "ARGUMENTATIVE"]),
-  level: z.enum(["EASY", "MEDIUM", "FLUENT"]).default("EASY"),
+  level: z.enum(["ZERO", "EASY", "MEDIUM", "FLUENT"]).default("EASY"), // 🚨 ADDED "ZERO"
   topic: z.string().optional(),
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
@@ -20,6 +20,15 @@ const ChatBodySchema = z.object({
 
 // ─── Level-Based Prompt Injections ─────────────────────────────
 const LEVEL_INSTRUCTIONS: Record<string, string> = {
+  // 🚨 ADDED "ZERO" INSTRUCTIONS
+  ZERO: `
+DIFFICULTY: ZERO / ABSOLUTE BEGINNER (Pre-A1)
+- You MUST speak using ONLY 1 or 2 extremely short sentences.
+- Use only the most basic, elementary vocabulary (colors, basic foods, simple greetings, yes/no).
+- Avoid all complex grammar.
+- Ask only very simple, direct questions (e.g., "What is your name?", "Do you like apples?").
+- Be overwhelmingly encouraging, warm, and patient.`,
+
   EASY: `
 DIFFICULTY: EASY (A1-A2)
 - Be warm, patient, and highly supportive.
@@ -55,7 +64,6 @@ export async function POST(req: Request) {
   console.log(`[CHAT-${requestId}] 🟢 Incoming Request`);
 
   try {
-    // 1. Parse & validate body
     const rawBody = await req.json();
     const parseResult = ChatBodySchema.safeParse(rawBody);
     
@@ -71,8 +79,17 @@ export async function POST(req: Request) {
     
     console.log(`[CHAT-${requestId}] Params: Mode=${mode}, Level=${level}, Target=${targetLanguage}, Native=${nativeLanguage}`);
 
-    // 2. Build dynamic system prompt
-    // CHANGED: We tell the AI to be a "friendly conversational partner" rather than leading a "fast-paced challenge".
+    // Clean up chat history to prevent consecutive user prompts from crashing DeepSeek
+    const sanitizedHistory: any[] = [];
+    for (const m of chatHistory) {
+      const lastMsg = sanitizedHistory[sanitizedHistory.length - 1];
+      if (lastMsg && lastMsg.role === m.role) {
+        lastMsg.content += `\n\n${m.text}`;
+      } else {
+        sanitizedHistory.push({ role: m.role, content: m.text });
+      }
+    }
+
     let systemPrompt = `You are a friendly, conversational native speaker having a natural voice chat with a learner.
 Target Language: ${targetLanguage}. Native Language: ${nativeLanguage}.
 
@@ -92,21 +109,16 @@ CONVERSATIONAL RULES:
     // Inject level-specific instructions
     systemPrompt += `\n${LEVEL_INSTRUCTIONS[level]}`;
 
-    // Inject mode-specific task or follow-up prompt
     if (isOpening) {
       const taskFn = MODE_OPENING_TASKS[mode];
       systemPrompt += `\n\n${taskFn(topic)}`;
     } else {
-      // CHANGED: Ensure the AI builds on the user's input rather than pivoting abruptly.
       systemPrompt += `\n\nTASK: CONTINUE THE CONVERSATION. Acknowledge what the user just said, add a natural conversational thought of your own, and ask a follow-up question to keep the ${mode.toLowerCase()} dynamic alive.`;
     }
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...chatHistory.map((m: any) => ({
-        role: m.role,
-        content: m.text,
-      })),
+      ...sanitizedHistory
     ];
 
     const apiKey = process.env.NOVITA_API_KEY;
@@ -125,7 +137,8 @@ CONVERSATIONAL RULES:
         model: "deepseek/deepseek-v4-flash-0731",
         messages: messages,
         response_format: { type: "json_object" },
-        max_tokens: level === "FLUENT" ? 10000: 9000,
+        // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
+        max_tokens: level === "FLUENT" ? 600 : 400,
         temperature: level === "FLUENT" ? 0.9 : 0.7, 
       }),
     });
@@ -141,23 +154,23 @@ CONVERSATIONAL RULES:
     const chatData = await chatResponse.json();
     const rawContent = chatData.choices?.[0]?.message?.content || "{}";
     
-    console.log(`[CHAT-${requestId}] 📝 Raw AI Content:`, rawContent);
-
-    // Parse JSON with fallback cleanup
+    // 🚨 SAFE JSON EXTRACTION
     let parsedContent: any
     try {
       parsedContent = JSON.parse(rawContent);
     } catch (e) {
-      console.warn(`[CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting cleanup...`);
-      const cleaned = rawContent.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedContent = JSON.parse(cleaned);
+      console.warn(`[CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting regex extraction...`);
+      const match = rawContent.match(/\{[\s\S]*\}/);
+      if (match) {
+        parsedContent = JSON.parse(match[0]);
+      } else {
+        throw new Error("Could not extract valid JSON from response");
+      }
     }
 
     if (!parsedContent.text || !parsedContent.translation) {
       throw new Error("AI response missing required 'text' or 'translation' fields");
     }
-
-    console.log(`[CHAT-${requestId}] ✅ Success. Text: "${parsedContent.text.substring(0, 50)}..."`);
 
     return NextResponse.json({ 
       text: parsedContent.text, 

@@ -10,7 +10,9 @@ const MODES = [
   { id: "ARGUMENTATIVE", label: "Debate", icon: "⚖️" }
 ];
 
+// 🚨 ADDED "ZERO" LEVEL HERE
 const LEVELS = [
+  { id: "ZERO", label: "Zero", desc: "Absolute beginner, very short", color: "sky" },
   { id: "EASY", label: "Easy", desc: "Simple vocab, slow pace", color: "emerald" },
   { id: "MEDIUM", label: "Medium", desc: "Natural speed, some idioms", color: "amber" },
   { id: "FLUENT", label: "Fluent", desc: "Native speed, complex topics", color: "rose" },
@@ -26,7 +28,7 @@ const SUPPORTED_LANGUAGES = [
 
 export default function FreestyleSetup({ onStart, defaultNative = "en-US", defaultTarget = "fr-FR" }: any) {
   const [mode, setMode] = useState("RANDOM");
-  const [level, setLevel] = useState("EASY");                    // <-- ADD
+  const [level, setLevel] = useState("ZERO"); // <-- Default to ZERO or EASY
   const [topic, setTopic] = useState("");
   const [voiceGender, setVoiceGender] = useState<"male" | "female">("female");
   const [nativeLang, setNativeLang] = useState(defaultNative);
@@ -40,7 +42,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
     setIsStarting(true);
     await onStart({
       mode,
-      level,                                                    // <-- PASS LEVEL
+      level,
       topic: mode === "SPECIFIC" ? topic : undefined,
       nativeLanguage: nativeLang,
       targetLanguage: targetLang,
@@ -94,12 +96,12 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
           </div>
         </div>
 
-        {/* Level Selector — NEW */}
+        {/* Level Selector — UPDATED GRID TO 4 COLUMNS */}
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-blue-500" /> Difficulty Level
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {LEVELS.map((l) => (
               <button
                 key={l.id}
