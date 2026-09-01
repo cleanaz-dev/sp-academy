@@ -11,10 +11,14 @@ const ChatBodySchema = z.object({
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
   voiceGender: z.enum(["male", "female"]).optional(),
-  chatHistory: z.array(z.object({
-    role: z.enum(["user", "assistant"]),
-    text: z.string(),
-  })).default([]),
+  chatHistory: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        text: z.string(),
+      }),
+    )
+    .default([]),
   isOpening: z.boolean().default(false),
 });
 
@@ -35,14 +39,14 @@ DIFFICULTY: EASY (A1-A2)
 - Speak in short, clear sentences. Avoid idioms, slang, and complex grammar.
 - React happily to their input before asking the next simple question.
 - If they struggle, gently steer the conversation to something very familiar (hobbies, food, weather).`,
-  
+
   MEDIUM: `
 DIFFICULTY: MEDIUM (B1-B2)
 - Be casually conversational and curious, like a friendly acquaintance.
 - Use natural vocabulary, some common idioms, and transitional phrases.
 - Acknowledge their ideas and share a brief perspective of your own before asking a thoughtful follow-up question.
 - Correct subtle mistakes naturally by just using the right word in your response.`,
-  
+
   FLUENT: `
 DIFFICULTY: FLUENT (C1-C2)
 - Be highly engaging and dynamic, like speaking with a native friend or colleague.
@@ -53,10 +57,14 @@ DIFFICULTY: FLUENT (C1-C2)
 
 // ─── Mode-Based Opening Prompts ────────────────────────────────
 const MODE_OPENING_TASKS: Record<string, (topic?: string) => string> = {
-  INTRODUCTION: () => `TASK: Warmly introduce yourself, share a brief, friendly detail about your day, and ask a simple warm-up question to get them talking.`,
-  SPECIFIC: (topic) => `TASK: Start a natural roleplay or conversation about: "${topic}". Set the scene conversationally, make a statement, and ask a question to draw them in.`,
-  RANDOM: () => `TASK: Share a brief, interesting thought about a completely random everyday topic, then ask them an engaging, open-ended question about it.`,
-  ARGUMENTATIVE: () => `TASK: Make a strong, slightly controversial statement. Briefly explain your stance and challenge them to share their perspective.`,
+  INTRODUCTION: () =>
+    `TASK: Warmly introduce yourself, share a brief, friendly detail about your day, and ask a simple warm-up question to get them talking.`,
+  SPECIFIC: (topic) =>
+    `TASK: Start a natural roleplay or conversation about: "${topic}". Set the scene conversationally, make a statement, and ask a question to draw them in.`,
+  RANDOM: () =>
+    `TASK: Share a brief, interesting thought about a completely random everyday topic, then ask them an engaging, open-ended question about it.`,
+  ARGUMENTATIVE: () =>
+    `TASK: Make a strong, slightly controversial statement. Briefly explain your stance and challenge them to share their perspective.`,
 };
 
 export async function POST(req: Request) {
@@ -66,18 +74,31 @@ export async function POST(req: Request) {
   try {
     const rawBody = await req.json();
     const parseResult = ChatBodySchema.safeParse(rawBody);
-    
+
     if (!parseResult.success) {
-      console.error(`[CHAT-${requestId}] ❌ Validation failed:`, parseResult.error.flatten());
+      console.error(
+        `[CHAT-${requestId}] ❌ Validation failed:`,
+        parseResult.error.flatten(),
+      );
       return NextResponse.json(
         { error: "Invalid request body", details: parseResult.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { mode, level, topic, targetLanguage, nativeLanguage, chatHistory, isOpening } = parseResult.data;
-    
-    console.log(`[CHAT-${requestId}] Params: Mode=${mode}, Level=${level}, Target=${targetLanguage}, Native=${nativeLanguage}`);
+    const {
+      mode,
+      level,
+      topic,
+      targetLanguage,
+      nativeLanguage,
+      chatHistory,
+      isOpening,
+    } = parseResult.data;
+
+    console.log(
+      `[CHAT-${requestId}] Params: Mode=${mode}, Level=${level}, Target=${targetLanguage}, Native=${nativeLanguage}`,
+    );
 
     // Clean up chat history to prevent consecutive user prompts from crashing DeepSeek
     const sanitizedHistory: any[] = [];
@@ -118,7 +139,7 @@ CONVERSATIONAL RULES:
 
     const messages = [
       { role: "system", content: systemPrompt },
-      ...sanitizedHistory
+      ...sanitizedHistory,
     ];
 
     const apiKey = process.env.NOVITA_API_KEY;
@@ -127,23 +148,28 @@ CONVERSATIONAL RULES:
     console.log(`[CHAT-${requestId}] 🚀 Sending request to Novita...`);
     const startTime = Date.now();
 
-    const chatResponse = await fetch("https://api.novita.ai/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+    const chatResponse = await fetch(
+      "https://api.novita.ai/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "deepseek/deepseek-v4-flash-0731",
+          messages: messages,
+          response_format: { type: "json_object" },
+          // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
+          max_tokens: level === "FLUENT" ? 600 : 400,
+          temperature: level === "FLUENT" ? 0.9 : 0.7,
+        }),
       },
-      body: JSON.stringify({
-        model: "deepseek/deepseek-v4-flash-0731",
-        messages: messages,
-        response_format: { type: "json_object" },
-        // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
-        max_tokens: level === "FLUENT" ? 600 : 400,
-        temperature: level === "FLUENT" ? 0.9 : 0.7, 
-      }),
-    });
+    );
 
-    console.log(`[CHAT-${requestId}] ⏱️ Novita responded in ${Date.now() - startTime}ms. Status: ${chatResponse.status}`);
+    console.log(
+      `[CHAT-${requestId}] ⏱️ Novita responded in ${Date.now() - startTime}ms. Status: ${chatResponse.status}`,
+    );
 
     if (!chatResponse.ok) {
       const errText = await chatResponse.text();
@@ -152,14 +178,31 @@ CONVERSATIONAL RULES:
     }
 
     const chatData = await chatResponse.json();
-    const rawContent = chatData.choices?.[0]?.message?.content || "{}";
-    
+
+    const choice = chatData.choices?.[0];
+
+    if (!choice?.message?.content) {
+      throw new Error("Novita returned no message content");
+    }
+
+    console.log(`[CHAT-${requestId}] Usage:`, chatData.usage);
+    console.log(`[CHAT-${requestId}] Finish reason:`, choice.finish_reason);
+
+    if (choice.finish_reason === "length") {
+      throw new Error("AI response was truncated by max_tokens");
+    }
+
+    const rawContent = choice.message.content;
+    // const rawContent = chatData.choices?.[0]?.message?.content || "{}";
+
     // 🚨 SAFE JSON EXTRACTION
-    let parsedContent: any
+    let parsedContent: any;
     try {
       parsedContent = JSON.parse(rawContent);
     } catch (e) {
-      console.warn(`[CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting regex extraction...`);
+      console.warn(
+        `[CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting regex extraction...`,
+      );
       const match = rawContent.match(/\{[\s\S]*\}/);
       if (match) {
         parsedContent = JSON.parse(match[0]);
@@ -169,20 +212,21 @@ CONVERSATIONAL RULES:
     }
 
     if (!parsedContent.text || !parsedContent.translation) {
-      throw new Error("AI response missing required 'text' or 'translation' fields");
+      throw new Error(
+        "AI response missing required 'text' or 'translation' fields",
+      );
     }
 
-    return NextResponse.json({ 
-      text: parsedContent.text, 
+    return NextResponse.json({
+      text: parsedContent.text,
       translation: parsedContent.translation,
-      meta: { level, mode, requestId }  
+      meta: { level, mode, requestId },
     });
-
   } catch (error: any) {
     console.error(`[CHAT-ERROR] ❌`, error.message || error);
     return NextResponse.json(
       { error: "Failed to process chat", message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
