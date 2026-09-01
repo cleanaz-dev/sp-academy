@@ -168,8 +168,8 @@ CONVERSATIONAL RULES:
           messages: messages,
           response_format: { type: "json_object" },
           // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
-          max_tokens: level === "FLUENT" ? 600 : 400,
-          temperature: level === "FLUENT" ? 0.9 : 0.7,
+          max_tokens: 2000,
+          temperature: 0.9
         }),
       },
     );
