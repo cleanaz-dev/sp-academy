@@ -3,6 +3,13 @@ import { z } from "zod";
 
 export const maxDuration = 60;
 
+const MAX_TOKENS_BY_LEVEL = {
+  ZERO: 180,
+  EASY: 240,
+  MEDIUM: 320,
+  FLUENT: 450,
+} as const;
+
 // ─── Validation Schema ─────────────────────────────────────────
 const ChatBodySchema = z.object({
   mode: z.enum(["INTRODUCTION", "SPECIFIC", "RANDOM", "ARGUMENTATIVE"]),
