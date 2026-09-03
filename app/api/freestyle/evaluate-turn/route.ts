@@ -1,4 +1,5 @@
 // app/api/freestyle/evaluate-turn/route.ts
+import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -77,7 +78,7 @@ Do not wrap in markdown (no \`\`\`json). Return raw JSON only.`;
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-v4-flash-0731",
+        model: NovitaTextModel.DEEPSEEK_V4_FLASH,
         messages: [{ role: "system", content: systemPrompt }],
         response_format: { type: "json_object" },
         max_tokens: 300, 
