@@ -46,6 +46,7 @@ export function FreestyleProvider({
   // New States for Suggestions
   const [suggestions, setSuggestions] = useState<SuggestionData | null>(null);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [accumulatedMistakes, setAccumulatedMistakes] = useState<any[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
@@ -83,6 +84,7 @@ export function FreestyleProvider({
           ...session,
           sessionId: session.id,
           messages,
+          mistakes: accumulatedMistakes,
           duration,
         }),
       });
@@ -102,6 +104,40 @@ export function FreestyleProvider({
         description: "We couldn't save your session. Please try again.",
       });
       isSubmittingRef.current = false;
+    }
+  };
+
+
+   // 🚨 3. NEW MINI-JOB: Evaluates grammar in the background
+  const evaluateUserTurn = async (userText: string, messageId: number) => {
+    try {
+      const res = await fetch("/api/freestyle/evaluate-turn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userText,
+          targetLanguage: session.targetLanguage,
+          nativeLanguage: session.nativeLanguage,
+          level: session.level, // Ensure `level` exists on your session object
+        }),
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      
+      if (data.hasMistakes && data.corrections?.length > 0) {
+        // Tag the corrections with the messageId so we know exactly when they happened
+        const taggedMistakes = data.corrections.map((correction: any) => ({
+          ...correction,
+          userMessageId: messageId,
+          timestamp: Date.now()
+        }));
+
+        setAccumulatedMistakes((prev) => [...prev, ...taggedMistakes]);
+      }
+    } catch (err) {
+      console.error("Background evaluation failed silently:", err);
     }
   };
 
@@ -253,6 +289,7 @@ export function FreestyleProvider({
     resetSpeechState();
 
     if (audioBlob) analyzePronunciation(audioBlob, userText, newMsgId);
+    evaluateUserTurn(userText, newMsgId);
     handleAiTurn(false, updatedMessages);
   };
 

@@ -8,7 +8,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       sessionId,
-      messages, 
+      messages,
+      mistakes = [], 
       duration,
       mode,
       topic,
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       duration,
       fullTranscript,
       messages,
+      mistakes,
     };
 
     const command = createCommand({

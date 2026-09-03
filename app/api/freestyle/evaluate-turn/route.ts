@@ -3,13 +3,13 @@ import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const maxDuration = 30; // 30 seconds is plenty for a single turn evaluation
+export const maxDuration = 30;
 
 const EvaluateBodySchema = z.object({
   userText: z.string().min(1),
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
-  level: z.enum(["EASY", "MEDIUM", "FLUENT"]).default("EASY"),
+  level: z.enum(["EASY", "MEDIUM", "FLUENT", "ZERO"]).default("EASY"),
 });
 
 export async function POST(req: Request) {
@@ -38,6 +38,8 @@ export async function POST(req: Request) {
       levelInstruction = "Flag standard grammatical errors, incorrect verb conjugations, and unnatural phrasing. Provide clear corrections.";
     } else if (level === "FLUENT") {
       levelInstruction = "Be highly strict. Flag any unnatural phrasing, lack of advanced vocabulary, or slight grammatical imperfections. Suggest native-level idioms and advanced phrasing.";
+    } else if (level === "ZERO") {
+      levelInstruction = "Meaning Zero language practice. Be extremely lenient. Only flag critical errors that prevent understanding. Focus on very basic grammar and vocabulary.";
     }
 
     // 2. Build the System Prompt
