@@ -85,10 +85,10 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       console.error(
         `[CHAT-${requestId}] ❌ Validation failed:`,
-        parseResult.error.flatten(),
+        z.flattenError(parseResult.error),
       );
       return NextResponse.json(
-        { error: "Invalid request body", details: parseResult.error.flatten() },
+        { error: "Invalid request body", details: z.flattenError(parseResult.error) },
         { status: 400 },
       );
     }

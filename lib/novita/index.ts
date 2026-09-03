@@ -3,6 +3,20 @@
 const NOVITA_API_KEY = process.env.NOVITA_API_KEY!;
 
 /**
+ * Text/chat models available via Novita's OpenAI-compatible endpoint.
+ */
+export const NovitaTextModel = {
+  DEEPSEEK_V4_FLASH_X: "deepseek/deepseek-v4-flash-0731",
+  DEEPSEEK_V4_FLASH: "deepseek/deepseek-v4-flash",
+  DEEPSEEK_V4_FLASH_VISION: "deepseek/deepseek-v4-flash-vision-exp",
+  // add more as you use them, e.g.:
+  QWEN_3_8_FLASH: "qwen/qwen3.8-flash",
+  KIMI_K3: "moonshotai/kimi-k3",
+  GLM_5_3: "zai-org/glm-5.3",
+  MACARON_V1_VENTI: "mindai/macaron-v1-venti"
+} as const;
+
+/**
  * Strips DeepSeek's <think> tags and markdown code fences from raw LLM output.
  */
 function cleanDeepSeekJson(content: string): string {
@@ -23,7 +37,7 @@ export async function generateNovitaText<T = any>(
   userPrompt: string,
   options?: { model?: string; temperature?: number }
 ): Promise<T> {
-  const model = options?.model ?? "deepseek/deepseek-v4-flash";
+  const model = options?.model ?? NovitaTextModel.DEEPSEEK_V4_FLASH;
   const temperature = options?.temperature ?? 0.7;
 
   const response = await fetch("https://api.novita.ai/openai/v1/chat/completions", {
@@ -134,3 +148,4 @@ export async function generateNovitaImage(
 
   throw new Error("Novita image generation timed out.");
 }
+
