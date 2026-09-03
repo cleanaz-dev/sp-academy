@@ -1,4 +1,3 @@
-// app/api/freestyle/evaluate-turn/route.ts
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -51,7 +50,6 @@ export async function POST(req: Request) {
         )}. If any word scores poorly (e.g., below 60), log it as a PRONUNCIATION mistake.`
       : "No audio pronunciation data provided. Skip PRONUNCIATION category unless the text clearly contains a phonetic hallucination.";
 
-    // 1. Cleaner Schema Instructions without pipe characters in the expected values
     const systemPrompt = `You are a strict language evaluator for a student learning ${targetLanguage}.
 The student's native language is ${nativeLanguage}.
 
@@ -109,10 +107,9 @@ Do not wrap in markdown. Return raw JSON only.`;
           model: NovitaTextModel.QWEN_3_8_FLASH,
           messages: [
             { role: "system", content: systemPrompt },
-            // 2. Pass the text to evaluate as a dedicated user message!
             { role: "user", content: `Evaluate this text: "${userText}"` }
           ],
-          response_format: { type: "json_object" },
+          // Removed response_format to prevent 400 errors on some Qwen models
           max_tokens: 500,
           temperature: 0.1,
         }),
@@ -139,12 +136,9 @@ Do not wrap in markdown. Return raw JSON only.`;
       }
     }
 
-    // 3. Rock-solid fallback so it's NEVER undefined
-    const hasMistakes = 
-      parsedContent?.hasMistakes ?? 
-      (Array.isArray(parsedContent?.corrections) && parsedContent.corrections.length > 0) ?? false;
-      
+    // Rock-solid fallback so it's NEVER undefined and catches hallucinations
     const corrections = Array.isArray(parsedContent?.corrections) ? parsedContent.corrections : [];
+    const hasMistakes = (parsedContent?.hasMistakes === true) || (corrections.length > 0);
 
     const finalResult = { hasMistakes, corrections };
 

@@ -1,4 +1,3 @@
-// app/api/freestyle/review/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { lambda, createCommand } from "@/lib/aws/lambda";
@@ -32,15 +31,17 @@ export async function POST(request: Request) {
       .map((m: any) => `[${m.role.toUpperCase()}]: ${m.text}`)
       .join("\n");
 
-    // 2. Separate the mistakes into 3 distinct buckets for the Lambda
+    // 2. Separate the mistakes into 3 distinct buckets for the Lambda (Added .toUpperCase())
     const grammarAndGenderMistakes = mistakes.filter(
-      (m: any) => m.category === "GRAMMAR" || m.category === "GENDER"
+      (m: any) => 
+        m.category?.toUpperCase() === "GRAMMAR" || 
+        m.category?.toUpperCase() === "GENDER"
     );
     const vocabMistakes = mistakes.filter(
-      (m: any) => m.category === "VOCABULARY"
+      (m: any) => m.category?.toUpperCase() === "VOCABULARY"
     );
     const pronunciationMistakes = mistakes.filter(
-      (m: any) => m.category === "PRONUNCIATION"
+      (m: any) => m.category?.toUpperCase() === "PRONUNCIATION"
     );
 
     // 3. Update the session in Prisma
