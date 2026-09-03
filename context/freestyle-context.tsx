@@ -129,19 +129,23 @@ export function FreestyleProvider({
   };
 
   // 🚨 3. NEW MINI-JOB: Evaluates grammar in the background
-  const evaluateUserTurn = async (userText: string, messageId: number, pronunciationData: any = null) => {
-  try {
-    const res = await fetch("/api/freestyle/evaluate-turn", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userText,
-        targetLanguage: session.targetLanguage,
-        nativeLanguage: session.nativeLanguage,
-        level: session.level,
-        pronunciationData, // 👈 PASS THIS TO YOUR ENDPOINT
-      }),
-    });
+  const evaluateUserTurn = async (
+    userText: string,
+    messageId: number,
+    pronunciationData: any = null,
+  ) => {
+    try {
+      const res = await fetch("/api/freestyle/evaluate-turn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userText,
+          targetLanguage: session.targetLanguage,
+          nativeLanguage: session.nativeLanguage,
+          level: session.level,
+          pronunciationData, // 👈 PASS THIS TO YOUR ENDPOINT
+        }),
+      });
 
       if (!res.ok) return;
 
@@ -307,7 +311,7 @@ export function FreestyleProvider({
     }
   };
 
-const submitTurn = async () => {
+  const submitTurn = async () => {
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
 
@@ -332,7 +336,7 @@ const submitTurn = async () => {
     // 1. Instantly get AI response (No UI blocking)
     handleAiTurn(false, updatedMessages);
 
-    // 2. Chain Pronunciation -> Evaluation in the background 
+    // 2. Chain Pronunciation -> Evaluation in the background
     (async () => {
       let pronunData = null;
       if (audioBlob) {
