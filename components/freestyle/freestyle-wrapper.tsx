@@ -39,7 +39,7 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
   }, []);
 
   // Pass both success and failure handlers to the hook
-  useReviewPusher(pendingReviewId, handleReviewReady, handleReviewFailed);
+  // useReviewPusher(pendingReviewId, handleReviewReady, handleReviewFailed);
 
 
   const handleStartSession = async (config: Omit<FreestyleSessionConfig, "id" | "aiAvatarUrl">) => {

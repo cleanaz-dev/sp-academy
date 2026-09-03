@@ -1,4 +1,5 @@
 // hooks/use-review-pusher.ts
+"use client"
 import { useEffect } from "react";
 import Pusher from "pusher-js";
 import { toast } from "sonner";
