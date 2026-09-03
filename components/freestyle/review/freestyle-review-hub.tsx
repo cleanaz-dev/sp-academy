@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { FreestyleAvatarReview } from "./freestyle-avatar-review";
 import { FreestyleGrammarReview } from "./freestyle-grammar-review";
 import { FreestylePronunciationReview } from "./freestyle-pronunciation-review";
 import { useReviewTTS } from "@/hooks/use-review-tts";
-import type { ReviewData, SessionData } from "@/lib/types/review";
 
 type Phase =
   | "landing"
@@ -25,7 +24,7 @@ interface ApiResponse {
 
 interface Props {
   sessionId: string;
-  onComplete?: () => void; // <-- NEW: Called when user finishes review
+  onComplete?: () => void;
 }
 
 export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
@@ -82,13 +81,15 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
   const { session, review } = data;
   const grade = getGrade(review.metrics.overallScore);
 
-  const grammarMistakes = review.mistakes.filter((m) => m.type === "grammar");
+  // 🚨 FIXED: Changed m.type to m.category to match backend Zod schema
+  const grammarMistakes = review.mistakes.filter(
+    (m) => m.category === "GRAMMAR" || m.category === "GENDER"
+  );
   
-  const pronunciationPhrases =
-    review.mistakes
-      .filter((m) => m.type === "pronunciation")
-      .map((m) => m.correction)
-      .slice(0, 3);
+  const pronunciationPhrases = review.mistakes
+    .filter((m) => m.category === "PRONUNCIATION")
+    .map((m) => m.correction)
+    .slice(0, 3);
 
   const fallbackPhrases = review.mistakes.map((m) => m.correction).slice(0, 3);
   const practicePhrases = pronunciationPhrases.length > 0 ? pronunciationPhrases : fallbackPhrases;
@@ -145,7 +146,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4">
+    <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-20">
       <div className="max-w-lg mx-auto pt-6 space-y-6">
         <div className="flex justify-center">
           <FreestyleAvatarReview isSpeaking={isSpeaking} />
@@ -156,6 +157,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
           <div className="text-center space-y-6 animate-in fade-in duration-500">
             <h1 className="text-3xl font-black text-gray-800">Session Review</h1>
 
+            {/* GRADE CIRCLE */}
             <div
               className={`w-36 h-36 rounded-full ${grade.bg} ${grade.border} border-4 flex flex-col items-center justify-center mx-auto shadow-lg`}
             >
@@ -163,6 +165,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
               <span className="text-gray-500 font-bold text-sm">{review.metrics.overallScore}%</span>
             </div>
 
+            {/* METRICS GRID */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Grammar", value: review.metrics.grammarScore },
@@ -177,22 +180,53 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
               ))}
             </div>
 
-            <div className="bg-white rounded-xl p-4 border border-gray-100 text-left space-y-2">
-              <p className="text-xs text-gray-400 uppercase tracking-wide font-bold">Strengths</p>
-              <ul className="space-y-1">
-                {review.overallFeedback.strengths.map((s, i) => (
-                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                    <span>💪</span> {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {/* 🔥 NEW: GRAMMAR ANALYSIS CARD */}
+            {review.grammarAnalysis && (
+              <div className="bg-red-50 rounded-xl p-4 border border-red-100 text-left space-y-2">
+                <p className="text-xs text-red-500 uppercase tracking-wide font-bold">Top Grammar Weakness</p>
+                <p className="text-md font-bold text-red-900">{review.grammarAnalysis.topWeakness}</p>
+                <p className="text-sm text-red-700">{review.grammarAnalysis.explanation}</p>
+              </div>
+            )}
+
+            {/* 🔥 NEW: VOCAB UPGRADES CARD */}
+            {review.vocabUpgrades && review.vocabUpgrades.length > 0 && (
+              <div className="bg-indigo-50 rounded-xl p-4 border border-indigo-100 text-left space-y-3">
+                <p className="text-xs text-indigo-500 uppercase tracking-wide font-bold">Vocabulary Upgrades</p>
+                <div className="space-y-3">
+                  {review.vocabUpgrades.map((upgrade, idx) => (
+                    <div key={idx} className="bg-white p-3 rounded-lg shadow-sm border border-indigo-50">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="line-through text-red-400 text-sm font-medium">{upgrade.original}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-green-600 font-bold text-sm">{upgrade.better}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">{upgrade.explanation}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* STRENGTHS */}
+            {review.overallFeedback.strengths && review.overallFeedback.strengths.length > 0 && (
+              <div className="bg-white rounded-xl p-4 border border-gray-100 text-left space-y-2">
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-bold">Strengths</p>
+                <ul className="space-y-1">
+                  {review.overallFeedback.strengths.map((s, i) => (
+                    <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                      <span>💪</span> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <button
               onClick={startReview}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
             >
-              Start Review 🚀
+              Start Interactive Review 🚀
             </button>
           </div>
         )}
@@ -253,4 +287,64 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
       </div>
     </div>
   );
+}
+
+// ------------------------------
+// TYPES 
+// ------------------------------
+
+export interface ReviewMetrics {
+  overallScore: number;
+  grammarScore: number;
+  vocabScore: number;
+  pronunciationScore: number | null;
+  fluencyScore: number;
+}
+
+// 🚨 FIXED: Updated to match backend Zod schema EXACTLY
+export interface ReviewMistake {
+  category: "GENDER" | "GRAMMAR" | "PRONUNCIATION" | "VOCABULARY";
+  severity: "MINOR" | "MAJOR" | "CRITICAL";
+  mistake: string; 
+  correction: string;
+  explanation: string;
+  context?: string;
+}
+
+export interface ReviewOverallFeedback {
+  summary: string;
+  strengths?: string[];
+  focusAreas?: string[];
+  encouragement: string;
+}
+
+// 🔥 NEW TYPES for the incoming AI Data
+export interface GrammarAnalysis {
+  topWeakness: string;
+  explanation: string;
+}
+
+export interface VocabUpgrade {
+  original: string;
+  better: string;
+  explanation: string;
+}
+
+export interface ReviewData {
+  metrics: ReviewMetrics;
+  mistakes: ReviewMistake[];
+  overallFeedback: ReviewOverallFeedback;
+  // Attached the new ones here
+  grammarAnalysis?: GrammarAnalysis;
+  vocabUpgrades?: VocabUpgrade[];
+}
+
+export interface SessionData {
+  id: string;
+  nativeLanguage: string;
+  targetLanguage: string;
+  level: string;
+  mode: string;
+  topic?: string | null;
+  duration: number;
 }

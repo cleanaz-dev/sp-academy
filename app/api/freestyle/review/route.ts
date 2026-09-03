@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const {
       sessionId,
       messages,
-      mistakes = [], 
+      mistakes = [],
       duration,
       mode,
       topic,
@@ -21,7 +21,10 @@ export async function POST(request: Request) {
     console.log("sessionId:", sessionId, "duration:", duration);
 
     if (!sessionId || !messages) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     // 1. Format the full transcript just for easy reading in the DB
@@ -29,7 +32,18 @@ export async function POST(request: Request) {
       .map((m: any) => `[${m.role.toUpperCase()}]: ${m.text}`)
       .join("\n");
 
-    // 2. Update the session in Prisma
+    // 2. Separate the mistakes into 3 distinct buckets for the Lambda
+    const grammarAndGenderMistakes = mistakes.filter(
+      (m: any) => m.category === "GRAMMAR" || m.category === "GENDER"
+    );
+    const vocabMistakes = mistakes.filter(
+      (m: any) => m.category === "VOCABULARY"
+    );
+    const pronunciationMistakes = mistakes.filter(
+      (m: any) => m.category === "PRONUNCIATION"
+    );
+
+    // 3. Update the session in Prisma
     const updatedSession = await prisma.freestyleSession.update({
       where: { id: sessionId },
       data: {
@@ -40,6 +54,7 @@ export async function POST(request: Request) {
       },
     });
 
+    // 4. Create a SINGLE system task (Lambda will handle the 3 parallel LLM calls)
     const task = await prisma.systemTask.create({
       data: {
         type: "FREESTYLE_REVIEW",
@@ -55,7 +70,7 @@ export async function POST(request: Request) {
 
     const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/system-tasks/${task.id}`;
 
-    // 3. The Payload for Lambda
+    // 5. The Payload for Lambda with the separated mistake buckets
     const payload = {
       taskId: task.id,
       sessionId,
@@ -68,6 +83,13 @@ export async function POST(request: Request) {
       duration,
       fullTranscript,
       messages,
+      // We pass the separated buckets so Lambda can easily fire 3 concurrent calls
+      separatedMistakes: {
+        grammarAndGender: grammarAndGenderMistakes,
+        vocabulary: vocabMistakes,
+        pronunciation: pronunciationMistakes,
+      },
+      // Keep the raw array just in case
       mistakes,
     };
 
@@ -77,7 +99,7 @@ export async function POST(request: Request) {
       invocationType: "Event",
     });
 
-    // 4. Trigger AWS Lambda function (Fire & Forget style)
+    // 6. Trigger AWS Lambda function (Fire & Forget style)
     await lambda.send(command);
 
     return NextResponse.json({
@@ -86,6 +108,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Review Route Error:", error);
-    return NextResponse.json({ error: "Failed to process review" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to process review" },
+      { status: 500 },
+    );
   }
 }

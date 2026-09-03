@@ -110,6 +110,8 @@ model FreestyleReview {
 
   mistakes        Json[]
   overallFeedback Json?
+  grammarAnalysis Json?
+  vocabUpgrades   Json?
   metrics         Json?
   lambdaStatus    LambdaStatus? @default(PENDING)
 

@@ -1,16 +1,16 @@
 import { z } from "zod";
 
-// Individual mistake — strict shape so frontend components don't crash
+// Individual mistake — strict shape matching the evaluate-turn route
 export const FreestyleMistakeSchema = z.object({
-  type: z.enum(["grammar", "vocabulary", "pronunciation", "fluency"]),
-  severity: z.enum(["minor", "major", "critical"]),
-  original: z.string().min(1),
+  category: z.enum(["GENDER", "GRAMMAR", "PRONUNCIATION", "VOCABULARY"]),
+  severity: z.enum(["MINOR", "MAJOR", "CRITICAL"]),
+  mistake: z.string().min(1), // Changed from 'original' to match your evaluate-turn prompt
   correction: z.string().min(1),
   explanation: z.string().min(1),
   context: z.string().optional(),
 });
 
-// Metrics — now includes fluencyScore
+// Metrics — includes fluencyScore and overallScore
 export const FreestyleMetricsSchema = z.object({
   overallScore: z.number().min(0).max(100),
   grammarScore: z.number().min(0).max(100),
@@ -19,19 +19,36 @@ export const FreestyleMetricsSchema = z.object({
   fluencyScore: z.number().min(0).max(100),
 });
 
-// overallFeedback is now an object, not a string
+// overallFeedback object
 export const FreestyleOverallFeedbackSchema = z.object({
   summary: z.string().min(1),
-  strengths: z.array(z.string()).max(3),
-  focusAreas: z.array(z.string()).max(3),
+  strengths: z.array(z.string()).optional(),
+  focusAreas: z.array(z.string()).optional(), // Made optional just in case the LLM skips it
   encouragement: z.string().min(1),
+});
+
+// NEW: Grammar Analysis Schema
+export const FreestyleGrammarAnalysisSchema = z.object({
+  topWeakness: z.string().min(1),
+  explanation: z.string().min(1),
+});
+
+// NEW: Vocabulary Upgrade Schema
+export const FreestyleVocabUpgradeSchema = z.object({
+  original: z.string().min(1),
+  better: z.string().min(1),
+  explanation: z.string().min(1),
 });
 
 // The review data itself
 export const FreestyleReviewDataSchema = z.object({
   metrics: FreestyleMetricsSchema,
-  mistakes: z.array(FreestyleMistakeSchema).max(5),
+  mistakes: z.array(FreestyleMistakeSchema), // Removed .max(5) so long sessions don't fail validation
   overallFeedback: FreestyleOverallFeedbackSchema,
+  
+  // Attach our new fields here as optional (in case of partial failures)
+  grammarAnalysis: FreestyleGrammarAnalysisSchema.optional(),
+  vocabUpgrades: z.array(FreestyleVocabUpgradeSchema).optional(),
 });
 
 // Main webhook payload from Lambda
@@ -48,4 +65,5 @@ export type FreestyleReviewWebhookPayload = z.infer<typeof FreestyleReviewWebhoo
 export type FreestyleReviewData = z.infer<typeof FreestyleReviewDataSchema>;
 export type FreestyleMistake = z.infer<typeof FreestyleMistakeSchema>;
 export type FreestyleMetrics = z.infer<typeof FreestyleMetricsSchema>;
-export type FreestyleOverallFeedback = z.infer<typeof FreestyleOverallFeedbackSchema>;
+export type FreestyleGrammarAnalysis = z.infer<typeof FreestyleGrammarAnalysisSchema>;
+export type FreestyleVocabUpgrade = z.infer<typeof FreestyleVocabUpgradeSchema>;

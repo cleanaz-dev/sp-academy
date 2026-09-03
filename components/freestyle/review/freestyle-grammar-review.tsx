@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import type { ReviewMistake } from "@/lib/types/review";
+import type { ReviewMistake } from "./freestyle-review-hub"; // Or wherever you keep these types!
 
 interface Props {
   mistakes: ReviewMistake[];
   onComplete: () => void;
 }
 
+// 🚨 FIXED: Updated to match uppercase severity enums
 const severityColor = {
-  minor: "border-yellow-400 bg-yellow-50",
-  major: "border-orange-400 bg-orange-50",
-  critical: "border-red-400 bg-red-50",
+  MINOR: "border-yellow-400 bg-yellow-50",
+  MAJOR: "border-orange-400 bg-orange-50",
+  CRITICAL: "border-red-400 bg-red-50",
 };
 
 export function FreestyleGrammarReview({ mistakes, onComplete }: Props) {
@@ -40,14 +41,15 @@ export function FreestyleGrammarReview({ mistakes, onComplete }: Props) {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5 animate-in slide-in-from-bottom-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {/* Dynamically show if it was GRAMMAR or GENDER */}
           <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-md uppercase">
-            Grammar
+            {current.category}
           </span>
           <span
             className={`text-xs font-bold px-2 py-1 rounded-md uppercase ${
-              current.severity === "critical"
+              current.severity === "CRITICAL"
                 ? "bg-red-100 text-red-700"
-                : current.severity === "major"
+                : current.severity === "MAJOR"
                 ? "bg-orange-100 text-orange-700"
                 : "bg-yellow-100 text-yellow-700"
             }`}
@@ -63,7 +65,8 @@ export function FreestyleGrammarReview({ mistakes, onComplete }: Props) {
       <div className="space-y-3">
         <div className="bg-gray-50 border-l-4 border-gray-400 p-4 rounded-r-lg">
           <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">You said</p>
-          <p className="text-lg text-gray-800 font-medium">"{current.original}"</p>
+          {/* 🚨 FIXED: 'original' is now 'mistake' */}
+          <p className="text-lg text-gray-800 font-medium">"{current.mistake}"</p>
         </div>
 
         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
