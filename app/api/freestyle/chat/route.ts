@@ -1,3 +1,4 @@
+import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -164,7 +165,7 @@ CONVERSATIONAL RULES:
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "qwen/qwen3.8-flash",
+          model: NovitaTextModel.DEEPSEEK_V4_FLASH,
           messages: messages,
           response_format: { type: "json_object" },
           // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
