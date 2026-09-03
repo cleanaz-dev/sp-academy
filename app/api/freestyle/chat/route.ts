@@ -165,7 +165,7 @@ CONVERSATIONAL RULES:
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: NovitaTextModel.DEEPSEEK_V4_FLASH,
+          model: NovitaTextModel.KIMI_K3,
           messages: messages,
           response_format: { type: "json_object" },
           // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
