@@ -165,11 +165,11 @@ CONVERSATIONAL RULES:
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: NovitaTextModel.DEEPSEEK_V4_FLASH_X,
+          model: NovitaTextModel.QWEN_3_8_FLASH,
           messages: messages,
           response_format: { type: "json_object" },
           // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
-          max_tokens: 2000,
+          max_tokens: 4000,
           temperature: 0.9
         }),
       },
