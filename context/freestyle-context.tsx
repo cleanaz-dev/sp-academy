@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useRef, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useSpeech } from "@/context/speech-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { convertBlobToWav } from "@/lib/audio-utils";
@@ -28,7 +35,9 @@ interface FreestyleContextType {
   handleReplay: (text: string) => void;
 }
 
-const FreestyleContext = createContext<FreestyleContextType | undefined>(undefined);
+const FreestyleContext = createContext<FreestyleContextType | undefined>(
+  undefined,
+);
 
 export function FreestyleProvider({
   session,
@@ -42,7 +51,7 @@ export function FreestyleProvider({
   const [messages, setMessages] = useState<any[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [retriesLeft, setRetriesLeft] = useState(3);
-  
+
   // New States for Suggestions
   const [suggestions, setSuggestions] = useState<SuggestionData | null>(null);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
@@ -52,11 +61,23 @@ export function FreestyleProvider({
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
 
-  const { startRecording: startSpeech, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
-  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
+  const {
+    startRecording: startSpeech,
+    stopRecording,
+    isRecording,
+    transcript,
+    resetSpeechState,
+  } = useSpeech();
+  const {
+    speak,
+    isPlaying,
+    isLoading: isSpeechLoading,
+    stop: stopAudio,
+  } = useSpeak();
 
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
-  const canRetry = retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
+  const canRetry =
+    retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
 
   // Initial greeting
   useEffect(() => {
@@ -70,10 +91,10 @@ export function FreestyleProvider({
 
     stopRecording();
     stopAudio();
-    
+
     const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
     const toastId = toast.loading("Saving session...", {
-      description: "Sending your conversation to the AI for review."
+      description: "Sending your conversation to the AI for review.",
     });
 
     try {
@@ -95,8 +116,8 @@ export function FreestyleProvider({
         id: toastId,
         description: "Your review is being generated in the background.",
       });
-      
-      onEnd(); 
+
+      onEnd();
     } catch (err) {
       console.error("Failed to submit session for review:", err);
       toast.error("Uh oh! Something went wrong.", {
@@ -107,31 +128,31 @@ export function FreestyleProvider({
     }
   };
 
-
-   // 🚨 3. NEW MINI-JOB: Evaluates grammar in the background
-  const evaluateUserTurn = async (userText: string, messageId: number) => {
-    try {
-      const res = await fetch("/api/freestyle/evaluate-turn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userText,
-          targetLanguage: session.targetLanguage,
-          nativeLanguage: session.nativeLanguage,
-          level: session.level, // Ensure `level` exists on your session object
-        }),
-      });
+  // 🚨 3. NEW MINI-JOB: Evaluates grammar in the background
+  const evaluateUserTurn = async (userText: string, messageId: number, pronunciationData: any = null) => {
+  try {
+    const res = await fetch("/api/freestyle/evaluate-turn", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userText,
+        targetLanguage: session.targetLanguage,
+        nativeLanguage: session.nativeLanguage,
+        level: session.level,
+        pronunciationData, // 👈 PASS THIS TO YOUR ENDPOINT
+      }),
+    });
 
       if (!res.ok) return;
 
       const data = await res.json();
-      
+
       if (data.hasMistakes && data.corrections?.length > 0) {
         // Tag the corrections with the messageId so we know exactly when they happened
         const taggedMistakes = data.corrections.map((correction: any) => ({
           ...correction,
           userMessageId: messageId,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         }));
 
         setAccumulatedMistakes((prev) => [...prev, ...taggedMistakes]);
@@ -141,7 +162,11 @@ export function FreestyleProvider({
     }
   };
 
-  const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
+  const analyzePronunciation = async (
+    audioBlob: Blob,
+    text: string,
+    messageId: number,
+  ) => {
     try {
       const wavBlob = await convertBlobToWav(audioBlob);
       const formData = new FormData();
@@ -149,19 +174,35 @@ export function FreestyleProvider({
       formData.append("transcript", text);
       formData.append("language", session.targetLanguage);
 
-      const res = await fetch("/api/pronunciation-assessment", { method: "POST", body: formData });
+      const res = await fetch("/api/pronunciation-assessment", {
+        method: "POST",
+        body: formData,
+      });
       if (!res.ok) throw new Error("Pronunciation assessment failed");
-      
+
       const scoreData = await res.json();
 
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, pronunciationScore: scoreData, isAnalyzingPronunciation: false } : m))
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                pronunciationScore: scoreData,
+                isAnalyzingPronunciation: false,
+              }
+            : m,
+        ),
       );
+
+      return scoreData;
     } catch (err) {
       console.error("Pronunciation assessment failed", err);
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m))
+        prev.map((m) =>
+          m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m,
+        ),
       );
+      return null;
     }
   };
 
@@ -230,7 +271,7 @@ export function FreestyleProvider({
 
         // 🚨 Fetch suggestions in the background right now
         generateSuggestions([...chatHistory, newAiMessage]);
-        
+
         // 🚨 Play the voice (this happens at the exact same time as generating hints)
         await speak(
           data.text,
@@ -266,7 +307,7 @@ export function FreestyleProvider({
     }
   };
 
-  const submitTurn = async () => {
+const submitTurn = async () => {
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
 
@@ -288,9 +329,17 @@ export function FreestyleProvider({
     setMessages(updatedMessages);
     resetSpeechState();
 
-    if (audioBlob) analyzePronunciation(audioBlob, userText, newMsgId);
-    evaluateUserTurn(userText, newMsgId);
+    // 1. Instantly get AI response (No UI blocking)
     handleAiTurn(false, updatedMessages);
+
+    // 2. Chain Pronunciation -> Evaluation in the background 
+    (async () => {
+      let pronunData = null;
+      if (audioBlob) {
+        pronunData = await analyzePronunciation(audioBlob, userText, newMsgId);
+      }
+      await evaluateUserTurn(userText, newMsgId, pronunData);
+    })();
   };
 
   const handleRetry = () => {
@@ -325,13 +374,14 @@ export function FreestyleProvider({
         isPlaying,
         isSpeechLoading,
         transcript,
-        suggestions, 
-        isSuggestionsLoading, 
+        suggestions,
+        isSuggestionsLoading,
         submitTurn,
         handleRetry,
         handleEndSession,
         startRecording: () => startSpeech(session.targetLanguage),
-        handleReplay: (text: string) => speak(text, session.targetLanguage, 1.0, session.voiceGender),
+        handleReplay: (text: string) =>
+          speak(text, session.targetLanguage, 1.0, session.voiceGender),
       }}
     >
       {children}
