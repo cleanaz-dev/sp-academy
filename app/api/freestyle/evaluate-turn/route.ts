@@ -34,7 +34,6 @@ export async function POST(req: Request) {
       `[EVAL-${requestId}] Evaluating turn. Level: ${level}, Text: "${userText}"`,
     );
 
-    // 1. Level-based strictness mapped to Severity
     let levelInstruction = "";
     if (level === "EASY") {
       levelInstruction = "Be lenient. Only flag CRITICAL or MAJOR errors that impede understanding. Ignore MINOR mistakes.";
@@ -46,20 +45,18 @@ export async function POST(req: Request) {
       levelInstruction = "Be extremely lenient. ONLY flag CRITICAL errors that completely prevent understanding.";
     }
 
-    // 2. Format Pronunciation Context if it exists
     const pronunciationContext = pronunciationData?.words?.length
       ? `PRONUNCIATION DATA: The user's word-level pronunciation scores are: ${JSON.stringify(
           pronunciationData.words.map((w: any) => ({ word: w.word, score: w.accuracyScore }))
         )}. If any word scores poorly (e.g., below 60), log it as a PRONUNCIATION mistake.`
-      : "No audio pronunciation data provided. Skip PRONUNCIATION category unless the text clearly contains a phonetic hallucination (a word that makes no sense but sounds similar to the right word).";
+      : "No audio pronunciation data provided. Skip PRONUNCIATION category unless the text clearly contains a phonetic hallucination.";
 
-    // 3. Build the System Prompt
+    // 1. Cleaner Schema Instructions without pipe characters in the expected values
     const systemPrompt = `You are a strict language evaluator for a student learning ${targetLanguage}.
 The student's native language is ${nativeLanguage}.
 
 INSTRUCTIONS:
 ${levelInstruction}
-Evaluate the user's text: "${userText}".
 
 ${pronunciationContext}
 
@@ -75,32 +72,30 @@ You MUST assign a severity to every mistake:
 - CRITICAL: Meaning is lost, severely altered, or impossible to understand.
 
 CRITICAL RULE:
-Find ALL mistakes. If there are multiple errors (e.g., a gender error AND a pronunciation error), you MUST return multiple objects inside the "corrections" array.
+Find ALL mistakes. If there are multiple errors, you MUST return multiple objects inside the "corrections" array.
 
 You MUST respond in valid JSON matching exactly this schema:
 {
-  "hasMistakes": boolean,
+  "hasMistakes": true or false,
   "corrections": [
     { 
-      "category": "GENDER | GRAMMAR | PRONUNCIATION | VOCABULARY",
-      "severity": "MINOR | MAJOR | CRITICAL",
+      "category": "GRAMMAR", // MUST BE EXACTLY ONE OF: GENDER, GRAMMAR, PRONUNCIATION, VOCABULARY
+      "severity": "MINOR", // MUST BE EXACTLY ONE OF: MINOR, MAJOR, CRITICAL
       "mistake": "exact part of the string that was wrong", 
       "correction": "how to say it correctly", 
       "explanation": "brief explanation in ${nativeLanguage}" 
     }
-    // Add an object like this for EACH mistake found
   ]
 }
 
 If there are no mistakes based on their level, return:
 { "hasMistakes": false, "corrections": [] }
 
-Do not wrap in markdown (no \`\`\`json). Return raw JSON only.`;
+Do not wrap in markdown. Return raw JSON only.`;
 
     const apiKey = process.env.NOVITA_API_KEY;
     if (!apiKey) throw new Error("NOVITA_API_KEY is not configured.");
 
-    // 4. Call Novita (Deepseek)
     const startTime = Date.now();
     const response = await fetch(
       "https://api.novita.ai/openai/v1/chat/completions",
@@ -111,11 +106,15 @@ Do not wrap in markdown (no \`\`\`json). Return raw JSON only.`;
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: NovitaTextModel.DEEPSEEK_V4_FLASH,
-          messages: [{ role: "system", content: systemPrompt }],
+          model: NovitaTextModel.QWEN_3_8_FLASH,
+          messages: [
+            { role: "system", content: systemPrompt },
+            // 2. Pass the text to evaluate as a dedicated user message!
+            { role: "user", content: `Evaluate this text: "${userText}"` }
+          ],
           response_format: { type: "json_object" },
-          max_tokens: 500, // Increased to support multiple mistakes
-          temperature: 0.1, // Low temperature for consistent JSON output
+          max_tokens: 500,
+          temperature: 0.1,
         }),
       },
     );
@@ -127,29 +126,35 @@ Do not wrap in markdown (no \`\`\`json). Return raw JSON only.`;
     const data = await response.json();
     const rawContent = data.choices?.[0]?.message?.content || "{}";
 
-    // 5. Parse JSON safely
-    let parsedContent: any;
+    let parsedContent: any = { hasMistakes: false, corrections: [] };
     try {
       parsedContent = JSON.parse(rawContent);
     } catch (e) {
-      console.warn(
-        `[EVAL-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting cleanup...`,
-      );
-      const cleaned = rawContent
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-      parsedContent = JSON.parse(cleaned);
+      console.warn(`[EVAL-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting cleanup...`);
+      try {
+        const cleaned = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
+        parsedContent = JSON.parse(cleaned);
+      } catch (err) {
+        console.error(`[EVAL-${requestId}] ❌ JSON parse failed after cleanup:`, err);
+      }
     }
 
+    // 3. Rock-solid fallback so it's NEVER undefined
+    const hasMistakes = 
+      parsedContent?.hasMistakes ?? 
+      (Array.isArray(parsedContent?.corrections) && parsedContent.corrections.length > 0) ?? false;
+      
+    const corrections = Array.isArray(parsedContent?.corrections) ? parsedContent.corrections : [];
+
+    const finalResult = { hasMistakes, corrections };
+
     console.log(
-      `[EVAL-${requestId}] ✅ Finished in ${Date.now() - startTime}ms. Mistakes: ${parsedContent.hasMistakes}`,
+      `[EVAL-${requestId}] ✅ Finished in ${Date.now() - startTime}ms. Mistakes: ${finalResult.hasMistakes}, Count: ${finalResult.corrections.length}`,
     );
 
-    return NextResponse.json(parsedContent);
+    return NextResponse.json(finalResult);
   } catch (error: any) {
     console.error(`[EVAL-ERROR] ❌`, error.message || error);
-    // If it fails, we gracefully return no mistakes so the UI doesn't break
     return NextResponse.json({ hasMistakes: false, corrections: [] });
   }
 }
