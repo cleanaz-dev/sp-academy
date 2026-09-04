@@ -30,7 +30,7 @@ export default function PricingPage() {
       <div className="pointer-events-none absolute -left-40 top-40 -z-10 h-[400px] w-[400px] rounded-full bg-teal-400/10 blur-[100px]" />
       <div className="pointer-events-none absolute -right-40 top-80 -z-10 h-[500px] w-[500px] rounded-full bg-indigo-400/10 blur-[100px]" />
 
-      <div className="mx-auto max-w-7xl px-6 pb-24 pt-20 lg:pt-32">
+      <div className="mx-auto max-w-7xl px-6 pb-24 pt-20 lg:pt-16">
         
         {/* Header Section */}
         <div className="mx-auto max-w-3xl text-center">
