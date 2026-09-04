@@ -1785,8 +1785,8 @@ export async function saveGameScore({
 
 
 export async function getAllUserReviews(userId: string) {
-  const reviews = await prisma.user.findFirst({
-    where: { userId },
+  const reviews = await prisma.user.findUnique({
+    where: { id: userId },
     include: {
       dailyJournals: {
         include: { review: true },
