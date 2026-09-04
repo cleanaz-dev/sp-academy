@@ -10,14 +10,6 @@ import { FreestyleSuggestionsPanel } from "./freestyle-suggestions-panel";
 import { FreestyleControls } from "./freestyle-controls";
 import { FreestyleTimer } from "./freestyle-timer";
 
-const MOCK_SUGGESTIONS = [
-  "Could you repeat that a bit more slowly?",
-  "What does that mean in English?",
-  "I'm not sure how to say it, but...",
-  "Can we talk about a different topic?",
-  "Let me think about that for a second.",
-];
-
 export default function FreestyleChat() {
   const {
     session,
