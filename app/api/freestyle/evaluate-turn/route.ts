@@ -110,7 +110,7 @@ Do not wrap in markdown. Return raw JSON only.`;
             { role: "user", content: `Evaluate this text: "${userText}"` }
           ],
           // Removed response_format to prevent 400 errors on some Qwen models
-          max_tokens: 500,
+          max_tokens: 1000,
           temperature: 0.1,
         }),
       },
