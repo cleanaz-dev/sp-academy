@@ -1,18 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
-  BookOpen,
   Search,
   X,
   SearchX,
@@ -20,13 +11,16 @@ import {
   MessageSquare,
   PenTool,
   Calendar,
-  BarChart,
+  ChevronRight,
+  Sparkles,
+  Activity,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 
 // Animation variants
 const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 15 },
   visible: {
     opacity: 1,
     y: 0,
@@ -34,12 +28,12 @@ const containerVariants = {
   },
   exit: {
     opacity: 0,
-    y: -20,
-    transition: { duration: 0.3, ease: "easeIn" },
+    y: -15,
+    transition: { duration: 0.2, ease: "easeIn" },
   },
 };
 
-// Helper for formatting dates safely
+// Helper for formatting dates
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   return new Intl.DateTimeFormat("en-US", {
@@ -53,12 +47,10 @@ export default function LearningHubPage({ reviews, userId }) {
   const [activeTab, setActiveTab] = useState("freestyle");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Extract data safely from the passed server object
   const freestyleSessions = reviews?.FreestyleSession || [];
   const journals = reviews?.dailyJournals || [];
   const conversations = reviews?.ConversationReview || [];
 
-  // Centralized filter function based on active tab
   const filterContent = () => {
     const query = searchQuery.toLowerCase();
 
@@ -70,10 +62,8 @@ export default function LearningHubPage({ reviews, userId }) {
           session.mode?.toLowerCase().includes(query) ||
           session.level?.toLowerCase().includes(query)
       );
-      // Sort by newest first
       return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
-
     if (activeTab === "journals") {
       let filtered = journals.filter(
         (journal) =>
@@ -82,77 +72,76 @@ export default function LearningHubPage({ reviews, userId }) {
       );
       return filtered.sort((a, b) => new Date(b.entryDate) - new Date(a.entryDate));
     }
-
     if (activeTab === "conversations") {
-      // If you later include the 'conversation' relation in your Prisma query, you can filter by its title too
-      let filtered = conversations.filter(
-        (review) => review.id.toLowerCase().includes(query)
+      let filtered = conversations.filter((review) =>
+        review.id.toLowerCase().includes(query)
       );
       return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
-
     return [];
   };
 
   const filteredData = filterContent();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8F9FC] font-sans">
       {/* Header Section */}
-      <header className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 bg-[length:300%_300%] py-16 text-white">
+      <header className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 bg-[length:300%_300%] py-16 text-white shadow-md">
         <div className="mx-auto max-w-7xl px-6">
-          <h1 className="mb-4 text-4xl font-bold">Your Learning Hub</h1>
-          <p className="text-xl opacity-90 max-w-2xl">
+          <h1 className="mb-4 text-4xl font-extrabold tracking-tight">
+            Your Learning Hub
+          </h1>
+          <p className="text-lg opacity-90 max-w-2xl font-medium">
             Track your language progress, review past mistakes, and see your fluency scores improve over time. 🚀
           </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="mx-auto max-w-7xl px-6 pt-8 pb-20">
+      <div className="mx-auto max-w-7xl px-6 pt-10 pb-24">
         {/* Tab Navigation */}
-        <div className="mb-6 flex flex-wrap gap-4">
-          <Button
-            variant={activeTab === "freestyle" ? "default" : "outline"}
+        <div className="mb-8 flex flex-wrap gap-3">
+          <TabButton
+            active={activeTab === "freestyle"}
             onClick={() => setActiveTab("freestyle")}
-            className="relative"
-          >
-            <Mic className="mr-2 h-4 w-4" />
-            Freestyle Sessions
-          </Button>
-          <Button
-            variant={activeTab === "journals" ? "default" : "outline"}
+            icon={<Mic size={18} />}
+            label="Freestyle Sessions"
+            activeColor="bg-violet-600 text-white shadow-md shadow-violet-200"
+            inactiveColor="bg-white text-gray-600 hover:bg-violet-50 border border-gray-200"
+          />
+          <TabButton
+            active={activeTab === "journals"}
             onClick={() => setActiveTab("journals")}
-            className="relative"
-          >
-            <PenTool className="mr-2 h-4 w-4" />
-            Daily Journals
-          </Button>
-          <Button
-            variant={activeTab === "conversations" ? "default" : "outline"}
+            icon={<PenTool size={18} />}
+            label="Daily Journals"
+            activeColor="bg-teal-500 text-white shadow-md shadow-teal-200"
+            inactiveColor="bg-white text-gray-600 hover:bg-teal-50 border border-gray-200"
+          />
+          <TabButton
+            active={activeTab === "conversations"}
             onClick={() => setActiveTab("conversations")}
-            className="relative"
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Conversations
-          </Button>
+            icon={<MessageSquare size={18} />}
+            label="Conversations"
+            activeColor="bg-indigo-500 text-white shadow-md shadow-indigo-200"
+            inactiveColor="bg-white text-gray-600 hover:bg-indigo-50 border border-gray-200"
+          />
         </div>
 
         {/* Search */}
-        <div className="mb-8 w-full max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-500" />
+        <div className="mb-10 w-full max-w-md">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 group-focus-within:text-violet-500 transition-colors" />
             <input
               type="text"
               placeholder="Search by language, topic, or mode..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border border-gray-200 py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition-all focus:border-violet-300 focus:ring-4 focus:ring-violet-500/10 shadow-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-500 hover:text-gray-700"
+                className="absolute right-4 top-1/2 -translate-y-1/2 transform text-gray-400 hover:text-gray-700"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -162,202 +151,224 @@ export default function LearningHubPage({ reviews, userId }) {
 
         {/* Dynamic Lists */}
         <AnimatePresence mode="wait">
-          {/* FREESTYLE TAB */}
-          {activeTab === "freestyle" && (
-            <motion.div
-              key="freestyle"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-            >
-              {filteredData.length > 0 ? (
-                filteredData.map((session) => (
-                  <Card key={session.id} className="flex flex-col justify-between transition-shadow hover:shadow-lg border-l-4 border-l-violet-500">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">
-                          {session.topic || "Open Conversation"}
-                        </CardTitle>
-                        <Badge variant="secondary" className="capitalize">
-                          {session.targetLanguage}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">{session.mode}</Badge>
-                        <Badge variant="outline" className="text-xs">{session.level}</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center text-sm text-gray-500 justify-between">
-                          <div className="flex items-center">
-                            <Calendar className="mr-1 h-4 w-4" />
-                            <span>{formatDate(session.createdAt)}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Clock className="mr-1 h-4 w-4" />
-                            <span>{Math.round(session.duration / 60)} min</span>
-                          </div>
-                        </div>
-
-                        {session.review ? (
-                          <div className="rounded-md bg-green-50 p-3 text-sm text-green-700 border border-green-100 flex justify-between items-center">
-                            <span className="font-medium">Review Available</span>
-                            {session.review.mistakes?.length > 0 && (
-                               <Badge className="bg-green-600">{session.review.mistakes.length} Notes</Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="rounded-md bg-orange-50 p-3 text-sm text-orange-700 border border-orange-100">
-                            Review Pending Processing...
-                          </div>
-                        )}
-
-                        <Link href={`/learning-hub/freestyle/${session.id}`} className="w-full mt-2">
-                          <Button className="w-full" disabled={!session.review}>
-                            {session.review ? "View Full Review" : "Processing"}
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <EmptyState message="No freestyle sessions found." />
-              )}
-            </motion.div>
-          )}
-
-          {/* JOURNALS TAB */}
-          {activeTab === "journals" && (
-            <motion.div
-              key="journals"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-            >
-              {filteredData.length > 0 ? (
-                filteredData.map((journal) => (
-                  <Card key={journal.id} className="flex flex-col justify-between transition-shadow hover:shadow-lg border-l-4 border-l-fuchsia-500">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">Daily Journal</CardTitle>
-                        <Badge variant="secondary" className="capitalize">
-                          {journal.language || "en-US"}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col gap-4">
-                         <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="mr-1 h-4 w-4" />
-                          <span>{formatDate(journal.entryDate)}</span>
-                        </div>
-
-                        {journal.review && journal.review.overallScore !== null ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="text-sm font-medium text-gray-600 flex items-center">
-                                <BarChart className="mr-2 h-4 w-4" /> Overall Score
-                              </span>
-                              <span className="font-bold text-indigo-600 text-lg">
-                                {journal.review.overallScore}%
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                                <div>Fluency: <span className="font-medium text-gray-900">{journal.review.fluencyScore}%</span></div>
-                                <div>Accuracy: <span className="font-medium text-gray-900">{journal.review.accuracyScore}%</span></div>
-                            </div>
-                          </div>
-                        ) : (
-                           <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-500 text-center italic">
-                            No scored review generated yet.
-                          </div>
-                        )}
-
-                        <Link href={`/learning-hub/journal/${journal.id}`} className="w-full mt-2">
-                          <Button className="w-full" variant="outline">
-                            View Analysis
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <EmptyState message="No journal entries found." />
-              )}
-            </motion.div>
-          )}
-
-          {/* CONVERSATIONS TAB */}
-          {activeTab === "conversations" && (
-            <motion.div
-              key="conversations"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-            >
-              {filteredData.length > 0 ? (
-                filteredData.map((review) => (
-                  <Card key={review.id} className="flex flex-col justify-between transition-shadow hover:shadow-lg border-l-4 border-l-indigo-500">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">Structured Conversation</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="mr-1 h-4 w-4" />
-                          <span>{formatDate(review.createdAt)}</span>
-                        </div>
-
-                        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center justify-between">
-                            <span className="text-sm font-medium text-indigo-800">Grammar & Vocab Mistakes</span>
-                            <Badge className="bg-indigo-600 hover:bg-indigo-700">
-                                {review.mistakes?.length || 0} Corrected
-                            </Badge>
-                        </div>
-
-                        <Link href={`/learning-hub/conversation/${review.conversationId}`} className="w-full mt-2">
-                          <Button className="w-full">
-                            View Mistakes & Notes
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <EmptyState message="No conversation reviews found." />
-              )}
-            </motion.div>
-          )}
+          <motion.div
+            key={activeTab}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {filteredData.length > 0 ? (
+              filteredData.map((item) => {
+                if (activeTab === "freestyle") return <FreestyleCard key={item.id} session={item} />;
+                if (activeTab === "journals") return <JournalCard key={item.id} journal={item} />;
+                if (activeTab === "conversations") return <ConversationCard key={item.id} review={item} />;
+              })
+            ) : (
+              <EmptyState message={`No ${activeTab} found.`} />
+            )}
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>
   );
 }
 
-// Reusable Empty State Component
+// ----------------------------------------------------------------------
+// CUSTOM UI COMPONENTS
+// ----------------------------------------------------------------------
+
+function TabButton({ active, onClick, icon, label, activeColor, inactiveColor }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+        active ? activeColor : inactiveColor
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+// --- 1. FREESTYLE CARD (Violet Theme) ---
+function FreestyleCard({ session }) {
+  const isReady = !!session.review;
+  const mistakesCount = session.review?.mistakes?.length || 0;
+
+  return (
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10">
+      <div>
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
+            {session.topic || "Open Conversation"}
+          </h3>
+          <span className="shrink-0 rounded-lg bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700">
+            {session.targetLanguage}
+          </span>
+        </div>
+
+        <div className="mb-6 flex flex-wrap gap-2">
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold text-gray-600 tracking-wider">
+            {session.mode}
+          </span>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-semibold text-gray-600 tracking-wider">
+            {session.level}
+          </span>
+        </div>
+
+        <div className="mb-6 flex items-center gap-6 text-sm text-gray-500 font-medium">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-violet-400" />
+            {formatDate(session.createdAt)}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-violet-400" />
+            {Math.round(session.duration / 60)} min
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-auto flex items-center justify-between">
+        {isReady ? (
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
+              <Sparkles className="h-3 w-3 text-emerald-600" />
+            </span>
+            <span className="text-xs font-bold text-emerald-700">
+              {mistakesCount} Notes
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+            </span>
+            <span className="text-xs font-bold text-amber-600">Processing...</span>
+          </div>
+        )}
+
+        <Link href={`/learning-hub/freestyle/${session.id}`}>
+          <button
+            disabled={!isReady}
+            className={`flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-bold transition-colors ${
+              isReady
+                ? "bg-violet-600 text-white hover:bg-violet-700"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Review <ChevronRight className="h-4 w-4" />
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// --- 2. JOURNAL CARD (Teal/Cyan Theme) ---
+function JournalCard({ journal }) {
+  const isReady = journal.review && journal.review.overallScore !== null;
+  const score = isReady ? journal.review.overallScore : 0;
+
+  return (
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/10">
+      <div>
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900">Daily Journal</h3>
+          <span className="shrink-0 rounded-lg bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
+            {journal.language || "en-US"}
+          </span>
+        </div>
+
+        <div className="mb-6 flex items-center gap-1.5 text-sm text-gray-500 font-medium">
+          <Calendar className="h-4 w-4 text-teal-400" />
+          {formatDate(journal.entryDate)}
+        </div>
+
+        {isReady ? (
+          <div className="mb-6 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 p-4 border border-teal-100/50">
+            <div className="flex items-end justify-between mb-2">
+              <span className="text-sm font-bold text-teal-900">Overall Score</span>
+              <span className="text-3xl font-extrabold text-teal-600 leading-none">
+                {score}%
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-teal-100 mt-2">
+              <div 
+                className="h-full bg-teal-500 rounded-full transition-all duration-1000" 
+                style={{ width: `${score}%` }} 
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 rounded-2xl bg-gray-50 p-4 border border-gray-100 flex items-center justify-center min-h-[90px]">
+            <span className="text-sm font-medium text-gray-400 italic">Score pending...</span>
+          </div>
+        )}
+      </div>
+
+      <Link href={`/learning-hub/journal/${journal.id}`} className="mt-auto w-full">
+        <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-50 text-teal-700 py-2.5 text-sm font-bold hover:bg-teal-100 transition-colors">
+          <Activity className="h-4 w-4" /> View Analysis
+        </button>
+      </Link>
+    </div>
+  );
+}
+
+// --- 3. CONVERSATION CARD (Indigo Theme) ---
+function ConversationCard({ review }) {
+  const mistakesCount = review.mistakes?.length || 0;
+
+  return (
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
+      <div>
+        <div className="flex items-start justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
+            {review.conversation?.title || "Structured Conversation"}
+          </h3>
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+            <Target className="h-4 w-4" />
+          </span>
+        </div>
+
+        <div className="mb-6 flex items-center gap-1.5 text-sm text-gray-500 font-medium">
+          <Calendar className="h-4 w-4 text-indigo-400" />
+          {formatDate(review.createdAt)}
+        </div>
+
+        <div className="mb-6 flex items-center justify-between rounded-xl bg-indigo-50 p-3 border border-indigo-100/50">
+           <span className="text-sm font-bold text-indigo-900">Corrections Made</span>
+           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+             {mistakesCount}
+           </span>
+        </div>
+      </div>
+
+      <Link href={`/learning-hub/conversation/${review.conversationId}`} className="mt-auto w-full">
+        <button className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-indigo-100 bg-white text-indigo-600 py-2 text-sm font-bold hover:border-indigo-200 hover:bg-indigo-50 transition-colors">
+          View Corrections
+        </button>
+      </Link>
+    </div>
+  );
+}
+
+// --- EMPTY STATE ---
 function EmptyState({ message }) {
   return (
-    <div className="col-span-full py-16 text-center">
-      <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-        <SearchX className="h-8 w-8 text-gray-400" />
+    <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-3xl border border-dashed border-gray-200">
+      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gray-50">
+        <SearchX className="h-10 w-10 text-gray-300" />
       </div>
-      <h3 className="mb-2 text-lg font-medium text-gray-900">
+      <h3 className="mb-2 text-xl font-bold text-gray-800">
         Nothing here yet!
       </h3>
-      <p className="text-gray-500">
-        {message} Try completing a session to see your progress here.
+      <p className="text-gray-500 max-w-sm">
+        {message} Complete an activity to start seeing your progress and reviews here.
       </p>
     </div>
   );
