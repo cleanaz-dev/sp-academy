@@ -7,6 +7,8 @@ export default async function Page() {
   const user = await getUserbyUserId(clerkId);
   const reviews: UserReviews = await getAllUserReviews(user.id);
 
+  console.log("reviews", reviews);
+
   return (
     <>
       <LearningHubPage reviews={reviews} userId={user.id} />
