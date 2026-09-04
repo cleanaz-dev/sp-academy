@@ -2,13 +2,13 @@
 
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+
 
 import FreestyleSetup from "./freestyle-setup";
 import FreestyleChat from "./freestyle-chat";
 import { FreestyleProvider } from "@/context/freestyle-context";
 import { FreestyleReviewHub } from "./review/freestyle-review-hub";
-import { useReviewPusher } from "@/hooks/use-review-pusher"; 
+ 
 
 export type FreestyleSessionConfig = {
   id: string;
@@ -18,7 +18,7 @@ export type FreestyleSessionConfig = {
   targetLanguage: string;
   voiceGender: "male" | "female";
   aiAvatarUrl: string;
-  level: "EASY" | "MEDIUM" | "FLUENT";
+  level: "EASY" | "MEDIUM" | "FLUENT" | "ZERO"
 };
 
 export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) {
