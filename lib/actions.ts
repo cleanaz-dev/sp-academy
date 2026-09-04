@@ -1782,3 +1782,29 @@ export async function saveGameScore({
     message: "Score submitted, but didn't beat previous high score." 
   };
 }
+
+
+export async function getAllUserReviews(userId: string) {
+  const reviews = await prisma.user.findFirst({
+    where: { userId },
+    include: {
+      dailyJournals: {
+        include: { review: true },
+      },
+      FreestyleSession: {
+        include: { review: true },
+      },
+      // Change this part to include the parent conversation info:
+      ConversationReview: {
+        include: {
+           conversation: {
+             select: { title: true, nativeLanguage: true, tutorLanguage: true }
+           }
+        }
+      } 
+    },
+  });
+  return reviews;
+}
+
+export type UserReviews = Awaited<ReturnType<typeof getAllUserReviews>>;

@@ -1,16 +1,16 @@
-import LearningHubPage from "@/components/learning-hub/LearningHubPage";
-import React from "react";
+
+import EduCenterPage from "@/components/edu-centre/edu-centre-page";
 import { getAllCourses, getUserbyUserId } from "@/lib/actions";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function page() {
-  const { userId } = auth();
+  const { userId } = await auth();
   const courses = await getAllCourses();
   const user = await getUserbyUserId(userId);
 
   return (
     <>
-      <LearningHubPage courses={courses} userId={user.id} />
+      <EduCenterPage courses={courses} userId={user.id} />
     </>
   );
 }
