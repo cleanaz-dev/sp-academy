@@ -1,25 +1,27 @@
 model Lesson {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  subject     String?
-  description String?
-  duration    String?
-  level       Int?
-  content     String      @db.String
-  type        LessonType?
-  coverUrl    String?
-  topics      Json?
-  teacher     Teacher?    @relation(fields: [teacherId], references: [id])
-  teacherId   String?     @db.ObjectId
-  quiz        Quiz?
-  course      Course?     @relation(fields: [courseId], references: [id])
-  courseId    String?     @db.ObjectId
-  Progress    Progress[]
-  orderIndex  Int? // Add this to maintain lesson order in course
-  exercise    Exercise[]
-  Lecture     Lecture[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  subject            String?
+  description        String?
+  duration           String?
+  level              Int?
+  content            String            @db.String
+  type               LessonType?
+  coverUrl           String?
+  topics             Json?
+  teacher            Teacher?          @relation(fields: [teacherId], references: [id])
+  teacherId          String?           @db.ObjectId
+  quiz               Quiz?
+  course             Course?           @relation(fields: [courseId], references: [id])
+  courseId           String?           @db.ObjectId
+  Progress           Progress[]
+  orderIndex         Int? // Add this to maintain lesson order in course
+  exercise           Exercise[]
+  Lecture            Lecture[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  FoundationCourse   FoundationCourse? @relation(fields: [foundationCourseId], references: [id])
+  foundationCourseId String?           @db.ObjectId
 }
 
 model Lecture {

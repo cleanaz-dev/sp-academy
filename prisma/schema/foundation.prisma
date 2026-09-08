@@ -1,0 +1,83 @@
+// ── The shared skeleton. Cached by cacheKey, generated ONCE per combo ──
+model FoundationCourse {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  cacheKey  String             @unique // "en-US:es-ES:beginner:travel"
+  title     String
+  // Planner-generated day-by-day outline, no content yet:
+  // [{ day: 1, theme: "...", targetChunks: [...] }, ...]
+  outline   Json
+  dayCount  Int                @default(7)
+  lessons   FoundationLesson[]
+  createdAt DateTime           @default(now())
+  Lesson    Lesson[]
+}
+
+// ── One per user, created one at a time by the cycle ──
+model FoundationLesson {
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  courseId   String           @db.ObjectId
+  course     FoundationCourse @relation(fields: [courseId], references: [id])
+  userId     String           @db.ObjectId // lessons are personal now (adaptive)
+  user       User             @relation(fields: [userId], references: [id])
+  orderIndex Int
+
+  status String @default("building") // "building" | "ready" — lazy generation flag
+
+  // Primitive-shaped payloads (Zod parses these on the frontend):
+  visualContent     Json? // S3 key, NPC line, scene, dialogue constraint
+  grammarContent    Json? // sentence pair, word glosses, cloze items + answer keys + feedback
+  pronunciationData Json? // focus sounds + positions in reference text (for Shadow)
+  listeningContent  Json? // reference text, options, correct index
+  quizContent       Json? // item keys + feedback (same-day review for v1)
+
+  // Config for the freestyle session that completes this day:
+  freestyle Json? // { tier, topic, persona, requiredChunks, openingLine }
+
+  createdAt              DateTime                @default(now())
+  FoundationFreestyleLog FoundationFreestyleLog?
+}
+
+// ── Merged: UserFoundation is gone, folded in here ──
+model FoundationProgress {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  foundationCourseId String @db.ObjectId
+  status             String @default("in_progress") // "in_progress" | "completed"
+  currentDay         Int    @default(1)
+  currentStage       String @default("lesson_ready") // "lesson_ready" | "lesson_done" | "freestyle_pending"
+
+  completedLessonIds String[] @db.ObjectId
+
+  totalXp        Int   @default(0)
+  overallFluency Float @default(0)
+  skillMastery   Json? // { "rr": 85, "past_tense": 60 } — updated by freestyle + quiz results
+  itemResults    Json? // [{ itemId, firstTryCorrect, nextDue }] — SKIP for v1, add later
+
+  updatedAt DateTime @updatedAt
+}
+
+// ── The freestyle session = your assessment engine ──
+// ── Links a foundation day to its freestyle session + stores what the cycle needs ──
+model FoundationFreestyleLog {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  lessonId String           @db.ObjectId
+  lesson   FoundationLesson @relation(fields: [lessonId], references: [id])
+
+  freestyleSessionId String           @db.ObjectId
+  freestyleSession   FreestyleSession @relation(fields: [freestyleSessionId], references: [id])
+
+  // What the cycle actually consumes (your FreestyleReview already has the
+  // deep analysis — this is just the planner-facing summary):
+  attemptedChunks Json? // ["pedir", "quiero + inf"]
+  landedChunks    Json? // what they used correctly
+  passed          Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([lessonId]) // one freestyle session per lesson day
+}
