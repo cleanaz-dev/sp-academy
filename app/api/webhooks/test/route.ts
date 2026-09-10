@@ -10,7 +10,10 @@ export async function POST(req: Request) {
     // Here you can add logic to process the webhook payload as needed
 
     return NextResponse.json(
-      { message: "Webhook received successfully" },
+      {
+        message: "Webhook received successfully",
+        lessonId: `mock_${Date.now()}`,
+      },
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
