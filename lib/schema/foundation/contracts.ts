@@ -140,3 +140,27 @@ export const FoundationLessonPayloadSchema = z.object({
   freestyle: FreestyleConfigSchema,
 });
 export type FoundationLessonPayload = z.infer<typeof FoundationLessonPayloadSchema>;
+
+export const FoundationLessonHandoffSchema = z.object({
+  day: z.number().int().positive(),
+  theme: z.string(),
+  targetChunks: z.array(z.string()).min(1), // skillMastery keys track these
+
+  grammar: GrammarContentSchema,
+  pronunciation: PronunciationDataSchema,
+  listening: ListeningContentSchema,
+  visual: VisualContentSchema,
+  quiz: QuizContentSchema,
+  freestyle: FreestyleConfigSchema,
+
+  // The following are for the next lesson's build to know what was already done:
+  previous_lessons: z.array(z.object({
+    day: z.number().int().positive(),
+    theme: z.string(),
+    targetSentence: z.string(),
+    chunks: z.array(z.string()).min(1),
+    npcLine: z.string(),
+    freestyleTopic: z.string(),
+  })).min(1),
+});
+export type FoundationLessonHandoff = z.infer<typeof FoundationLessonHandoffSchema>;

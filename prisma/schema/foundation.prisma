@@ -15,8 +15,8 @@ model FoundationCourse {
 // ── One per user, created one at a time by the cycle ──
 model FoundationLesson {
   id         String           @id @default(auto()) @map("_id") @db.ObjectId
-  courseId   String           @db.ObjectId
-  course     FoundationCourse @relation(fields: [courseId], references: [id])
+  foundationCourseId   String           @db.ObjectId
+  course     FoundationCourse @relation(fields: [foundationCourseId], references: [id])
   userId     String           @db.ObjectId // lessons are personal now (adaptive)
   user       User             @relation(fields: [userId], references: [id])
   orderIndex Int
@@ -29,12 +29,16 @@ model FoundationLesson {
   pronunciationData Json? // focus sounds + positions in reference text (for Shadow)
   listeningContent  Json? // reference text, options, correct index
   quizContent       Json? // item keys + feedback (same-day review for v1)
+  lessonHandoff     Json?
 
   // Config for the freestyle session that completes this day:
   freestyle Json? // { tier, topic, persona, requiredChunks, openingLine }
 
   createdAt              DateTime                @default(now())
   FoundationFreestyleLog FoundationFreestyleLog?
+
+  @@unique([foundationCourseId, orderIndex])  // ← this is your idempotency guard, free
+  @@index([userId, foundationCourseId])
 }
 
 // ── Merged: UserFoundation is gone, folded in here ──
