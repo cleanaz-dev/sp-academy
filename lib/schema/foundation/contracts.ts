@@ -12,16 +12,18 @@ import { z } from "zod";
 // ── Shared primitives ────────────────────────────────────────────────────────
 
 export const ClozeItemSchema = z.object({
-  id: z.string(),                          // stable item id (skillMastery / later spacing)
-  hostSentence: z.string(),                // full sentence, blank marked by "___"
+  id: z.string(), // stable item id (skillMastery / later spacing)
+  hostSentence: z.string(), // full sentence, blank marked by "___"
   blankPosition: z.number().int().nonnegative(), // word index of the blank
   acceptableAnswers: z.array(z.string()).min(1),
-  wrongAnswerFeedback: z.array(
-    z.object({
-      wrong: z.string(),                   // the anticipated wrong answer
-      feedback: z.string(),                // ONE line, actionable
-    })
-  ).max(2),
+  wrongAnswerFeedback: z
+    .array(
+      z.object({
+        wrong: z.string(), // the anticipated wrong answer
+        feedback: z.string(), // ONE line, actionable
+      }),
+    )
+    .max(2),
 });
 export type ClozeItem = z.infer<typeof ClozeItemSchema>;
 
@@ -29,14 +31,14 @@ export type ClozeItem = z.infer<typeof ClozeItemSchema>;
 // The "lesson" is: learner dismantles the sentence, then produces the chunk.
 
 export const WordGlossSchema = z.object({
-  word: z.string(),            // exact substring of targetSentence
-  gloss: z.string(),           // meaning in native language
-  role: z.string(),            // e.g. "subject", "verb", "object", "connector"
+  word: z.string(), // exact substring of targetSentence
+  gloss: z.string(), // meaning in native language
+  role: z.string(), // e.g. "subject", "verb", "object", "connector"
 });
 
 export const GrammarContentSchema = z.object({
   targetSentence: z.string(),
-  nativeSentence: z.string(),  // natural translation, not word-for-word
+  nativeSentence: z.string(), // natural translation, not word-for-word
   words: z.array(WordGlossSchema),
   highlightGroup: z.array(z.string()), // words forming the day's chunk — UI highlights these
   clozeItems: z.array(ClozeItemSchema).min(1).max(3),
@@ -47,13 +49,13 @@ export type GrammarContent = z.infer<typeof GrammarContentSchema>;
 // Data FOR the shadowing task — never descriptions of tongues/mouths.
 
 export const FocusSoundSchema = z.object({
-  sound: z.string(),                        // e.g. "rr" — the phoneme label
+  sound: z.string(), // e.g. "rr" — the phoneme label
   positions: z.array(z.number().int().nonnegative()), // char offsets in referenceText
 });
 
 export const PronunciationDataSchema = z.object({
-  referenceText: z.string(),                // rendered to TTS at build time
-  audioS3Key: z.string(),                   // Fish Audio / Azure output
+  referenceText: z.string(), // rendered to TTS at build time
+  audioS3Key: z.string(), // Fish Audio / Azure output
   focusSounds: z.array(FocusSoundSchema).min(1),
   // Scoring targets for Azure pronunciation assessment, per attempt.
   // The component shows the score per focusSound; no pass/fail gate.
@@ -64,11 +66,11 @@ export type PronunciationData = z.infer<typeof PronunciationDataSchema>;
 
 export const ListeningContentSchema = z.object({
   id: z.string(),
-  referenceText: z.string(),                // what Fish Audio actually says
+  referenceText: z.string(), // what Fish Audio actually says
   audioS3Key: z.string(),
   options: z.array(z.string()).min(3).max(4),
   correctIndex: z.number().int().nonnegative(),
-  contrast: z.string(),                     // what this item discriminates, e.g. "rr vs r"
+  contrast: z.string(), // what this item discriminates, e.g. "rr vs r"
 });
 export type ListeningContent = z.infer<typeof ListeningContentSchema>;
 
@@ -78,11 +80,11 @@ export type ListeningContent = z.infer<typeof ListeningContentSchema>;
 
 export const VisualContentSchema = z.object({
   imageS3Key: z.string(),
-  sceneDescription: z.string(),             // one sentence, native language
+  sceneDescription: z.string(), // one sentence, native language
   altText: z.string(),
-  npcLine: z.string(),                      // what the character says (audio + optional text)
+  npcLine: z.string(), // what the character says (audio + optional text)
   constraint: z.object({
-    requiredChunk: z.string(),              // a natural reply MUST use this
+    requiredChunk: z.string(), // a natural reply MUST use this
     validReplies: z.array(z.string()).min(1),
   }),
 });
@@ -98,7 +100,11 @@ export const QuizItemSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("listening"),
     listening: ListeningContentSchema.pick({
-      id: true, referenceText: true, audioS3Key: true, options: true, correctIndex: true,
+      id: true,
+      referenceText: true,
+      audioS3Key: true,
+      options: true,
+      correctIndex: true,
     }),
   }),
 ]);
@@ -112,16 +118,26 @@ export type QuizContent = z.infer<typeof QuizContentSchema>;
 // ── 6. FREESTYLE CONFIG (plugs into your existing freestyle engine) ─────────
 // Mirrors FreestyleMode / FreestyleLevel enums in your Prisma schema.
 
-export const FreestyleModeSchema = z.enum(["INTRODUCTION", "SPECIFIC", "RANDOM", "ARGUMENTATIVE"]);
-export const FreestyleLevelSchema = z.enum(["ZERO", "EASY", "MEDIUM", "FLUENT"]);
+export const FreestyleModeSchema = z.enum([
+  "INTRODUCTION",
+  "SPECIFIC",
+  "RANDOM",
+  "ARGUMENTATIVE",
+]);
+export const FreestyleLevelSchema = z.enum([
+  "ZERO",
+  "EASY",
+  "MEDIUM",
+  "FLUENT",
+]);
 
 export const FreestyleConfigSchema = z.object({
   mode: FreestyleModeSchema,
   level: FreestyleLevelSchema,
-  topic: z.string(),                        // matches the lesson theme
-  persona: z.string(),                      // who the AI plays (e.g. "Madrid café waiter")
+  topic: z.string(), // matches the lesson theme
+  persona: z.string(), // who the AI plays (e.g. "Madrid café waiter")
   requiredChunks: z.array(z.string()).min(1), // chunks the conversation MUST surface
-  openingLine: z.string(),                  // native language, what the AI says first
+  openingLine: z.string(), // native language, what the AI says first
 });
 export type FreestyleConfig = z.infer<typeof FreestyleConfigSchema>;
 
@@ -139,7 +155,9 @@ export const FoundationLessonPayloadSchema = z.object({
   quiz: QuizContentSchema,
   freestyle: FreestyleConfigSchema,
 });
-export type FoundationLessonPayload = z.infer<typeof FoundationLessonPayloadSchema>;
+export type FoundationLessonPayload = z.infer<
+  typeof FoundationLessonPayloadSchema
+>;
 
 export const FoundationLessonHandoffSchema = z.object({
   day: z.number().int().positive(),
@@ -154,13 +172,21 @@ export const FoundationLessonHandoffSchema = z.object({
   freestyle: FreestyleConfigSchema,
 
   // The following are for the next lesson's build to know what was already done:
-  previous_lessons: z.array(z.object({
-    day: z.number().int().positive(),
-    theme: z.string(),
-    targetSentence: z.string(),
-    chunks: z.array(z.string()).min(1),
-    npcLine: z.string(),
-    freestyleTopic: z.string(),
-  })).min(1),
+  previous_lessons: z
+    .array(
+      z.object({
+        day: z.number().int().positive(),
+        theme: z.string(),
+        targetSentence: z.string(),
+        chunks: z.array(z.string()).min(1),
+        npcLine: z.string(),
+        freestyleTopic: z.string(),
+      }),
+    )
+    .nullish()
+    .default([]),
 });
-export type FoundationLessonHandoff = z.infer<typeof FoundationLessonHandoffSchema>;
+
+export type FoundationLessonHandoff = z.infer<
+  typeof FoundationLessonHandoffSchema
+>;
