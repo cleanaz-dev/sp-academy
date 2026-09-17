@@ -9,13 +9,13 @@ import {
   MessageSquare, 
   BookOpen, 
   Flag, 
-  Play,
-  Globe
+  Play
 } from "lucide-react";
 
 export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isPlaying, stop } = useSpeak();
 
+  // Safely extract the handoff data
   const handoff = data.lessonHandoff || {};
   const theme = handoff.theme || "Today's Lesson";
   const day = handoff.day || 1;
@@ -24,6 +24,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   const npcLine = handoff.npcLine || "";
   const freestyleTopic = handoff.freestyleTopic || "";
 
+  // Languages (In production, pull these from your user context/props)
   const nativeLang = "en-US";
   const targetLang = "fr-FR";
 
@@ -31,6 +32,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   const [activeAudio, setActiveAudio] = useState<"introNative" | "introTarget" | "target" | "npc" | null>(null);
   const [introLang, setIntroLang] = useState<"native" | "target">("native");
 
+  // Reset active audio state when the hook says it stopped playing
   useEffect(() => {
     if (!isPlaying) setActiveAudio(null);
   }, [isPlaying]);
@@ -38,9 +40,10 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   // English Intro
   const introTextNative = `Welcome to Day ${day}. I'm so glad you're here! Today, we are focusing on ${theme}. We're going to learn some new vocabulary, practice your pronunciation, and at the end of the lesson, your final mission is: ${freestyleTopic}. Whenever you're ready, click Start Lesson below!`;
   
-  // French Intro (In a real app, pass this in your JSON handoff from the backend!)
-  const introTextTarget = `Bienvenue au Jour ${day}. Je suis si heureux que vous soyez là ! Aujourd'hui, nous nous concentrons sur les salutations. Nous allons apprendre du nouveau vocabulaire, pratiquer votre prononciation, et à la fin de la leçon, votre mission finale sera : saluer un voisin. Quand vous serez prêt, cliquez sur Commencer la leçon ci-dessous !`;
+  // French Intro (Fallback translation for the UI if not provided by backend)
+  const introTextTarget = `Bienvenue au Jour ${day}. Je suis si heureux que vous soyez là ! Aujourd'hui, nous nous concentrons sur : ${theme}. Nous allons apprendre du nouveau vocabulaire, pratiquer votre prononciation, et à la fin de la leçon, votre mission finale sera : ${freestyleTopic}. Quand vous serez prêt, cliquez sur Commencer la leçon ci-dessous !`;
 
+  // Generic toggle for all audio buttons
   const toggleAudio = (id: typeof activeAudio, text: string, lang: string) => {
     if (activeAudio === id && isPlaying) {
       stop();
@@ -52,6 +55,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
     }
   };
 
+  // Cleanup audio if they click "Start"
   const handleStart = () => {
     stop();
     onNext();
@@ -78,7 +82,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
         {/* DUAL-LANGUAGE BRIEFING TEXT */}
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 relative group transition-all hover:border-slate-300">
           
-          {/* Language Toggle */}
+          {/* Language Toggle Tabs */}
           <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2">
               <Flag size={14} /> Lesson Overview
@@ -103,7 +107,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
             </div>
           </div>
 
-          {/* Text & Audio Button */}
+          {/* Text & Audio Play Button */}
           <div className="flex justify-between items-start gap-4">
             <p className="text-slate-700 leading-relaxed font-medium">
               {introLang === "native" ? introTextNative : introTextTarget}
@@ -133,11 +137,94 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
           </div>
         </div>
 
-        {/* --- TARGET SENTENCE & NPC --- (Same as previous code) */}
-        {/* ... */}
-        
+        {/* TARGET SENTENCE & NPC CONTEXT (TARGET LANGUAGE) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* Core Target Phrase */}
+          {targetSentence && (
+            <div className="p-5 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <Target size={14} /> Target Phrase
+                </h3>
+                <p className="text-xl font-bold text-indigo-900 mb-4">{targetSentence}</p>
+              </div>
+              <button
+                onClick={() => toggleAudio("target", targetSentence, targetLang)}
+                className={`self-start flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                  activeAudio === "target"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                }`}
+              >
+                {activeAudio === "target" ? <Square size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+                {activeAudio === "target" ? "Stop" : "Listen (French)"}
+              </button>
+            </div>
+          )}
+
+          {/* NPC Setup */}
+          {npcLine && (
+            <div className="p-5 bg-purple-50 rounded-2xl border border-purple-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-purple-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <MessageSquare size={14} /> NPC Opening Line
+                </h3>
+                <p className="text-lg font-medium text-purple-900 italic mb-4">"{npcLine}"</p>
+              </div>
+              <button
+                onClick={() => toggleAudio("npc", npcLine, targetLang)}
+                className={`self-start flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
+                  activeAudio === "npc"
+                    ? "bg-purple-600 text-white"
+                    : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                }`}
+              >
+                {activeAudio === "npc" ? <Square size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+                {activeAudio === "npc" ? "Stop" : "Listen (French)"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* VOCABULARY CHUNKS */}
+        {chunks.length > 0 && (
+          <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+            <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <BookOpen size={14} /> Vocabulary to Master
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {chunks.map((chunk: string, idx: number) => (
+                <span 
+                  key={idx} 
+                  className="px-3 py-1.5 bg-white border border-emerald-200 text-emerald-800 text-sm font-medium rounded-lg shadow-sm"
+                >
+                  {chunk}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FINAL MISSION */}
+        {freestyleTopic && (
+          <div className="p-5 bg-amber-50 rounded-2xl border border-amber-200 flex flex-col md:flex-row gap-4 items-center">
+            <div className="w-12 h-12 shrink-0 bg-amber-100 rounded-full flex items-center justify-center text-amber-500">
+              <Flag size={24} fill="currentColor" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wide mb-1">
+                Final Mission
+              </h3>
+              <p className="text-amber-900 font-medium">
+                At the end of this lesson, you will roleplay: <strong>{freestyleTopic}</strong>.
+              </p>
+            </div>
+          </div>
+        )}
+
       </div>
-      
+
       {/* START BUTTON */}
       <button
         onClick={handleStart}
