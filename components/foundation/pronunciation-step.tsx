@@ -1,8 +1,26 @@
 "use client";
 
-import React from "react";
+import { usePronunciation } from "@/context/pronunciation-context";
+import { useMiniAudioPlayer } from "@/hooks/use-mini-audio-player";
+
+
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
+  const { play, isPlaying, currentS3Key } = useMiniAudioPlayer();
+  const { isRecording, score, error, assessSpeech, cancelAssessment } = usePronunciation();
+
+  const targetLang = "fr-FR"; // In production, pass this down from the parent wrapper!
+
+  const handleRecordToggle = () => {
+    if (isRecording) {
+      cancelAssessment();
+    } else {
+      assessSpeech(data.referenceText, targetLang);
+    }
+  };
+
+  const isThisAudioPlaying = isPlaying && currentS3Key === data.audioS3Key;
+
   return (
     <div className="p-4 border rounded-lg bg-white shadow-sm">
       <h2 className="text-xl font-bold mb-4">Step 3: Pronunciation Practice</h2>
@@ -21,16 +39,46 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        {/* Play Audio Button (Fish/Azure TTS) */}
-        <button className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 font-semibold rounded flex items-center justify-center gap-2">
-          <span>🔊</span> Play Reference Audio
+        {/* Play S3 Reference Audio */}
+        <button 
+          onClick={() => play(data.audioS3Key)}
+          className={`flex-1 px-4 py-3 font-semibold rounded flex items-center justify-center gap-2 ${
+            isThisAudioPlaying ? 'bg-blue-200 text-blue-900' : 'bg-gray-200 hover:bg-gray-300'
+          }`}
+        >
+          <span>{isThisAudioPlaying ? "🔊 Playing..." : "🔊 Play Reference"}</span> 
         </button>
         
-        {/* Record Button (AssemblyAI STT hook goes here) */}
-        <button className="flex-1 px-4 py-3 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded flex items-center justify-center gap-2 border border-red-300">
-          <span>🎤</span> Hold to Speak
+        {/* Record with Azure Pronunciation */}
+        <button 
+          onClick={handleRecordToggle}
+          className={`flex-1 px-4 py-3 font-bold rounded flex items-center justify-center gap-2 border ${
+            isRecording 
+              ? 'bg-red-500 text-white border-red-600 animate-pulse' 
+              : 'bg-red-50 hover:bg-red-100 text-red-700 border-red-300'
+          }`}
+        >
+          <span>🎤</span> {isRecording ? "Stop Recording" : "Click to Speak"}
         </button>
       </div>
+
+      {/* AZURE RESULTS DISPLAY */}
+      {error && (
+        <div className="p-4 mb-4 bg-red-100 text-red-700 rounded border border-red-300">
+          Error: {error}
+        </div>
+      )}
+
+      {score && (
+        <div className="p-4 mb-6 bg-green-50 border border-green-200 rounded">
+          <h3 className="font-bold text-green-900 mb-2">Azure Pronunciation Score:</h3>
+          <div className="flex gap-4 text-sm font-mono">
+            <div>Pronunciation: <span className="font-bold">{score.pronunciationScore}</span></div>
+            <div>Accuracy: <span className="font-bold">{score.accuracyScore}</span></div>
+            <div>Fluency: <span className="font-bold">{score.fluencyScore}</span></div>
+          </div>
+        </div>
+      )}
 
       <button 
         onClick={onNext} 

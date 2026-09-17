@@ -1,17 +1,27 @@
 "use client";
 
+import { useMiniAudioPlayer } from "@/hooks/use-mini-audio-player";
 import React, { useState } from "react";
+
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
   const [selected, setSelected] = useState<number | null>(null);
+  const { play, isPlaying, currentS3Key } = useMiniAudioPlayer();
+
+  const isThisAudioPlaying = isPlaying && currentS3Key === data.audioS3Key;
 
   return (
     <div className="p-4 border rounded-lg bg-white shadow-sm">
       <h2 className="text-xl font-bold mb-4">Step 4: Listening Comprehension</h2>
       <p className="mb-4 text-gray-600">Listen to the audio and select the matching text.</p>
       
-      <button className="w-full sm:w-auto px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded mb-6 flex items-center justify-center gap-2">
-        <span>🔊</span> Play Audio
+      <button 
+        onClick={() => play(data.audioS3Key)}
+        className={`w-full sm:w-auto px-6 py-3 font-bold rounded mb-6 flex items-center justify-center gap-2 ${
+          isThisAudioPlaying ? 'bg-blue-200 text-blue-900' : 'bg-gray-200 hover:bg-gray-300'
+        }`}
+      >
+        <span>{isThisAudioPlaying ? "🔊 Playing..." : "🔊 Play Audio"}</span>
       </button>
       
       <div className="flex flex-col gap-3">
