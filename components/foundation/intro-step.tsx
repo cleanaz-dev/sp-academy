@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useSpeak } from "@/hooks/use-speak";
-
+import React, { useState, useEffect } from "react";
 
 
 export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
@@ -33,7 +32,8 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   const playNativeIntro = () => {
     stop();
     setActiveAudio("native");
-    const introText = `Welcome to Day ${day}. Today's theme is ${theme}. Your final mission will be: ${freestyleTopic}.`;
+    // Conversational, friendly coach script
+    const introText = `Welcome to Day ${day}. I'm so glad you're here! Today, we are focusing on ${theme}. We're going to learn some new vocabulary, practice your pronunciation, and at the end of the lesson, your final mission is ${freestyleTopic}. Whenever you're ready, click Start Lesson below!`;
     speak(introText, nativeLang, 1.0);
   };
 
