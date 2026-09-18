@@ -14,10 +14,7 @@ const VOICE_MAP: Record<string, Record<string, string>> = {
   "zh-CN": { male: "m1n2o3p4q5r6s7t8u9v0w1x2y3z4a5b6", female: "c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6" },
   "pt-BR": { male: "e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6", female: "u1v2w3x4y5z6a7b8c9d0e1f2g3h4i5j6" },
   "ru-RU": { male: "k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6", female: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" },
-  "ko-KR": { male: "s1t2u3v4w5x6y7z8a9b0c1d2e3f4g5h6", female: "i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6" },
-  "ar-SA": { male: "o1p2q3r4s5t6u7v8w9x0y1z2a3b4c5d6", female: "e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6" },
-  "hi-IN": { male: "v1w2x3y4z5a6b7c8d9e0f1g2h3i4j5k6", female: "l1m2n3o4p5q6r7s8t9u0v1w2x3y4z5a6" },
-  "tr-TR": { male: "f1g2h3i4j5k6l7m8n9o0p1q2r3s4t5u6", female: "b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6" },
+  "ko-KR": { male: "s1t2u3v4w5x6y7z8a9b0c1d2e3f4g5h6", female: "i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6" }
 };
 
 const FALLBACK_VOICE_ID = "690813f2df56491b82ee02a22d1c67fd";
