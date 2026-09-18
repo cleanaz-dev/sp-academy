@@ -266,6 +266,9 @@ export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
       onNext(); // Move to Freestyle!
     }
   };
+  console.log("Quiz Data:", data);
+  console.log("Current Index:", currentIndex);
+  console.log("Current Quiz Item:", currentItem);
 
   return (
     <div className="flex flex-col h-full p-8 md:p-12 overflow-y-auto">
