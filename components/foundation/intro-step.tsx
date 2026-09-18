@@ -2,7 +2,7 @@
 
 import { useSpeak } from "@/hooks/use-speak";
 import React, { useState, useEffect } from "react";
-
+import { Play, Sparkles, Volume2, Square, ArrowRight, Mic } from "lucide-react";
 
 export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isPlaying, stop } = useSpeak();
@@ -30,6 +30,10 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   }, [isPlaying]);
 
   const playNativeIntro = () => {
+    if (activeAudio === "native") {
+      stop();
+      return;
+    }
     stop();
     setActiveAudio("native");
     // Conversational, friendly coach script
@@ -38,6 +42,10 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   };
 
   const playTargetSentence = () => {
+    if (activeAudio === "target") {
+      stop();
+      return;
+    }
     stop();
     setActiveAudio("target");
     speak(targetSentence, targetLang, 1.0);
@@ -50,96 +58,118 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   };
 
   return (
-    <div className="p-6 md:p-8 border rounded-2xl bg-white shadow-sm max-w-2xl mx-auto">
-      {/* HEADER */}
-      <div className="text-center mb-8">
-        <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">
-          Lesson Briefing
-        </p>
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">
+    <div className="flex flex-col gap-10 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full">
+      
+      {/* HEADER SECTION */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold tracking-widest uppercase mb-2 shadow-sm">
+          <Sparkles size={14} /> Lesson Briefing
+        </div>
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">
           Day {day}: {theme}
         </h1>
-        <p className="text-gray-500">
-          Review your objectives before entering the simulation.
+        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          Review your objectives before entering the simulation. Master these concepts to succeed in your final mission.
         </p>
       </div>
 
-      {/* AUDIO CONTROLS */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+      {/* AUDIO ACTION ROW */}
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
         <button
           onClick={playNativeIntro}
-          className={`flex-1 py-3 px-4 rounded-xl font-bold flex justify-center items-center gap-2 border transition-colors ${
+          className={`group flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl border shadow-sm transition-all font-medium ${
             activeAudio === "native"
-              ? "bg-blue-100 text-blue-800 border-blue-300"
-              : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+              ? "bg-blue-50 border-blue-300 text-blue-800 ring-4 ring-blue-500/10"
+              : "bg-white border-gray-200 hover:shadow-md hover:border-gray-300 text-gray-700"
           }`}
         >
-          <span>{activeAudio === "native" ? "🔊 Playing Briefing..." : "🔊 Play Briefing (English)"}</span>
+          <div className={`p-2 rounded-full transition-colors ${activeAudio === "native" ? "bg-blue-200 text-blue-700" : "bg-blue-50 group-hover:bg-blue-100 text-blue-600"}`}>
+            {activeAudio === "native" ? <Square size={16} className="fill-current" /> : <Volume2 size={16} />}
+          </div>
+          {activeAudio === "native" ? "Stop Briefing" : "Play Briefing (English)"}
         </button>
 
         <button
           onClick={playTargetSentence}
           disabled={!targetSentence}
-          className={`flex-1 py-3 px-4 rounded-xl font-bold flex justify-center items-center gap-2 border transition-colors ${
+          className={`group flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl border shadow-sm transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
             activeAudio === "target"
-              ? "bg-purple-100 text-purple-800 border-purple-300"
-              : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+              ? "bg-purple-50 border-purple-300 text-purple-800 ring-4 ring-purple-500/10"
+              : "bg-white border-gray-200 hover:shadow-md hover:border-gray-300 text-gray-700"
           }`}
         >
-          <span>{activeAudio === "target" ? "🔊 Playing Target..." : "🔊 Target Sentence (French)"}</span>
+          <div className={`p-2 rounded-full transition-colors ${activeAudio === "target" ? "bg-purple-200 text-purple-700" : "bg-purple-50 group-hover:bg-purple-100 text-purple-600"}`}>
+            {activeAudio === "target" ? <Square size={16} className="fill-current" /> : <Play size={16} className="fill-current" />}
+          </div>
+          {activeAudio === "target" ? "Stop Target" : "Target Sentence (French)"}
         </button>
       </div>
 
-      {/* LESSON HANDOFF DATA DISPLAY */}
-      <div className="space-y-6 mb-10 text-left">
+      {/* CORE CONTENT GRID */}
+      <div className="grid md:grid-cols-12 gap-6 mt-4">
         
-        {/* Core Target */}
-        <div className="p-5 bg-blue-50 rounded-xl border border-blue-100">
-          <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-2">
-            Main Target Sentence
+        {/* Main Target Sentence */}
+        <div className="md:col-span-5 p-8 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-100 shadow-sm flex flex-col justify-center">
+          <h3 className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-4">
+            Main Target
           </h3>
-          <p className="text-xl font-bold text-blue-950">{targetSentence}</p>
+          <p className="text-2xl md:text-3xl font-medium text-blue-950 leading-snug">
+            "{targetSentence}"
+          </p>
         </div>
 
-        {/* Vocabulary/Chunks List */}
+        {/* Vocabulary & Chunks List (Pills instead of bullets) */}
         {chunks.length > 0 && (
-          <div className="p-5 bg-gray-50 rounded-xl border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">
+          <div className="md:col-span-7 p-8 rounded-3xl bg-white border border-gray-200 shadow-sm">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-5">
               Vocabulary & Chunks to Master
             </h3>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {chunks.map((chunk: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2 text-gray-800 font-medium">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  <span>{chunk}</span>
-                </li>
+                <span 
+                  key={idx} 
+                  className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 hover:border-gray-300 transition-colors cursor-default shadow-sm"
+                >
+                  {chunk}
+                </span>
               ))}
-            </ul>
+            </div>
           </div>
         )}
-
-        {/* Final Mission / Freestyle Topic */}
-        <div className="p-5 bg-purple-50 rounded-xl border border-purple-100 flex flex-col md:flex-row gap-4 items-center">
-          <div className="text-4xl">🎯</div>
-          <div>
-            <h3 className="text-sm font-bold text-purple-800 uppercase tracking-wide mb-1">
-              Final Mission
-            </h3>
-            <p className="text-purple-950 font-medium">
-              At the end of this lesson, you will roleplay: <strong>{freestyleTopic}</strong>.
-            </p>
-          </div>
-        </div>
-
       </div>
 
-      {/* START BUTTON */}
-      <button
-        onClick={handleStart}
-        className="w-full py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-lg shadow-lg transition-transform active:scale-95"
-      >
-        Start Lesson
-      </button>
+      {/* FINAL MISSION & START BUTTON (Dark Contrast Area) */}
+      <div className="relative overflow-hidden mt-4 p-8 md:p-10 rounded-3xl bg-gray-900 text-white shadow-2xl">
+        {/* Decorative background icon */}
+        <div className="absolute -top-10 -right-4 text-gray-800 opacity-40 rotate-12 pointer-events-none">
+          <Mic size={180} strokeWidth={1} />
+        </div>
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+              <span className="text-2xl">🎯</span>
+              <h3 className="text-blue-400 font-bold tracking-widest uppercase text-xs">
+                Final Mission
+              </h3>
+            </div>
+            <p className="text-2xl font-semibold text-gray-100">
+              Roleplay: {freestyleTopic}
+            </p>
+            <p className="text-gray-400 mt-2 text-sm max-w-md">
+              At the end of this lesson, you will test your skills in a live AI simulation.
+            </p>
+          </div>
+          
+          <button
+            onClick={handleStart}
+            className="w-full md:w-auto whitespace-nowrap flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-500 transition-all text-white font-bold text-lg shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-1 active:translate-y-0 active:scale-95"
+          >
+            Start Lesson <ArrowRight size={20} />
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 }
