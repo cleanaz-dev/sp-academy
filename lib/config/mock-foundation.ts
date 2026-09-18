@@ -162,80 +162,32 @@ export const MOCK_FOUNDATION_DATA = {
   quizContent: {
     items: [
       {
-        type: "cloze",
-        cloze: {
-          id: "cloze-1",
-          hostSentence: "___, enchanté. Je suis Alex.",
-          blankPosition: 0,
-          acceptableAnswers: ["Bonjour", "bonjour"],
-          wrongAnswerFeedback: [
-            {
-              wrong: "Salut",
-              feedback:
-                "«Salut» is too casual for a formal neighbor — use «Bonjour».",
-            },
-            {
-              wrong: "Bonsoir",
-              feedback:
-                "«Bonsoir» is for the evening; during the day say «Bonjour».",
-            },
-          ],
-        },
+        type: "verbal_cloze",
+        prompt: "___, enchanté. Je suis Alex.",
+        hint: "Daytime greeting",
+        acceptableAnswers: ["bonjour", "Bonjour"],
+        feedback: "Use 'Bonjour' during the day!",
       },
       {
-        type: "cloze",
-        cloze: {
-          id: "cloze-2",
-          hostSentence: "Bonjour, ___. Je suis Alex.",
-          blankPosition: 1,
-          acceptableAnswers: ["enchanté", "Enchanté", "enchantée", "Enchantée"],
-          wrongAnswerFeedback: [
-            {
-              wrong: "enchanter",
-              feedback: "Drop the final -r: the fixed phrase is «enchanté».",
-            },
-            {
-              wrong: "merci",
-              feedback:
-                "«Merci» means 'thank you'; say «enchanté» for 'nice to meet you'.",
-            },
-          ],
-        },
+        type: "reorder",
+        prompt: "Translate: 'Nice to meet you. I am Alex.'",
+        expectedWords: ["Enchanté.", "Je", "suis", "Alex."],
+        scrambledBank: ["suis", "Alex.", "Je", "Enchanté.", "est", "merci"],
       },
       {
-        type: "cloze",
-        cloze: {
-          id: "cloze-3",
-          hostSentence: "Bonjour, enchanté. Je ___ Alex.",
-          blankPosition: 3,
-          acceptableAnswers: ["suis"],
-          wrongAnswerFeedback: [
-            {
-              wrong: "est",
-              feedback: "«Est» goes with he/she; with «je» always use «suis».",
-            },
-            {
-              wrong: "sont",
-              feedback: "«Sont» is for 'they'; with «je» say «suis».",
-            },
-          ],
-        },
+        type: "true_false",
+        statement:
+          "If you meet your neighbor at 8:00 PM, you should say 'Bonjour'.",
+        isTrue: false,
+        explanation:
+          "At 8:00 PM (evening), you must say 'Bonsoir'. 'Bonjour' is only for the daytime.",
       },
       {
-        type: "listening",
-        listening: {
-          id: "listen-1",
-          referenceText: "Bonjour, enchanté. Je suis Alex.",
-          audioS3Key: "foundation/usr_test/day1/listening.mp3",
-          options: [
-            "Bonjour, enchanté. Je suis Alex.",
-            "Bonjour, enchanté. Je suis Alexa.",
-            "Bonsoir, enchanté. Je suis Alex.",
-            "Salut, enchanté. Je suis Alex.",
-          ],
-          correctIndex: 0,
-          contrast: "bonjour vs bonsoir (daytime vs evening greeting)",
-        },
+        type: "verbal_cloze",
+        prompt: "Bonjour, enchanté. Je ___ Alex.",
+        hint: "I 'am' (1st person être)",
+        acceptableAnswers: ["suis"],
+        feedback: "Always use 'suis' with 'Je'.",
       },
     ],
     passThreshold: 0.7,
