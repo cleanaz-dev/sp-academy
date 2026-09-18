@@ -1,152 +1,164 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, XCircle, ArrowRight, PenTool, Check } from "lucide-react";
+import { Mic, ArrowRight, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const clozeItems = data.items.filter((item: any) => item.type === "cloze");
-  
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [results, setResults] = useState<Record<string, { status: string; message?: string }>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
+  const [feedback, setFeedback] = useState<string>("");
 
-  const handleInputChange = (id: string, value: string) => {
-    setAnswers(prev => ({ ...prev, [id]: value }));
-    setResults(prev => {
-      const newResults = { ...prev };
-      delete newResults[id];
-      return newResults;
-    });
-  };
+  const totalQuestions = data.items.length;
+  const currentItem = data.items[currentIndex];
 
-  const checkAnswer = (clozeItem: any) => {
-    const id = clozeItem.id;
-    const userAnswer = (answers[id] || "").trim();
-    
-    if (clozeItem.acceptableAnswers.includes(userAnswer)) {
-      setResults(prev => ({ ...prev, [id]: { status: "correct" } }));
-      return;
-    }
-
-    const specificFeedback = clozeItem.wrongAnswerFeedback?.find(
-      (fb: any) => fb.wrong.toLowerCase() === userAnswer.toLowerCase()
-    );
-
-    if (specificFeedback) {
-      setResults(prev => ({ ...prev, [id]: { status: "incorrect", message: specificFeedback.feedback } }));
+  const handleNextQuestion = () => {
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setStatus("idle");
+      setFeedback("");
     } else {
-      setResults(prev => ({ ...prev, [id]: { status: "incorrect", message: "Not quite right, try again." } }));
+      onNext(); // Move to Freestyle AI!
     }
   };
 
-  const isAllCorrect = clozeItems.every((item: any) => results[item.cloze.id]?.status === "correct");
+  // --- SUB-RENDERERS FOR QUESTION TYPES ---
 
-  return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
-      
-      <div className="mb-10 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 text-blue-600 mb-4">
-          <PenTool size={32} />
+  const renderVerbalCloze = (item: any) => {
+    // In reality, this mic button would trigger your Deepgram STT hook.
+    // For the baseline, we simulate the speech recognition check.
+    const simulateSpeechCheck = () => {
+      setStatus("correct");
+      setFeedback("Excellent pronunciation!");
+    };
+
+    return (
+      <div className="flex flex-col items-center animate-in zoom-in-95 duration-300">
+        <h3 className="text-xl text-gray-500 font-medium mb-8">Speak the missing word:</h3>
+        
+        <div className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          <span className="text-blue-500 border-b-4 border-dashed border-blue-200 px-2 pb-1">
+            {status === "correct" ? item.acceptableAnswers[0] : "____"}
+          </span>
+          {item.prompt.replace("___", "")}
         </div>
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-          Knowledge Check
-        </h2>
-        <p className="text-gray-500 text-lg">
-          Complete the sentences to prove your mastery before the final mission.
+        
+        <p className="text-gray-400 font-medium mb-12 flex items-center gap-2">
+          <AlertCircle size={16} /> Hint: {item.hint}
+        </p>
+
+        <button 
+          onClick={simulateSpeechCheck}
+          className={`relative w-28 h-28 rounded-full flex items-center justify-center shadow-xl transition-all ${
+            status === "correct" 
+              ? "bg-green-500 text-white" 
+              : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 active:scale-95"
+          }`}
+        >
+          {status === "correct" ? <CheckCircle2 size={40} /> : <Mic size={40} />}
+          {status === "idle" && (
+            <span className="absolute inset-0 rounded-full border-4 border-blue-400 animate-ping opacity-30"></span>
+          )}
+        </button>
+        <p className="mt-4 text-sm font-bold text-gray-400 uppercase tracking-widest">
+          {status === "correct" ? "Nailed it" : "Tap to Speak"}
         </p>
       </div>
+    );
+  };
+
+  const renderTrueFalse = (item: any) => {
+    const handleGuess = (guess: boolean) => {
+      if (guess === item.isTrue) {
+        setStatus("correct");
+        setFeedback("✅ Correct! " + item.explanation);
+      } else {
+        setStatus("incorrect");
+        setFeedback("❌ Not quite. " + item.explanation);
+      }
+    };
+
+    return (
+      <div className="flex flex-col w-full max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
+        <div className="bg-gray-50 p-8 rounded-3xl border border-gray-200 mb-8 text-center text-2xl text-gray-800 font-medium leading-relaxed">
+          "{item.statement}"
+        </div>
+        
+        <div className="flex gap-4 w-full">
+          <button 
+            onClick={() => handleGuess(true)}
+            disabled={status !== "idle"}
+            className="flex-1 py-5 rounded-2xl border-2 border-gray-200 font-bold text-xl text-gray-700 hover:border-green-400 hover:bg-green-50 transition-all active:scale-95 disabled:opacity-50"
+          >
+            True
+          </button>
+          <button 
+            onClick={() => handleGuess(false)}
+            disabled={status !== "idle"}
+            className="flex-1 py-5 rounded-2xl border-2 border-gray-200 font-bold text-xl text-gray-700 hover:border-red-400 hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
+          >
+            False
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full p-8 md:p-12 overflow-y-auto">
       
-      <div className="flex flex-col gap-6 mb-8">
-        {clozeItems.map((item: any, idx: number) => {
-          const id = item.cloze.id;
-          const result = results[id];
-          const isCorrect = result?.status === "correct";
-          
-          // Split the sentence to render a visual blank
-          const sentenceParts = item.cloze.hostSentence.split("___");
-
-          return (
-            <div key={id} className={`p-6 md:p-8 rounded-2xl border-2 transition-all duration-300 ${
-              isCorrect 
-                ? 'bg-green-50/50 border-green-400 shadow-sm' 
-                : result?.status === "incorrect"
-                ? 'bg-red-50/30 border-red-200'
-                : 'bg-white border-gray-200 hover:border-blue-200 shadow-sm'
-            }`}>
-              
-              <div className="flex items-center gap-3 mb-4">
-                <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${isCorrect ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
-                  {isCorrect ? <Check size={14} strokeWidth={3} /> : idx + 1}
-                </span>
-                <p className="font-bold text-gray-400 uppercase tracking-widest text-xs">Fill in the blank</p>
-              </div>
-
-              {/* Formatted Sentence */}
-              <p className="text-2xl font-medium text-gray-900 mb-6 leading-relaxed flex flex-wrap items-center gap-2">
-                {sentenceParts[0]}
-                <span className={`inline-block min-w-[80px] border-b-2 px-2 text-center transition-colors ${isCorrect ? 'border-green-500 text-green-700' : 'border-dashed border-gray-400 text-gray-400'}`}>
-                  {isCorrect ? answers[id] : "?"}
-                </span>
-                {sentenceParts[1]}
-              </p>
-              
-              {/* Input Area */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input 
-                  type="text" 
-                  value={answers[id] || ""}
-                  onChange={(e) => handleInputChange(id, e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && answers[id]) checkAnswer(item.cloze); }}
-                  disabled={isCorrect}
-                  placeholder="Type the missing word..." 
-                  className={`flex-1 p-4 rounded-xl border-2 outline-none font-medium text-lg transition-all ${
-                    isCorrect 
-                      ? 'bg-green-100/50 border-transparent text-green-800' 
-                      : 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10'
-                  }`}
-                />
-                {!isCorrect && (
-                  <button 
-                    onClick={() => checkAnswer(item.cloze)}
-                    disabled={!answers[id]}
-                    className="px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl disabled:opacity-30 disabled:hover:bg-gray-900 transition-all active:scale-95 whitespace-nowrap"
-                  >
-                    Check Answer
-                  </button>
-                )}
-              </div>
-
-              {/* Feedback messages */}
-              {result?.status === "incorrect" && (
-                <div className="mt-4 p-4 bg-red-100 text-red-800 rounded-xl flex items-start gap-3 animate-in slide-in-from-top-2">
-                  <XCircle className="shrink-0 mt-0.5 text-red-600" size={20} />
-                  <p className="font-medium">{result.message}</p>
-                </div>
-              )}
-              
-              {isCorrect && (
-                <div className="mt-4 p-4 bg-green-100 text-green-800 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2">
-                  <CheckCircle2 className="text-green-600" size={20} />
-                  <p className="font-bold">Perfect!</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* Quiz Header & Progress */}
+      <div className="mb-12 flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+            Knowledge Check
+          </h2>
+          <p className="text-gray-500 text-lg">
+            Let's see what you remember.
+          </p>
+        </div>
+        {/* Simple Progress Indicator */}
+        <div className="flex gap-2">
+          {data.items.map((_: any, idx: number) => (
+            <div key={idx} className={`h-2.5 w-8 rounded-full transition-colors ${
+              idx < currentIndex ? "bg-green-500" : idx === currentIndex ? "bg-blue-500" : "bg-gray-200"
+            }`} />
+          ))}
+        </div>
       </div>
 
-      <div className="mt-auto pt-6 flex justify-end border-t border-gray-100">
+      {/* Dynamic Question Area */}
+      <div className="flex-1 flex flex-col justify-center mb-8">
+        {currentItem.type === "verbal_cloze" && renderVerbalCloze(currentItem)}
+        {currentItem.type === "true_false" && renderTrueFalse(currentItem)}
+        {currentItem.type === "reorder" && (
+            <div className="text-center text-gray-400 italic">
+               {/* Re-use the exact same UI logic from the Listening step here! */}
+               [Sentence Builder UI renders here]
+            </div>
+        )}
+      </div>
+
+      {/* Feedback & Next Button Footer */}
+      <div className="mt-auto min-h-[80px] flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 pt-6">
+        <div className={`flex-1 font-medium text-lg animate-in fade-in ${
+          status === "correct" ? "text-green-600" : status === "incorrect" ? "text-red-500" : "text-transparent"
+        }`}>
+          {feedback || "placeholder"}
+        </div>
+
         <button 
-          onClick={onNext} 
-          disabled={!isAllCorrect}
+          onClick={handleNextQuestion} 
+          disabled={status !== "correct"}
           className={`w-full sm:w-auto px-8 py-4 font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-2 ${
-            isAllCorrect 
-              ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20 active:scale-95' 
+            status === "correct" 
+              ? 'bg-gray-900 hover:bg-black text-white shadow-md active:scale-95' 
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
-          Enter Simulation <ArrowRight size={20} />
+          {currentIndex === totalQuestions - 1 ? "Enter AI Conversation" : "Next Question"} <ArrowRight size={20} />
         </button>
       </div>
+
     </div>
   );
 }
