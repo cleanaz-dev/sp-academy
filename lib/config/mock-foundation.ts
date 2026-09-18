@@ -109,6 +109,28 @@ export const MOCK_FOUNDATION_DATA = {
   pronunciationData: {
     referenceText: "Bonjour, enchanté. Je suis Alex.",
     audioS3Key: "foundation/usr_test/day1/pronunciation.mp3",
+    breakdown: [
+      {
+        text: "Bonjour",
+        phonetic: "bɔ̃.ʒuʁ",
+        hint: "Focus on the nasal 'on'",
+      },
+      {
+        text: "enchanté",
+        phonetic: "ɑ̃.ʃɑ̃.te",
+        hint: null,
+      },
+      {
+        text: "Je suis",
+        phonetic: "ʒə.sɥi",
+        hint: "The 's' in suis is silent",
+      },
+      {
+        text: "Alex",
+        phonetic: "a.lɛks",
+        hint: null,
+      },
+    ],
     focusSounds: [
       {
         sound: "nasal on (ɔ̃)",

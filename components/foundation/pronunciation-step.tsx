@@ -2,31 +2,70 @@
 
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useMiniAudioPlayer } from "@/hooks/use-mini-audio-player";
-import React from "react";
-import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle } from "lucide-react";
+import { useSpeak } from "@/hooks/use-speak";
+import React, { useState, useEffect } from "react";
+import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const { play, isPlaying, currentS3Key } = useMiniAudioPlayer();
-  const { isRecording, score, error, assessSpeech, cancelAssessment } = usePronunciation();
+  const { play, isPlaying: isPlayingS3, currentS3Key } = useMiniAudioPlayer();
+  const { speak, isPlaying: isPlayingTTS } = useSpeak();
+  const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
 
-  const targetLang = "fr-FR"; // In production, pass this down from the parent wrapper!
+  // State to track which word/chunk we are practicing
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // If there's no breakdown array (fallback to old JSON), just use the full sentence
+  const breakdown = data.breakdown || [];
+  const totalSteps = breakdown.length + 1; // All words + 1 for the final full sentence
+  const isFullSentenceStep = currentIndex === breakdown.length;
+
+  // Get current text based on step
+  const currentText = isFullSentenceStep ? data.referenceText : breakdown[currentIndex].text;
+  const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex].phonetic;
+  const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex].hint;
+
+  const targetLang = "fr-FR"; 
+
+  // Reset Azure's score when we switch words
+  useEffect(() => {
+    reset();
+  }, [currentIndex, reset]);
 
   const handleRecordToggle = () => {
     if (isRecording) {
       cancelAssessment();
     } else {
-      assessSpeech(data.referenceText, targetLang);
+      assessSpeech(currentText, targetLang);
     }
   };
 
-  const isThisAudioPlaying = isPlaying && currentS3Key === data.audioS3Key;
+  const handlePlayAudio = () => {
+    if (isFullSentenceStep && data.audioS3Key) {
+      play(data.audioS3Key);
+    } else {
+      // Use browser TTS for the individual words if we don't have S3 files for them
+      speak(currentText, targetLang);
+    }
+  };
 
-  // Helper to render a score bar
+  const isAudioActive = isPlayingS3 || isPlayingTTS;
+
+  const handleNextWord = () => {
+    if (currentIndex < totalSteps - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      onNext(); // Advance to Listening Step
+    }
+  };
+
+  // Helper for rendering Azure score bars
   const ScoreBar = ({ label, value }: { label: string, value: number }) => (
     <div className="flex flex-col gap-1.5">
-      <div className="flex justify-between text-sm font-bold">
-        <span className="text-gray-600">{label}</span>
-        <span className="text-gray-900">{value}%</span>
+      <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+        <span className="text-gray-500">{label}</span>
+        <span className={value >= 80 ? 'text-green-600' : value >= 60 ? 'text-yellow-600' : 'text-red-600'}>
+          {value}%
+        </span>
       </div>
       <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
         <div 
@@ -42,63 +81,76 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   return (
     <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
       
-      <div className="mb-8">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+      {/* Header & Progress */}
+      <div className="mb-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6">
           Pronunciation Lab
         </h2>
-        <p className="text-gray-500 text-lg">
-          Listen to the native speaker, then record yourself.
-        </p>
-      </div>
-      
-      {/* Target Sentence Display */}
-      <div className="mb-6 p-8 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-center relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-50 opacity-50 pointer-events-none">
-          <Mic size={120} />
-        </div>
-        <p className="text-3xl md:text-4xl font-medium text-gray-900 leading-snug relative z-10">
-          "{data.referenceText}"
-        </p>
-      </div>
-      
-      {/* Focus Sounds */}
-      {data.focusSounds && data.focusSounds.length > 0 && (
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Focus Sounds:
-          </span>
-          {data.focusSounds.map((fs: any, idx: number) => (
-            <span key={idx} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold border border-blue-100">
-              {fs.sound}
-            </span>
+        
+        {/* Step Indicator (Dots) */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {Array.from({ length: totalSteps }).map((_, idx) => (
+            <div 
+              key={idx} 
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                idx === currentIndex ? 'w-8 bg-blue-600' : 
+                idx < currentIndex ? 'w-2.5 bg-green-500' : 'w-2.5 bg-gray-200'
+              }`}
+            />
           ))}
         </div>
-      )}
+        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+          {isFullSentenceStep ? "Final Step: Full Sentence" : `Part ${currentIndex + 1} of ${totalSteps - 1}`}
+        </p>
+      </div>
+      
+      {/* Target Flashcard */}
+      <div className="mb-8 p-10 bg-white rounded-3xl border border-gray-200 shadow-sm text-center relative overflow-hidden transition-all duration-500">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-50 opacity-40 pointer-events-none">
+          <Mic size={160} />
+        </div>
+        
+        <p className="text-4xl md:text-5xl font-bold text-gray-900 leading-snug relative z-10 mb-4 tracking-tight">
+          "{currentText}"
+        </p>
+        
+        {currentPhonetic && (
+          <p className="text-lg font-mono text-gray-400 relative z-10 mb-4">
+            /{currentPhonetic}/
+          </p>
+        )}
 
-      {/* Action Buttons */}
+        {currentHint && (
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100 relative z-10">
+            <Activity size={16} /> {currentHint}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons (Play / Record) */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <button 
-          onClick={() => play(data.audioS3Key)}
-          className={`flex-1 py-4 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm ${
-            isThisAudioPlaying 
+          onClick={handlePlayAudio}
+          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm text-lg ${
+            isAudioActive 
               ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50' 
-              : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'
+              : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
           }`}
         >
-          {isThisAudioPlaying ? <Square size={20} className="fill-current" /> : <Volume2 size={20} />}
-          {isThisAudioPlaying ? "Playing Audio..." : "Play Reference"}
+          {isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
+          {isAudioActive ? "Playing..." : "Listen"}
         </button>
         
         <button 
           onClick={handleRecordToggle}
-          className={`flex-1 py-4 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm ${
+          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm text-lg ${
             isRecording 
               ? 'bg-red-50 border-red-200 text-red-600 ring-4 ring-red-500/20 animate-pulse' 
               : 'bg-gray-900 hover:bg-black border-gray-900 text-white'
           }`}
         >
-          {isRecording ? <Square size={20} className="fill-current" /> : <Mic size={20} />}
-          {isRecording ? "Stop Recording" : "Record Your Voice"}
+          {isRecording ? <Square size={24} className="fill-current" /> : <Mic size={24} />}
+          {isRecording ? "Stop Recording" : "Record"}
         </button>
       </div>
 
@@ -112,9 +164,16 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
 
       {score && (
         <div className="mb-8 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm animate-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity className="text-green-500" size={24} />
-            <h3 className="font-extrabold text-gray-900 text-lg">Pronunciation Analysis</h3>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <Activity className="text-blue-500" size={24} />
+              <h3 className="font-extrabold text-gray-900 text-lg">Analysis</h3>
+            </div>
+            {score.pronunciationScore >= 80 && (
+              <span className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-bold">
+                <CheckCircle2 size={16} /> Great job!
+              </span>
+            )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -125,14 +184,17 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         </div>
       )}
 
-      <div className="mt-auto pt-6 flex justify-end">
+      {/* Navigation (Only appears forcefully if they got a score, but can also just be a fixed 'Next' block) */}
+      <div className="mt-auto pt-6 flex justify-end border-t border-gray-100">
         <button 
-          onClick={onNext} 
-          className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-lg shadow-md shadow-blue-500/20 transition-transform active:scale-95 flex items-center justify-center gap-2"
+          onClick={handleNextWord} 
+          disabled={isRecording}
+          className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-lg shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          Next: Listening Comprehension <ArrowRight size={20} />
+          {isFullSentenceStep ? "Finish Practice" : "Next Word"} <ArrowRight size={20} />
         </button>
       </div>
+
     </div>
   );
 }
