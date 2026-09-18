@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Check, Circle, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target } from "lucide-react";
 import { MOCK_FOUNDATION_DATA } from "@/lib/config/mock-foundation";
 
 // Import all sub-components
@@ -11,41 +12,39 @@ import { PronunciationStep } from "./pronunciation-step";
 import { ListeningStep } from "./listening-step";
 import { QuizStep } from "./quiz-step";
 
+const STEPS_CONFIG = [
+  { id: 0, title: "Mission Briefing", icon: Flag },
+  { id: 1, title: "Scene Context", icon: ImageIcon },
+  { id: 2, title: "Grammar & Meaning", icon: BookOpen },
+  { id: 3, title: "Pronunciation Lab", icon: Mic },
+  { id: 4, title: "Listening Focus", icon: Headphones },
+  { id: 5, title: "Knowledge Check", icon: PenTool },
+  { id: 6, title: "Final Mission", icon: Target },
+];
+
 export function FoundationWrapper() {
-  // step 0 = Intro, 1 = Visual, 2 = Grammar, 3 = Pronunciation, 4 = Listening, 5 = Quiz, 6 = Freestyle
   const [step, setStep] = useState(0); 
   const data = MOCK_FOUNDATION_DATA;
-  const TOTAL_STEPS = 7;
 
   const renderStep = () => {
     switch (step) {
-      case 0:
-        return <IntroStep data={data} onNext={() => setStep(1)} />;
-      case 1:
-        return <VisualStep data={data.visualContent} onNext={() => setStep(2)} />;
-      case 2:
-        return <GrammarStep data={data.grammarContent} onNext={() => setStep(3)} />;
-      case 3:
-        return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(4)} />;
-      case 4:
-        return <ListeningStep data={data.listeningContent} onNext={() => setStep(5)} />;
-      case 5:
-        return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
+      case 0: return <IntroStep data={data} onNext={() => setStep(1)} />;
+      case 1: return <VisualStep data={data.visualContent} onNext={() => setStep(2)} />;
+      case 2: return <GrammarStep data={data.grammarContent} onNext={() => setStep(3)} />;
+      case 3: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(4)} />;
+      case 4: return <ListeningStep data={data.listeningContent} onNext={() => setStep(5)} />;
+      case 5: return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
       case 6:
         return (
-          <div className="p-8 border rounded-2xl bg-purple-50 shadow-sm border-purple-200 text-center">
-            <h2 className="text-2xl font-bold mb-4 text-purple-900">Final Mission: Freestyle</h2>
-            <p className="mb-2"><strong>Target Scenario:</strong> {data.freestyle.topic}</p>
-            <p className="mb-6"><strong>Required Chunks:</strong> {data.freestyle.requiredChunks.join(", ")}</p>
-            
-            {/* When you are ready, your Freestyle component goes here */}
-            <div className="p-12 border-2 border-dashed border-purple-300 rounded-xl bg-white text-purple-400 mb-8">
+          <div className="flex flex-col h-full justify-center items-center text-center animate-in fade-in duration-500">
+            <h2 className="text-3xl font-bold mb-4 text-gray-900">Final Mission: Freestyle</h2>
+            <p className="mb-2 text-gray-600"><strong>Scenario:</strong> {data.freestyle.topic}</p>
+            <div className="w-full p-12 border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/50 text-blue-500 mb-8 mt-6">
               [Freestyle Chat Component Mounts Here]
             </div>
-
             <button 
-              onClick={() => alert("Lesson Complete! Returning to Dashboard...")} 
-              className="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl w-full sm:w-auto shadow-md"
+              onClick={() => alert("Lesson Complete!")} 
+              className="px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg"
             >
               Finish Lesson 🎉
             </button>
@@ -57,31 +56,58 @@ export function FoundationWrapper() {
   };
 
   return (
-    // Replaced standard padding with a wider max-width and clean layout
-    <div className="max-w-5xl mx-auto p-4 md:p-8 lg:py-12">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-8">
       
-      {/* Header Info - Sleeker presentation */}
-      {step > 0 && (
-        <div className="mb-6 flex justify-between items-center text-sm font-semibold tracking-wide text-slate-400 uppercase">
-          <span>Day {data.orderIndex}: {data.lessonHandoff.theme}</span>
-          <span className="text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">
-            Step {step} of {TOTAL_STEPS - 1}
-          </span>
+      {/* LEFT SIDEBAR: STEPPER */}
+      <div className="w-full md:w-64 lg:w-72 flex-shrink-0 md:py-6">
+        <div className="mb-8">
+          <p className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-1">
+            Course • Day {data.orderIndex}
+          </p>
+          <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
+            {data.lessonHandoff.theme}
+          </h2>
         </div>
-      )}
-      
-      {/* Progress Bar - Made it ultra-thin and elegant */}
-      {step > 0 && (
-        <div className="w-full bg-slate-100 h-1.5 mb-10 rounded-full overflow-hidden">
-          <div 
-            className="bg-indigo-500 h-full rounded-full transition-all duration-700 ease-out" 
-            style={{ width: `${(step / (TOTAL_STEPS - 1)) * 100}%` }}
-          />
-        </div>
-      )}
 
-      {/* Main Content Area */}
-      {renderStep()}
+        <div className="relative">
+          {/* Vertical connecting line */}
+          <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-gray-100 rounded-full" />
+          
+          <div className="flex flex-col gap-6 relative z-10">
+            {STEPS_CONFIG.map((s, index) => {
+              const isCompleted = step > index;
+              const isActive = step === index;
+              const isUpcoming = step < index;
+              const Icon = s.icon;
+
+              return (
+                <div key={s.id} className={`flex items-center gap-4 transition-all duration-300 ${isActive ? "opacity-100" : "opacity-50"}`}>
+                  {/* Step Icon / Status */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white transition-colors duration-300
+                    ${isCompleted ? "border-green-500 bg-green-50 text-green-500" : 
+                      isActive ? "border-blue-600 bg-blue-50 text-blue-600 shadow-sm ring-4 ring-blue-50" : 
+                      "border-gray-200 text-gray-400"}
+                  `}>
+                    {isCompleted ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />}
+                  </div>
+                  
+                  {/* Step Title */}
+                  <div className={`font-semibold text-sm ${isActive ? "text-gray-900" : "text-gray-500"}`}>
+                    {s.title}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
+      <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
+        {/* We let the individual step components handle their own padding and layout inside this card */}
+        {renderStep()}
+      </div>
+
     </div>
   );
 }
