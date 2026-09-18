@@ -54,32 +54,30 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Word-by-Word Breakdown
         </h3>
-        <div className="flex flex-col gap-3">
+        
+        {/* CHANGED HERE: Using Grid for 2-column layout on medium screens and up */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.words.map((wordObj: any, idx: number) => (
             <button 
               key={idx} 
               onClick={() => handleSpeak(wordObj.word, idx)}
               disabled={isLoading}
-              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-sm hover:shadow"
+              className="group flex items-start gap-4 p-5 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-sm hover:shadow"
             >
-              <div className="flex items-center gap-4">
-                {/* Play Icon Indicator */}
-                <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
-                  {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={18} /> : <Volume2 size={18} />}
-                </div>
-                
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-xl text-gray-900 group-hover:text-blue-700 transition-colors">
-                      {wordObj.word}
-                    </span>
-                  </div>
-                  <span className="text-gray-500 font-medium">{wordObj.gloss}</span>
-                </div>
+              {/* Play Icon Indicator */}
+              <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors mt-0.5">
+                {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={18} /> : <Volume2 size={18} />}
               </div>
-
-              <div className="mt-3 sm:mt-0 ml-14 sm:ml-0">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
+              
+              {/* Restructured for better vertical flow inside the half-width card */}
+              <div className="flex flex-col w-full">
+                <span className="font-bold text-xl text-gray-900 group-hover:text-blue-700 transition-colors">
+                  {wordObj.word}
+                </span>
+                <span className="text-gray-500 font-medium mb-3">{wordObj.gloss}</span>
+                
+                {/* Role Pill moved below to ensure it fits safely */}
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-wider w-fit">
                   {wordObj.role}
                 </span>
               </div>

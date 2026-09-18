@@ -142,14 +142,22 @@ export const MOCK_FOUNDATION_DATA = {
     id: "listen-1",
     referenceText: "Bonjour, enchanté. Je suis Alex.",
     audioS3Key: "foundation/usr_test/day1/listening.mp3",
-    options: [
-      "Bonjour, enchanté. Je suis Alex.",
-      "Bonjour, enchanté. Je suis Alexa.",
-      "Bonsoir, enchanté. Je suis Alex.",
-      "Salut, enchanté. Je suis Alex.",
-    ],
-    correctIndex: 0,
-    contrast: "bonjour vs bonsoir (daytime vs evening greeting)",
+    expectedWords: ["Bonjour", "enchanté", "Je", "suis", "Alex"],
+    wordBank: [
+      "Alex",
+      "Je",
+      "Bonsoir",
+      "suis",
+      "enchanté",
+      "Bonjour",
+      "Salut",
+      "est",
+    ], // Scrambled with distractors
+    contrastFeedback: {
+      triggerWord: "Bonsoir",
+      message:
+        "Listen closely! The speaker says 'Bonjour' (used during the day), not 'Bonsoir' (used in the evening).",
+    },
   },
   quizContent: {
     items: [
