@@ -57,21 +57,24 @@ export function FoundationWrapper() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
-      {/* Header Info (Only show if we are past the Intro step) */}
+    // Replaced standard padding with a wider max-width and clean layout
+    <div className="max-w-5xl mx-auto p-4 md:p-8 lg:py-12">
+      
+      {/* Header Info - Sleeker presentation */}
       {step > 0 && (
-        <div className="mb-4 flex flex-wrap gap-4 justify-between items-center text-sm text-gray-500 font-medium">
-          <span>Course: {data.foundationCourseId}</span>
-          <span>Day {data.orderIndex}</span>
-          <span>Step {step} of {TOTAL_STEPS - 1}</span>
+        <div className="mb-6 flex justify-between items-center text-sm font-semibold tracking-wide text-slate-400 uppercase">
+          <span>Day {data.orderIndex}: {data.lessonHandoff.theme}</span>
+          <span className="text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">
+            Step {step} of {TOTAL_STEPS - 1}
+          </span>
         </div>
       )}
       
-      {/* Progress Bar (Hidden on Intro Step for a cleaner look) */}
+      {/* Progress Bar - Made it ultra-thin and elegant */}
       {step > 0 && (
-        <div className="w-full bg-gray-200 h-2 mb-8 rounded-full overflow-hidden">
+        <div className="w-full bg-slate-100 h-1.5 mb-10 rounded-full overflow-hidden">
           <div 
-            className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-in-out" 
+            className="bg-indigo-500 h-full rounded-full transition-all duration-700 ease-out" 
             style={{ width: `${(step / (TOTAL_STEPS - 1)) * 100}%` }}
           />
         </div>
