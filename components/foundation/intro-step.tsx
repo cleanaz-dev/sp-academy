@@ -44,9 +44,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
       
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-          Prepare for Deployment
-        </h1>
+     
         <p className="text-gray-500 text-lg max-w-xl">
           Review today's target phrase and essential vocabulary before entering the simulation.
         </p>

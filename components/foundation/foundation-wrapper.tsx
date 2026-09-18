@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Check, Circle, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target } from "lucide-react";
 import { MOCK_FOUNDATION_DATA } from "@/lib/config/mock-foundation";
 
-// Import all sub-components
 import { IntroStep } from "./intro-step";
 import { VisualStep } from "./visual-step";
 import { GrammarStep } from "./grammar-step";
@@ -36,7 +35,7 @@ export function FoundationWrapper() {
       case 5: return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
       case 6:
         return (
-          <div className="flex flex-col h-full justify-center items-center text-center animate-in fade-in duration-500">
+          <div className="flex flex-col h-full justify-center items-center text-center p-8 animate-in fade-in duration-500">
             <h2 className="text-3xl font-bold mb-4 text-gray-900">Final Mission: Freestyle</h2>
             <p className="mb-2 text-gray-600"><strong>Scenario:</strong> {data.freestyle.topic}</p>
             <div className="w-full p-12 border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/50 text-blue-500 mb-8 mt-6">
@@ -56,12 +55,13 @@ export function FoundationWrapper() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-8">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-6 md:gap-8">
       
-      {/* LEFT SIDEBAR: STEPPER */}
-      <div className="w-full md:w-64 lg:w-72 flex-shrink-0 md:py-6">
-        <div className="mb-8">
-          <p className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-1">
+      {/* LEFT SIDEBAR: STEPPER CARD */}
+      {/* Added bg-white, padding, rounding, and h-fit so it looks like a matching left-hand card */}
+      <div className="w-full md:w-72 lg:w-80 flex-shrink-0 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8 h-fit">
+        <div className="mb-10">
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
             Course • Day {data.orderIndex}
           </p>
           <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
@@ -77,15 +77,14 @@ export function FoundationWrapper() {
             {STEPS_CONFIG.map((s, index) => {
               const isCompleted = step > index;
               const isActive = step === index;
-              const isUpcoming = step < index;
               const Icon = s.icon;
 
               return (
-                <div key={s.id} className={`flex items-center gap-4 transition-all duration-300 ${isActive ? "opacity-100" : "opacity-50"}`}>
+                <div key={s.id} className={`flex items-center gap-4 transition-all duration-300 ${isActive ? "opacity-100" : "opacity-50 hover:opacity-75"}`}>
                   {/* Step Icon / Status */}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white transition-colors duration-300
-                    ${isCompleted ? "border-green-500 bg-green-50 text-green-500" : 
-                      isActive ? "border-blue-600 bg-blue-50 text-blue-600 shadow-sm ring-4 ring-blue-50" : 
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 bg-white
+                    ${isCompleted ? "border-green-500 text-green-500" : 
+                      isActive ? "border-blue-600 text-blue-600 shadow-sm ring-4 ring-blue-50" : 
                       "border-gray-200 text-gray-400"}
                   `}>
                     {isCompleted ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />}
@@ -104,7 +103,6 @@ export function FoundationWrapper() {
 
       {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
       <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
-        {/* We let the individual step components handle their own padding and layout inside this card */}
         {renderStep()}
       </div>
 
