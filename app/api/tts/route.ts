@@ -8,12 +8,7 @@ const VOICE_MAP: Record<string, Record<string, string>> = {
   "en-US": { male: "933563129e564b19a115bedd57b7406a", female: "802e3bc2b27e49c2995d23ef70e6ac89" },
   "fr-FR": { male: "83154314d3d64d56b8a434583a659a91", female: "690813f2df56491b82ee02a22d1c67fd" },
   "es-ES": { male: "43e1948b1a544700bd88250916cd31e8", female: "0118a35dcb604837abe7961a43e13ba8" },
-  "de-DE": { male: "e3f1c0b8d5a14e7f9b2c4e1a6f8b9c2d", female: "f4a2b1c3d4e5f6a7b8c9d0e1f2a3b4c5" },
-  "it-IT": { male: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", female: "q1r2s3t4u5v6w7x8y9z0a1b2c3d4e5f6" },
   "ja-JP": { male: "g1h2i3j4k5l6m7n8o9p0q1r2s3t4u5v6", female: "w1x2y3z4a5b6c7d8e9f0g1h2i3j4k5l6" },
-  "zh-CN": { male: "m1n2o3p4q5r6s7t8u9v0w1x2y3z4a5b6", female: "c1d2e3f4g5h6i7j8k9l0m1n2o3p4q5r6" },
-  "pt-BR": { male: "e1f2g3h4i5j6k7l8m9n0o1p2q3r4s5t6", female: "u1v2w3x4y5z6a7b8c9d0e1f2g3h4i5j6" },
-  "ru-RU": { male: "k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6", female: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" },
   "ko-KR": { male: "s1t2u3v4w5x6y7z8a9b0c1d2e3f4g5h6", female: "i1j2k3l4m5n6o7p8q9r0s1t2u3v4w5x6" }
 };
 
