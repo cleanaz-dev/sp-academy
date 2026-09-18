@@ -10,6 +10,7 @@ import { GrammarStep } from "./grammar-step";
 import { PronunciationStep } from "./pronunciation-step";
 import { ListeningStep } from "./listening-step";
 import { QuizStep } from "./quiz-step";
+import { FreestyleStep } from "./freestyle-step";
 
 const STEPS_CONFIG = [
   { id: 0, title: "Mission Briefing", icon: Flag },
@@ -33,22 +34,7 @@ export function FoundationWrapper() {
       case 3: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(4)} />;
       case 4: return <ListeningStep data={data.listeningContent} onNext={() => setStep(5)} />;
       case 5: return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
-      case 6:
-        return (
-          <div className="flex flex-col h-full justify-center items-center text-center p-8 animate-in fade-in duration-500">
-            <h2 className="text-3xl font-bold mb-4 text-gray-900">Final Mission: Freestyle</h2>
-            <p className="mb-2 text-gray-600"><strong>Scenario:</strong> {data.freestyle.topic}</p>
-            <div className="w-full p-12 border-2 border-dashed border-blue-200 rounded-2xl bg-blue-50/50 text-blue-500 mb-8 mt-6">
-              [Freestyle Chat Component Mounts Here]
-            </div>
-            <button 
-              onClick={() => alert("Lesson Complete!")} 
-              className="px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-lg"
-            >
-              Finish Lesson 🎉
-            </button>
-          </div>
-        );
+      case 6: return <FreestyleStep data={data} onFinish={() => alert("Lesson Complete!")} />;
       default:
         return <div>Unknown Step</div>;
     }

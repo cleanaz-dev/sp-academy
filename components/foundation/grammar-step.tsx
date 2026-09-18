@@ -1,51 +1,101 @@
 "use client";
 
 import { useSpeak } from "@/hooks/use-speak";
-import React from "react";
-
+import React, { useState } from "react";
+import { Volume2, Loader2, ArrowRight } from "lucide-react";
 
 export function GrammarStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isLoading } = useSpeak();
   const targetLang = "fr-FR"; 
+  
+  // Track which word is currently being spoken for a targeted loading state
+  const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
+
+  const handleSpeak = async (text: string, index: number | null = null) => {
+    setActiveWordIndex(index);
+    await speak(text, targetLang);
+    setActiveWordIndex(null);
+  };
 
   return (
-    <div className="p-4 border rounded-lg bg-white shadow-sm">
-      <h2 className="text-xl font-bold mb-4">Step 2: Sentence Breakdown</h2>
+    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
       
-      {/* Target Sentence Display */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-md border border-blue-100 relative group cursor-pointer" 
-           onClick={() => speak(data.targetSentence, targetLang)}>
-        <p className="text-sm text-blue-500 font-bold mb-1 uppercase tracking-wider">Click to hear sentence 🔊</p>
-        <p className="text-2xl font-bold text-blue-900 mb-1">{data.targetSentence}</p>
-        <p className="text-gray-600">{data.nativeSentence}</p>
+      <div className="mb-10">
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+          Grammar & Meaning
+        </h2>
+        <p className="text-gray-500 text-lg">
+          Break down the target sentence to understand its structure.
+        </p>
       </div>
       
-      {/* Word-by-Word Breakdown */}
-      <div className="flex flex-col gap-2">
-        {data.words.map((wordObj: any, idx: number) => (
-          <button 
-            key={idx} 
-            onClick={() => speak(wordObj.word, targetLang)}
-            disabled={isLoading}
-            className="flex flex-col sm:flex-row sm:justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded border transition-colors text-left"
-          >
-            <div>
-              <span className="font-bold text-lg text-gray-900">{wordObj.word}</span>
-              <span className="ml-2 text-gray-700">- {wordObj.gloss}</span>
-            </div>
-            <span className="text-sm text-gray-500 sm:self-center bg-gray-200 px-2 py-1 rounded">
-              {wordObj.role}
-            </span>
-          </button>
-        ))}
+      {/* Target Sentence Display - Big, interactive card */}
+      <button 
+        onClick={() => handleSpeak(data.targetSentence, -1)}
+        disabled={isLoading}
+        className="group w-full mb-10 p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-left transition-all hover:shadow-md hover:border-blue-300 relative overflow-hidden"
+      >
+        <div className="absolute top-8 right-8 text-blue-300 group-hover:text-blue-500 transition-colors">
+          {isLoading && activeWordIndex === -1 ? <Loader2 className="animate-spin" size={28} /> : <Volume2 size={28} />}
+        </div>
+        <p className="text-xs font-bold text-blue-500 mb-3 uppercase tracking-widest flex items-center gap-2">
+          Click to play sentence
+        </p>
+        <p className="text-3xl md:text-4xl font-bold text-blue-950 mb-3">
+          {data.targetSentence}
+        </p>
+        <p className="text-lg text-blue-800/70 font-medium">
+          {data.nativeSentence}
+        </p>
+      </button>
+      
+      {/* Word-by-Word Breakdown List */}
+      <div className="mb-8">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+          Word-by-Word Breakdown
+        </h3>
+        <div className="flex flex-col gap-3">
+          {data.words.map((wordObj: any, idx: number) => (
+            <button 
+              key={idx} 
+              onClick={() => handleSpeak(wordObj.word, idx)}
+              disabled={isLoading}
+              className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-sm hover:shadow"
+            >
+              <div className="flex items-center gap-4">
+                {/* Play Icon Indicator */}
+                <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
+                  {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={18} /> : <Volume2 size={18} />}
+                </div>
+                
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-bold text-xl text-gray-900 group-hover:text-blue-700 transition-colors">
+                      {wordObj.word}
+                    </span>
+                  </div>
+                  <span className="text-gray-500 font-medium">{wordObj.gloss}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 sm:mt-0 ml-14 sm:ml-0">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-200">
+                  {wordObj.role}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <button 
-        onClick={onNext} 
-        className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded w-full sm:w-auto"
-      >
-        Next: Pronunciation
-      </button>
+      <div className="mt-auto pt-6 flex justify-end">
+        <button 
+          onClick={onNext} 
+          className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-lg shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2"
+        >
+          Next: Pronunciation Lab <ArrowRight size={20} />
+        </button>
+      </div>
     </div>
   );
 }
