@@ -47,15 +47,19 @@ function VerbalClozeQuestion({
     }
   };
 
+  // Split the prompt at the "___" to place the blank in the correct spot
+  const promptParts = item.prompt.split("___");
+
   return (
     <div className="flex flex-col items-center animate-in zoom-in-95 duration-300">
       <h3 className="text-xl text-gray-500 font-medium mb-8">Speak the missing word:</h3>
       
-      <div className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight">
-        <span className="text-blue-500 border-b-4 border-dashed border-blue-200 px-2 pb-1">
+      <div className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 tracking-tight text-center">
+        {promptParts[0]}
+        <span className="text-blue-500 border-b-4 border-dashed border-blue-200 px-2 pb-1 mx-1">
           {localStatus === "correct" ? item.acceptableAnswers[0] : "____"}
         </span>
-        {item.prompt.replace("___", "")}
+        {promptParts[1]}
       </div>
       
       <p className="text-gray-400 font-medium mb-12 flex items-center gap-2">
@@ -87,11 +91,11 @@ function VerbalClozeQuestion({
       {/* Live Transcript Display */}
       <div className="mt-6 min-h-[24px]">
         {isRecording ? (
-          <p className="text-sm font-medium text-gray-500 animate-pulse">
+          <p className="text-sm font-medium text-gray-500 animate-pulse text-center">
             Listening: <span className="italic text-gray-800">"{transcript}..."</span>
           </p>
         ) : (
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest text-center">
             {localStatus === "correct" ? "Nailed it" : "Tap to Speak"}
           </p>
         )}
@@ -99,7 +103,6 @@ function VerbalClozeQuestion({
     </div>
   );
 }
-
 // --------------------------------------------------------
 // 2. TRUE/FALSE COMPONENT
 // --------------------------------------------------------
