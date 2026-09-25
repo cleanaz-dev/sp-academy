@@ -65,6 +65,7 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Menu Group */}
         <SidebarGroup>
           <SidebarGroupLabel className="py-4 text-lg font-bold tracking-widest text-emerald-500">
             Menu
@@ -76,25 +77,29 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                 return (
                   <SidebarMenuItem key={navItem.href} className="px-2 py-1">
                     <SidebarMenuButton
-                      render={<Link href={navItem.href} />}
                       isActive={isActive}
                       className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-400"
-                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
-                    >
-                      {navItem.icon}
-                      <span
-                        className={`text-xs ${
-                          isActive
-                            ? "text-white"
-                            : "text-blue-500 group-hover:text-white"
-                        }`}
-                      >
-                        {navItem.label}
-                      </span>
-                    </SidebarMenuButton>
+                          : "text-blue-500 hover:text-white"
+                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300`}
+                      render={
+                        <Link href={navItem.href}>
+                          <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
+                            {navItem.icon}
+                          </div>
+                          <span
+                            className={`text-sm font-medium ${
+                              isActive
+                                ? "text-white"
+                                : "text-blue-500 group-hover:text-white"
+                            }`}
+                          >
+                            {navItem.label}
+                          </span>
+                        </Link>
+                      }
+                    />
                   </SidebarMenuItem>
                 );
               })}
@@ -102,6 +107,7 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Settings Group */}
         <SidebarGroup>
           <SidebarGroupLabel className="py-4 text-lg font-bold tracking-widest text-emerald-500">
             Settings
@@ -115,25 +121,29 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                 return (
                   <SidebarMenuItem key={settingItem.href} className="px-2 py-1">
                     <SidebarMenuButton
-                      render={<Link href={settingItem.href} />}
                       isActive={isActive}
                       className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-400"
-                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
-                    >
-                      {settingItem.icon}
-                      <span
-                        className={`text-xs ${
-                          isTextActive
-                            ? "text-white"
-                            : "text-blue-500 group-hover:text-white"
-                        }`}
-                      >
-                        {settingItem.label}
-                      </span>
-                    </SidebarMenuButton>
+                          : "text-blue-500 hover:text-white"
+                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300`}
+                      render={
+                        <Link href={settingItem.href}>
+                          <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
+                            {settingItem.icon}
+                          </div>
+                          <span
+                            className={`text-sm font-medium ${
+                              isTextActive
+                                ? "text-white"
+                                : "text-blue-500 group-hover:text-white"
+                            }`}
+                          >
+                            {settingItem.label}
+                          </span>
+                        </Link>
+                      }
+                    />
                   </SidebarMenuItem>
                 );
               })}
