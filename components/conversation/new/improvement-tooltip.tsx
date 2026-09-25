@@ -19,7 +19,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ImprovementTooltipProps, WordAssessment, CorrectionDetail } from "./types";
+import type {
+  ImprovementTooltipProps,
+  WordAssessment,
+  CorrectionDetail,
+} from "./types";
 import { capitalizeFirstLetter, speakPhrase } from "./utils";
 
 export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
@@ -33,15 +37,19 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
 
   // Helper to color-code word accuracy scores
   const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-emerald-400 bg-emerald-500/20 border-emerald-500/30";
-    if (score >= 80) return "text-green-400 bg-green-500/20 border-green-500/30";
-    if (score >= 70) return "text-amber-400 bg-yellow-500/20 border-yellow-500/30";
+    if (score >= 90)
+      return "text-emerald-400 bg-emerald-500/20 border-emerald-500/30";
+    if (score >= 80)
+      return "text-green-400 bg-green-500/20 border-green-500/30";
+    if (score >= 70)
+      return "text-amber-400 bg-yellow-500/20 border-yellow-500/30";
     return "text-red-400 bg-red-500/20 border-red-500/30";
   };
 
   // Check if any word was mispronounced or scored low
   const hasWordIssues = pronunciationScore?.words?.some(
-    (w) => (w.accuracyScore ?? 100) < 80 || (w.errorType && w.errorType !== "None")
+    (w) =>
+      (w.accuracyScore ?? 100) < 80 || (w.errorType && w.errorType !== "None"),
   );
 
   // Show breakdown if overall pronunciation score is < 85 OR any single word needs work
@@ -52,7 +60,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
   // Helper to render granular grammar/vocab correction items
   const renderCorrectionItem = (
     title: string,
-    detail?: string | CorrectionDetail
+    detail?: string | CorrectionDetail,
   ) => {
     if (!detail) return null;
     const text = typeof detail === "object" ? detail.correction : detail;
@@ -64,7 +72,9 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
       <div className="mb-2 pl-2">
         <span className="font-semibold text-sky-300">{title}: </span>
         <span className="text-white">{text}</span>
-        {reason && <p className="text-xs italic text-emerald-300">Why: {reason}</p>}
+        {reason && (
+          <p className="text-xs text-emerald-300 italic">Why: {reason}</p>
+        )}
       </div>
     );
   };
@@ -76,19 +86,24 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
       corrections.genderAgreement ||
       corrections.finalNotes);
 
-  const hasImprovedPhrasing =
-    Boolean(improvedResponse && improvedResponse.trim() !== "" && improvedResponse !== originalText);
+  const hasImprovedPhrasing = Boolean(
+    improvedResponse &&
+      improvedResponse.trim() !== "" &&
+      improvedResponse !== originalText,
+  );
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <button
-          className="flex animate-pulse items-center space-x-1 text-blue-500 shadow-2xl shadow-white transition-transform hover:scale-110"
-          title="View detailed feedback"
-        >
-          <Info className="h-4 w-4" />
-        </button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <button
+            className="flex animate-pulse items-center space-x-1 text-blue-500 shadow-2xl shadow-white transition-transform hover:scale-110"
+            title="View detailed feedback"
+          >
+            <Info className="h-4 w-4" />
+          </button>
+        }
+      />
 
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border-none bg-linear-to-r from-indigo-600/95 to-purple-700/95 p-6 text-white shadow-xl backdrop-blur-md">
         <DialogHeader>
@@ -129,29 +144,31 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  {pronunciationScore.words.map((word: WordAssessment, idx: number) => {
-                    const scoreColor = getScoreColor(word.accuracyScore);
+                  {pronunciationScore.words.map(
+                    (word: WordAssessment, idx: number) => {
+                      const scoreColor = getScoreColor(word.accuracyScore);
 
-                    return (
-                      <div
-                        key={idx}
-                        className={cn(
-                          "rounded border px-2 py-1 text-sm font-medium transition-transform hover:scale-105",
-                          scoreColor
-                        )}
-                        title={
-                          word.errorType && word.errorType !== "None"
-                            ? `Issue: ${word.errorType}`
-                            : `Accuracy: ${word.accuracyScore}/100`
-                        }
-                      >
-                        <span className="block">{word.word}</span>
-                        <span className="block text-[10px] opacity-80">
-                          {word.accuracyScore}/100
-                        </span>
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div
+                          key={idx}
+                          className={cn(
+                            "rounded border px-2 py-1 text-sm font-medium transition-transform hover:scale-105",
+                            scoreColor,
+                          )}
+                          title={
+                            word.errorType && word.errorType !== "None"
+                              ? `Issue: ${word.errorType}`
+                              : `Accuracy: ${word.accuracyScore}/100`
+                          }
+                        >
+                          <span className="block">{word.word}</span>
+                          <span className="block text-[10px] opacity-80">
+                            {word.accuracyScore}/100
+                          </span>
+                        </div>
+                      );
+                    },
+                  )}
                 </div>
 
                 <p className="mt-2 text-xs text-emerald-300">
@@ -200,10 +217,16 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
               </span>
               {renderCorrectionItem("Vocabulary", corrections.vocabulary)}
               {renderCorrectionItem("Articles", corrections.article)}
-              {renderCorrectionItem("Gender Agreement", corrections.genderAgreement)}
+              {renderCorrectionItem(
+                "Gender Agreement",
+                corrections.genderAgreement,
+              )}
               {corrections.finalNotes && (
-                <p className="mt-2 border-t border-white/10 pt-2 italic text-slate-300">
-                  Note: {typeof corrections.finalNotes === "string" ? corrections.finalNotes : ""}
+                <p className="mt-2 border-t border-white/10 pt-2 text-slate-300 italic">
+                  Note:{" "}
+                  {typeof corrections.finalNotes === "string"
+                    ? corrections.finalNotes
+                    : ""}
                 </p>
               )}
             </div>

@@ -32,15 +32,17 @@ export default function DeleteReadingDialog({ log }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="text-gray-500 hover:text-gray-600"
-        >
-          <Trash2 />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-gray-500 hover:text-gray-600"
+          >
+            <Trash2 />
+          </Button>
+        }
+      />
       <DialogContent className="bg-white">
         <DialogHeader>
           <DialogTitle>Delete Log</DialogTitle>
