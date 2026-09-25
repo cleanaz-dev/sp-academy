@@ -1,4 +1,5 @@
 import "./globals.css";
+import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Nunito } from "next/font/google";
 import { Toaster } from "sonner";
@@ -8,7 +9,7 @@ const nunito = Nunito({
   weight: ["200", "300", "400", "600", "700", "800", "900"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Spoon Academy - Revolutionizing Learning with AI",
   description:
     "Transform your learning experience with Spoon Academy’s cutting-edge AI-powered approach.",
@@ -34,10 +35,15 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className={nunito.className}><ClerkProvider dynamic>
+      <body className={nunito.className}>
+        <ClerkProvider dynamic>
           {children}
           <Toaster
             position="bottom-right"
@@ -45,7 +51,8 @@ export default function RootLayout({ children }) {
             theme="system"
             closeButton
           />
-        </ClerkProvider></body>
+        </ClerkProvider>
+      </body>
     </html>
   );
 }
