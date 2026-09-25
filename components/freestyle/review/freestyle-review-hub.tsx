@@ -146,7 +146,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
   };
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 pb-20">
+    <div className="min-h-full bg-linear-to-b from-gray-50 to-gray-100 p-4 pb-20">
       <div className="max-w-lg mx-auto pt-6 space-y-6">
         <div className="flex justify-center">
           <FreestyleAvatarReview isSpeaking={isSpeaking} />
@@ -173,7 +173,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
                 { label: "Pronunciation", value: review.metrics.pronunciationScore ?? "N/A" },
                 { label: "Fluency", value: review.metrics.fluencyScore },
               ].map((m) => (
-                <div key={m.label} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div key={m.label} className="bg-white p-3 rounded-xl shadow-xs border border-gray-100">
                   <div className="text-xs text-gray-400 uppercase tracking-wider font-bold">{m.label}</div>
                   <div className="text-xl font-bold text-gray-800">{m.value}</div>
                 </div>
@@ -195,7 +195,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
                 <p className="text-xs text-indigo-500 uppercase tracking-wide font-bold">Vocabulary Upgrades</p>
                 <div className="space-y-3">
                   {review.vocabUpgrades.map((upgrade, idx) => (
-                    <div key={idx} className="bg-white p-3 rounded-lg shadow-sm border border-indigo-50">
+                    <div key={idx} className="bg-white p-3 rounded-lg shadow-xs border border-indigo-50">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="line-through text-red-400 text-sm font-medium">{upgrade.original}</span>
                         <span className="text-gray-400">→</span>
@@ -242,7 +242,7 @@ export function FreestyleReviewHub({ sessionId, onComplete }: Props) {
         {/* INTRO / TRANSITION / OUTRO */}
         {(phase === "intro" || phase === "transition" || phase === "outro") && (
           <div className="text-center py-16 animate-in fade-in">
-            <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm border border-gray-100">
+            <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-xs border border-gray-100">
               <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
               <span className="text-gray-600 font-medium">
                 {isSpeaking ? "AI Tutor is speaking..." : "Loading audio..."}

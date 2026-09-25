@@ -22,12 +22,12 @@ export default function FinalReadStep({
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-5xl mx-auto w-full space-y-8">
       
-      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-8 shadow-sm text-center">
+      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-8 shadow-xs text-center">
         <span className="mb-4 inline-block rounded bg-indigo-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700">Full Transcript</span>
         <p className="text-3xl font-medium text-indigo-950 mt-4 mb-4 leading-relaxed">{improvedTranscript}</p>
       </div>
 
-      <div className={`rounded-2xl border p-10 text-center shadow-sm flex flex-col items-center justify-center transition-all duration-500 ${
+      <div className={`rounded-2xl border p-10 text-center shadow-xs flex flex-col items-center justify-center transition-all duration-500 ${
         !practiceCompleted && !isRecordingFull ? "border-sky-300 bg-sky-100/50 shadow-[0_0_30px_rgba(56,189,248,0.1)]" : "border-gray-100 bg-white"
       }`}>
          <p className="mb-8 text-lg font-medium text-gray-600">
@@ -61,21 +61,21 @@ export default function FinalReadStep({
              {hasFullScore && (
                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-10 w-full max-w-3xl flex flex-col items-center">
                     <div className="flex gap-4 mb-8 w-full justify-center">
-                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-sm border border-sky-100 min-w-[120px]">
+                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-xs border border-sky-100 min-w-[120px]">
                         <span className="text-4xl font-black text-sky-600">{score.pronunciationScore}</span>
                         <span className="text-xs font-bold text-gray-500 uppercase mt-2 tracking-wider">Pronunciation</span>
                       </div>
-                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-sm border border-sky-100 min-w-[120px]">
+                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-xs border border-sky-100 min-w-[120px]">
                         <span className="text-4xl font-black text-sky-600">{score.accuracyScore}</span>
                         <span className="text-xs font-bold text-gray-500 uppercase mt-2 tracking-wider">Accuracy</span>
                       </div>
-                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-sm border border-sky-100 min-w-[120px]">
+                      <div className="flex flex-col items-center p-5 bg-white rounded-2xl shadow-xs border border-sky-100 min-w-[120px]">
                         <span className="text-4xl font-black text-sky-600">{score.fluencyScore}</span>
                         <span className="text-xs font-bold text-gray-500 uppercase mt-2 tracking-wider">Fluency</span>
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-sky-200 bg-white p-8 text-2xl flex flex-wrap justify-center gap-x-2.5 gap-y-2 shadow-sm leading-relaxed">
+                    <div className="rounded-2xl border border-sky-200 bg-white p-8 text-2xl flex flex-wrap justify-center gap-x-2.5 gap-y-2 shadow-xs leading-relaxed">
                       {score.words.map((w: any, i: number) => (
                         <span 
                           key={i} 

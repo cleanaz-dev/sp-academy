@@ -8,7 +8,7 @@ import { heroConfig, generateTextShadow, generateGlowSequence } from "./landing-
 
 export default function HeroSection() {
   return (
-    <main className={`relative min-h-screen overflow-hidden bg-gradient-to-br ${heroConfig.background.gradient}`}>
+    <main className={`relative min-h-screen overflow-hidden bg-linear-to-br ${heroConfig.background.gradient}`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 h-full w-full">
         {heroConfig.background.blobs.map((blob, index) => (
@@ -22,7 +22,7 @@ export default function HeroSection() {
               repeatType: "reverse",
               delay: blob.delay,
             }}
-            className={`absolute ${blob.position} h-72 w-72 rounded-full bg-gradient-to-r ${blob.gradient} blur-3xl`}
+            className={`absolute ${blob.position} h-72 w-72 rounded-full bg-linear-to-r ${blob.gradient} blur-3xl`}
           />
         ))}
       </div>
@@ -45,7 +45,7 @@ export default function HeroSection() {
               transition={{ delay: 0.2 }}
               className="flex justify-center md:justify-start"
             >
-              <span className={`rounded-full bg-gradient-to-r ${heroConfig.badge.gradient} px-4 md:px-8 py-2 text-sm md:text-2xl font-medium text-white shadow-lg shadow-sky-400/20`}>
+              <span className={`rounded-full bg-linear-to-r ${heroConfig.badge.gradient} px-4 md:px-8 py-2 text-sm md:text-2xl font-medium text-white shadow-lg shadow-sky-400/20`}>
                 {heroConfig.badge.text}
               </span>
             </motion.div>
@@ -93,7 +93,7 @@ export default function HeroSection() {
             >
               <Link href={heroConfig.buttons.primary.href}>
                 <Button 
-                  className={`rounded-full border-2 bg-gradient-to-r ${heroConfig.buttons.primary.gradient} px-8 py-6 text-lg text-white md:shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105 hover:${heroConfig.buttons.primary.hoverGradient}`}
+                  className={`rounded-full border-2 bg-linear-to-r ${heroConfig.buttons.primary.gradient} px-8 py-6 text-lg text-white md:shadow-lg shadow-sky-400/20 transition-all duration-300 hover:scale-105 hover:${heroConfig.buttons.primary.hoverGradient}`}
                 >
                   {heroConfig.buttons.primary.text}
                 </Button>

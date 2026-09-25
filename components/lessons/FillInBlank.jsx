@@ -69,7 +69,7 @@ const FillInBlank = ({ exercise, onComplete }) => {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 rounded border p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded border p-2 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             placeholder="Type your answer..."
             aria-label="Your answer"
           />

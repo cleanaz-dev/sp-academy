@@ -152,7 +152,7 @@ const SidebarContent = ({
         />
       </div>
     </div>
-    <div className="flex-grow space-y-2 overflow-y-auto">
+    <div className="grow space-y-2 overflow-y-auto">
       {/* Sidebar Title */}
       <div className="flex px-4 py-2">
         <h1 className={`text-lg font-bold tracking-widest text-emerald-500`}>
@@ -166,9 +166,9 @@ const SidebarContent = ({
             href={navItem.href}
             className={`group flex items-center gap-4 rounded-sm p-2 ${
               pathname.includes(navItem.href)
-                ? "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
+                ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
                 : "text-blue-400"
-            } hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+            } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
           >
             {navItem.icon}
             <div
@@ -196,9 +196,9 @@ const SidebarContent = ({
             href={settingItem.href}
             className={`group flex items-center gap-4 rounded-sm p-2 ${
               settingItem.href === pathname
-                ? "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
+                ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
                 : "text-blue-400"
-            } hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+            } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
           >
             {settingItem.icon}
             <span
@@ -240,7 +240,7 @@ export default function DashboardLayout({ children }) {
       <div
         className={`${
           sidebarOpen ? "w-48" : "w-0"
-        } hidden h-full flex-shrink-0 overflow-hidden bg-white transition-[width] duration-300 lg:block`}
+        } hidden h-full shrink-0 overflow-hidden bg-white transition-[width] duration-300 lg:block`}
       >
         <div
           className={`h-full w-48 overflow-y-auto ${
@@ -256,7 +256,7 @@ export default function DashboardLayout({ children }) {
       </div>
 
       {/* Main content area */}
-      <div className="flex h-full w-full flex-grow flex-col transition-all duration-300 lg:w-[calc(100%-15rem)]">
+      <div className="flex h-full w-full grow flex-col transition-all duration-300 lg:w-[calc(100%-15rem)]">
         {/* Topbar */}
         <div className="flex h-[55px] w-full items-center justify-between px-4">
           <div className="flex items-center">
@@ -338,10 +338,10 @@ export default function DashboardLayout({ children }) {
                     // Check if the current pathname includes the item.href
                     pathname.includes(item.href)
                       ? // Apply gradient background and white text for the active state
-                        "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold text-white"
+                        "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold text-white"
                       : // Default text color for non-active links
                         "text-blue-500"
-                  } // Gradient background and white text on hover hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+                  } // Gradient background and white text on hover hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
                 >
                   {item.label}
                 </Link>
@@ -371,7 +371,7 @@ export default function DashboardLayout({ children }) {
         <ScrollArea className="h-full w-full">
           {" "}
           {/* Ensure full height for ScrollArea */}
-          <div className="h-full flex-grow overflow-auto bg-white">
+          <div className="h-full grow overflow-auto bg-white">
             {children}
           </div>
         </ScrollArea>

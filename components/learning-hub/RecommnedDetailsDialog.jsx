@@ -98,7 +98,7 @@ export function RecommendedDetailsDialog({ item, isOpen, onClose }) {
               <div className="flex items-center gap-4 rounded-lg bg-gray-50 p-4">
                 <div className="h-16 w-16 overflow-hidden rounded-full bg-gray-300">
                   {/* Add actual image handling */}
-                  <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-500" />
+                  <div className="h-full w-full bg-linear-to-br from-blue-500 to-purple-500" />
                 </div>
                 <div>
                   <h4 className="font-semibold">{item.instructor.name}</h4>

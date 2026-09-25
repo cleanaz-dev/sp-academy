@@ -142,7 +142,7 @@ export const SpeakingModule = ({ text, speaker, language, className }) => {
     <button
       type="button"
       onClick={isSpeaking ? stopSpeaking : () => speakText(text, speaker)}
-      className={`transition-colors duration-200 focus:outline-none ${
+      className={`transition-colors duration-200 focus:outline-hidden ${
         className ? `${className} hover:text-blue-600` : "text-gray-800"
       }`}
       aria-label={isSpeaking ? "Stop speaking" : "Speak text"}

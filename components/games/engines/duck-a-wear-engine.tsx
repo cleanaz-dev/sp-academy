@@ -100,7 +100,7 @@ export default function DuckAWearEngine({
   // --- READY STATE ---
   if (gameState === "ready") {
     return (
-      <div className="flex flex-col items-center justify-center flex-grow space-y-8 text-center h-full min-h-[400px]">
+      <div className="flex flex-col items-center justify-center grow space-y-8 text-center h-full min-h-[400px]">
         <div className="bg-blue-50 p-6 rounded-full shadow-inner mb-4">
           <Mic className="h-16 w-16 text-blue-500" />
         </div>
@@ -124,13 +124,13 @@ export default function DuckAWearEngine({
   // --- ENDED STATE ---
   if (gameState === "ended") {
     return (
-      <div className="flex flex-col items-center justify-center flex-grow space-y-6 h-full min-h-[400px] animate-in zoom-in duration-300">
+      <div className="flex flex-col items-center justify-center grow space-y-6 h-full min-h-[400px] animate-in zoom-in duration-300">
         <div className="relative">
           <div className="absolute inset-0 bg-amber-400 blur-3xl opacity-20 rounded-full" />
           <Medal className="h-24 w-24 text-amber-500 drop-shadow-xl relative z-10" />
         </div>
         <h2 className="text-4xl font-extrabold text-slate-900">Game Over!</h2>
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 px-12 flex flex-col items-center shadow-sm">
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 px-12 flex flex-col items-center shadow-xs">
           <span className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Final Score</span>
           <span className="text-5xl font-black text-amber-500">{score}</span>
         </div>
@@ -140,11 +140,11 @@ export default function DuckAWearEngine({
 
   // --- PLAYING STATE ---
   return (
-    <div className="flex flex-col flex-grow h-full max-w-md mx-auto w-full">
+    <div className="flex flex-col grow h-full max-w-md mx-auto w-full">
       
       {/* Top Bar */}
       <div className="flex justify-between items-center w-full mb-8">
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-xl font-bold shadow-sm">
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-xl font-bold shadow-xs">
           <Trophy className="h-5 w-5 text-amber-500" /> 
           <span className="text-lg">{score}</span>
         </div>
@@ -153,7 +153,7 @@ export default function DuckAWearEngine({
           Round {currentRound + 1} / {gameData.rounds.length}
         </div>
 
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold shadow-sm transition-colors duration-300 ${
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold shadow-xs transition-colors duration-300 ${
           timeLeft <= 3 ? "bg-red-50 border border-red-200 text-red-600 animate-pulse" : "bg-slate-50 border border-slate-200 text-slate-700"
         }`}>
           <Timer className="h-5 w-5" /> 
@@ -162,12 +162,12 @@ export default function DuckAWearEngine({
       </div>
 
       {/* Main Image View */}
-      <div className="flex-grow flex flex-col justify-center items-center relative mb-8">
-        <div className={`w-full aspect-square max-w-[320px] rounded-[2rem] shadow-lg overflow-hidden border-8 transition-all duration-300 ${roundSuccess ? 'border-emerald-400 shadow-emerald-200 scale-105' : 'border-white bg-slate-100'} relative z-10`}>
+      <div className="grow flex flex-col justify-center items-center relative mb-8">
+        <div className={`w-full aspect-square max-w-[320px] rounded-4xl shadow-lg overflow-hidden border-8 transition-all duration-300 ${roundSuccess ? 'border-emerald-400 shadow-emerald-200 scale-105' : 'border-white bg-slate-100'} relative z-10`}>
           
           {/* Success Overlay */}
           {roundSuccess && (
-            <div className="absolute inset-0 bg-emerald-500/20 z-20 flex items-center justify-center backdrop-blur-sm animate-in fade-in zoom-in">
+            <div className="absolute inset-0 bg-emerald-500/20 z-20 flex items-center justify-center backdrop-blur-xs animate-in fade-in zoom-in">
               <CheckCircle2 className="w-24 h-24 text-emerald-500 drop-shadow-lg bg-white rounded-full" />
             </div>
           )}
@@ -194,7 +194,7 @@ export default function DuckAWearEngine({
       </div>
 
       {/* Live Grading Transcript Box */}
-      <div className={`w-full border rounded-3xl p-4 flex flex-col gap-3 shadow-sm relative overflow-hidden transition-colors ${
+      <div className={`w-full border rounded-3xl p-4 flex flex-col gap-3 shadow-xs relative overflow-hidden transition-colors ${
         roundSuccess ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200"
       }`}>
         
@@ -209,7 +209,7 @@ export default function DuckAWearEngine({
             {roundSuccess ? <CheckCircle2 className="h-6 w-6 relative z-10" /> : isRecording ? <Mic className="h-5 w-5 relative z-10" /> : <MicOff className="h-5 w-5 relative z-10" />}
           </div>
           
-          <div className="flex-grow min-h-[1.5rem] flex items-center">
+          <div className="grow min-h-6 flex items-center">
             {transcript ? (
               <span className={`font-medium leading-tight ${roundSuccess ? "text-emerald-700" : "text-slate-700"}`}>
                 "{transcript}"

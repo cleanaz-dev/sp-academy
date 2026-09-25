@@ -87,7 +87,7 @@ export default function ExerciseHandler({ exercises }) {
 
   return (
     <main className="bg-gray-50">
-      <header className="mb-8 animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+      <header className="mb-8 animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-16 text-white">
         <div className="mx-auto max-w-7xl px-6">
           <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
             {exercises.title}

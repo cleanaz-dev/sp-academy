@@ -51,7 +51,7 @@ const WordAssociationGame = forwardRef(({ exercise, isCompleted }, ref) => {
 
       <div className="mx-auto rounded-lg bg-white p-6 shadow-md">
         <div className="mb-10 flex items-center gap-4">
-          <span className="flex h-8 w-8 animate-[gradient_6s_ease_infinite] items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] text-sm font-medium text-white">
+          <span className="flex h-8 w-8 animate-gradient items-center justify-center rounded-full bg-linear-to-r from-teal-400 via-emerald-400 to-sky-400 bg-size-[300%_300%] text-sm font-medium text-white">
             {exercise.order + 1}
           </span>
           <p className="font-medium text-muted-foreground">
@@ -64,7 +64,7 @@ const WordAssociationGame = forwardRef(({ exercise, isCompleted }, ref) => {
           <img
             src={exercise.imageUrl}
             alt={exercise.image_prompt}
-            className="mx-auto w-full max-w-md rounded-lg shadow-sm"
+            className="mx-auto w-full max-w-md rounded-lg shadow-xs"
           />
         </div>
 

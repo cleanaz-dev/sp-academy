@@ -63,7 +63,7 @@ export default function ListenCompareStep({
       )}
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs flex flex-col">
           <div>
             <span className="mb-3 inline-block rounded bg-gray-100 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-500 w-max">What you said</span>
             <p className="text-lg text-gray-600 line-through decoration-red-400/50 decoration-2 mb-6">
@@ -77,7 +77,7 @@ export default function ListenCompareStep({
                 <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 block">Pronunciation Errors</span>
                 <div className="flex flex-wrap gap-2">
                   {mispronouncedWords.map((w: any, i: number) => (
-                    <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-sm flex items-center gap-1">
+                    <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-xs flex items-center gap-1">
                       {w.word} <span className="opacity-50 text-[10px]">({w.errorType})</span>
                     </span>
                   ))}
@@ -86,7 +86,7 @@ export default function ListenCompareStep({
             )}
 
             {originalAudioUrl && (
-              <button onClick={toggleOriginalAudio} className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold shadow-sm transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
+              <button onClick={toggleOriginalAudio} className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold shadow-xs transition-all bg-gray-100 text-gray-700 hover:bg-gray-200">
                 {isOriginalPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                 {isOriginalPlaying ? "Playing..." : "Play My Audio"}
               </button>
@@ -94,7 +94,7 @@ export default function ListenCompareStep({
           </div>
         </div>
 
-        <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-6 shadow-sm">
+        <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-6 shadow-xs">
           <div>
             <span className="mb-3 inline-block rounded bg-indigo-200 px-2 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700">How a native says it</span>
             <p className="text-2xl font-medium text-indigo-950 mb-3 leading-tight">{improvedTranscript}</p>
@@ -113,7 +113,7 @@ export default function ListenCompareStep({
               <span className="w-8 text-right font-bold text-indigo-900 text-sm">{playbackSpeed.toFixed(1)}x</span>
             </div>
 
-            <button onClick={handlePlayImprovedAudio} disabled={isLoading} className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-bold shadow-sm transition-all ${hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"}`}>
+            <button onClick={handlePlayImprovedAudio} disabled={isLoading} className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-bold shadow-xs transition-all ${hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"}`}>
               {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Volume2 className="h-6 w-6" />}
               {isPlaying ? "Playing AI Voice..." : hasPlayedAudio ? "Listen Again" : "Play Native Audio"}
             </button>

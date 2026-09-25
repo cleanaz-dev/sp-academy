@@ -38,7 +38,7 @@ export function FreestyleGrammarReview({ mistakes, onComplete }: Props) {
   const isLast = index === mistakes.length - 1;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5 animate-in slide-in-from-bottom-4">
+    <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6 space-y-5 animate-in slide-in-from-bottom-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Dynamically show if it was GRAMMAR or GENDER */}

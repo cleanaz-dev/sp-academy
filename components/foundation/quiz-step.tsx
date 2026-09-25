@@ -221,7 +221,7 @@ function ReorderQuestion({
           <button
             key={`sel-${idx}`}
             onClick={() => handleRemoveWord(word, idx)}
-            className="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm font-bold text-gray-800 hover:bg-red-50 hover:border-red-200 transition-all active:scale-95 text-lg"
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-xs font-bold text-gray-800 hover:bg-red-50 hover:border-red-200 transition-all active:scale-95 text-lg"
           >
             {word}
           </button>
@@ -234,7 +234,7 @@ function ReorderQuestion({
           <button
             key={`bank-${idx}`}
             onClick={() => handleAddWord(word, idx)}
-            className="px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 shadow-sm transition-all active:scale-95 text-lg"
+            className="px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 shadow-xs transition-all active:scale-95 text-lg"
           >
             {word}
           </button>

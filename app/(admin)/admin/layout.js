@@ -64,7 +64,7 @@ export default function AdminLayout({ children }) {
       >
         {/* Sidebar Toggle Button */}
         <button
-          className="mb-4 ml-3 text-white focus:outline-none mt-2 md:mt-0"
+          className="mb-4 ml-3 text-white focus:outline-hidden mt-2 md:mt-0"
           onClick={() => setSidebarOpen(!isSidebarOpen)}
         >
           {isSidebarOpen ? (

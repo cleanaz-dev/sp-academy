@@ -55,7 +55,7 @@ export default function LandingPage() {
         </div>
       </header>
       <main className="flex-1">
-        <section className="relative w-full bg-gradient-to-r from-indigo-200 to-yellow-100 py-12 md:py-24 lg:py-32 xl:py-48">
+        <section className="relative w-full bg-linear-to-r from-indigo-200 to-yellow-100 py-12 md:py-24 lg:py-32 xl:py-48">
           {/* SVG */}
           {/* <Image
         src="/bg-shapes.svg"
@@ -78,13 +78,13 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Link
-                    className="inline-flex h-10 items-center justify-center rounded-md bg-white px-8 text-sm font-medium text-primary shadow transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center rounded-md bg-white px-8 text-sm font-medium text-primary shadow-sm transition-colors hover:bg-zinc-100 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50"
                     href="/sign-up"
                   >
                     Get Started
                   </Link>
                   {/* <Link
-          className="inline-flex h-10 items-center justify-center rounded-md border border-white bg-transparent px-8 text-sm font-medium text-white shadow-sm transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-white bg-transparent px-8 text-sm font-medium text-white shadow-xs transition-colors hover:bg-white/20 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:pointer-events-none disabled:opacity-50"
           href="#features"
          >
           Learn More
@@ -133,28 +133,28 @@ export default function LandingPage() {
         </section>
         <section
           id="features"
-          className="w-full bg-gradient-to-r from-indigo-200 to-yellow-100 py-12 md:py-24 lg:py-32"
+          className="w-full bg-linear-to-r from-indigo-200 to-yellow-100 py-12 md:py-24 lg:py-32"
         >
           <div className="container mx-auto px-4 md:px-6">
             <h2 className="mb-12 text-center text-3xl tracking-tighter text-white sm:text-5xl">
               Our Features
             </h2>
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-xs">
                 <Brain className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Interactive Lessons</h3>
                 <p className="text-center text-zinc-500">
                   Engage with our fun and interactive learning materials
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-xs">
                 <Rocket className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Personalized Learning</h3>
                 <p className="text-center text-zinc-500">
                   Tailored content that adapts to each student's pace
                 </p>
               </div>
-              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col items-center space-y-2 rounded-lg border-zinc-200 bg-white p-4 shadow-xs">
                 <Users className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Collaborative Projects</h3>
                 <p className="text-center text-zinc-500">

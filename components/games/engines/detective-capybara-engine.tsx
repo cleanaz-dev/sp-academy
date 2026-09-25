@@ -141,7 +141,7 @@ export default function DetectiveCapybaraEngine({
   // --- READY STATE ---
   if (gameState === "ready") {
     return (
-      <div className="flex flex-col items-center justify-center flex-grow space-y-8 text-center h-full min-h-[420px]">
+      <div className="flex flex-col items-center justify-center grow space-y-8 text-center h-full min-h-[420px]">
         <div className="bg-amber-100 p-6 rounded-full shadow-inner">
           <Search className="h-16 w-16 text-amber-600" />
         </div>
@@ -165,7 +165,7 @@ export default function DetectiveCapybaraEngine({
   // --- ENDED STATE ---
   if (gameState === "ended") {
     return (
-      <div className="flex flex-col items-center justify-center flex-grow space-y-6 h-full min-h-[420px] text-center animate-in zoom-in duration-300">
+      <div className="flex flex-col items-center justify-center grow space-y-6 h-full min-h-[420px] text-center animate-in zoom-in duration-300">
         <div className="relative">
           {isWin ? (
             <ShieldCheck className="h-24 w-24 text-emerald-500 drop-shadow-xl" />
@@ -181,7 +181,7 @@ export default function DetectiveCapybaraEngine({
             ? "Detective Capybara caught the culprit thanks to your precise notes!"
             : "The real thief escaped. Keep practicing your listening skills!"}
         </p>
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 px-12 flex flex-col items-center shadow-sm">
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 px-12 flex flex-col items-center shadow-xs">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Score</span>
           <span className={`text-5xl font-black ${isWin ? "text-emerald-500" : "text-slate-700"}`}>
             {isWin ? "100" : "25"}
@@ -194,7 +194,7 @@ export default function DetectiveCapybaraEngine({
   // --- LINEUP STATE ---
   if (gameState === "lineup") {
     return (
-      <div className="flex flex-col flex-grow h-full w-full max-w-2xl mx-auto space-y-6">
+      <div className="flex flex-col grow h-full w-full max-w-2xl mx-auto space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-extrabold text-slate-900">Police Lineup</h2>
           <p className="text-xs text-slate-500 mt-1">Review your notebook clues and accuse the culprit!</p>
@@ -214,12 +214,12 @@ export default function DetectiveCapybaraEngine({
         </div>
 
         {/* 4 Suspects Selection Grid */}
-        <div className="grid grid-cols-2 gap-4 flex-grow">
+        <div className="grid grid-cols-2 gap-4 grow">
           {gameData.suspects.map((suspect) => (
             <div
               key={suspect.id}
               onClick={() => handleAccuseSuspect(suspect)}
-              className="group cursor-pointer bg-white border border-slate-200 hover:border-amber-400 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+              className="group cursor-pointer bg-white border border-slate-200 hover:border-amber-400 rounded-2xl p-4 flex flex-col items-center text-center shadow-xs hover:shadow-md transition-all hover:-translate-y-1"
             >
               <div className="w-20 h-20 rounded-full overflow-hidden mb-3 border-2 border-slate-100 group-hover:border-amber-400">
                 <img src={suspect.imageUrl} alt={suspect.name} className="w-full h-full object-cover" />
@@ -235,7 +235,7 @@ export default function DetectiveCapybaraEngine({
 
   // --- INVESTIGATING STATE (SCENES) ---
   return (
-    <div className="flex flex-col flex-grow h-full max-w-md mx-auto w-full space-y-5">
+    <div className="flex flex-col grow h-full max-w-md mx-auto w-full space-y-5">
       
       {/* Top Header */}
       <div className="flex justify-between items-center w-full">
@@ -249,7 +249,7 @@ export default function DetectiveCapybaraEngine({
       </div>
 
       {/* Witness Image & Audio Player */}
-      <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 flex flex-col items-center relative shadow-sm">
+      <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 flex flex-col items-center relative shadow-xs">
         <div className={`relative w-28 h-28 rounded-full overflow-hidden border-4 mb-3 transition-transform ${isPlaying ? "border-amber-400 scale-105" : "border-white"}`}>
           <img src={currentScene.witnessImageUrl} alt={currentScene.witnessName} className="w-full h-full object-cover" />
         </div>
@@ -267,7 +267,7 @@ export default function DetectiveCapybaraEngine({
               setPlaybackRate(1.0);
               isPlaying ? pause() : play();
             }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm"
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xs"
           >
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
             {isPlaying ? "Pause" : "Listen"}
@@ -303,7 +303,7 @@ export default function DetectiveCapybaraEngine({
           <div className={`p-2.5 rounded-full ${currentClueUnlocked ? "bg-emerald-500 text-white" : isRecording ? "bg-blue-500 text-white animate-pulse" : "bg-slate-100 text-slate-400"}`}>
             {currentClueUnlocked ? <CheckCircle2 className="h-5 w-5" /> : isRecording ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
           </div>
-          <div className="text-xs text-slate-700 italic flex-grow">
+          <div className="text-xs text-slate-700 italic grow">
             {transcript ? `"${transcript}"` : `Listen to witness, then state clue in ${targetLanguage}...`}
           </div>
         </div>

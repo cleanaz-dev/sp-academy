@@ -8,7 +8,7 @@ export function FreestyleAvatarReview({ isSpeaking }: Props) {
   return (
     <div className="relative flex flex-col items-center">
       <div
-        className={`w-28 h-28 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl transition-all duration-500 ${
+        className={`w-28 h-28 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl transition-all duration-500 ${
           isSpeaking ? "scale-110 shadow-2xl ring-4 ring-indigo-200" : ""
         }`}
       >

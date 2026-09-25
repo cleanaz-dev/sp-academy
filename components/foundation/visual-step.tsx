@@ -107,7 +107,7 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
                 onClick={() => setSelectedReply(idx)}
                 className={`p-4 text-left font-medium rounded-xl border-2 transition-all duration-300 ${
                   selectedReply === idx 
-                    ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-sm ring-4 ring-indigo-500/10' 
+                    ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-xs ring-4 ring-indigo-500/10' 
                     : 'bg-white border-gray-200 hover:border-indigo-300 hover:bg-gray-50 text-gray-700'
                 }`}
               >

@@ -10,7 +10,7 @@ export default function GamePreviewPanel() {
     useGenerate();
 
   return (
-    <div className="flex flex-col h-full rounded-xl border bg-slate-50 p-6 shadow-sm dark:bg-slate-900/50">
+    <div className="flex flex-col h-full rounded-xl border bg-slate-50 p-6 shadow-xs dark:bg-slate-900/50">
       {/* Header */}
       <div className="flex items-center justify-between border-b pb-4 mb-4">
         <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export default function GamePreviewPanel() {
 
         {/* State 3: Clean Preview Display Card */}
         {previewData && !isPreviewLoading && (
-          <div className="w-full space-y-4 bg-white p-5 rounded-xl border shadow-sm dark:bg-slate-900">
+          <div className="w-full space-y-4 bg-white p-5 rounded-xl border shadow-xs dark:bg-slate-900">
             {/* Context Tags */}
             <div className="flex flex-wrap gap-2 text-xs">
               <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded font-medium">

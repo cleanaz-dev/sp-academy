@@ -28,7 +28,7 @@ export default function GrammarStep({
           const cardError = error && activeRecordingTarget === item.id;
 
           return (
-            <div key={item.id} className={`flex flex-col gap-6 rounded-2xl border p-6 shadow-sm transition-all md:flex-row md:items-center md:justify-between ${isActioned ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"}`}>
+            <div key={item.id} className={`flex flex-col gap-6 rounded-2xl border p-6 shadow-xs transition-all md:flex-row md:items-center md:justify-between ${isActioned ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"}`}>
               
               <div className="flex-1 space-y-4">
                 <div className="flex items-start gap-4">
@@ -36,7 +36,7 @@ export default function GrammarStep({
                       <p className="text-base font-medium text-red-500 line-through mb-1">{item.original}</p>
                       
                       {cardScore ? (
-                          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xl shadow-sm bg-white p-4 rounded-xl border border-emerald-100 inline-flex">
+                          <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-xl shadow-xs bg-white p-4 rounded-xl border border-emerald-100 inline-flex">
                             {cardScore.words.map((w: any, i: number) => (
                               <span key={i} className={`font-semibold ${w.accuracyScore >= 80 ? "text-emerald-600" : w.accuracyScore >= 60 ? "text-yellow-500" : "text-red-500 underline decoration-red-300"}`}>
                                 {w.word}
@@ -68,7 +68,7 @@ export default function GrammarStep({
                       ? "bg-red-500 text-white animate-pulse shadow-md ring-4 ring-red-500/20" 
                       : cardScore 
                         ? "bg-emerald-100 text-emerald-700 cursor-default"
-                        : "bg-sky-500 text-white shadow-sm hover:bg-sky-600 hover:-translate-y-0.5"
+                        : "bg-sky-500 text-white shadow-xs hover:bg-sky-600 hover:-translate-y-0.5"
                   } ${(isRecording && !isRecordingThis) ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {isRecordingThis ? (

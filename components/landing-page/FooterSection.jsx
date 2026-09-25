@@ -6,7 +6,7 @@ import { footerConfig } from "./landing-page-config";
 
 export default function FooterSection() {
   return (
-    <footer className="relative bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-t border-gray-200 dark:border-gray-800">
+    <footer className="relative bg-linear-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto px-6 py-12 md:py-16">
         {/* Top Section */}
         <div className="grid grid-cols-1 gap-8 md:gap-12 md:grid-cols-2 lg:grid-cols-5">
@@ -34,7 +34,7 @@ export default function FooterSection() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-xl transition-all hover:scale-110 hover:bg-gradient-to-r hover:from-sky-400 hover:to-emerald-400"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-xl transition-all hover:scale-110 hover:bg-linear-to-r hover:from-sky-400 hover:to-emerald-400"
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -96,7 +96,7 @@ export default function FooterSection() {
       </div>
 
       {/* Gradient Accent */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 via-emerald-400 to-purple-400" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-sky-400 via-emerald-400 to-purple-400" />
     </footer>
   );
 }

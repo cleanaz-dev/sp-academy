@@ -117,7 +117,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-12 text-white shrink-0"
+        className="animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-12 text-white shrink-0"
       >
         <div className="mx-auto w-full max-w-[1600px] px-6">
           <motion.h1
@@ -147,7 +147,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="flex-1 w-full rounded-xl bg-white shadow-sm border border-gray-200 flex flex-col overflow-hidden"
+            className="flex-1 w-full rounded-xl bg-white shadow-xs border border-gray-200 flex flex-col overflow-hidden"
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
               <h2 className="text-2xl font-bold text-gray-800">
@@ -192,7 +192,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                   <button
                     key={idx}
                     onClick={() => openModal(date)}
-                    className={`relative flex flex-col p-2 sm:p-3 text-left transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500 ${
+                    className={`relative flex flex-col p-2 sm:p-3 text-left transition-all duration-200 group focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-sky-500 ${
                       isCompleted ? "bg-white hover:bg-emerald-50/30" : "bg-white hover:bg-sky-50"
                     }`}
                   >
@@ -209,7 +209,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                       )}
 
                       {isCompleted && hasAudio && (
-                        <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 shadow-sm">
+                        <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 shadow-xs">
                           <Mic className="w-3 h-3" />
                         </div>
                       )}
@@ -229,7 +229,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                     {isCompleted && (
                       <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
                         {!journalData?.review && (
-                          <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-sm">
+                          <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-xs">
                             <CheckCircle2 className="w-3 h-3" /> <span className="hidden md:inline">Logged</span>
                           </span>
                         )}
@@ -238,7 +238,7 @@ function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nat
                         </span>
                         
                         {journalData?.review && (
-                           <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                           <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-xs transition-colors group-hover:bg-indigo-600 group-hover:text-white">
                              <Sparkles className="w-3 h-3" /> REVIEW READY
                            </span>
                         )}

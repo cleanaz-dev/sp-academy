@@ -34,7 +34,7 @@ export default async function FreestyleReviewList() {
               // Change this route to wherever your review page lives
               href={`/freestyle/review/${session.id}`}
               key={session.id}
-              className="relative flex flex-col p-3 rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all bg-white shadow-sm"
+              className="relative flex flex-col p-3 rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all bg-white shadow-xs"
             >
               {/* UNREAD NOTIFICATION DOT */}
               {hasNewFeedback && (

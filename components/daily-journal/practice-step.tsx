@@ -60,7 +60,7 @@ export default function PracticeStep({ stepNumber, referenceText, azureLocale, c
       </div>
 
       <div
-        className={`rounded-2xl border p-6 shadow-sm flex flex-col items-center justify-center min-h-[180px] transition-all duration-500 ${
+        className={`rounded-2xl border p-6 shadow-xs flex flex-col items-center justify-center min-h-[180px] transition-all duration-500 ${
           timeToRecord ? "border-sky-300 bg-sky-100/50 shadow-[0_0_20px_rgba(56,189,248,0.15)]" : "border-sky-100 bg-sky-50"
         }`}
       >
@@ -79,7 +79,7 @@ export default function PracticeStep({ stepNumber, referenceText, azureLocale, c
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 w-full max-w-lg rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm"
+              className="flex items-center gap-2 w-full max-w-lg rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-xs"
             >
               <AlertCircle className="h-4 w-4 shrink-0" /> {error}
             </motion.div>
@@ -91,7 +91,7 @@ export default function PracticeStep({ stepNumber, referenceText, azureLocale, c
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 shadow-sm text-left"
+              className="w-full max-w-lg rounded-xl border border-sky-200 bg-white p-4 shadow-xs text-left"
             >
               <div className="grid grid-cols-4 gap-2 mb-4">
                 {[
@@ -119,7 +119,7 @@ export default function PracticeStep({ stepNumber, referenceText, azureLocale, c
               {mispronounced.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
                   {mispronounced.map((w, i) => (
-                    <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-sm">
+                    <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-xs">
                       {w.word} <span className="opacity-50 text-[10px]">({w.errorType})</span>
                     </span>
                   ))}
@@ -137,7 +137,7 @@ export default function PracticeStep({ stepNumber, referenceText, azureLocale, c
       <button
         onClick={handleToggle}
         disabled={!canRecord || isRecording}
-        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-sm transition-all duration-300 ${
+        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full shadow-xs transition-all duration-300 ${
           isRecording
             ? "bg-red-500 text-white animate-[pulse_1.5s_ease-in-out_infinite] ring-4 ring-red-500/30"
             : completed

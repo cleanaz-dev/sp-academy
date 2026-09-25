@@ -45,7 +45,7 @@ export function FoundationWrapper() {
       
       {/* LEFT SIDEBAR: STEPPER CARD */}
       {/* Added bg-white, padding, rounding, and h-fit so it looks like a matching left-hand card */}
-      <div className="w-full md:w-72 lg:w-80 flex-shrink-0 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-6 md:p-8 h-fit">
+      <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
         <div className="mb-10">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
             Course • Day {data.orderIndex}
@@ -70,7 +70,7 @@ export function FoundationWrapper() {
                   {/* Step Icon / Status */}
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 bg-white
                     ${isCompleted ? "border-green-500 text-green-500" : 
-                      isActive ? "border-blue-600 text-blue-600 shadow-sm ring-4 ring-blue-50" : 
+                      isActive ? "border-blue-600 text-blue-600 shadow-xs ring-4 ring-blue-50" : 
                       "border-gray-200 text-gray-400"}
                   `}>
                     {isCompleted ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />}
@@ -88,7 +88,7 @@ export function FoundationWrapper() {
       </div>
 
       {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
-      <div className="flex-1 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
+      <div className="flex-1 bg-white rounded-4xl shadow-xs border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
         {renderStep()}
       </div>
 

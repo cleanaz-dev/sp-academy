@@ -8,8 +8,8 @@ export default function ConversationCardCopy({ conversation }) {
   return (
     <div className="w-full p-4">
       <Link href={`/conversation/${conversation.id}`}>
-        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-gray-800">
-          <div className="group relative aspect-[16/9] w-full overflow-hidden">
+        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-xs transition-shadow duration-300 hover:shadow-md dark:bg-gray-800">
+          <div className="group relative aspect-video w-full overflow-hidden">
             <Image
               src={conversation.imageUrl}
               alt={conversation.title}
@@ -18,7 +18,7 @@ export default function ConversationCardCopy({ conversation }) {
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <h3 className="truncate text-lg font-bold text-white sm:text-xl">
                 {conversation.title}
@@ -37,7 +37,7 @@ export default function ConversationCardCopy({ conversation }) {
                 {conversation.level.toLowerCase()}
               </span>
             </div>
-            <p className="min-h-[5rem] flex-grow text-sm italic text-gray-600 dark:text-gray-300">
+            <p className="min-h-20 grow text-sm italic text-gray-600 dark:text-gray-300">
               {conversation.introduction.targetLanguage}
             </p>
           </div>

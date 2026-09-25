@@ -37,7 +37,7 @@ export default function AdminGamesPage({ games }: { games: Game[] }) {
         {/* Games Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map((game) => (
-            <div key={game.id} className="rounded-xl border bg-white p-5 shadow-sm space-y-4 dark:bg-slate-900 flex flex-col justify-between">
+            <div key={game.id} className="rounded-xl border bg-white p-5 shadow-xs space-y-4 dark:bg-slate-900 flex flex-col justify-between">
               
               {/* Card Content (Same as before) */}
               <div>

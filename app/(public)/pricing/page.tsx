@@ -44,7 +44,7 @@ export default function PricingPage() {
             </span>
             <h1 className="mb-6 text-5xl font-extrabold tracking-tight text-gray-900 lg:text-6xl">
               Master a new language. <br />
-              <span className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent bg-[length:200%_auto]">
+              <span className="animate-gradient bg-linear-to-r from-violet-600 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent bg-size-[200%_auto]">
                 Faster than ever.
               </span>
             </h1>
@@ -99,7 +99,7 @@ export default function PricingPage() {
           >
             <div className="relative rounded-3xl bg-white p-8 shadow-2xl shadow-violet-500/10 border border-gray-100 xl:p-10">
               {/* Badge */}
-              <div className="absolute -top-5 left-0 right-0 mx-auto w-fit rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-sm font-bold text-white shadow-md">
+              <div className="absolute -top-5 left-0 right-0 mx-auto w-fit rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-sm font-bold text-white shadow-md">
                 Launch Special 🚀
               </div>
 
@@ -124,7 +124,7 @@ export default function PricingPage() {
                 ].map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 mt-0.5">
-                      <Check className="h-4 w-4 text-violet-600 stroke-[3]" />
+                      <Check className="h-4 w-4 text-violet-600 stroke-3" />
                     </div>
                     <span className="text-gray-700 font-medium">{feature}</span>
                   </li>
@@ -142,7 +142,7 @@ export default function PricingPage() {
                   <ArrowRight className={`h-5 w-5 transition-transform duration-300 ${isHovered ? 'translate-x-1' : ''}`} />
                 </span>
                 {/* Subtle button gradient shine effect */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
+                <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out group-hover:translate-x-full" />
               </button>
 
               <div className="mt-6 text-center text-sm font-medium text-gray-400 flex items-center justify-center gap-2">
@@ -160,7 +160,7 @@ export default function PricingPage() {
 // Reusable micro-component for the features grid
 function FeatureCard({ icon, title, description, color }) {
   return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-md">
+    <div className="rounded-2xl bg-white p-6 shadow-xs border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-md">
       <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
         {icon}
       </div>

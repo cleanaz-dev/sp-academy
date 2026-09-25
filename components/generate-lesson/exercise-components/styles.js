@@ -82,7 +82,7 @@ export const NumberCircle = styled.span`
   position: absolute;
   top: 8px;
   left: 8px;
-  flex-shrink: 0;
+  shrink: 0;
   width: 24px;
   height: 24px;
   display: flex;

@@ -64,7 +64,7 @@ export default function StatsSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute left-[20%] top-[20%] h-72 w-72 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 blur-3xl"
+          className="absolute left-[20%] top-[20%] h-72 w-72 rounded-full bg-linear-to-r from-sky-400 to-emerald-400 blur-3xl"
         />
         <motion.div
           initial={{ opacity: 0 }}
@@ -75,7 +75,7 @@ export default function StatsSection() {
             repeatType: "reverse",
             delay: 1,
           }}
-          className="absolute bottom-[20%] right-[20%] h-72 w-72 rounded-full bg-gradient-to-r from-amber-400 to-purple-400 blur-3xl"
+          className="absolute bottom-[20%] right-[20%] h-72 w-72 rounded-full bg-linear-to-r from-amber-400 to-purple-400 blur-3xl"
         />
       </div>
 
@@ -93,12 +93,12 @@ export default function StatsSection() {
                 className="text-center"
               >
                 <div
-                  className={`mx-auto mb-4 h-12 w-12 rounded-xl bg-gradient-to-r ${stat.gradient} p-3 text-white shadow-lg`}
+                  className={`mx-auto mb-4 h-12 w-12 rounded-xl bg-linear-to-r ${stat.gradient} p-3 text-white shadow-lg`}
                 >
                   {stat.icon}
                 </div>
                 <motion.h3
-                  className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
+                  className="bg-linear-to-r from-sky-400 to-emerald-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
                   initial={{ scale: 0.5 }}
                   whileInView={{ scale: 1 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -120,7 +120,7 @@ export default function StatsSection() {
               transition={{ duration: 0.8 }}
               className="mb-12 text-center"
             >
-              <span className="inline-block rounded-full bg-gradient-to-r from-purple-400 to-sky-400 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-400/20">
+              <span className="inline-block rounded-full bg-linear-to-r from-purple-400 to-sky-400 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-400/20">
                 Success Stories 🌈
               </span>
             </motion.div>
@@ -140,7 +140,7 @@ export default function StatsSection() {
                     "{testimonial.content}"
                   </p>
                   <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-                    <p className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text font-semibold text-transparent">
+                    <p className="bg-linear-to-r from-sky-400 to-emerald-400 bg-clip-text font-semibold text-transparent">
                       {testimonial.author}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -159,7 +159,7 @@ export default function StatsSection() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <button className="rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-8 py-3 font-medium text-white shadow-lg shadow-sky-400/20 transition-transform duration-300 hover:scale-105">
+            <button className="rounded-full bg-linear-to-r from-sky-400 to-emerald-400 px-8 py-3 font-medium text-white shadow-lg shadow-sky-400/20 transition-transform duration-300 hover:scale-105">
               Join Our Success Story
             </button>
           </motion.div>

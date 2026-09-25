@@ -75,7 +75,7 @@ export default function FreestyleReviewDetail({ session }: ReviewDetailProps) {
           ) : (
             <div className="space-y-4">
               {review.mistakes.map((mistake: any, idx: number) => (
-                <div key={idx} className="p-5 rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div key={idx} className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
                   <div className="mb-2">
                     <span className="text-xs font-bold text-rose-500 uppercase tracking-wide">You said:</span>
                     <p className="text-slate-700 font-medium mt-1">"{mistake.originalText || mistake.userText}"</p>

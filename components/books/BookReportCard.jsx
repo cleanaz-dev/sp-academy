@@ -99,7 +99,7 @@ export default async function BookReportCard({ book, bookReports }) {
   return (
     <Card className="group relative flex w-full max-w-sm flex-col overflow-hidden transition-all duration-300 hover:shadow-xl">
       {/* Header Section */}
-      <div className="flex h-36 justify-between bg-gradient-to-br from-slate-100 via-blue-100 to-slate-200 p-4">
+      <div className="flex h-36 justify-between bg-linear-to-br from-slate-100 via-blue-100 to-slate-200 p-4">
         <div className="mb-2">
           <h3 className="line-clamp-1 text-lg font-semibold">{title}</h3>
           <p className="text-sm text-gray-600">{author}</p>
@@ -191,7 +191,7 @@ export default async function BookReportCard({ book, bookReports }) {
           <Link href={`/books/${bookReport?.id}`} className="w-full">
             <Button
               variant="default"
-              className="w-full bg-gradient-to-r from-sky-400 to-blue-500 text-white shadow-md transition-all duration-300 hover:from-sky-500 hover:to-blue-600"
+              className="w-full bg-linear-to-r from-sky-400 to-blue-500 text-white shadow-md transition-all duration-300 hover:from-sky-500 hover:to-blue-600"
             >
               View Reading Logs
             </Button>

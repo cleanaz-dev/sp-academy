@@ -47,7 +47,7 @@ export default function GameCodeModal({ gameId, gameTitle, currentCode }: GameCo
       onOpenChange={setOpen}
       >
       <DialogTrigger asChild>
-        <Button variant={currentCode ? "outline" : "default"} className="w-full text-xs">
+        <Button variant={currentCode ? "outline-solid" : "default"} className="w-full text-xs">
           <Code2 className="mr-2 h-3.5 w-3.5" />
           {currentCode ? "Edit TSX Code" : "Paste TSX Code"}
         </Button>

@@ -83,17 +83,17 @@ const Avatar = ({ user }) => {
     <div className="group flex items-center gap-3">
       {avatarUrl ? (
         <div className="relative">
-          <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 blur transition duration-300 group-hover:opacity-15"></div>
+          <div className="absolute -inset-0.5 rounded-full bg-linear-to-r from-blue-500 to-purple-600 opacity-0 blur-sm transition duration-300 group-hover:opacity-15"></div>
           <Image
             src={avatarUrl}
             alt={userName}
             width={40}
             height={40}
-            className="transform rounded-full border-2 border-white shadow-sm transition-all duration-300 group-hover:scale-105"
+            className="transform rounded-full border-2 border-white shadow-xs transition-all duration-300 group-hover:scale-105"
           />
         </div>
       ) : (
-        <div className="flex h-10 w-10 transform items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100 font-semibold text-gray-700 shadow-sm transition-all duration-300 group-hover:scale-105">
+        <div className="flex h-10 w-10 transform items-center justify-center rounded-full bg-linear-to-r from-blue-100 to-purple-100 font-semibold text-gray-700 shadow-xs transition-all duration-300 group-hover:scale-105">
           {userName?.[0] || "?"}
         </div>
       )}
@@ -135,7 +135,7 @@ const ActivityImage = ({ src, alt, content }) => {
 
   return (
     <div className="group relative">
-      <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 opacity-0 blur transition duration-300 group-hover:opacity-15"></div>
+      <div className="absolute -inset-0.5 rounded-lg bg-linear-to-r from-blue-500 to-purple-600 opacity-0 blur-sm transition duration-300 group-hover:opacity-15"></div>
       <Image src={src} alt={alt} {...dimensions} />
     </div>
   );
@@ -287,7 +287,7 @@ const ActivityItem = ({ item }) => {
 
 // Loading skeleton
 const ActivitySkeleton = () => (
-  <div className="animate-pulse rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+  <div className="animate-pulse rounded-xl border border-gray-100 bg-white p-4 shadow-xs">
     <div className="flex items-center space-x-3">
       <div className="h-10 w-10 rounded-full bg-gray-200" />
       <div className="space-y-2">

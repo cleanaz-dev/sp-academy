@@ -31,7 +31,7 @@ export default async function AchievementsPage() {
                   alt={achievement.name}
                   width={80}
                   height={80}
-                  className={`rounded-full shadow-sm transition ${
+                  className={`rounded-full shadow-xs transition ${
                     isUnlocked ? "grayscale-0" : "opacity-50 grayscale"
                   }`}
                   priority

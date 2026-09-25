@@ -81,12 +81,12 @@ export const ConjugationTable = ({
   const [hoveredRow, setHoveredRow] = useState(null);
 
   return (
-    <section className="mx-auto max-w-4xl rounded-xl bg-white p-8 shadow-sm">
+    <section className="mx-auto max-w-4xl rounded-xl bg-white p-8 shadow-xs">
       <header className="mb-10 text-center">
         <div className="mb-3 flex items-center justify-center gap-2">
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-r from-transparent to-blue-500/70"></div>
           <Bookmark className="h-5 w-5 text-blue-600" />
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-l from-transparent to-blue-500/70"></div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           {title?.french || "Conjugation Table"}
@@ -105,7 +105,7 @@ export const ConjugationTable = ({
         </div>
       )}
 
-      <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+      <div className="mb-8 overflow-hidden rounded-xl border border-gray-200 shadow-xs">
         {/* Table Header */}
         <div className="grid grid-cols-2 border-b border-gray-200 bg-gray-50 px-6 py-4">
           <div className="text-sm font-medium text-gray-600">Usage</div>

@@ -69,7 +69,7 @@ const NotificationItem = ({ notification, markAsRead }) => {
           {/* Notification Icon */}
           <div
             className={cn(
-              "flex-shrink-0 rounded-full p-2",
+              "shrink-0 rounded-full p-2",
               isRead ? "bg-gray-100" : "bg-blue-100",
             )}
           >

@@ -515,7 +515,7 @@ export default function LessonChat({ sections }) {
     return (
       <button
         onClick={toggleMinimize}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border-2 border-white bg-gradient-to-r from-indigo-600 to-blue-500 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-indigo-700 hover:to-blue-600"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border-2 border-white bg-linear-to-r from-indigo-600 to-blue-500 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-indigo-700 hover:to-blue-600"
         aria-label="Open chat"
       >
         <div className="relative">
@@ -557,7 +557,7 @@ export default function LessonChat({ sections }) {
       `}</style>
 
       {/* Header - Centered */}
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-5 py-2">
+      <div className="bg-linear-to-r from-indigo-600 to-blue-500 px-5 py-2">
         <div className="flex items-center justify-between gap-2">
           {/* Optional Icon - Uncomment if you want an icon */}
           {/* <Zap size={16} className="text-white" /> */}
@@ -617,7 +617,7 @@ export default function LessonChat({ sections }) {
       {/* Chat messages */}
       <div
         ref={chatBoxRef}
-        className="h-80 overflow-y-auto bg-gradient-to-b from-gray-50 to-white px-5 py-4"
+        className="h-80 overflow-y-auto bg-linear-to-b from-gray-50 to-white px-5 py-4"
         style={{ scrollBehavior: "smooth" }}
       >
         <AnimatePresence>
@@ -705,7 +705,7 @@ export default function LessonChat({ sections }) {
               onKeyDown={(e) =>
                 e.key === "Enter" && !isLoading && handleChatSubmit()
               }
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 pr-10 text-sm placeholder-gray-400 transition-all focus:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 pr-10 text-sm placeholder-gray-400 transition-all focus:border-indigo-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-200"
               placeholder="Type your question..."
               disabled={isLoading}
             />
@@ -719,7 +719,7 @@ export default function LessonChat({ sections }) {
           {isStreaming ? (
             <Button
               onClick={cancelStream}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500 p-0 text-white shadow-sm hover:bg-red-600"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500 p-0 text-white shadow-xs hover:bg-red-600"
             >
               <X size={16} />
             </Button>
@@ -727,7 +727,7 @@ export default function LessonChat({ sections }) {
             <Button
               onClick={handleChatSubmit}
               disabled={!chatInput.trim() || isLoading}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-blue-500 p-0 text-white shadow-sm transition-all hover:from-indigo-700 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-r from-indigo-600 to-blue-500 p-0 text-white shadow-xs transition-all hover:from-indigo-700 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send size={16} className="text-white" />
             </Button>

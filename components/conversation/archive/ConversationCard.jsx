@@ -8,7 +8,7 @@ export default function ConversationCard({ conversation }) {
   return (
     <div className="p-4">
       <Link href={`/conversation/${conversation.id}`}>
-        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-gray-800">
+        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-xs transition-shadow duration-300 hover:shadow-md dark:bg-gray-800">
           <div className="group relative h-48 w-full overflow-hidden">
             <Image
               src={conversation.imageUrl}
@@ -18,7 +18,7 @@ export default function ConversationCard({ conversation }) {
               className="object-cover transition-transform duration-700 group-hover:scale-105"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <h3 className="text-xl font-bold text-white">
                 {conversation.title}

@@ -12,7 +12,7 @@ export default function Page() {
     <GenerateProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
         {/* Header */}
-        <header className="border-b bg-white dark:bg-slate-900 shadow-sm">
+        <header className="border-b bg-white dark:bg-slate-900 shadow-xs">
           <div className="mx-auto max-w-7xl px-6 py-8 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">

@@ -95,14 +95,14 @@ export const AiTutor = ({ data }) => {
   };
 
   return (
-    <section className="mx-auto max-w-4xl rounded-xl border border-gray-100 bg-white p-8 shadow-sm">
+    <section className="mx-auto max-w-4xl rounded-xl border border-gray-100 bg-white p-8 shadow-xs">
       <header className="mb-10 text-center">
         <div className="mb-3 flex items-center justify-center gap-2">
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-r from-transparent to-blue-500/70"></div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
             <Brain className="h-5 w-5 text-blue-600" />
           </div>
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-l from-transparent to-blue-500/70"></div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           {title.french}
@@ -136,7 +136,7 @@ export const AiTutor = ({ data }) => {
       </header>
 
       <div className="mb-8 grid grid-cols-1 gap-6">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm transition-all duration-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50/50 shadow-xs transition-all duration-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm">
           {/* AI profile */}
           <div className="flex items-center justify-between border-b border-gray-200 p-5">
             <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export const AiTutor = ({ data }) => {
                     ? "Posez une question..."
                     : "Ask a question..."
                 }
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
               />
               <button className="rounded-lg bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700">
                 <MessageSquare className="h-5 w-5" />
@@ -236,7 +236,7 @@ export const AiTutor = ({ data }) => {
       {/* Tips */}
       <div className="relative rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-inner">
         <div className="absolute -left-1 -top-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-300 to-blue-500 shadow-md">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-blue-300 to-blue-500 shadow-md">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
         </div>

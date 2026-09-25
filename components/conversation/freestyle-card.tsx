@@ -9,10 +9,10 @@ export default function FreestyleCard() {
   return (
     <div className="w-full p-4">
       <Link href="/conversation/freestyle">
-        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800">
+        <div className="cursor-pointer overflow-hidden rounded-2xl bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-gray-800">
           
           {/* Top Hero Section of the Card */}
-          <div className="group relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+          <div className="group relative aspect-video w-full overflow-hidden bg-linear-to-br from-indigo-600 via-purple-600 to-pink-500">
             
             {/* Cover Image */}
             <Image
@@ -29,7 +29,7 @@ export default function FreestyleCard() {
             <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-black/20 blur-3xl transition-transform duration-700 group-hover:scale-150"></div>
 
             {/* Gradient Overlay & Text */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
@@ -53,7 +53,7 @@ export default function FreestyleCard() {
                 Friendly AI
               </span>
             </div>
-            <p className="min-h-[5rem] flex-grow text-sm italic text-gray-600 dark:text-gray-300">
+            <p className="min-h-20 grow text-sm italic text-gray-600 dark:text-gray-300">
               No scripts. No safety nets. Just you and the AI for 5 minutes!
             </p>
           </div>

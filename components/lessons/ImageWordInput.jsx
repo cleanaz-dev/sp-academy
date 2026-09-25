@@ -82,7 +82,7 @@ const ImageWordInput = ({ exercise, onComplete }) => {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 rounded border p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 rounded border p-3 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             placeholder="Type your answer..."
           />
 

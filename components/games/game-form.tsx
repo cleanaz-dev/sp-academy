@@ -24,7 +24,7 @@ export default function GameForm() {
   };
 
   return (
-    <div className="space-y-6 rounded-xl border bg-white p-6 shadow-sm dark:bg-slate-900">
+    <div className="space-y-6 rounded-xl border bg-white p-6 shadow-xs dark:bg-slate-900">
       <div className="flex items-center justify-between border-b pb-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -51,7 +51,7 @@ export default function GameForm() {
               placeholder='e.g., "Fast Spanish Farm Animals"'
               value={form.title}
               onChange={(e) => updateFormField("title", e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
               required
             />
           </div>
@@ -65,7 +65,7 @@ export default function GameForm() {
               value={form.description}
               onChange={(e) => updateFormField("description", e.target.value)}
               rows={2}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
             />
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function GameForm() {
             <select
               value={form.type}
               onChange={(e) => updateFormField("type", e.target.value as GameType)}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
             >
               <option value="SPEECH_DESCRIBE">🎤 Speech Describe (Voice)</option>
               <option value="VISUAL">🖼️ Visual Quiz (Multiple Choice)</option>
@@ -93,7 +93,7 @@ export default function GameForm() {
             <select
               value={form.language}
               onChange={(e) => updateFormField("language", e.target.value as LanguageCode)}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
             >
               <option value="en-US">🇺🇸 English (en-US)</option>
               <option value="fr-FR">🇫🇷 French (fr-FR)</option>
@@ -112,7 +112,7 @@ export default function GameForm() {
             placeholder='e.g., "Safari Animals", "Kitchen Objects", "Space Travel"'
             value={form.theme}
             onChange={(e) => updateFormField("theme", e.target.value)}
-            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+            className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
             required
           />
           <p className="mt-1 text-xs text-slate-500">
@@ -129,7 +129,7 @@ export default function GameForm() {
             <select
               value={form.imageStyle}
               onChange={(e) => updateFormField("imageStyle", e.target.value)}
-              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+              className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
             >
               <option value="3D Cartoon">🎨 3D Cartoon (Pixar Style)</option>
               <option value="Photorealistic">📸 Photorealistic</option>
@@ -147,7 +147,7 @@ export default function GameForm() {
               <select
                 value={form.difficulty}
                 onChange={(e) => updateFormField("difficulty", Number(e.target.value))}
-                className="w-1/2 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+                className="w-1/2 rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
               >
                 <option value={1}>Easy (Level 1)</option>
                 <option value={2}>Medium (Level 2)</option>
@@ -157,7 +157,7 @@ export default function GameForm() {
               <select
                 value={form.itemCount}
                 onChange={(e) => updateFormField("itemCount", Number(e.target.value))}
-                className="w-1/2 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
+                className="w-1/2 rounded-lg border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 dark:bg-slate-800"
               >
                 <option value={5}>5 Questions</option>
                 <option value={10}>10 Questions</option>

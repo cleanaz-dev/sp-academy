@@ -148,7 +148,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
       <motion.div
         ref={ref}
         layout
-        className={`cursor-move rounded-md border px-4 py-2 shadow-sm transition-all duration-200 ${
+        className={`cursor-move rounded-md border px-4 py-2 shadow-xs transition-all duration-200 ${
           isDragging
             ? "bg-gray-300 opacity-60"
             : submitted
@@ -179,7 +179,7 @@ const DragDropExercise = forwardRef(({ exercise, isCompleted }, ref) => {
       <DndProvider backend={HTML5Backend}>
         <div className="mx-auto space-y-6 rounded-lg bg-white p-6 shadow-lg">
           <div className="mb-10 flex items-center gap-4">
-            <span className="flex h-8 w-8 animate-[gradient_6s_ease_infinite] items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] text-sm font-medium text-white">
+            <span className="flex h-8 w-8 animate-gradient items-center justify-center rounded-full bg-linear-to-r from-teal-400 via-emerald-400 to-sky-400 bg-size-[300%_300%] text-sm font-medium text-white">
               {exercise.order + 1}
             </span>
             <p className="font-medium text-muted-foreground">

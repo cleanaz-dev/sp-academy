@@ -7,7 +7,7 @@ export function FreestyleStep({ data, onFinish }: { data: any; onFinish: () => v
   const { freestyle } = data;
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-[2rem] p-8 md:p-12 animate-in fade-in duration-700 overflow-y-auto text-slate-50">
+    <div className="flex flex-col h-full bg-slate-950 rounded-4xl p-8 md:p-12 animate-in fade-in duration-700 overflow-y-auto text-slate-50">
       
       {/* Header */}
       <div className="text-center mb-10">

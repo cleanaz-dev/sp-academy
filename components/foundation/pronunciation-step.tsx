@@ -105,7 +105,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       </div>
       
       {/* Target Flashcard */}
-      <div className="mb-8 p-10 bg-white rounded-3xl border border-gray-200 shadow-sm text-center relative overflow-hidden transition-all duration-500">
+      <div className="mb-8 p-10 bg-white rounded-3xl border border-gray-200 shadow-xs text-center relative overflow-hidden transition-all duration-500">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-50 opacity-40 pointer-events-none">
           <Mic size={160} />
         </div>
@@ -131,7 +131,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <button 
           onClick={handlePlayAudio}
-          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm text-lg ${
+          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg ${
             isAudioActive 
               ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50' 
               : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
@@ -143,7 +143,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         
         <button 
           onClick={handleRecordToggle}
-          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-sm text-lg ${
+          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg ${
             isRecording 
               ? 'bg-red-50 border-red-200 text-red-600 ring-4 ring-red-500/20 animate-pulse' 
               : 'bg-gray-900 hover:bg-black border-gray-900 text-white'
@@ -163,7 +163,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       )}
 
       {score && (
-        <div className="mb-8 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm animate-in slide-in-from-bottom-4">
+        <div className="mb-8 p-6 bg-white rounded-2xl border border-gray-200 shadow-xs animate-in slide-in-from-bottom-4">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
               <Activity className="text-blue-500" size={24} />

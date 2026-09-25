@@ -86,7 +86,7 @@ export default function GenerateBookForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-[1fr,auto] gap-8">
+      <div className="grid grid-cols-[1fr_auto] gap-8">
         <div className="space-y-4">
           {/* Target Language */}
           <div className="grid gap-4 md:grid-cols-2">

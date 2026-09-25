@@ -57,7 +57,7 @@ export const ConversationWithAi = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-blue-100 bg-gradient-to-r from-slate-50 to-blue-50 p-4 shadow-sm sm:flex-row">
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-blue-100 bg-linear-to-r from-slate-50 to-blue-50 p-4 shadow-xs sm:flex-row">
       <div className="flex gap-2">
         <AnimatePresence mode="wait">
           <motion.div
@@ -71,7 +71,7 @@ export const ConversationWithAi = () => {
               <Button
                 type="button"
                 onClick={stopConversation}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-red-600 hover:to-rose-700 hover:shadow-lg"
+                className="flex items-center gap-2 rounded-full bg-linear-to-r from-red-500 to-rose-600 px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-red-600 hover:to-rose-700 hover:shadow-lg"
               >
                 <MicOff className="h-4 w-4" />
                 End Conversation
@@ -81,7 +81,7 @@ export const ConversationWithAi = () => {
                 type="button"
                 onClick={startConversation}
                 disabled={conversation.status === "connecting"}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg disabled:from-slate-400 disabled:to-slate-500"
+                className="flex items-center gap-2 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-blue-600 hover:to-indigo-700 hover:shadow-lg disabled:from-slate-400 disabled:to-slate-500"
               >
                 {conversation.status === "connecting" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -95,7 +95,7 @@ export const ConversationWithAi = () => {
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 shadow-sm backdrop-blur-sm">
+      <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 shadow-xs backdrop-blur-xs">
         {getStatusIcon()}
         <span className="text-sm font-medium text-slate-700">
           {getStatusText()}

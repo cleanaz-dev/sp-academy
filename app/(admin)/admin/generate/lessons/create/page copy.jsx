@@ -606,7 +606,7 @@ export default function CreateLesson() {
         <button
           type="button"
           onClick={isSpeaking ? stopSpeaking : () => speakText(text, language)}
-          className={`rounded-full p-3 transition-all focus:outline-none ${
+          className={`rounded-full p-3 transition-all focus:outline-hidden ${
             isSpeaking
               ? "animate-pulse bg-blue-500 text-white shadow-lg"
               : "bg-white text-slate-800 shadow-md hover:bg-blue-50 hover:text-blue-500"
@@ -819,7 +819,7 @@ export default function CreateLesson() {
     const fullDialogueSpeakers = lines.map((line) => line.speaker).join(", ");
 
     return (
-      <section className="mx-auto mb-10 max-w-3xl rounded-lg bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-100 p-6">
+      <section className="mx-auto mb-10 max-w-3xl rounded-lg bg-linear-to-br from-blue-50 via-slate-50 to-indigo-100 p-6">
         <header className="mb-6 text-center">
           <h1 className="text-3xl font-semibold text-gray-900">
             {title.french}
@@ -1008,7 +1008,7 @@ export default function CreateLesson() {
       <button
         type="button"
         onClick={isSpeaking ? stopSpeaking : () => speakText(text, speaker)}
-        className={`transition-colors duration-200 focus:outline-none ${
+        className={`transition-colors duration-200 focus:outline-hidden ${
           className || "text-gray-800 hover:text-blue-600"
         }`}
         aria-label={isSpeaking ? "Stop speaking" : "Speak text"}
@@ -1078,7 +1078,7 @@ export default function CreateLesson() {
 
   const Pronunciation = ({ title, items }) => {
     return (
-      <section className="mx-auto max-w-3xl rounded-lg bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-100 p-6">
+      <section className="mx-auto max-w-3xl rounded-lg bg-linear-to-br from-blue-50 via-slate-50 to-indigo-100 p-6">
         <header className="mb-6 text-center">
           <h1 className="text-3xl font-semibold text-gray-900">
             {title.french} 🗣️
@@ -1123,7 +1123,7 @@ export default function CreateLesson() {
 
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-6xl px-6 py-8">
-          <Card className="bg-white shadow-sm">
+          <Card className="bg-white shadow-xs">
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Primary Section */}
               <div className="border-b p-6">
@@ -1374,7 +1374,7 @@ export default function CreateLesson() {
                     {exerciseTypes.map((exercise) => (
                       <div
                         key={exercise.id}
-                        className="rounded border p-4 shadow-sm"
+                        className="rounded border p-4 shadow-xs"
                       >
                         <div className="flex flex-col space-y-2">
                           <div>

@@ -66,7 +66,7 @@ const ProgressAndControls = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-center space-x-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 p-4"
+            className="flex items-center justify-center space-x-4 rounded-lg bg-linear-to-r from-purple-50 to-pink-50 p-4"
           >
             <Award className="h-8 w-8 text-purple-600" />
             <div>
@@ -194,7 +194,7 @@ export default function InteractiveExercises({ exercises }) {
                 >
                   <RadioGroupItem value={option} id={`${exercise.id}-${idx}`} />
                   <Label
-                    className="flex-grow cursor-pointer"
+                    className="grow cursor-pointer"
                     htmlFor={`${exercise.id}-${idx}`}
                   >
                     {option}

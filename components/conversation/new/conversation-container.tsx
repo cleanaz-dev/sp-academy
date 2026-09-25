@@ -84,7 +84,7 @@ export const ConversationContainer: React.FC<Props> = ({
   return (
     <div className="container mx-auto flex max-w-4xl gap-4">
       <div className="w-full">
-        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow max-h-[1200px]">
+        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow-sm max-h-[1200px]">
           {/* Header with Voice Toggle */}
           <div className="flex items-center justify-between p-2">
             <header>

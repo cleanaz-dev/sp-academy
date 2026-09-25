@@ -81,9 +81,9 @@ export const Vocab = ({ title = {}, items = [], context = {} }) => {
     <section className="mx-auto max-w-4xl rounded-xl bg-white p-8">
       <header className="mb-10 text-center">
         <div className="mb-3 flex items-center justify-center gap-2">
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-r from-transparent to-blue-500/70"></div>
           <Bookmark className="h-5 w-5 text-blue-600" />
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-l from-transparent to-blue-500/70"></div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           {title?.french || "Vocabulary"}
@@ -97,7 +97,7 @@ export const Vocab = ({ title = {}, items = [], context = {} }) => {
         {items.map((item, index) => (
           <div
             key={index}
-            className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm transition-all duration-300 hover:border-blue-300 hover:bg-blue-50/70 hover:shadow-md"
+            className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50/50 shadow-xs transition-all duration-300 hover:border-blue-300 hover:bg-blue-50/70 hover:shadow-md"
             onMouseEnter={() => setHoveredItem(index)}
             onMouseLeave={() => setHoveredItem(null)}
           >
@@ -154,7 +154,7 @@ export const Vocab = ({ title = {}, items = [], context = {} }) => {
 
       {context && (
         <div className="relative px-6">
-          <div className="group flex w-full flex-col rounded-full bg-gradient-to-tr from-transparent via-slate-50/10 to-amber-300/10 pl-6 hover:bg-gray-50/10">
+          <div className="group flex w-full flex-col rounded-full bg-linear-to-tr from-transparent via-slate-50/10 to-amber-300/10 pl-6 hover:bg-gray-50/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {" "}
@@ -166,7 +166,7 @@ export const Vocab = ({ title = {}, items = [], context = {} }) => {
               <div>
                 {context?.french && (
                   <div
-                    className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm transition-all duration-200 hover:scale-110 hover:bg-amber-600"
+                    className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-xs transition-all duration-200 hover:scale-110 hover:bg-amber-600"
                     aria-label="Listen to context"
                   >
                     <Volume2 className="h-4 w-4" />

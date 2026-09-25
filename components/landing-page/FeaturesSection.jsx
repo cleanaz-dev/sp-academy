@@ -41,7 +41,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-sky-50/50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-32">
+    <section className="relative overflow-hidden bg-linear-to-b from-white via-sky-50/50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-32">
       {/* floating gradients */}
       <motion.div
         animate={{
@@ -62,10 +62,10 @@ export default function FeaturesSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <span className="inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-6 py-2 text-lg font-semibold text-white shadow-md">
+          <span className="inline-block rounded-full bg-linear-to-r from-sky-400 to-emerald-400 px-6 py-2 text-lg font-semibold text-white shadow-md">
             Explore What Makes Us Different
           </span>
-          <h2 className="mt-6 bg-gradient-to-r from-purple-400 via-amber-400 to-sky-400 bg-clip-text text-transparent text-5xl font-bold">
+          <h2 className="mt-6 bg-linear-to-r from-purple-400 via-amber-400 to-sky-400 bg-clip-text text-transparent text-5xl font-bold">
             Learning That Adapts To You
           </h2>
         </motion.div>
@@ -100,19 +100,19 @@ export default function FeaturesSection() {
                 </motion.div>
 
                 <div
-                  className={`absolute -inset-4 rounded-3xl bg-gradient-to-r ${feature.gradient} opacity-20 blur-3xl`}
+                  className={`absolute -inset-4 rounded-3xl bg-linear-to-r ${feature.gradient} opacity-20 blur-3xl`}
                 />
               </div>
 
               {/* text */}
               <div className="flex-1 relative z-10">
                 <div
-                  className={`inline-flex items-center justify-center rounded-xl bg-gradient-to-r ${feature.gradient} p-3 text-white shadow-lg mb-6`}
+                  className={`inline-flex items-center justify-center rounded-xl bg-linear-to-r ${feature.gradient} p-3 text-white shadow-lg mb-6`}
                 >
                   {feature.icon}
                 </div>
                 <h3
-                  className={`text-2xl md:text-3xl font-semibold mb-4 bg-gradient-to-r ${feature.gradient} bg-clip-text text-transparent`}
+                  className={`text-2xl md:text-3xl font-semibold mb-4 bg-linear-to-r ${feature.gradient} bg-clip-text text-transparent`}
                 >
                   {feature.title}
                 </h3>
@@ -131,7 +131,7 @@ export default function FeaturesSection() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="mt-32 text-center"
         >
-          <span className="inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-8 py-4 text-white text-lg font-semibold shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+          <span className="inline-block rounded-full bg-linear-to-r from-sky-400 to-emerald-400 px-8 py-4 text-white text-lg font-semibold shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
             Start Learning With Spoon Academy 🚀
           </span>
         </motion.div>

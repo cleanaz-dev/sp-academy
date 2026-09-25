@@ -44,7 +44,7 @@ export const AudioModule = ({ text, language }) => {
       <button
         type="button"
         onClick={isSpeaking ? stopSpeaking : () => speakText(text, language)}
-        className={`rounded-full p-3 transition-all focus:outline-none ${
+        className={`rounded-full p-3 transition-all focus:outline-hidden ${
           isSpeaking
             ? "animate-pulse bg-blue-500 text-white shadow-lg"
             : "bg-white text-slate-800 shadow-md hover:bg-blue-50 hover:text-blue-500"

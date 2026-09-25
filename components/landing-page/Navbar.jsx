@@ -18,14 +18,14 @@ export default function Navbar() {
           <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-[1px]" />
 
           {/* Gradient border */}
-          <div className="absolute inset-0 rounded-full bg-white/20 p-[1px]" />
+          <div className="absolute inset-0 rounded-full bg-white/20 p-px" />
 
           {/* Content */}
           <div className="relative flex items-center justify-between px-6 py-3">
             {/* Logo */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-xl font-bold text-transparent"
+              className="bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-xl font-bold text-transparent"
             >
               Spoon Academy
             </motion.div>
@@ -70,7 +70,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700">
+                <Button className="rounded-full bg-linear-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700">
                   Get Started
                 </Button>
               </motion.div>

@@ -15,7 +15,7 @@ export function FreestyleChatBubble({
   if (message.role === "user") {
     return (
       <div className="flex flex-col items-end animate-in slide-in-from-bottom-1">
-        <div className="max-w-[85%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm shadow-sm text-[15px] leading-relaxed">
+        <div className="max-w-[85%] p-4 rounded-3xl bg-blue-500 text-white rounded-br-sm shadow-xs text-[15px] leading-relaxed">
           {message.text}
         </div>
 
@@ -47,7 +47,7 @@ export function FreestyleChatBubble({
   // Assistant message
   return (
     <div className="flex flex-col items-start gap-1 animate-in slide-in-from-bottom-1">
-      <div className="max-w-[85%] p-4 rounded-3xl bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-sm text-[15px] leading-relaxed">
+      <div className="max-w-[85%] p-4 rounded-3xl bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-xs text-[15px] leading-relaxed">
         <p>{message.text}</p>
 
         {message.translation && (

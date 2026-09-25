@@ -86,7 +86,7 @@ export default function LearningHubPage({ reviews, userId }) {
   return (
     <div className="min-h-screen bg-[#F8F9FC] font-sans">
       {/* Header Section */}
-      <header className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 bg-[length:300%_300%] py-16 text-white shadow-md">
+      <header className="animate-gradient bg-linear-to-r from-violet-500 via-fuchsia-500 to-indigo-500 bg-size-[300%_300%] py-16 text-white shadow-md">
         <div className="mx-auto max-w-7xl px-6">
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight">
             Your Learning Hub
@@ -136,7 +136,7 @@ export default function LearningHubPage({ reviews, userId }) {
               placeholder="Search by language, topic, or mode..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition-all focus:border-violet-300 focus:ring-4 focus:ring-violet-500/10 shadow-sm"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-hidden transition-all focus:border-violet-300 focus:ring-4 focus:ring-violet-500/10 shadow-xs"
             />
             {searchQuery && (
               <button
@@ -199,7 +199,7 @@ function FreestyleCard({ session }) {
   const mistakesCount = session.review?.mistakes?.length || 0;
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-xs border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-violet-500/10">
       <div>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
@@ -274,7 +274,7 @@ function JournalCard({ journal }) {
   const score = isReady ? journal.review.overallScore : 0;
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/10">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-xs border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-500/10">
       <div>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900">Daily Journal</h3>
@@ -289,7 +289,7 @@ function JournalCard({ journal }) {
         </div>
 
         {isReady ? (
-          <div className="mb-6 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 p-4 border border-teal-100/50">
+          <div className="mb-6 rounded-2xl bg-linear-to-br from-teal-50 to-emerald-50 p-4 border border-teal-100/50">
             <div className="flex items-end justify-between mb-2">
               <span className="text-sm font-bold text-teal-900">Overall Score</span>
               <span className="text-3xl font-extrabold text-teal-600 leading-none">
@@ -324,7 +324,7 @@ function ConversationCard({ review }) {
   const mistakesCount = review.mistakes?.length || 0;
 
   return (
-    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
+    <div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-6 shadow-xs border border-gray-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
       <div>
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-2">

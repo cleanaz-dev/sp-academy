@@ -332,7 +332,7 @@ export default function LessonPreview({
     <DndProvider backend={HTML5Backend}>
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-6xl px-6 py-8">
-          <Card className="bg-white p-6 shadow-sm">
+          <Card className="bg-white p-6 shadow-xs">
             <h2 className="mb-6 text-lg font-medium text-gray-900">
               Lesson Preview
             </h2>

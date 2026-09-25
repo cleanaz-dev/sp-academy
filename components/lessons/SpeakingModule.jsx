@@ -153,7 +153,7 @@ export default function SpeakingModule({
     <Button
       size="icon"
       onClick={isSpeaking ? stopSpeaking : () => speakText(text, speaker)}
-      className={`group focus:outline-none bg-${customColor || "bg-green-500"} hover:bg-${customColor}/50 rounded-full transition-all duration-200 ${customCss} `}
+      className={`group focus:outline-hidden bg-${customColor || "bg-green-500"} hover:bg-${customColor}/50 rounded-full transition-all duration-200 ${customCss} `}
       aria-label={isSpeaking ? "Stop speaking" : "Speak text"}
     >
       {!customCss === "speak" ? (

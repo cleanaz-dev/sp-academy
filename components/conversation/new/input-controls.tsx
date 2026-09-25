@@ -101,7 +101,7 @@ export const InputControls: React.FC<Props> = ({
               value={textInput}
               onChange={(e) => onTextChange(e.target.value)}
               placeholder="Type something to translate..."
-              className="w-full flex-1 bg-transparent px-3 text-sm outline-none"
+              className="w-full flex-1 bg-transparent px-3 text-sm outline-hidden"
             />
 
             {hasText && (

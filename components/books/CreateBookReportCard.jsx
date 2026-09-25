@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function CreateBookReportCard() {
   return (
-    <Card className="flex w-full max-w-sm flex-col items-center justify-center rounded-md bg-gray-50 shadow-sm transition-shadow hover:shadow-md">
+    <Card className="flex w-full max-w-sm flex-col items-center justify-center rounded-md bg-gray-50 shadow-xs transition-shadow hover:shadow-md">
       <CardContent className="flex flex-col items-center space-y-3 p-6">
         <Link
           href="/books/create"

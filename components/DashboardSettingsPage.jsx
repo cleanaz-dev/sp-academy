@@ -46,7 +46,7 @@ export default function SPAcademySettings() {
           </TabsList>
 
           <TabsContent value="account">
-            <Card className="bg-gradient-to-b from-indigo-200/25 to-yellow-100/25">
+            <Card className="bg-linear-to-b from-indigo-200/25 to-yellow-100/25">
               <CardHeader>
                 <CardTitle>Account Information</CardTitle>
                 <CardDescription>
@@ -84,7 +84,7 @@ export default function SPAcademySettings() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button className="bg-gradient-to-br from-blue-600 to-violet-600 hover:animate-pulse">
+                <Button className="bg-linear-to-br from-blue-600 to-violet-600 hover:animate-pulse">
                   <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </Button>
@@ -93,7 +93,7 @@ export default function SPAcademySettings() {
           </TabsContent>
 
           <TabsContent value="notifications">
-            <Card className="bg-gradient-to-b from-indigo-200/25 to-yellow-100/25">
+            <Card className="bg-linear-to-b from-indigo-200/25 to-yellow-100/25">
               <CardHeader>
                 <CardTitle>Notification Settings</CardTitle>
                 <CardDescription>
@@ -150,7 +150,7 @@ export default function SPAcademySettings() {
           </TabsContent>
 
           <TabsContent value="privacy">
-            <Card className="bg-gradient-to-b from-indigo-200/25 to-yellow-100/25">
+            <Card className="bg-linear-to-b from-indigo-200/25 to-yellow-100/25">
               <CardHeader>
                 <CardTitle>Privacy Settings</CardTitle>
                 <CardDescription>
@@ -190,7 +190,7 @@ export default function SPAcademySettings() {
           </TabsContent>
 
           <TabsContent value="preferences">
-            <Card className="bg-gradient-to-b from-indigo-200/25 to-yellow-100/25">
+            <Card className="bg-linear-to-b from-indigo-200/25 to-yellow-100/25">
               <CardHeader>
                 <CardTitle>Learning Preferences</CardTitle>
                 <CardDescription>
@@ -234,7 +234,7 @@ export default function SPAcademySettings() {
                 </div> */}
               </CardContent>
               <CardFooter>
-                <Button className="bg-gradient-to-br from-blue-600 to-violet-600 hover:animate-pulse">
+                <Button className="bg-linear-to-br from-blue-600 to-violet-600 hover:animate-pulse">
                   <Save className="mr-2 h-4 w-4" />
                   Save Preferences
                 </Button>

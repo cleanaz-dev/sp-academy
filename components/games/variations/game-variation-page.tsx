@@ -91,14 +91,14 @@ export default function GameVariationsPage({ game }: GameVariationsPageProps) {
             className="object-cover"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950" />
+          <div className="absolute inset-0 bg-linear-to-br from-slate-800 to-slate-950" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-slate-50 via-transparent to-transparent" />
       </div>
 
       {/* Game Info Box */}
       <div className="max-w-4xl mx-auto px-6 -mt-16 relative z-10 text-center mb-10">
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-3xl p-8 shadow-xs border border-slate-100">
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
             {game.title}
           </h1>
@@ -178,15 +178,15 @@ export default function GameVariationsPage({ game }: GameVariationsPageProps) {
                   <Link
                     key={variation.id}
                     href={`/games/${game.id}/${variation.id}`}
-                    className="group relative bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-300 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+                    className="group relative bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-300 transition-all duration-300 flex flex-col justify-between overflow-hidden"
                   >
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-slate-50 rounded-full blur-2xl group-hover:bg-blue-50 transition-colors" />
 
-                    <div className="relative z-10 flex-grow">
+                    <div className="relative z-10 grow">
                       {/* Top Row: Big Flag + Target Language + Difficulty */}
                       <div className="flex justify-between items-start mb-5">
                         <div className="flex items-center gap-3">
-                          <div className="text-4xl drop-shadow-sm transition-transform group-hover:scale-110">
+                          <div className="text-4xl drop-shadow-xs transition-transform group-hover:scale-110">
                             {target.flag}
                           </div>
                           <div className="flex flex-col">

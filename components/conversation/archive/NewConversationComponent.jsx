@@ -421,11 +421,11 @@ export default function NewConversationComponent({
       {/* Main Conversation Area */}
       <div
         className={`transition-all duration-300 ${
-          isPanelOpen ? "w-[60%]" : "w-[100%]"
+          isPanelOpen ? "w-[60%]" : "w-full"
         }`}
       >
         {/* Your existing conversation UI */}
-        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow">
+        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between p-2">
             <header>
               <div>
@@ -485,7 +485,7 @@ export default function NewConversationComponent({
           </ScrollArea>
 
           {/* Input Area */}
-          <div className="border-t bg-white/80 p-4 backdrop-blur-sm">
+          <div className="border-t bg-white/80 p-4 backdrop-blur-xs">
             <div className="mx-auto flex max-w-4xl flex-col gap-4">
               {/* Status Indicators */}
               <div className="relative h-8 w-full">
@@ -547,7 +547,7 @@ export default function NewConversationComponent({
                     value={textInput}
                     onChange={(e) => setTextInput(e.target.value)}
                     placeholder="Type something to translate..."
-                    className="flex-1 bg-transparent px-3 text-sm outline-none"
+                    className="flex-1 bg-transparent px-3 text-sm outline-hidden"
                   />
 
                   {/* Send Button */}
@@ -695,7 +695,7 @@ export default function NewConversationComponent({
           width: isPanelOpen ? "40%" : "0%",
           opacity: isPanelOpen ? 1 : 0,
         }}
-        className="rounded-lg bg-white shadow"
+        className="rounded-lg bg-white shadow-sm"
       >
         {isPanelOpen && (
           <Tabs defaultValue="vocabulary" className="h-full w-full">

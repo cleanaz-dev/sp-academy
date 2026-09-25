@@ -69,7 +69,7 @@ export const MessageBubble: React.FC<Props> = ({
         className={cn(
           "relative rounded-2xl px-4 py-3 text-sm shadow-md md:max-w-[75%]",
           isUser
-            ? "min-w-44 self-end rounded-br-none bg-gradient-to-br from-blue-500 to-indigo-500 text-white"
+            ? "min-w-44 self-end rounded-br-none bg-linear-to-br from-blue-500 to-indigo-500 text-white"
             : "self-start rounded-bl-none bg-white text-gray-900",
         )}
       >

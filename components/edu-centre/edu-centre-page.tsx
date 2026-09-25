@@ -400,7 +400,7 @@ export default function EduCenterPage({ courses, userId }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <header className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white">
+      <header className="animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-16 text-white">
         <div className="mx-auto max-w-7xl px-6">
           <h1 className="mb-4 text-4xl font-bold">Edu Center</h1>
           <p className="text-xl opacity-90">
@@ -414,7 +414,7 @@ export default function EduCenterPage({ courses, userId }) {
       <div className="mx-auto max-w-7xl px-6 pt-8">
         <div className="mb-6 flex gap-4">
           <Button
-            variant={activeTab === "courses" ? "default" : "outline"}
+            variant={activeTab === "courses" ? "default" : "outline-solid"}
             onClick={() => handleTabChange("courses")}
             className="relative"
           >
@@ -422,7 +422,7 @@ export default function EduCenterPage({ courses, userId }) {
             Courses
           </Button>
           <Button
-            variant={activeTab === "recommended" ? "default" : "outline"}
+            variant={activeTab === "recommended" ? "default" : "outline-solid"}
             onClick={() => handleTabChange("recommended")}
             className="relative"
           >
@@ -444,7 +444,7 @@ export default function EduCenterPage({ courses, userId }) {
               placeholder="Search courses, topics, skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-md border-none py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-md border-none py-2 pl-10 pr-4 focus:border-transparent focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             {searchQuery && (
               <button

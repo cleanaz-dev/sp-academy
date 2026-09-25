@@ -116,11 +116,11 @@ export default function NewVariationPage({ game }: Props) {
         </div>
       </div>
 
-      <Card className="overflow-hidden border-muted shadow-sm">
+      <Card className="overflow-hidden border-muted shadow-xs">
         {/* 2. BASE GAME BANNER (Provides context to the admin) */}
         <div className="flex flex-col items-start gap-6 border-b bg-muted/30 p-6 md:flex-row md:items-center">
           {game.imageUrl ? (
-            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm">
+            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white shadow-xs">
               <Image
                 src={game.imageUrl}
                 alt={game.title}
@@ -130,7 +130,7 @@ export default function NewVariationPage({ game }: Props) {
               />
             </div>
           ) : (
-            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border bg-gray-100 shadow-sm">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border bg-gray-100 shadow-xs">
               <Gamepad2 className="h-10 w-10 text-gray-400" />
             </div>
           )}
@@ -321,7 +321,7 @@ export default function NewVariationPage({ game }: Props) {
                 <h3>Media Directives</h3>
               </div>
               <div className="pl-0 md:pl-7">
-                <div className="flex flex-row items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4 shadow-sm transition-all hover:bg-gray-50">
+                <div className="flex flex-row items-center justify-between rounded-xl border border-gray-200 bg-gray-50/50 p-4 shadow-xs transition-all hover:bg-gray-50">
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold text-gray-900">
                       Generate Visual Context (Images)

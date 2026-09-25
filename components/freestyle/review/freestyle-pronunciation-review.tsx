@@ -45,7 +45,7 @@ export function FreestylePronunciationReview({ phrases, targetLanguage, onComple
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6 text-center animate-in slide-in-from-bottom-4">
+    <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6 space-y-6 text-center animate-in slide-in-from-bottom-4">
       <div className="flex items-center justify-between">
         <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-md uppercase">
           Pronunciation

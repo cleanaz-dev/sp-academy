@@ -118,14 +118,14 @@ export function BillingForm({ currentBillingPlan }) {
           <div className="flex gap-2">
             <Button
               type="button"
-              variant={billingInterval === "monthly" ? "default" : "outline"}
+              variant={billingInterval === "monthly" ? "default" : "outline-solid"}
               onClick={() => setBillingInterval("monthly")}
             >
               Monthly
             </Button>
             <Button
               type="button"
-              variant={billingInterval === "annually" ? "default" : "outline"}
+              variant={billingInterval === "annually" ? "default" : "outline-solid"}
               onClick={() => setBillingInterval("annually")}
             >
               Annually

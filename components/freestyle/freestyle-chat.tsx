@@ -41,7 +41,7 @@ export default function FreestyleChat() {
         {/* Header - Added glassmorphism and larger avatar */}
         <div className="z-10 flex items-center justify-between border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-50 shadow-sm">
+            <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-50 shadow-xs">
               <Image
                 src="https://res.cloudinary.com/dmllgn0t7/image/upload/v1788189464/ai-avatar.png"
                 alt="AI Avatar"
@@ -94,7 +94,7 @@ export default function FreestyleChat() {
           {/* AI / TTS Loading Indicator */}
           {isProcessing && !isRecording && (
             <div className="flex items-start gap-2 duration-300 animate-in fade-in zoom-in">
-              <div className="flex items-center gap-3 rounded-2xl rounded-bl-sm border border-gray-100 bg-white px-5 py-3.5 shadow-sm ring-1 ring-black/5">
+              <div className="flex items-center gap-3 rounded-2xl rounded-bl-sm border border-gray-100 bg-white px-5 py-3.5 shadow-xs ring-1 ring-black/5">
                 {isPlaying ? (
                   <>
                     <Volume2 className="h-5 w-5 animate-pulse text-indigo-500" />

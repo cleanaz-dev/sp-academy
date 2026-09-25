@@ -33,7 +33,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
       <button 
         onClick={() => handleSpeak(data.targetSentence, -1)}
         disabled={isLoading}
-        className="group w-full mb-10 p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-left transition-all hover:shadow-md hover:border-blue-300 relative overflow-hidden"
+        className="group w-full mb-10 p-8 bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-left transition-all hover:shadow-md hover:border-blue-300 relative overflow-hidden"
       >
         <div className="absolute top-8 right-8 text-blue-300 group-hover:text-blue-500 transition-colors">
           {isLoading && activeWordIndex === -1 ? <Loader2 className="animate-spin" size={28} /> : <Volume2 size={28} />}
@@ -62,7 +62,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
               key={idx} 
               onClick={() => handleSpeak(wordObj.word, idx)}
               disabled={isLoading}
-              className="group flex items-start gap-4 p-5 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-sm hover:shadow"
+              className="group flex items-start gap-4 p-5 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-xs hover:shadow-sm"
             >
               {/* Play Icon Indicator */}
               <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors mt-0.5">

@@ -72,7 +72,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
             <select
               value={nativeLang}
               onChange={(e) => setNativeLang(e.target.value)}
-              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-none transition-all font-medium text-gray-700 cursor-pointer appearance-none"
+              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 outline-hidden transition-all font-medium text-gray-700 cursor-pointer appearance-none"
             >
               {SUPPORTED_LANGUAGES.map(lang => (
                 <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -87,7 +87,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
             <select
               value={targetLang}
               onChange={(e) => setTargetLang(e.target.value)}
-              className="w-full p-4 bg-indigo-50/30 border-2 border-indigo-100 rounded-2xl focus:bg-white focus:border-indigo-500 outline-none transition-all font-medium text-indigo-900 cursor-pointer appearance-none"
+              className="w-full p-4 bg-indigo-50/30 border-2 border-indigo-100 rounded-2xl focus:bg-white focus:border-indigo-500 outline-hidden transition-all font-medium text-indigo-900 cursor-pointer appearance-none"
             >
               {SUPPORTED_LANGUAGES.map(lang => (
                 <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -150,7 +150,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
               placeholder="What do you want to talk about? (e.g., Returning shoes at a store)"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
+              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-hidden transition-all"
             />
           </div>
         )}
@@ -181,7 +181,7 @@ export default function FreestyleSetup({ onStart, defaultNative = "en-US", defau
         <button
           onClick={handleStart}
           disabled={isStarting}
-          className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 active:scale-[0.98] transition-all disabled:opacity-70"
+          className="w-full flex items-center justify-center gap-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white p-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 active:scale-[0.98] transition-all disabled:opacity-70"
         >
           {isStarting ? (
             <span className="animate-pulse">Preparing Arena...</span>

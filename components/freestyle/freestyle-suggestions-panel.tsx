@@ -61,7 +61,7 @@ export function FreestyleSuggestionsPanel({
               </p>
 
               <div className="space-y-3">
-                <div className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/30">
+                <div className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/30">
                   <MessageSquareDashed className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" />
 
                   <div>
@@ -73,7 +73,7 @@ export function FreestyleSuggestionsPanel({
                   </div>
                 </div>
 
-                <div className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50/30">
+                <div className="group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-700 shadow-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/30">
                   <MessageSquareDashed className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
 
                   <div>
@@ -98,7 +98,7 @@ export function FreestyleSuggestionsPanel({
                 {(suggestions.vocabulary ?? []).map((v, i) => (
                   <div
                     key={i}
-                    className="flex flex-col rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-sm"
+                    className="flex flex-col rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-xs"
                   >
                     <span className="text-sm font-bold text-gray-900">
                       {v.word}

@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function FamilySection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-emerald-50/30 to-sky-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-28">
+    <section className="relative overflow-hidden bg-linear-to-b from-white via-emerald-50/30 to-sky-50/30 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 py-28">
       {/* background accents */}
       <motion.div
         animate={{
@@ -33,14 +33,14 @@ export default function FamilySection() {
           className="flex-1 text-center md:text-left"
         >
           <div className="flex justify-center md:justify-start">
-            <span className="inline-block rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-5 py-2 text-sm font-semibold text-white shadow-md">
+            <span className="inline-block rounded-full bg-linear-to-r from-sky-400 to-emerald-400 px-5 py-2 text-sm font-semibold text-white shadow-md">
               Learning Together, Growing Together 🌱
             </span>
           </div>
 
           <h2 className="mt-6 text-4xl font-bold leading-tight text-gray-900 dark:text-white md:text-5xl">
             Empowering Families Through <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
               Connected Learning
             </span>
           </h2>
@@ -61,7 +61,7 @@ export default function FamilySection() {
           <div className="flex justify-center md:justify-start">
             <motion.button
               whileHover={{ scale: 1.05 }}
-              className="mt-10 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:from-sky-500 hover:to-emerald-500 transition-all"
+              className="mt-10 rounded-full bg-linear-to-r from-sky-400 to-emerald-400 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:from-sky-500 hover:to-emerald-500 transition-all"
             >
               Join the Spoon Family 💖
             </motion.button>
@@ -91,7 +91,7 @@ export default function FamilySection() {
             />
           </motion.div>
 
-          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-r from-sky-400/30 to-emerald-400/30 blur-3xl" />
+          <div className="absolute -inset-6 rounded-3xl bg-linear-to-r from-sky-400/30 to-emerald-400/30 blur-3xl" />
         </motion.div>
       </div>
     </section>

@@ -2,7 +2,7 @@ export default function GrammarDetectivePreview({ gameData }) {
   return (
     <div className="space-y-6">
       {gameData.cases?.map((caseData, index) => (
-        <div key={index} className="rounded-lg border bg-white p-4 shadow-sm">
+        <div key={index} className="rounded-lg border bg-white p-4 shadow-xs">
           {/* Case Header */}
           <div className="mb-4 flex items-center gap-3">
             <span className="rounded-full bg-blue-600 px-3 py-1 text-sm font-medium text-white">

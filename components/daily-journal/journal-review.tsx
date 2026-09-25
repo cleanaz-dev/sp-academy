@@ -104,8 +104,8 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 overflow-y-auto">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
+    <div className="fixed inset-0 z-100 flex flex-col bg-slate-50 overflow-y-auto">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
             <Sparkles className="h-5 w-5" />
@@ -125,7 +125,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-6 pb-32">
         
         {/* --- SUMMARY & METRICS CARD --- */}
-        <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start">
+        <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-xs flex flex-col md:flex-row gap-6 items-start">
           <div className="flex-1 space-y-3">
             <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
               <Activity className="w-5 h-5 text-indigo-500" />
@@ -160,7 +160,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex flex-col">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs flex flex-col">
               <span className="mb-2 inline-block rounded bg-gray-100 px-2 py-1 text-xs font-bold uppercase tracking-wider text-gray-500 w-max">What you said</span>
               <p className="text-lg text-gray-600 line-through decoration-red-400/50 decoration-2 mb-4">
                 {originalTranscript}
@@ -172,7 +172,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                   <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-2 block">Pronunciation Errors</span>
                   <div className="flex flex-wrap gap-2">
                     {mispronouncedWords.map((w: any, i: number) => (
-                      <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-sm flex items-center gap-1">
+                      <span key={i} className="bg-red-50 text-red-700 text-xs px-2 py-1 rounded border border-red-100 shadow-xs flex items-center gap-1">
                         {w.word} <span className="opacity-50 text-[10px]">({w.errorType})</span>
                       </span>
                     ))}
@@ -181,7 +181,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
               )}
             </div>
 
-            <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-5 shadow-sm">
+            <div className="relative flex flex-col justify-between rounded-2xl border-2 border-indigo-100 bg-indigo-50 p-5 shadow-xs">
               <div>
                 <span className="mb-2 inline-block rounded bg-indigo-200 px-2 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700">How a native says it</span>
                 <p className="text-xl font-medium text-indigo-950 mb-2">
@@ -197,7 +197,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
               <button
                 onClick={handlePlayImprovedAudio}
                 disabled={isLoading}
-                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-sm transition-all mt-auto ${
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-xs transition-all mt-auto ${
                   hasPlayedAudio ? "bg-indigo-600 text-white hover:bg-indigo-700" : "animate-pulse bg-indigo-500 text-white hover:bg-indigo-600"
                 }`}
               >
@@ -220,7 +220,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
               {grammarSuggestions.map((item: any) => {
                 const isActioned = actionedCards.has(item.id);
                 return (
-                  <div key={item.id} className={`flex flex-col gap-4 rounded-2xl border p-5 shadow-sm transition-all md:flex-row md:items-center md:justify-between ${isActioned ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"}`}>
+                  <div key={item.id} className={`flex flex-col gap-4 rounded-2xl border p-5 shadow-xs transition-all md:flex-row md:items-center md:justify-between ${isActioned ? "border-emerald-200 bg-emerald-50/30" : "border-gray-200 bg-white"}`}>
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start gap-4">
                          <div className="flex-1">
@@ -234,7 +234,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                       </div>
                     </div>
                     <div className="shrink-0 md:pl-6">
-                      <button onClick={() => handleCardAcknowledge(item.id)} className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all md:w-auto ${isActioned ? "bg-emerald-100 text-emerald-700 cursor-default" : "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:-translate-y-0.5"}`}>
+                      <button onClick={() => handleCardAcknowledge(item.id)} className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-all md:w-auto ${isActioned ? "bg-emerald-100 text-emerald-700 cursor-default" : "bg-emerald-500 text-white shadow-xs hover:bg-emerald-600 hover:-translate-y-0.5"}`}>
                         {isActioned ? <><CheckCircle2 className="h-5 w-5" /> Got it!</> : "Acknowledge"}
                       </button>
                     </div>
@@ -254,7 +254,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
             <h3 className="text-lg font-bold text-gray-800">Try it out</h3>
           </div>
           
-          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-center shadow-sm">
+          <div className="rounded-2xl border border-sky-100 bg-sky-50 p-6 text-center shadow-xs">
              <p className="mb-6 text-sm text-sky-800 font-medium">Read the improved transcript aloud to practice your new phrasing and pronunciation.</p>
              <button onClick={handlePracticeToggle} className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all ${isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-sky-500 hover:bg-sky-600 hover:scale-105"}`}>
                 <Mic className="h-8 w-8 text-white" />
@@ -283,7 +283,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
                  : !practiceCompleted ? "Try recording the new phrase to continue."
                  : "Ready to save!"}
             </p>
-            <button onClick={onComplete} disabled={!isReviewComplete} className={`flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-bold shadow-sm transition-all ${isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+            <button onClick={onComplete} disabled={!isReviewComplete} className={`flex items-center gap-2 rounded-xl px-8 py-3.5 text-base font-bold shadow-xs transition-all ${isReviewComplete ? "bg-gray-900 text-white hover:bg-black hover:scale-105" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
               Finish Review <ArrowRight className="h-5 w-5" />
             </button>
         </div>

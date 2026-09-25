@@ -45,7 +45,7 @@ function Sidebar({ sideBarOpen, toggleSideBar }) {
       <div
         className={`flex h-screen w-auto flex-col ${
           sideBarOpen ? "translate-x-0" : "-translate-x-60"
-        } justify-between bg-gradient-to-b from-indigo-200 to-yellow-100 transition-transform duration-500`}
+        } justify-between bg-linear-to-b from-indigo-200 to-yellow-100 transition-transform duration-500`}
       >
         <div className="flex items-center gap-2 px-4 pt-6">
           <Link href="/home" className="flex items-center" prefetch={false}>

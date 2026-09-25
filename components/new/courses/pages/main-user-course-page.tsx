@@ -10,7 +10,7 @@ export default function MainUserCoursePage({ courses }) {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] py-16 text-white"
+        className="animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-16 text-white"
       >
         <div className="mx-auto max-w-7xl px-6">
           <motion.h1

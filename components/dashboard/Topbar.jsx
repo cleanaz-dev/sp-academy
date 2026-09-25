@@ -113,9 +113,9 @@ export const Topbar = ({
               href={item.href}
               className={`rounded-md px-2 py-1 text-sm ${
                 pathname.includes(item.href)
-                  ? "bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold text-white"
+                  ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 font-semibold text-white"
                   : "text-blue-500"
-              } hover:bg-gradient-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
+              } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
             >
               {item.label}
             </Link>

@@ -350,7 +350,7 @@ export default function EnhancedDialogueGenerator() {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {/* Vocabulary Section */}
                 {preview.vocabulary.length > 0 && (
-                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-xs">
                     <div className="mb-2 flex items-center">
                       <BookOpen className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
@@ -379,7 +379,7 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Key Phrases Section */}
                 {preview.keyPhrases.length > 0 && (
-                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-xs">
                     <div className="mb-2 flex items-center">
                       <MessageSquare className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
@@ -396,7 +396,7 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Cultural Notes Section */}
                 {preview.culturalNotes.length > 0 && (
-                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-xs">
                     <div className="mb-2 flex items-center">
                       <Info className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">
@@ -413,7 +413,7 @@ export default function EnhancedDialogueGenerator() {
 
                 {/* Level Requirements Section */}
                 {preview.levelRequirements && (
-                  <div className="rounded-lg bg-gray-100 p-4 shadow-sm">
+                  <div className="rounded-lg bg-gray-100 p-4 shadow-xs">
                     <div className="mb-2 flex items-center">
                       <CheckCircle className="mr-2 text-blue-500" />
                       <p className="font-medium text-gray-800">

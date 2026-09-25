@@ -115,7 +115,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
 
   return (
     // FULL PAGE WRAPPER: Fixed inset-0 taking up entire viewport
-    <div className="fixed inset-0 z-[100] flex flex-col md:flex-row bg-slate-50 overflow-hidden">
+    <div className="fixed inset-0 z-100 flex flex-col md:flex-row bg-slate-50 overflow-hidden">
       
       {/* Vertical Sidebar (Full Height on Desktop) - Passes Finish Logic */}
       <ProgressSidebar 
@@ -130,7 +130,7 @@ export default function InteractiveReviewModal({ onClose, onComplete, journal }:
       <div className="flex-1 flex flex-col h-full relative overflow-hidden bg-slate-50/50">
         
         {/* Header - Stays glued to top of content area */}
-        <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 md:px-10 shrink-0 shadow-sm z-10">
+        <header className="flex h-20 items-center justify-between border-b border-gray-200 bg-white px-6 md:px-10 shrink-0 shadow-xs z-10">
           <h3 className="text-xl font-bold text-gray-800">{steps[currentStepIndex].title}</h3>
           <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 transition-colors">
             <X className="h-7 w-7" />

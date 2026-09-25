@@ -39,7 +39,7 @@ const Bookshelf = ({ books }) => {
                         className="rounded-sm object-cover shadow-lg"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-sm bg-gradient-to-r from-blue-500 to-blue-600 p-2 shadow-lg">
+                      <div className="flex h-full w-full items-center justify-center rounded-sm bg-linear-to-r from-blue-500 to-blue-600 p-2 shadow-lg">
                         <span className="text-center text-sm text-white">
                           {book.title}
                         </span>
@@ -50,7 +50,7 @@ const Bookshelf = ({ books }) => {
               ))}
             </div>
             {/* Wooden shelf */}
-            <div className="from-brown-800 to-brown-600 h-4 rounded-sm bg-gradient-to-r shadow-md" />
+            <div className="from-brown-800 to-brown-600 h-4 rounded-sm bg-linear-to-r shadow-md" />
           </div>
         ))}
       </div>

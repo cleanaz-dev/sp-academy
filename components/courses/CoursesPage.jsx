@@ -97,7 +97,7 @@ export default function CoursePage({ course, userId, courseId }) {
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
+              className="h-full rounded-full bg-linear-to-r from-blue-500 to-violet-500"
             />
           </div>
         </div>

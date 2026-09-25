@@ -92,7 +92,7 @@ export function EnrollmentDialog({ course, isOpen, onClose }) {
           <Button
             onClick={handleEnroll}
             disabled={confirmText !== "ENROLL" || isLoading}
-            className="bg-gradient-to-r from-blue-600 to-violet-600"
+            className="bg-linear-to-r from-blue-600 to-violet-600"
           >
             {isLoading ? "Enrolling..." : "Confirm Enrollment"}
           </Button>

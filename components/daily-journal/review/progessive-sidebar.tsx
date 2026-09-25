@@ -38,7 +38,7 @@ export default function ProgressSidebar({
       </div>
 
       {/* 🟢 Navigation Info Box */}
-      <div className="mb-8 rounded-xl bg-indigo-50 border border-indigo-100 p-4 shadow-sm flex items-start gap-3">
+      <div className="mb-8 rounded-xl bg-indigo-50 border border-indigo-100 p-4 shadow-xs flex items-start gap-3">
         <Info className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
         <p className="text-sm text-indigo-900 leading-relaxed">
           Finish your current task, then <strong>click the next step</strong> below to advance.
@@ -95,7 +95,7 @@ export default function ProgressSidebar({
         <button 
           onClick={onComplete} 
           disabled={!canFinish}
-          className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold shadow-sm transition-all ${
+          className={`flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold shadow-xs transition-all ${
             canFinish 
               ? "bg-gray-900 text-white hover:bg-black hover:-translate-y-1 shadow-md" 
               : "bg-gray-100 text-gray-400 cursor-not-allowed"

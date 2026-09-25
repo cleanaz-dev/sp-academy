@@ -19,7 +19,7 @@ export default async function Page({ params }: Params) {
   }
 
   return (
-    <main className="min-h-screen animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-4">
+    <main className="min-h-screen animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] p-4">
       <GameRunner gameVariation={gameVariation} />
     </main>
   );

@@ -412,7 +412,7 @@ function AnalysisDisplay({ scores }) {
           Overall Rating
         </span>
         <div
-          className={`flex-shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold text-gray-800 ${getScoreColor(
+          className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold text-gray-800 ${getScoreColor(
             cefrToPercentage(scores.cefr_score.pronunciation),
           )}`}
         >

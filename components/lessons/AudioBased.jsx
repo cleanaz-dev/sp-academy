@@ -113,7 +113,7 @@ const AudioBased = ({ exercise, onComplete }) => {
             type="text"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            className="w-full rounded-lg border p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-lg border p-3 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             placeholder="Type your answer..."
           />
         )}

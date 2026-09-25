@@ -17,7 +17,7 @@ export default function NavigationBar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {/* Desktop Logo */}
             <Image
               src={NavLogo}

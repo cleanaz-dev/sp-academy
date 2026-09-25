@@ -5,31 +5,31 @@ export default function SpoonLogo() {
     <div className="flex flex-col items-center">
       {/* <div className="flex gap-1 h-10">
         <div className="text-5xl font-bold text-white bg-sky-400 rounded-lg px-2 py-0 transform -skew-x-12 leading-none relative w-10">
-          <span className="relative left-[-13px] top-[0px]">S</span>
+          <span className="relative left-[-13px] top-0">S</span>
         </div>
         <div className="text-5xl font-bold text-white bg-emerald-400 rounded-lg px-2 transform -skew-x-12 relative w-10">
-          <span className="relative left-[-13px] top-[0px]">P</span>
+          <span className="relative left-[-13px] top-0">P</span>
         </div>
         <div className="text-5xl font-bold text-white bg-amber-400 rounded-lg px-2 transform -skew-x-12 relative w-10">
-          <span className="relative left-[-13px] top-[0px]">O</span>
+          <span className="relative left-[-13px] top-0">O</span>
         </div>
         <div className="text-5xl font-bold text-white bg-amber-400 rounded-lg px-2 transform -skew-x-12 relative w-10">
-          <span className="relative left-[-13px] top-[0px]">O</span>
+          <span className="relative left-[-13px] top-0">O</span>
         </div>
         <div className="text-5xl font-bold text-white bg-violet-400 rounded-lg px-2 transform -skew-x-12 relative w-10">
-          <span className="relative left-[-13px] top-[0px]">N</span>
+          <span className="relative left-[-13px] top-0">N</span>
         </div>
       </div>
       <div className="text-gray-700 text-sm tracking-wider mt-2">ACADEMY</div> */}
 
-      <div className="w-full animate-[gradient_6s_ease_infinite] bg-gradient-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-16 text-center text-white">
+      <div className="w-full animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] p-16 text-center text-white">
         <h1 className="text-3xl font-bold">Welcome to SPOON Academy</h1>
         <p className="mt-2">Learning made simple, spoon-fed for success.</p>
       </div>
 
       {/* <div className="h-screen flex">
       // Sidebar
-        <aside className="bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 bg-[length:200%_200%] animate-gradient-x text-white w-64 flex flex-col justify-between p-4">
+        <aside className="bg-linear-to-r from-sky-400 via-emerald-400 to-amber-400 bg-size-[200%_200%] animate-gradient-x text-white w-64 flex flex-col justify-between p-4">
           <div>
             <h1 className="text-2xl font-bold mb-6">SPOON</h1>
             <nav>

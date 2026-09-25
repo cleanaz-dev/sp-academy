@@ -119,7 +119,7 @@ export const Summary = (data) => {
             {topics[activeTopic] && (
               <>
                 {/* Summary Box */}
-                <div className="mb-6 rounded-xl border border-gray-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
+                <div className="mb-6 rounded-xl border border-gray-100 bg-linear-to-br from-blue-50 to-indigo-50 p-5">
                   <div className="mb-3 flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
                       <svg
@@ -179,10 +179,10 @@ export const Summary = (data) => {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      className="group min-h-20 rounded-lg border border-gray-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-4 transition-shadow"
+                      className="group min-h-20 rounded-lg border border-gray-100 bg-linear-to-br from-blue-50 to-indigo-50 p-4 transition-shadow"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 transition-all duration-300 group-hover:scale-125 group-hover:bg-green-500/50">
+                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 transition-all duration-300 group-hover:scale-125 group-hover:bg-green-500/50">
                           <span className="text-xs font-bold text-blue-600 group-hover:text-white">
                             {index + 1}
                           </span>
@@ -207,7 +207,7 @@ export const Summary = (data) => {
               : `${topics.length} topics available for study`}
           </div>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
+            <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition-colors hover:bg-gray-50">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"
@@ -226,7 +226,7 @@ export const Summary = (data) => {
                 ? "Ajouter aux favoris"
                 : "Add to favorites"}
             </button>
-            <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700">
+            <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-xs transition-colors hover:bg-indigo-700">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4"

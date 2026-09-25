@@ -22,7 +22,7 @@ export default function CompletedJournalsSidebar({
 
   return (
     <div className="w-full shrink-0 lg:w-80">
-      <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-200 sticky top-8">
+      <div className="rounded-xl bg-white p-6 shadow-xs border border-gray-200 sticky top-8">
         <h3 className="mb-4 text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           Completed Journals
@@ -96,7 +96,7 @@ export default function CompletedJournalsSidebar({
 
                   {hasReview && (
                     <div className="mt-auto w-full pt-1">
-                      <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-200 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                      <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-100 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-200 shadow-xs transition-colors group-hover:bg-indigo-600 group-hover:text-white">
                         <Sparkles className="w-3 h-3" /> View Review
                       </span>
                     </div>

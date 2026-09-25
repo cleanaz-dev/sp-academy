@@ -124,7 +124,7 @@ export default function OnboardingShell({
         {/* Progress */}
         <div className="mb-12 h-1.5 overflow-hidden rounded-full bg-gray-200">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+            className="h-full rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500"
             animate={{
               width: `${(step / totalSteps) * 100}%`,
             }}
@@ -366,7 +366,7 @@ function SelectionCard({
       className={`flex w-full items-center gap-4 rounded-2xl border p-5 text-left transition-all duration-200 ${
         selected
           ? "border-violet-400 bg-violet-50 shadow-md shadow-violet-500/10"
-          : "border-gray-100 bg-white shadow-sm hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
+          : "border-gray-100 bg-white shadow-xs hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md"
       }`}
     >
       {children}
@@ -378,7 +378,7 @@ function SelectionCard({
             : "border-2 border-gray-200"
         }`}
       >
-        {selected && <Check className="h-4 w-4 stroke-[3]" />}
+        {selected && <Check className="h-4 w-4 stroke-3" />}
       </div>
     </button>
   );

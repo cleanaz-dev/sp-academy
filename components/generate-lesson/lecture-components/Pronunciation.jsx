@@ -44,11 +44,11 @@ export const Pronunciation = ({ title, items }) => {
     <section className="mx-auto max-w-4xl rounded-xl bg-white p-8">
       <header className="mb-10 text-center">
         <div className="mb-3 flex items-center justify-center gap-2">
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-purple-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-r from-transparent to-purple-500/70"></div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
             <Speech className="h-5 w-5 text-purple-600" />
           </div>
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-purple-500/70"></div>
+          <div className="h-px w-16 bg-linear-to-l from-transparent to-purple-500/70"></div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           {title.french}
@@ -73,7 +73,7 @@ export const Pronunciation = ({ title, items }) => {
           return (
             <div
               key={index}
-              className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:border-blue-200 hover:shadow-md"
+              className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs transition-all duration-200 hover:border-blue-200 hover:shadow-md"
               onMouseEnter={() => setHoveredItem(index)}
               onMouseLeave={() => setHoveredItem(null)}
             >

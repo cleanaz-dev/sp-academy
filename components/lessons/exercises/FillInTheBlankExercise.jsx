@@ -78,7 +78,7 @@ const FillInTheBlankExercise = forwardRef(({ exercise, isCompleted }, ref) => {
       )}
       <div className="mx-auto rounded-lg border border-gray-200 bg-white p-4">
         <div className="mb-10 flex items-center gap-4">
-          <span className="flex h-8 w-8 animate-[gradient_6s_ease_infinite] items-center justify-center rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-sky-400 bg-[length:300%_300%] text-sm font-medium text-white">
+          <span className="flex h-8 w-8 animate-gradient items-center justify-center rounded-full bg-linear-to-r from-teal-400 via-emerald-400 to-sky-400 bg-size-[300%_300%] text-sm font-medium text-white">
             {exercise.order + 1}
           </span>
           <p className="font-medium text-muted-foreground">
@@ -93,7 +93,7 @@ const FillInTheBlankExercise = forwardRef(({ exercise, isCompleted }, ref) => {
               type="text"
               value={userAnswers[index]}
               onChange={(e) => handleInputChange(index, e.target.value)}
-              className={`mx-2 w-32 rounded-md border px-2 py-1 transition-all duration-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+              className={`mx-2 w-32 rounded-md border px-2 py-1 transition-all duration-300 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 ${
                 submitted && inputErrors[index]
                   ? "animate-[shake_0.4s_ease-in-out] border-red-600"
                   : submitted && !inputErrors[index]

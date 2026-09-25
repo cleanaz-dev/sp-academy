@@ -72,7 +72,7 @@ function LessonCard({ lesson }) {
         {/* Image Section */}
         <div className="relative flex h-12 w-full items-center justify-center overflow-hidden bg-gray-50 md:h-full md:w-[100px]">
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-br from-blue-400 to-purple-400" />
+            <div className="absolute left-0 top-0 h-full w-full bg-linear-to-br from-blue-400 to-purple-400" />
           </div>
         </div>
 
@@ -137,8 +137,8 @@ function LessonCard({ lesson }) {
                       key={index}
                       className="flex items-center gap-2 text-sm text-gray-600"
                     >
-                      <CheckCircle className="h-3 w-3 flex-shrink-0 text-green-500" />
-                      <span className="break-words">{topic}</span>
+                      <CheckCircle className="h-3 w-3 shrink-0 text-green-500" />
+                      <span className="wrap-break-word">{topic}</span>
                     </div>
                   ))}
                 </div>

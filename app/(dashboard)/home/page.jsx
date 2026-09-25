@@ -40,7 +40,7 @@ export default async function DashboardHome() {
         <SpoonLogo />
         <header className="mb-6 border-b bg-white p-6">
           <div className="mx-auto max-w-7xl">
-            <h1 className="mt-4 inline-block bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 bg-clip-text text-4xl font-bold text-transparent">
+            <h1 className="mt-4 inline-block bg-linear-to-r from-blue-600 via-green-500 to-indigo-400 bg-clip-text text-4xl font-bold text-transparent">
               Welcome back, {user?.firstName}!
             </h1>
           </div>

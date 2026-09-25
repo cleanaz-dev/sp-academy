@@ -34,7 +34,7 @@ export function GameRunner({ gameVariation }: GameRunnerProps) {
         <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-purple-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-        <div className="relative z-10 flex-grow flex flex-col">
+        <div className="relative z-10 grow flex flex-col">
           <GameEngineRegistry
             gameTitle={game.title}
             gameData={gameData}

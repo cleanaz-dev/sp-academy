@@ -90,7 +90,7 @@ export const ImprovementTooltip: React.FC<ImprovementTooltipProps> = ({
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border-none bg-gradient-to-r from-indigo-600/95 to-purple-700/95 p-6 text-white shadow-xl backdrop-blur-md">
+      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border-none bg-linear-to-r from-indigo-600/95 to-purple-700/95 p-6 text-white shadow-xl backdrop-blur-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl font-semibold text-white">
             <Sparkles className="h-6 w-6 text-yellow-300" />

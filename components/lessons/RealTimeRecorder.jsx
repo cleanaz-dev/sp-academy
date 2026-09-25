@@ -182,7 +182,7 @@ export default function RealTimeRecorder() {
         <div className="mb-6 rounded bg-red-100 p-3 text-red-700">{error}</div>
       )}
 
-      <div className="mb-6 rounded bg-white p-4 shadow">
+      <div className="mb-6 rounded bg-white p-4 shadow-sm">
         <h3 className="mb-2 text-lg font-semibold">Say This Phrase:</h3>
         <PhraseDisplay
           target={targetPhrase}
@@ -212,7 +212,7 @@ export default function RealTimeRecorder() {
       </div>
 
       {scores && (
-        <div className="rounded bg-white p-4 shadow">
+        <div className="rounded bg-white p-4 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold">Pronunciation Scores:</h3>
 
           {/* Word-level scores */}

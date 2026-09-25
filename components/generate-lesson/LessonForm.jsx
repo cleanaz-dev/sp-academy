@@ -187,7 +187,7 @@ export default function LessonForm({
         </div>
       </header>
       <div className="mx-auto max-w-6xl px-6 py-8">
-        <Card className="bg-white shadow-sm">
+        <Card className="bg-white shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Course Information */}
             <div className="border-b p-6">
@@ -434,7 +434,7 @@ export default function LessonForm({
                   {exerciseTypes.map((exercise) => (
                     <div
                       key={exercise.id}
-                      className="rounded border p-4 shadow-sm"
+                      className="rounded border p-4 shadow-xs"
                     >
                       <div className="flex flex-col space-y-2">
                         <div>

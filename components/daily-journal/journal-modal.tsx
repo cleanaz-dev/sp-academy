@@ -211,7 +211,7 @@ export default function JournalModal({
                 onClick={() => setLanguage(code)}
                 className={`rounded-lg px-4 py-1.5 text-xs font-semibold transition-all ${
                   language === code
-                    ? "border-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm"
+                    ? "border-2 border-emerald-500 bg-emerald-50 text-emerald-800 shadow-xs"
                     : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
                 } ${modalState !== "idle" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
@@ -258,7 +258,7 @@ export default function JournalModal({
           {modalState === "idle" && (
             <button
               onClick={handleStartRecording}
-              className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-red-600"
+              className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
             >
               🔴 Start Recording
             </button>
@@ -268,7 +268,7 @@ export default function JournalModal({
           {modalState === "recording" && (
             <button
               onClick={handleStopRecording}
-              className="rounded-full bg-gray-800 px-6 py-3 text-sm font-semibold text-white shadow transition hover:bg-gray-900"
+              className="rounded-full bg-gray-800 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-900"
             >
               ⏹ Stop Recording
             </button>
@@ -279,13 +279,13 @@ export default function JournalModal({
             <>
               <button
                 onClick={handleRetry}
-                className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-xs transition hover:bg-gray-100"
               >
                 🔄 Retry
               </button>
               <button
                 onClick={handleCompleteAndSave}
-                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-emerald-700"
+                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
               >
                 ✅ Complete & Save
               </button>

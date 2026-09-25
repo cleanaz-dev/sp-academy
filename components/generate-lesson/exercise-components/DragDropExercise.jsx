@@ -156,14 +156,14 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
       >
         <Button
           variant="ghost" // Use shadcn Button with ghost variant
-          className={`m-0.5 cursor-move rounded-md px-2.5 py-1.5 text-sm font-medium shadow-sm transition-all duration-200 ${
+          className={`m-0.5 cursor-move rounded-md px-2.5 py-1.5 text-sm font-medium shadow-xs transition-all duration-200 ${
             isDragging
               ? "border-2 border-indigo-300 bg-indigo-100 opacity-50 shadow-lg"
               : submitted
                 ? isWordCorrect(word, index)
-                  ? "animate-pulse-subtle border-0 bg-gradient-to-r from-green-400 to-emerald-500 text-white"
-                  : "animate-wobble border-0 bg-gradient-to-r from-red-400 to-pink-500 text-white"
-                : "border border-indigo-200 bg-gradient-to-r from-indigo-100 to-blue-100 hover:border-indigo-300"
+                  ? "animate-pulse-subtle border-0 bg-linear-to-r from-green-400 to-emerald-500 text-white"
+                  : "animate-wobble border-0 bg-linear-to-r from-red-400 to-pink-500 text-white"
+                : "border border-indigo-200 bg-linear-to-r from-indigo-100 to-blue-100 hover:border-indigo-300"
           } `}
         >
           {displayWord}
@@ -180,8 +180,8 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
     <div
       className={`relative overflow-hidden rounded-lg border-2 p-3 ${
         isCorrect
-          ? "border-green-300 bg-gradient-to-br from-green-50 to-white"
-          : "border-indigo-200 bg-gradient-to-br from-indigo-50 to-white"
+          ? "border-green-300 bg-linear-to-br from-green-50 to-white"
+          : "border-indigo-200 bg-linear-to-br from-indigo-50 to-white"
       } `}
     >
       {/* Decorative elements */}
@@ -189,7 +189,7 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
       <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-blue-200 opacity-20"></div>
 
       {isCorrect && (
-        <div className="absolute right-2 top-2 z-10 rounded-full bg-green-100 p-1 text-green-600 shadow-sm">
+        <div className="absolute right-2 top-2 z-10 rounded-full bg-green-100 p-1 text-green-600 shadow-xs">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-4 w-4"
@@ -208,7 +208,7 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
       <DndProvider backend={HTML5Backend}>
         <div className="relative z-10">
           <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-medium text-white shadow-sm">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-r from-indigo-500 to-purple-500 text-xs font-medium text-white shadow-xs">
               {exercise.order + 1}
             </span>
             <p className="text-sm font-medium text-gray-700">
@@ -234,7 +234,7 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
             ))}
 
             {/* Animated pattern background */}
-            <div className="absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-30 [background-size:16px_16px]"></div>
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-30 bg-size-[16px_16px]"></div>
           </div>
 
           <div className="mt-3 flex items-center gap-2">
@@ -242,7 +242,7 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
               <Button
                 size="sm"
                 onClick={handleSubmit}
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 text-xs font-medium text-white shadow-sm transition-all hover:opacity-90"
+                className="bg-linear-to-r from-indigo-500 to-purple-500 text-xs font-medium text-white shadow-xs transition-all hover:opacity-90"
               >
                 Check
               </Button>
@@ -251,7 +251,7 @@ export const DragDropExercise = forwardRef(({ exercise }, ref) => {
                 <Button
                   size="sm"
                   onClick={handleTryAgain}
-                  className="rounded-md bg-gradient-to-r from-blue-500 to-teal-500 text-xs font-medium text-white shadow-sm transition-all hover:opacity-90"
+                  className="rounded-md bg-linear-to-r from-blue-500 to-teal-500 text-xs font-medium text-white shadow-xs transition-all hover:opacity-90"
                 >
                   Try Again
                 </Button>
