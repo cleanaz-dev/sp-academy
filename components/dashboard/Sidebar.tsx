@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { navItems, settingItems } from "./NavLinks";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import {
   Sidebar as ShadcnSidebar,
@@ -78,11 +79,13 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                   <SidebarMenuItem key={navItem.href} className="px-2 py-1">
                     <SidebarMenuButton
                       isActive={isActive}
-                      className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
+                      className={cn(
+                        "group flex h-auto items-center gap-4 rounded-sm p-3 transition-all",
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-500 hover:text-white"
-                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300`}
+                          : "text-blue-500",
+                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
+                      )}
                       render={
                         <Link href={navItem.href}>
                           <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
@@ -122,11 +125,13 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                   <SidebarMenuItem key={settingItem.href} className="px-2 py-1">
                     <SidebarMenuButton
                       isActive={isActive}
-                      className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
+                      className={cn(
+                        "group flex h-auto items-center gap-4 rounded-sm p-3 transition-all",
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-500 hover:text-white"
-                      } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300`}
+                          : "text-blue-500",
+                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
+                      )}
                       render={
                         <Link href={settingItem.href}>
                           <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
