@@ -88,14 +88,14 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                       )}
                       render={
                         <Link href={navItem.href}>
-                          <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
+                          <div className={isActive ? "text-white" : "text-blue-400 "}>
                             {navItem.icon}
                           </div>
                           <span
                             className={`text-sm font-medium ${
                               isActive
                                 ? "text-white"
-                                : "text-blue-500 group-hover:text-white"
+                                : "text-blue-500 "
                             }`}
                           >
                             {navItem.label}
