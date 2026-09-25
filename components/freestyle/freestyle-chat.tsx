@@ -33,13 +33,13 @@ export default function FreestyleChat() {
 
   return (
     // Changed to `h-full min-h-0` so it perfectly fills the parent without breaking flexbox
-    <div className="flex h-full min-h-0 w-full gap-4 md:gap-6 p-2 ">
+    <div className="flex h-full min-h-0 w-full gap-4 md:gap-6 p-10">
       
       {/* MAIN CHAT AREA */}
-      <div className="relative flex flex-1 flex-col overflow-hidden rounded-3xl bg-slate-200 shadow-xl shadow-black/5 ring-1 ring-black/5 transition-all">
+           <div className="relative flex flex-1 flex-col overflow-hidden rounded-3xl bg-white/80 backdrop-blur-xl shadow-xl shadow-black/5 ring-1 ring-black/5 transition-all">
         
         {/* Header - Added glassmorphism and larger avatar */}
-        <div className="z-10 flex items-center justify-between border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur-md">
+        <div className="z-10 flex items-center justify-between border-b border-gray-200/50 bg-white/50 px-6 py-4 backdrop-blur-md">
           <div className="flex items-center gap-4">
             <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-gray-50 shadow-xs">
               <Image
@@ -62,7 +62,7 @@ export default function FreestyleChat() {
         </div>
 
         {/* Messages Area - Improved padding and background */}
-        <div className="flex-1 space-y-6 overflow-y-auto bg-[#FAFAFA] p-6 sm:p-8 scroll-smooth">
+       <div className="flex-1 space-y-6 overflow-y-auto bg-transparent p-6 sm:p-8 scroll-smooth">
           
           {/* Subtle empty state if no messages yet (prevents awkward blank screen) */}
           {messages.length === 0 && !isProcessing && !isRecording && (

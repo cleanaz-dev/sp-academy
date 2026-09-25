@@ -56,8 +56,8 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
       <SidebarHeader className="mt-4 flex items-center justify-center">
         <Image
           src="/logo1.png"
-          height={100}
-          width={100}
+          height={200}
+          width={200}
           alt="logo"
           priority
           style={{ width: "auto", height: "auto" }}
