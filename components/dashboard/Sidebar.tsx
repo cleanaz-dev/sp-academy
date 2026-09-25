@@ -7,8 +7,6 @@ import { ShieldCheck } from "lucide-react";
 import { navItems, settingItems } from "./NavLinks";
 import { Button } from "@/components/ui/button";
 
-// Import the new Shadcn Sidebar components
-// We alias Sidebar to ShadcnSidebar to prevent naming conflicts with your component name
 import {
   Sidebar as ShadcnSidebar,
   SidebarContent,
@@ -29,28 +27,31 @@ interface SidebarProps {
 
 export const Sidebar = ({ pathname }: SidebarProps) => {
   const [isUserAdmin, setIsUserAdmin] = useState<boolean>(false);
-  
-  // Shadcn's hook replaces the need to pass open states manually
   const { state, isMobile } = useSidebar();
   const sidebarOpen = state === "expanded" || isMobile;
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchIsAdmin = async () => {
       try {
         const response = await fetch("/api/users/is-admin");
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
         const data = await response.json();
-        setIsUserAdmin(data.isAdmin);
+        if (!cancelled) setIsUserAdmin(Boolean(data.isAdmin));
       } catch (error) {
         console.error("Error fetching admin status:", error);
       }
     };
 
     fetchIsAdmin();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <ShadcnSidebar>
-      {/* 1. Header (Logo) */}
       <SidebarHeader className="mt-4 flex items-center justify-center">
         <Image
           src="/logo1.png"
@@ -63,21 +64,19 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
         />
       </SidebarHeader>
 
-      {/* 2. Scrollable Content */}
       <SidebarContent>
-        {/* Menu Group */}
         <SidebarGroup>
           <SidebarGroupLabel className="py-4 text-lg font-bold tracking-widest text-emerald-500">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((navItem, index) => {
+              {navItems.map((navItem) => {
                 const isActive = pathname.includes(navItem.href);
                 return (
-                  <SidebarMenuItem key={index} className="px-2 py-1">
+                  <SidebarMenuItem key={navItem.href} className="px-2 py-1">
                     <SidebarMenuButton
-                 
+                      render={<Link href={navItem.href} />}
                       isActive={isActive}
                       className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
                         isActive
@@ -85,18 +84,16 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                           : "text-blue-400"
                       } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
                     >
-                      <Link href={navItem.href}>
-                        {navItem.icon}
-                        <span
-                          className={`text-xs ${
-                            isActive
-                              ? "text-white"
-                              : "text-blue-500 group-hover:text-white"
-                          }`}
-                        >
-                          {navItem.label}
-                        </span>
-                      </Link>
+                      {navItem.icon}
+                      <span
+                        className={`text-xs ${
+                          isActive
+                            ? "text-white"
+                            : "text-blue-500 group-hover:text-white"
+                        }`}
+                      >
+                        {navItem.label}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -105,21 +102,20 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Settings Group */}
         <SidebarGroup>
           <SidebarGroupLabel className="py-4 text-lg font-bold tracking-widest text-emerald-500">
             Settings
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingItems.map((settingItem, index) => {
-                const isActive = pathname === settingItem.href; // Maintained your strict equality check for settings
+              {settingItems.map((settingItem) => {
+                const isActive = pathname === settingItem.href;
                 const isTextActive = pathname.includes(settingItem.href);
 
                 return (
-                  <SidebarMenuItem key={index} className="px-2 py-1">
+                  <SidebarMenuItem key={settingItem.href} className="px-2 py-1">
                     <SidebarMenuButton
-                
+                      render={<Link href={settingItem.href} />}
                       isActive={isActive}
                       className={`group flex h-auto items-center gap-4 rounded-sm p-3 transition-all ${
                         isActive
@@ -127,18 +123,16 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                           : "text-blue-400"
                       } hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white`}
                     >
-                      <Link href={settingItem.href}>
-                        {settingItem.icon}
-                        <span
-                          className={`text-xs ${
-                            isTextActive
-                              ? "text-white"
-                              : "text-blue-500 group-hover:text-white"
-                          }`}
-                        >
-                          {settingItem.label}
-                        </span>
-                      </Link>
+                      {settingItem.icon}
+                      <span
+                        className={`text-xs ${
+                          isTextActive
+                            ? "text-white"
+                            : "text-blue-500 group-hover:text-white"
+                        }`}
+                      >
+                        {settingItem.label}
+                      </span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -148,7 +142,6 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* 3. Footer (Admin Button) */}
       {isUserAdmin && sidebarOpen && (
         <SidebarFooter className="p-4">
           <div className="animate-gradient overflow-hidden rounded-lg bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-1 shadow-lg">
