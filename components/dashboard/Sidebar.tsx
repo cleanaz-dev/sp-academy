@@ -134,14 +134,14 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                       )}
                       render={
                         <Link href={settingItem.href}>
-                          <div className={isActive ? "text-white" : "text-blue-400 group-hover:text-white"}>
+                          <div className={isActive ? "text-white" : "text-blue-400 "}>
                             {settingItem.icon}
                           </div>
                           <span
                             className={`text-sm font-medium ${
                               isTextActive
                                 ? "text-white"
-                                : "text-blue-500 group-hover:text-white"
+                                : "text-blue-500 "
                             }`}
                           >
                             {settingItem.label}
