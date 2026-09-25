@@ -59,6 +59,7 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
           height={200}
           width={200}
           alt="logo"
+          quality={100}
           priority
           style={{ width: "auto", height: "auto" }}
           className="flex"
