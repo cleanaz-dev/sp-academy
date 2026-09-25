@@ -33,7 +33,7 @@ export default function FreestyleChat() {
 
   return (
     // Changed to `h-full min-h-0` so it perfectly fills the parent without breaking flexbox
-    <div className="flex h-full min-h-0 w-full gap-4 md:gap-6 p-2">
+    <div className="flex h-full min-h-0 w-full gap-4 md:gap-6 p-2 bg-slate-200">
       
       {/* MAIN CHAT AREA */}
       <div className="relative flex flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-xl shadow-black/5 ring-1 ring-black/5 transition-all">
