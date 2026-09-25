@@ -13,7 +13,7 @@ export default function NavigationBar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="border-b border-2">
+    <nav className="border-2 border-b">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -65,11 +65,13 @@ export default function NavigationBar() {
           {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
+              <SheetTrigger
+                render={
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                }
+              />
               <SheetContent side="right" className="bg-white">
                 <div className="mt-8 flex flex-col space-y-4">
                   <a

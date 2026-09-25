@@ -316,11 +316,13 @@ export default function PronunciationAssessment({
 
   const ScoreExplanation = ({ score, type }) => (
     <HoverCard>
-      <HoverCardTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Info className="h-4 w-4" />
-        </Button>
-      </HoverCardTrigger>
+      <HoverCardTrigger
+        render={
+          <Button variant="ghost" size="icon">
+            <Info className="h-4 w-4" />
+          </Button>
+        }
+      />
       <HoverCardContent className="w-80">
         <div className="space-y-2">
           <h4 className="text-sm font-semibold">
@@ -351,22 +353,22 @@ export default function PronunciationAssessment({
         <div className="grid grid-cols-2 gap-2">
           {words.map((word, index) => (
             <HoverCard key={`${word.word}-${index}`}>
-              <HoverCardTrigger asChild>
-                <div
-                  className={`cursor-pointer rounded-lg border p-2 hover:bg-gray-50`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{word.word}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => playCorrectPronunciation(word.word)}
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </Button>
+              <HoverCardTrigger
+                render={
+                  <div className="cursor-pointer rounded-lg border p-2 hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <span>{word.word}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => playCorrectPronunciation(word.word)}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </HoverCardTrigger>
+                }
+              />
               <HoverCardContent>
                 <div className="space-y-2">
                   <h4 className="font-semibold">{word.word}</h4>
@@ -458,7 +460,7 @@ export default function PronunciationAssessment({
                 </Select>
 
                 <Card
-                  className="h-auto max-h-full resize-none overflow-auto whitespace-pre-wrap p-2"
+                  className="h-auto max-h-full resize-none overflow-auto p-2 whitespace-pre-wrap"
                   contentEditable={false}
                   disabled={isRecording || isLoading}
                 >

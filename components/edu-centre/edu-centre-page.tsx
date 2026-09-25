@@ -414,7 +414,7 @@ export default function EduCenterPage({ courses, userId }) {
       <div className="mx-auto max-w-7xl px-6 pt-8">
         <div className="mb-6 flex gap-4">
           <Button
-            variant={activeTab === "courses" ? "default" : "outline-solid"}
+            variant={activeTab === "courses" ? "default" : "outline"}
             onClick={() => handleTabChange("courses")}
             className="relative"
           >
@@ -422,7 +422,7 @@ export default function EduCenterPage({ courses, userId }) {
             Courses
           </Button>
           <Button
-            variant={activeTab === "recommended" ? "default" : "outline-solid"}
+            variant={activeTab === "recommended" ? "default" : "outline"}
             onClick={() => handleTabChange("recommended")}
             className="relative"
           >

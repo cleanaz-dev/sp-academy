@@ -23,9 +23,7 @@ export default async function EmailTemplatesPage() {
               <p className="text-sm text-gray-600">{template.description}</p>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="link" asChild>
-                <a href={`/admin/emails/${template.id}`}>Edit</a>
-              </Button>
+              <Button variant="link" render={<a href={`/admin/emails/${template.id}`}>Edit</a>} />
               <Button variant="destructive" size="sm">
                 Delete
               </Button>
@@ -34,9 +32,7 @@ export default async function EmailTemplatesPage() {
         ))}
       </div>
       <div className="mt-6">
-        <Button asChild>
-          <a href="/admin/emails/create">Create New Template</a>
-        </Button>
+       <Button render={<a href="/admin/emails/create">Create New Template</a>} />
       </div>
     </div>
   );

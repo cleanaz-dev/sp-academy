@@ -79,11 +79,11 @@ export default async function Home() {
             </div>
             <CardFooter className="mt-auto p-4">
               <Button
-                asChild
+                render={
+                  <Link href={`/short-story/${story.id}`}>Read 🤓</Link>
+                }
                 className="w-full rounded-md bg-linear-to-br from-blue-600 to-violet-600 py-2 font-medium text-white hover:animate-pulse"
-              >
-                <Link href={`/short-story/${story.id}`}>Read 🤓</Link>
-              </Button>
+              />
             </CardFooter>
           </Card>
         ))}

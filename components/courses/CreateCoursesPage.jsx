@@ -267,30 +267,32 @@ export default function CreateCoursesPage() {
             <div className="inline-flex flex-col items-end">
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Button
-                        onClick={handlePublish}
-                        disabled={isLoading || validationIssues.length > 0}
-                        className="min-w-[120px]"
-                      >
-                        {isLoading ? (
-                          <div className="flex items-center gap-2">
-                            <span className="animate-spin">↻</span>
-                            Publishing...
-                          </div>
-                        ) : (
-                          "Publish Course"
+                  <TooltipTrigger
+                    render={
+                      <div>
+                        <Button
+                          onClick={handlePublish}
+                          disabled={isLoading || validationIssues.length > 0}
+                          className="min-w-[120px]"
+                        >
+                          {isLoading ? (
+                            <div className="flex items-center gap-2">
+                              <span className="animate-spin">↻</span>
+                              Publishing...
+                            </div>
+                          ) : (
+                            "Publish Course"
+                          )}
+                        </Button>
+                        {validationIssues.length > 0 && (
+                          <p className="mt-1 text-sm text-red-500">
+                            {validationIssues.length} issue
+                            {validationIssues.length !== 1 ? "s" : ""} to fix
+                          </p>
                         )}
-                      </Button>
-                      {validationIssues.length > 0 && (
-                        <p className="mt-1 text-sm text-red-500">
-                          {validationIssues.length} issue
-                          {validationIssues.length !== 1 ? "s" : ""} to fix
-                        </p>
-                      )}
-                    </div>
-                  </TooltipTrigger>
+                      </div>
+                    }
+                  />
                   <TooltipContent>
                     {validationIssues.length > 0 ? (
                       <div className="max-w-xs">
