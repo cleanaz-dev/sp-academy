@@ -275,15 +275,17 @@ export default function DashboardLayout({ children }) {
               </Link>
               {/* Sheet for sidebar on small screens */}
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetTrigger asChild>
-                  <button className="ml-2 mt-2 text-slate-800">
-                    <MenuDots
-                      className="animate-pulse"
-                      iconStyle="BoldDuotone"
-                      svgProps={{ width: "28px", height: "28px" }}
-                    />
-                  </button>
-                </SheetTrigger>
+                <SheetTrigger
+                  render={
+                    <button className="mt-2 ml-2 text-slate-800">
+                      <MenuDots
+                        className="animate-pulse"
+                        iconStyle="BoldDuotone"
+                        svgProps={{ width: "28px", height: "28px" }}
+                      />
+                    </button>
+                  }
+                />
 
                 <SheetContent
                   side="left"
@@ -317,7 +319,7 @@ export default function DashboardLayout({ children }) {
                 />
                 {/* Menu to open sidebar */}
                 <button
-                  className="ml-2 mt-1 text-slate-800"
+                  className="mt-1 ml-2 text-slate-800"
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                 >
                   <MenuDots
@@ -371,9 +373,7 @@ export default function DashboardLayout({ children }) {
         <ScrollArea className="h-full w-full">
           {" "}
           {/* Ensure full height for ScrollArea */}
-          <div className="h-full grow overflow-auto bg-white">
-            {children}
-          </div>
+          <div className="h-full grow overflow-auto bg-white">{children}</div>
         </ScrollArea>
       </div>
 
@@ -388,7 +388,7 @@ export default function DashboardLayout({ children }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-50 bg-black bg-opacity-50"
+              className="bg-opacity-50 fixed inset-0 z-50 bg-black"
               onClick={() => setShowNotifications(false)} // Close notifications when clicking outside
             />
 
@@ -399,7 +399,7 @@ export default function DashboardLayout({ children }) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-              className="fixed right-0 top-0 z-50 h-full w-fit overflow-y-auto rounded-l-lg bg-white shadow-lg"
+              className="fixed top-0 right-0 z-50 h-full w-fit overflow-y-auto rounded-l-lg bg-white shadow-lg"
             >
               <NotificationCard
                 handleNotificationClick={handleNotificationClick}
