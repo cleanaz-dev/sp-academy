@@ -14,9 +14,10 @@ import {
 import { Button } from "../ui/button";
 import NewGeneratedDialogue from "./NewGeneratedDialogue";
 import { BookOpen, MessageSquare, Info, CheckCircle } from "lucide-react";
-import { AVAILABLE_LANGUAGES, LEARNING_CONTENT } from "@/lib/config/dialog-config";
-
-
+import {
+  AVAILABLE_LANGUAGES,
+  LEARNING_CONTENT,
+} from "@/lib/config/dialog-config";
 
 export default function EnhancedDialogueGenerator() {
   const [selectedScenario, setSelectedScenario] = useState("");
@@ -96,41 +97,46 @@ export default function EnhancedDialogueGenerator() {
         (f) => f.id === selectedFocus,
       )?.learningObjectives;
 
-      const response = await fetch("/api/generate/generate-dialogue-test-copy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/generate/generate-dialogue-test-copy",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            languages: {
+              native: nativeLanguage,
+              target: targetLanguage,
+            },
+            scenario: {
+              type: selectedScenario,
+              context: selectedScenarioData.context,
+              label: selectedScenarioData.context.label,
+              keyPhrases:
+                selectedScenarioData.context.keyPhrases[selectedLevel],
+              vocabulary:
+                selectedScenarioData.context.vocabulary[selectedLevel],
+              culturalNotes: selectedScenarioData.context.culturalNotes,
+              roles: selectedScenarioData.context.roles,
+              situation: selectedScenarioData.context.situation,
+            },
+            level: {
+              type: selectedLevel,
+              requirements: levelRequirements,
+              label: LEARNING_CONTENT.levels.find((l) => l.id === selectedLevel)
+                ?.label,
+            },
+            focus: {
+              type: selectedFocus,
+              objectives: focusObjectives,
+              label: LEARNING_CONTENT.focusAreas.find(
+                (f) => f.id === selectedFocus,
+              )?.label,
+            },
+          }),
         },
-        body: JSON.stringify({
-          languages: {
-            native: nativeLanguage,
-            target: targetLanguage,
-          },
-          scenario: {
-            type: selectedScenario,
-            context: selectedScenarioData.context,
-            label: selectedScenarioData.context.label,
-            keyPhrases: selectedScenarioData.context.keyPhrases[selectedLevel],
-            vocabulary: selectedScenarioData.context.vocabulary[selectedLevel],
-            culturalNotes: selectedScenarioData.context.culturalNotes,
-            roles: selectedScenarioData.context.roles,
-            situation: selectedScenarioData.context.situation,
-          },
-          level: {
-            type: selectedLevel,
-            requirements: levelRequirements,
-            label: LEARNING_CONTENT.levels.find((l) => l.id === selectedLevel)
-              ?.label,
-          },
-          focus: {
-            type: selectedFocus,
-            objectives: focusObjectives,
-            label: LEARNING_CONTENT.focusAreas.find(
-              (f) => f.id === selectedFocus,
-            )?.label,
-          },
-        }),
-      });
+      );
 
       const data = await response.json();
       if (response.ok) {
@@ -211,12 +217,12 @@ export default function EnhancedDialogueGenerator() {
             </Label>
             <Select
               onValueChange={(value) => {
-                setSelectedScenario(value);
+                setSelectedScenario(value as string);
                 const selectedScenarioObj = LEARNING_CONTENT.scenarios.find(
                   (scenario) => scenario.id === value,
                 );
                 setScenarioTitle(selectedScenarioObj?.context.label || "");
-                updatePreview(value, selectedLevel, selectedFocus);
+                updatePreview(value as string, selectedLevel, selectedFocus);
               }}
             >
               <SelectTrigger>
@@ -288,8 +294,8 @@ export default function EnhancedDialogueGenerator() {
             </Label>
             <Select
               onValueChange={(value) => {
-                setSelectedLevel(value);
-                updatePreview(selectedScenario, value, selectedFocus);
+                setSelectedLevel(value as string);
+                updatePreview(selectedScenario, value as string, selectedFocus);
               }}
             >
               <SelectTrigger>
@@ -316,8 +322,8 @@ export default function EnhancedDialogueGenerator() {
             </Label>
             <Select
               onValueChange={(value) => {
-                setSelectedFocus(value);
-                updatePreview(selectedScenario, selectedLevel, value);
+                setSelectedFocus(value as string);
+                updatePreview(selectedScenario, selectedLevel, value as string);
               }}
             >
               <SelectTrigger>
