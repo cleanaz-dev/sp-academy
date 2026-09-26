@@ -56,13 +56,12 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
       <SidebarHeader className="mt-4 flex items-center justify-center">
         <Image
           src="/logo1-up.png"
-          height={200}
-          width={200}
+          width={1816}
+          height={368}
           alt="logo"
           quality={100}
           priority
-          style={{ width: "auto", height: "auto" }}
-          className="flex"
+          className="flex h-auto w-auto"
         />
       </SidebarHeader>
 
@@ -85,18 +84,20 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
                           : "text-blue-500",
-                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
+                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white",
                       )}
                       render={
                         <Link href={navItem.href}>
-                          <div className={isActive ? "text-white" : "text-blue-400 "}>
+                          <div
+                            className={
+                              isActive ? "text-white" : "text-blue-400"
+                            }
+                          >
                             {navItem.icon}
                           </div>
                           <span
                             className={`text-sm font-medium ${
-                              isActive
-                                ? "text-white"
-                                : "text-blue-500 "
+                              isActive ? "text-white" : "text-blue-500"
                             }`}
                           >
                             {navItem.label}
@@ -131,18 +132,20 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
                         isActive
                           ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
                           : "text-blue-500",
-                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
+                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white",
                       )}
                       render={
                         <Link href={settingItem.href}>
-                          <div className={isActive ? "text-white" : "text-blue-400 "}>
+                          <div
+                            className={
+                              isActive ? "text-white" : "text-blue-400"
+                            }
+                          >
                             {settingItem.icon}
                           </div>
                           <span
                             className={`text-sm font-medium ${
-                              isTextActive
-                                ? "text-white"
-                                : "text-blue-500 "
+                              isTextActive ? "text-white" : "text-blue-500"
                             }`}
                           >
                             {settingItem.label}
