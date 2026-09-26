@@ -56,12 +56,12 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
       <SidebarHeader className="mt-4 flex items-center justify-center">
         <Image
           src="/logo1-up.png"
-          width={1816}
-          height={368}
+          width={1000}
+          height={1000}
           alt="logo"
           priority
           quality={100}
-          className="h-auto w-[230px] object-contain"
+          className="h-auto w-[200px] object-contain"
         />
       </SidebarHeader>
 
