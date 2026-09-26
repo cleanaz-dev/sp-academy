@@ -59,9 +59,9 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
           width={1816}
           height={368}
           alt="logo"
-          quality={100}
           priority
-          className="flex h-auto w-auto"
+          quality={100}
+          className="h-auto w-[230px] object-contain"
         />
       </SidebarHeader>
 
