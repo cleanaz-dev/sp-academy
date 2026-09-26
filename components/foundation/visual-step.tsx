@@ -147,7 +147,7 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                 NPC Says:
               </p>
-              <p className="text-xl font-medium text-gray-900 leading-snug">
+              <p className="text-lg font-medium text-gray-900 leading-snug">
                 "{data.npcLine}"
               </p>
             </div>
