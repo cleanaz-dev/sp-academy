@@ -94,7 +94,7 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
         <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-600">
           <MapPin size={24} />
         </div>
-        <p className="text-lg leading-relaxed text-gray-800 font-medium">
+        <p className="text-md leading-relaxed text-gray-800 font-medium">
           {data.sceneDescription}
         </p>
       </div>
