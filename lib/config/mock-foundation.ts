@@ -5,38 +5,35 @@ export const MOCK_FOUNDATION_DATA = {
   status: "ready",
   visualContent: {
     imageS3Key: "foundation/usr_test/day1/visual.png",
+    // NEW: wasn't present on the old mock — visual scene now has its own NPC audio clip
+    npcAudioS3Key: "foundation/usr_test/day1/npc.mp3",
     sceneDescription:
-      "In the tidy hallway of your new apartment building, a friendly neighbor introduces herself and offers her hand in greeting.",
+      "In the tidy hallway of your new apartment building, your neighbor Marie greets you beside the potted plants and introduces herself with a handshake.",
     altText:
-      "A tidy apartment hallway with pale walls, a row of potted plants along the floor, and a smiling neighbor woman standing by her open door, extending her hand in greeting toward the viewer.",
+      "A tidy apartment hallway with potted plants lined along one wall. A smiling woman in casual clothes stands facing the viewer, extending her right hand in greeting.",
     npcLine:
-      "Bonjour ! Je suis Marie, votre voisine du troisième. *Elle vous tend la main avec un sourire.*",
+      "Bonjour ! Vous êtes le nouveau voisin, n'est-ce pas ? Moi, c'est Marie, j'habite juste à côté. Ravi de vous rencontrer !",
     constraint: {
       requiredChunk: "enchanté",
       validReplies: [
-        "Bonjour, enchanté. Je suis Alex.",
-        "Enchanté, Marie. Moi, je suis Alex.",
-        "Enchanté ! Je suis Alex, votre nouveau voisin.",
+        "Bonjour, je suis le nouveau voisin, enchanté !",
+        "Enchanté, Marie ! Je viens d'emménager.",
+        "Bonjour ! Enchanté de faire votre connaissance.",
       ],
     },
   },
   grammarContent: {
-    targetSentence: "Bonjour, enchanté. Je suis Alex.",
-    nativeSentence: "Hello, nice to meet you. I'm Alex.",
+    targetSentence: "Bonjour, je suis Paul, enchanté !",
+    nativeSentence: "Hello, I'm Paul — nice to meet you!",
     romanizedSentence: null,
     words: [
       {
         word: "Bonjour",
         gloss: "hello / good day",
-        role: "greeting (interjection)",
+        role: "interjection (greeting)",
       },
       {
-        word: "enchanté",
-        gloss: "nice to meet you",
-        role: "fixed polite phrase",
-      },
-      {
-        word: "Je",
+        word: "je",
         gloss: "I",
         role: "subject pronoun",
       },
@@ -46,88 +43,103 @@ export const MOCK_FOUNDATION_DATA = {
         role: "verb (1st person singular of être)",
       },
       {
-        word: "Alex",
-        gloss: "Alex",
-        role: "name (predicate noun)",
+        word: "Paul",
+        gloss: "Paul (name)",
+        role: "proper noun (name in polite self-introduction)",
+      },
+      {
+        word: "enchanté",
+        gloss: "nice to meet you (literally: delighted)",
+        role: "fixed polite phrase (masculine form)",
       },
     ],
-    highlightGroup: ["Bonjour", "enchanté", "Je", "suis"],
+    // NOTE: old mock highlighted "Je" + "suis" as two separate items; new data
+    // groups them as a single "je suis" chunk — adjust any highlight-matching
+    // logic that assumed one highlightGroup entry === one word.
+    highlightGroup: ["Bonjour", "je suis", "enchanté"],
     clozeItems: [
       {
         id: "cloze-1",
-        hostSentence: "___, enchanté. Je suis Alex.",
-        blankPosition: 0,
-        acceptableAnswers: ["Bonjour", "bonjour"],
+        hostSentence: "Bonjour, je suis Paul, enchanté !",
+        blankPosition: 2,
+        acceptableAnswers: ["suis"],
         wrongAnswerFeedback: [
           {
-            wrong: "Salut",
+            wrong: "est",
             feedback:
-              "«Salut» is too casual for a formal neighbor — use «Bonjour».",
+              "'Je' always pairs with 'suis' — 'est' is only used with 'il' or 'elle'.",
           },
           {
-            wrong: "Bonsoir",
-            feedback:
-              "«Bonsoir» is for the evening; during the day say «Bonjour».",
+            wrong: "es",
+            feedback: "'es' goes with 'tu'; with 'je' you must say 'suis'.",
           },
         ],
       },
       {
         id: "cloze-2",
-        hostSentence: "Bonjour, ___. Je suis Alex.",
-        blankPosition: 1,
-        acceptableAnswers: ["enchanté", "Enchanté", "enchantée", "Enchantée"],
+        hostSentence: "Bonjour, je suis Paul, enchanté !",
+        blankPosition: 4,
+        acceptableAnswers: ["enchanté"],
         wrongAnswerFeedback: [
           {
-            wrong: "enchanter",
-            feedback: "Drop the final -r: the fixed phrase is «enchanté».",
+            wrong: "enchantée",
+            feedback:
+              "You are a man, so use the masculine form 'enchanté' without the extra -e.",
           },
           {
-            wrong: "merci",
+            wrong: "bonsoir",
             feedback:
-              "«Merci» means 'thank you'; say «enchanté» for 'nice to meet you'.",
+              "'bonsoir' is an evening greeting; to say 'nice to meet you', use 'enchanté'.",
           },
         ],
       },
       {
+        // NOTE: old mock's 3rd clozeItem blanked "suis" again in the same
+        // targetSentence. New data instead uses a *different* host sentence
+        // ("Merci beaucoup, monsieur.") to drill a bonus word ("merci") that
+        // isn't in targetSentence at all — components that assume every
+        // clozeItem.hostSentence is a variant of grammarContent.targetSentence
+        // will need to be relaxed.
         id: "cloze-3",
-        hostSentence: "Bonjour, enchanté. Je ___ Alex.",
-        blankPosition: 3,
-        acceptableAnswers: ["suis"],
+        hostSentence: "Merci beaucoup, monsieur.",
+        blankPosition: 0,
+        acceptableAnswers: ["Merci", "merci"],
         wrongAnswerFeedback: [
           {
-            wrong: "est",
-            feedback: "«Est» goes with he/she; with «je» always use «suis».",
+            wrong: "bonjour",
+            feedback: "'bonjour' is a greeting; use 'merci' to thank someone.",
           },
           {
-            wrong: "sont",
-            feedback: "«Sont» is for 'they'; with «je» say «suis».",
+            wrong: "enchanté",
+            feedback:
+              "'enchanté' means 'nice to meet you' — here you are thanking someone, so use 'merci'.",
           },
         ],
       },
     ],
   },
   pronunciationData: {
-    referenceText: "Bonjour, enchanté. Je suis Alex.",
+    referenceText: "Bonjour, je suis Paul, enchanté !",
     audioS3Key: "foundation/usr_test/day1/pronunciation.mp3",
     breakdown: [
       {
         text: "Bonjour",
         phonetic: "bɔ̃.ʒuʁ",
-        hint: "Focus on the nasal 'on'",
+        hint: "The 'on' is one single nasal vowel — the 'n' is not pronounced as its own consonant.",
+      },
+      {
+        text: "je suis",
+        phonetic: "ʒə.sɥi",
+        hint: "The final 's' in suis is silent.",
+      },
+      {
+        text: "Paul",
+        phonetic: "pɔl",
+        hint: null,
       },
       {
         text: "enchanté",
         phonetic: "ɑ̃.ʃɑ̃.te",
-        hint: null,
-      },
-      {
-        text: "Je suis",
-        phonetic: "ʒə.sɥi",
-        hint: "The 's' in suis is silent",
-      },
-      {
-        text: "Alex",
-        phonetic: "a.lɛks",
         hint: null,
       },
     ],
@@ -140,54 +152,73 @@ export const MOCK_FOUNDATION_DATA = {
   },
   listeningContent: {
     id: "listen-1",
-    referenceText: "Bonjour, enchanté. Je suis Alex.",
+    referenceText: "Bonjour, je suis Paul, enchanté !",
     audioS3Key: "foundation/usr_test/day1/listening.mp3",
-    expectedWords: ["Bonjour", "enchanté", "Je", "suis", "Alex"],
+    // RENAMED: old mock called this "expectedWords". New payload calls it
+    // "expectedOrder" — same shape (ordered array of the target words), just
+    // a new key name. Update whatever component reads expectedWords.
+    expectedOrder: ["Bonjour", "je", "suis", "Paul", "enchanté"],
     wordBank: [
-      "Alex",
-      "Je",
-      "Bonsoir",
-      "suis",
+      "es",
       "enchanté",
       "Bonjour",
-      "Salut",
-      "est",
+      "bonsoir",
+      "Paul",
+      "suis",
+      "je",
+      "enchantée",
     ], // Scrambled with distractors
-    contrastFeedback: {
-      triggerWord: "Bonsoir",
-      message:
-        "Listen closely! The speaker says 'Bonjour' (used during the day), not 'Bonsoir' (used in the evening).",
-    },
+    // CHANGED SHAPE: old mock's "contrastFeedback" was an object
+    // { triggerWord, message } used to show a specific correction when the
+    // user picked one particular wrong word. New data instead sends a plain
+    // free-text "contrast" string describing the general contrast being
+    // tested (not tied to a single triggerWord). If your component needs a
+    // triggerWord/message pair for a toast/callout, you'll need to either
+    // parse this string yourself or have the backend keep sending the old
+    // shape too.
+    contrast:
+      "daytime vs evening greeting, masculine vs feminine ending, je vs tu verb form",
   },
   quizContent: {
     items: [
       {
         type: "verbal_cloze",
-        prompt: "___, enchanté. Je suis Alex.",
+        prompt: "___, je suis Paul, enchanté !",
         hint: "Daytime greeting",
         acceptableAnswers: ["bonjour", "Bonjour"],
-        feedback: "Use 'Bonjour' during the day!",
+        feedback: "Not quite — the daytime greeting in French is 'bonjour'.",
       },
       {
         type: "reorder",
-        prompt: "Translate: 'Nice to meet you. I am Alex.'",
-        expectedWords: ["Enchanté.", "Je", "suis", "Alex."],
-        scrambledBank: ["suis", "Alex.", "Je", "Enchanté.", "est", "merci"],
+        prompt: "Translate: 'Hello, I'm Paul — nice to meet you!'",
+        expectedWords: ["Bonjour,", "je", "suis", "Paul,", "enchanté", "!"],
+        scrambledBank: [
+          "!",
+          "Bonjour,",
+          "sont",
+          "bonsoir",
+          "enchantée",
+          "Paul,",
+          "je",
+          "suis",
+          "enchanté",
+        ],
       },
       {
         type: "true_false",
         statement:
-          "If you meet your neighbor at 8:00 PM, you should say 'Bonjour'.",
+          "It's 9 p.m. and Paul runs into his neighbor in the hallway. Saying 'Bonjour' is the correct greeting for this time of day.",
         isTrue: false,
         explanation:
-          "At 8:00 PM (evening), you must say 'Bonsoir'. 'Bonjour' is only for the daytime.",
+          "In the evening, switch to 'bonsoir' — 'bonjour' is the daytime greeting.",
       },
       {
         type: "verbal_cloze",
-        prompt: "Bonjour, enchanté. Je ___ Alex.",
-        hint: "I 'am' (1st person être)",
-        acceptableAnswers: ["suis"],
-        feedback: "Always use 'suis' with 'Je'.",
+        prompt: "Bonjour, je suis Paul, ___ !",
+        hint: "The polite phrase for meeting someone for the first time",
+        acceptableAnswers: ["enchanté", "Enchanté", "enchante", "Enchante"],
+        feedback:
+          "Almost — since Paul is a man, he says 'enchanté', without the extra -e.",
       },
     ],
     passThreshold: 0.7,
@@ -195,16 +226,27 @@ export const MOCK_FOUNDATION_DATA = {
   freestyle: {
     mode: "SPECIFIC",
     level: "ZERO",
-    topic: "Greeting a Neighbor",
-    persona: "a neighbor you run into in your apartment building",
-    requiredChunks: ["Bonjour", "Bonsoir", "Enchanté(e)", "Je suis [nom]"],
+    topic: "Meeting a Neighbor",
+    persona:
+      "a friendly neighbor you run into in the hallway of your apartment building in Paris",
+    // NOTE: old mock's requiredChunks included a 4th item, "Je suis [nom]"
+    // (a templated placeholder). New data's requiredChunks list only has 3
+    // literal chunks and drops the placeholder-style entry.
+    requiredChunks: ["Bonjour", "Enchanté", "Je suis"],
     openingLine:
-      "You run into a neighbor in your apartment building — greet them with the right greeting for the time of day, politely tell them your name, and say 'nice to meet you', replying in French.",
+      "Paul, you've just bumped into a neighbor in your apartment building — greet them in French, introduce yourself politely, and say it's nice to meet them.",
   },
+  // EXPANDED: old mock's lessonHandoff had 6 fields. New payload's
+  // lessonHandoff is much richer — it now carries intro/outro copy + audio,
+  // per-section "taught/blanked/wrong" rollups, and duplicates a few fields
+  // that also live deeper in the object (sceneDescription, npcLine/npcAudio,
+  // pronunciationSound, listeningContrast, etc.) so a lesson-summary screen
+  // can render without walking the whole payload. Treat this block as the
+  // "flattened summary" of everything above it.
   lessonHandoff: {
     day: 1,
     theme: "Greetings and Names",
-    targetSentence: "Bonjour, enchanté. Je suis Alex.",
+    targetSentence: "Bonjour, je suis Paul, enchanté !",
     chunks: [
       "bonjour / bon après-midi",
       "bonjour (le matin, poli)",
@@ -215,7 +257,34 @@ export const MOCK_FOUNDATION_DATA = {
       "please call me [name]",
     ],
     npcLine:
-      "Bonjour ! Je suis Marie, votre voisine du troisième. *Elle vous tend la main avec un sourire.*",
-    freestyleTopic: "Greeting a Neighbor",
+      "Bonjour ! Vous êtes le nouveau voisin, n'est-ce pas ? Moi, c'est Marie, j'habite juste à côté. Ravi de vous rencontrer !",
+    freestyleTopic: "Meeting a Neighbor",
+    // NEW fields below — none of these existed on the old mock's lessonHandoff
+    introNative:
+      "Hi Paul! Today you'll learn how to greet someone in French and politely tell them your name — perfect for meeting a new neighbor.",
+    introTarget:
+      "Bonjour Paul ! Aujourd'hui, on apprend à dire bonjour et à donner son nom en français.",
+    outroNative:
+      "Great job today, Paul! You can now greet someone in French and introduce yourself politely. How do you feel about the lesson?",
+    outroTarget:
+      "Bravo Paul ! Tu sais maintenant dire bonjour et donner ton nom en français. Comment te sens-tu ?",
+    introNativeAudio: "foundation/usr_test/day1/intro_native.mp3",
+    introTargetAudio: "foundation/usr_test/day1/intro_target.mp3",
+    outroNativeAudio: "foundation/usr_test/day1/outro_native.mp3",
+    outroTargetAudio: "foundation/usr_test/day1/outro_target.mp3",
+    npcAudio: "foundation/usr_test/day1/npc.mp3",
+    taughtChunks: ["Bonjour", "je suis", "enchanté"],
+    blankedWords: ["suis", "enchanté", "Merci", "bonjour"],
+    wrongAnswers: ["est", "es", "enchantée", "bonsoir", "bonjour", "enchanté"],
+    pronunciationSound: "nasal on (ɔ̃)",
+    listeningContrast:
+      "daytime vs evening greeting, masculine vs feminine ending, je vs tu verb form",
+    visualRequiredChunk: "enchanté",
+    sceneDescription:
+      "In the tidy hallway of your new apartment building, your neighbor Marie greets you beside the potted plants and introduces herself with a handshake.",
+    freestylePersona:
+      "a friendly neighbor you run into in the hallway of your apartment building in Paris",
+    trueFalseStatement:
+      "It's 9 p.m. and Paul runs into his neighbor in the hallway. Saying 'Bonjour' is the correct greeting for this time of day.",
   },
 };

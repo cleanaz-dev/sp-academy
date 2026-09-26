@@ -1,18 +1,20 @@
 "use client";
 
 import { usePronunciation } from "@/context/pronunciation-context";
-import { useMiniAudioPlayer } from "@/hooks/use-mini-audio-player";
 import { useSpeak } from "@/hooks/use-speak";
-import React, { useState, useEffect } from "react";
-import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const { play, isPlaying: isPlayingS3, currentS3Key } = useMiniAudioPlayer();
-  const { speak, isPlaying: isPlayingTTS } = useSpeak();
+  const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
   const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
 
   // State to track which word/chunk we are practicing
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // S3 Audio State for the full sentence
+  const [isPlayingS3, setIsPlayingS3] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // If there's no breakdown array (fallback to old JSON), just use the full sentence
   const breakdown = data.breakdown || [];
@@ -23,15 +25,34 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   const currentText = isFullSentenceStep ? data.referenceText : breakdown[currentIndex].text;
   const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex].phonetic;
   const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex].hint;
+  
+  // NEW: Check if the current word has a specific "focus sound" from the new JSON
+  const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions.includes(currentIndex));
 
   const targetLang = "fr-FR"; 
 
-  // Reset Azure's score when we switch words
+  // Reset Azure's score and stop audio when we switch words
   useEffect(() => {
     reset();
+    stopAudio();
   }, [currentIndex, reset]);
 
+  // Cleanup audio if component unmounts
+  useEffect(() => {
+    return () => stopAudio();
+  }, []);
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+    setIsPlayingS3(false);
+    stopTTS();
+  };
+
   const handleRecordToggle = () => {
+    stopAudio();
     if (isRecording) {
       cancelAssessment();
     } else {
@@ -39,18 +60,45 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     }
   };
 
+  const toggleS3Audio = (s3Key: string) => {
+    if (isPlayingS3) {
+      stopAudio();
+      return;
+    }
+    stopTTS();
+    
+    const audio = new Audio(s3Key);
+    audioRef.current = audio;
+    audio.onended = () => setIsPlayingS3(false);
+    
+    audio.play().catch(err => {
+      console.warn("Audio playback skipped (mock file not found locally):", err);
+      setIsPlayingS3(false);
+    });
+    
+    setIsPlayingS3(true);
+  };
+
   const handlePlayAudio = () => {
+    if (isRecording) return; // Don't play if mic is hot
+
     if (isFullSentenceStep && data.audioS3Key) {
-      play(data.audioS3Key);
+      toggleS3Audio(data.audioS3Key);
     } else {
-      // Use browser TTS for the individual words if we don't have S3 files for them
-      speak(currentText, targetLang);
+      // Use browser TTS for the individual words
+      if (isPlayingTTS) {
+        stopTTS();
+      } else {
+        stopAudio();
+        speak(currentText, targetLang);
+      }
     }
   };
 
   const isAudioActive = isPlayingS3 || isPlayingTTS;
 
   const handleNextWord = () => {
+    stopAudio();
     if (currentIndex < totalSteps - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
@@ -115,30 +163,38 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         </p>
         
         {currentPhonetic && (
-          <p className="text-lg font-mono text-gray-400 relative z-10 mb-4">
+          <p className="text-lg font-mono text-gray-400 relative z-10 mb-6">
             /{currentPhonetic}/
           </p>
         )}
 
-        {currentHint && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100 relative z-10">
-            <Activity size={16} /> {currentHint}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center justify-center gap-3 relative z-10">
+          {activeFocusSound && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 text-purple-700 text-sm font-bold border border-purple-200">
+              <Ear size={16} /> Focus: {activeFocusSound.sound}
+            </div>
+          )}
+          {currentHint && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100">
+              <Activity size={16} /> {currentHint}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action Buttons (Play / Record) */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <button 
           onClick={handlePlayAudio}
-          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg ${
+          disabled={isRecording}
+          className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg disabled:opacity-50 ${
             isAudioActive 
               ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50' 
               : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
           }`}
         >
           {isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
-          {isAudioActive ? "Playing..." : "Listen"}
+          {isAudioActive ? "Stop" : "Listen"}
         </button>
         
         <button 
@@ -184,7 +240,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         </div>
       )}
 
-      {/* Navigation (Only appears forcefully if they got a score, but can also just be a fixed 'Next' block) */}
+      {/* Navigation */}
       <div className="mt-auto pt-6 flex justify-end border-t border-gray-100">
         <button 
           onClick={handleNextWord} 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Circle, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target } from "lucide-react";
+import { Check, Circle, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target, Award } from "lucide-react";
 import { MOCK_FOUNDATION_DATA } from "@/lib/config/mock-foundation";
 
 import { IntroStep } from "./intro-step";
@@ -11,6 +11,7 @@ import { PronunciationStep } from "./pronunciation-step";
 import { ListeningStep } from "./listening-step";
 import { QuizStep } from "./quiz-step";
 import { FreestyleStep } from "./freestyle-step";
+import { OutroStep } from "./outro-step";
 
 const STEPS_CONFIG = [
   { id: 0, title: "Mission Briefing", icon: Flag },
@@ -20,6 +21,7 @@ const STEPS_CONFIG = [
   { id: 4, title: "Listening Focus", icon: Headphones },
   { id: 5, title: "Knowledge Check", icon: PenTool },
   { id: 6, title: "Final Mission", icon: Target },
+  { id: 7, title: "Mission Debrief", icon: Award }, // NEW STEP!
 ];
 
 export function FoundationWrapper() {
@@ -34,7 +36,8 @@ export function FoundationWrapper() {
       case 3: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(4)} />;
       case 4: return <ListeningStep data={data.listeningContent} onNext={() => setStep(5)} />;
       case 5: return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
-      case 6: return <FreestyleStep data={data} onFinish={() => alert("Lesson Complete!")} />;
+      case 6: return <FreestyleStep data={data} onNext={() => setStep(7)} />;
+      case 7: return <OutroStep data={data} onFinish={() => alert("Course Complete! Routing to Dashboard...")} />;
       default:
         return <div>Unknown Step</div>;
     }
@@ -44,7 +47,6 @@ export function FoundationWrapper() {
     <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-6 md:gap-8">
       
       {/* LEFT SIDEBAR: STEPPER CARD */}
-      {/* Added bg-white, padding, rounding, and h-fit so it looks like a matching left-hand card */}
       <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
         <div className="mb-10">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">

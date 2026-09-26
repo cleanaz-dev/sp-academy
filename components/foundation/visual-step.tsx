@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Image as ImageIcon, Loader2, MapPin, MessageCircle, ArrowRight, User } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Image as ImageIcon, Loader2, MapPin, ArrowRight, User, Play, Square } from "lucide-react";
 import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
 
 export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) {
@@ -11,6 +11,10 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
   // Track which valid reply the user selected
   const [selectedReply, setSelectedReply] = useState<number | null>(null);
 
+  // Audio state & ref
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     async function fetchImage() {
       if (!data.imageS3Key) {
@@ -18,12 +22,56 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
         return;
       }
       setIsLoadingImage(true);
+      // Depending on your setup, you might fetch real URLs here
       const url = await getPresignedImageUrl(data.imageS3Key);
       setImageUrl(url);
       setIsLoadingImage(false);
     }
     fetchImage();
   }, [data.imageS3Key]);
+
+  // Cleanup audio if the component unmounts while playing
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    };
+  }, []);
+
+  const toggleAudio = () => {
+    if (isPlayingAudio) {
+      audioRef.current?.pause();
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    if (!data.npcAudioS3Key) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    const audio = new Audio(data.npcAudioS3Key);
+    audioRef.current = audio;
+    audio.onended = () => setIsPlayingAudio(false);
+    
+    audio.play().catch((err) => {
+      console.warn("Audio playback skipped (mock file not found locally):", err);
+      setIsPlayingAudio(false);
+    });
+
+    setIsPlayingAudio(true);
+  };
+
+  const handleNext = () => {
+    // Ensure audio stops if they move to the next step
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    onNext();
+  };
 
   // Safely extract the constraints
   const validReplies = data.constraint?.validReplies || [];
@@ -75,9 +123,27 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
         
         {/* NPC Quote Overlapping Image */}
         <div className="absolute -bottom-6 left-0 right-0 px-6 animate-in slide-in-from-bottom-4 duration-500 delay-300 fill-mode-backwards">
-          <div className="bg-white px-6 py-5 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 max-w-2xl mx-auto flex gap-4 items-start">
-            <MessageCircle className="text-blue-500 shrink-0 mt-1" size={24} />
-            <div>
+          <div className="bg-white px-6 py-5 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 max-w-2xl mx-auto flex gap-4 items-center">
+            
+            {/* Interactive Play Button replaces the static MessageCircle icon */}
+            <button 
+              onClick={toggleAudio}
+              disabled={!data.npcAudioS3Key}
+              className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                !data.npcAudioS3Key ? 'bg-gray-100 text-gray-300 cursor-not-allowed' :
+                isPlayingAudio 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100'
+              }`}
+            >
+              {isPlayingAudio ? (
+                <Square size={20} className="fill-current" />
+              ) : (
+                <Play size={20} className="fill-current ml-1" /> // ml-1 offsets the triangle slightly so it looks optically centered
+              )}
+            </button>
+
+            <div className="flex-1">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                 NPC Says:
               </p>
@@ -89,9 +155,9 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
         </div>
       </div>
 
-      {/* RPG-Style Dialogue Selector (Using your constraint data!) */}
+      {/* RPG-Style Dialogue Selector */}
       {validReplies.length > 0 && (
-        <div className="mb-8 animate-in fade-in delay-700 fill-mode-backwards">
+        <div className="mb-8 animate-in fade-in delay-700 fill-mode-backwards mt-4">
           <div className="flex items-center gap-3 mb-4">
             <User className="text-indigo-500" size={20} />
             <h3 className="font-bold text-gray-900">Choose your response:</h3>
@@ -121,7 +187,7 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
       {/* Next Button - Unlocks when they pick a reply */}
       <div className="mt-auto pt-8 flex justify-end border-t border-gray-100">
         <button 
-          onClick={onNext} 
+          onClick={handleNext} 
           disabled={selectedReply === null && validReplies.length > 0}
           className={`w-full sm:w-auto px-8 py-4 font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-2 ${
             selectedReply !== null || validReplies.length === 0

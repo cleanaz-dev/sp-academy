@@ -1,76 +1,121 @@
 "use client";
 
-import { useSpeak } from "@/hooks/use-speak";
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Play, Volume2, Square, ArrowRight } from "lucide-react";
 
 export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const { speak, isPlaying, stop } = useSpeak();
-  
   const handoff = data.lessonHandoff || {};
-  const theme = handoff.theme || "Today's Lesson";
-  const day = handoff.day || 1;
+  
+  // Data extraction using the new richer lessonHandoff fields
   const chunks = handoff.chunks || [];
   const targetSentence = handoff.targetSentence || "";
   const freestyleTopic = handoff.freestyleTopic || "";
+  const introNative = handoff.introNative || "";
+  const introTarget = handoff.introTarget || "";
+  const introNativeAudio = handoff.introNativeAudio || "";
+  const introTargetAudio = handoff.introTargetAudio || "";
 
+  // We no longer need `useSpeak`. We'll manage standard HTML Audio element state.
   const [activeAudio, setActiveAudio] = useState<"native" | "target" | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Cleanup audio if the component unmounts while playing
   useEffect(() => {
-    if (!isPlaying) setActiveAudio(null);
-  }, [isPlaying]);
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    };
+  }, []);
 
-  const playNativeIntro = () => {
-    if (activeAudio === "native") return stop();
-    stop();
-    setActiveAudio("native");
-    speak(`Welcome to Day ${day}...`, "en-US", 1.0);
-  };
+  const toggleAudio = (type: "native" | "target", srcKey: string) => {
+    // If clicking the currently playing audio, stop it
+    if (activeAudio === type) {
+      audioRef.current?.pause();
+      setActiveAudio(null);
+      return;
+    }
 
-  const playTargetSentence = () => {
-    if (activeAudio === "target") return stop();
-    stop();
-    setActiveAudio("target");
-    speak(targetSentence, "fr-FR", 1.0);
+    // Stop anything currently playing
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    // In a production app, you might prepend a CloudFront domain or fetch a pre-signed URL here.
+    // E.g. const url = `https://d12345.cloudfront.net/${srcKey}`
+    const audioUrl = srcKey; 
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+
+    audio.onended = () => setActiveAudio(null);
+    
+    // Catch handles the error gracefully when running locally without the actual mp3 files
+    audio.play().catch(err => {
+      console.warn("Audio playback skipped (mock file not found locally):", err);
+      setActiveAudio(null);
+    });
+
+    setActiveAudio(type);
   };
 
   const handleStart = () => {
-    stop();
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
     onNext();
   };
 
   return (
     <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500">
       
-      {/* Header */}
-      <div className="mb-10">
-     
-        <p className="text-gray-500 text-lg max-w-xl">
-          Review today's target phrase and essential vocabulary before entering the simulation.
-        </p>
+      {/* Intro Copy & Audio Players */}
+      <div className="mb-10 flex flex-col gap-4">
+        
+        {/* Native Intro */}
+        <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <button 
+            onClick={() => toggleAudio("native", introNativeAudio)} 
+            className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+              activeAudio === 'native' 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+            }`}
+          >
+            {activeAudio === "native" ? <Square size={20} className="fill-current" /> : <Volume2 size={20} />}
+          </button>
+          <p className="text-gray-700 text-lg flex-1">
+            {introNative}
+          </p>
+        </div>
+
+        {/* Target Intro */}
+        <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <button 
+            onClick={() => toggleAudio("target", introTargetAudio)} 
+            className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+              activeAudio === 'target' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white hover:bg-gray-50 text-blue-600'
+            }`}
+          >
+            {activeAudio === "target" ? <Square size={20} className="fill-current" /> : <Play size={20} className="fill-current" />}
+          </button>
+          <p className="text-blue-900 font-medium text-lg flex-1">
+            {introTarget}
+          </p>
+        </div>
+
       </div>
 
-      {/* Target Sentence Area */}
-      <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-6 md:p-8 mb-8">
+      {/* Target Sentence Area (Simplified since audio moved to intros) */}
+      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 md:p-8 mb-8 text-center">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Main Target Sentence
         </h3>
-        <p className="text-2xl md:text-3xl font-medium text-gray-900 leading-snug mb-6">
+        <p className="text-2xl md:text-3xl font-medium text-gray-900 leading-snug">
           "{targetSentence}"
         </p>
-        
-        {/* Audio Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button onClick={playNativeIntro} className={`flex-1 py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all ${activeAudio === "native" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"}`}>
-            {activeAudio === "native" ? <Square size={18} className="fill-current" /> : <Volume2 size={18} />}
-            {activeAudio === "native" ? "Stop Briefing" : "Play Briefing (EN)"}
-          </button>
-
-          <button onClick={playTargetSentence} className={`flex-1 py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all ${activeAudio === "target" ? "bg-purple-50 border-purple-200 text-purple-700" : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"}`}>
-            {activeAudio === "target" ? <Square size={18} className="fill-current" /> : <Play size={18} className="fill-current" />}
-            {activeAudio === "target" ? "Stop Target" : "Target Sentence (FR)"}
-          </button>
-        </div>
       </div>
 
       {/* Vocabulary Pills */}

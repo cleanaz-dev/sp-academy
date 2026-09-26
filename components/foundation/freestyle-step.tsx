@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Target, Mic, Sparkles, ShieldAlert } from "lucide-react";
+import { Target, Mic, Sparkles, ShieldAlert, ArrowRight } from "lucide-react";
 
-export function FreestyleStep({ data, onFinish }: { data: any; onFinish: () => void }) {
+export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { freestyle } = data;
 
   return (
@@ -71,10 +71,10 @@ export function FreestyleStep({ data, onFinish }: { data: any; onFinish: () => v
       {/* Footer / Finish Button */}
       <div className="mt-auto flex justify-center">
         <button 
-          onClick={onFinish} 
-          className="w-full sm:w-auto px-12 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl text-lg shadow-xl shadow-indigo-900/50 transition-all active:scale-95"
+          onClick={onNext} 
+          className="w-full sm:w-auto px-12 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl text-lg shadow-xl shadow-indigo-900/50 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
-          End Simulation & Finish Lesson 🎉
+          End Simulation & View Debrief <ArrowRight size={20} />
         </button>
       </div>
 

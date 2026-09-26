@@ -2,19 +2,42 @@
 
 import { useSpeak } from "@/hooks/use-speak";
 import React, { useState } from "react";
-import { Volume2, Loader2, ArrowRight } from "lucide-react";
+import { Volume2, Loader2, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 
 export function GrammarStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isLoading } = useSpeak();
   const targetLang = "fr-FR"; 
   
-  // Track which word is currently being spoken for a targeted loading state
+  // Track which word is currently being spoken
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
+
+  // Cloze state mapping id -> user input
+  const [clozeInputs, setClozeInputs] = useState<Record<string, string>>({});
+  const [clozeResults, setClozeResults] = useState<Record<string, { status: "correct" | "incorrect", feedback?: string }>>({});
 
   const handleSpeak = async (text: string, index: number | null = null) => {
     setActiveWordIndex(index);
     await speak(text, targetLang);
     setActiveWordIndex(null);
+  };
+
+  const handleClozeCheck = (item: any) => {
+    const userVal = (clozeInputs[item.id] || "").trim().toLowerCase();
+    const isCorrect = item.acceptableAnswers.some((ans: string) => ans.toLowerCase() === userVal);
+    
+    if (isCorrect) {
+      setClozeResults(prev => ({ ...prev, [item.id]: { status: "correct" } }));
+    } else {
+      // Check for specific wrong answer feedback
+      const specificFeedback = item.wrongAnswerFeedback?.find((fb: any) => fb.wrong.toLowerCase() === userVal);
+      setClozeResults(prev => ({ 
+        ...prev, 
+        [item.id]: { 
+          status: "incorrect", 
+          feedback: specificFeedback?.feedback || "Not quite, try again!" 
+        } 
+      }));
+    }
   };
 
   return (
@@ -29,7 +52,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         </p>
       </div>
       
-      {/* Target Sentence Display - Big, interactive card */}
+      {/* Target Sentence Display */}
       <button 
         onClick={() => handleSpeak(data.targetSentence, -1)}
         disabled={isLoading}
@@ -44,18 +67,29 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         <p className="text-3xl md:text-4xl font-bold text-blue-950 mb-3">
           {data.targetSentence}
         </p>
-        <p className="text-lg text-blue-800/70 font-medium">
+        <p className="text-lg text-blue-800/70 font-medium mb-6">
           {data.nativeSentence}
         </p>
+
+        {/* NEW: Highlight Group rendering correctly accommodates multi-word chunks */}
+        {data.highlightGroup && data.highlightGroup.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-4 border-t border-blue-200/50">
+            <span className="text-sm font-semibold text-blue-800 flex items-center mr-2">Key Chunks:</span>
+            {data.highlightGroup.map((chunk: string, idx: number) => (
+              <span key={idx} className="bg-white/80 text-blue-900 px-3 py-1 rounded-md text-sm font-bold shadow-sm border border-blue-100">
+                {chunk}
+              </span>
+            ))}
+          </div>
+        )}
       </button>
       
       {/* Word-by-Word Breakdown List */}
-      <div className="mb-8">
+      <div className="mb-12">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Word-by-Word Breakdown
         </h3>
         
-        {/* CHANGED HERE: Using Grid for 2-column layout on medium screens and up */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.words.map((wordObj: any, idx: number) => (
             <button 
@@ -64,19 +98,16 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
               disabled={isLoading}
               className="group flex items-start gap-4 p-5 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-xs hover:shadow-sm"
             >
-              {/* Play Icon Indicator */}
               <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors mt-0.5">
                 {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={18} /> : <Volume2 size={18} />}
               </div>
               
-              {/* Restructured for better vertical flow inside the half-width card */}
               <div className="flex flex-col w-full">
                 <span className="font-bold text-xl text-gray-900 group-hover:text-blue-700 transition-colors">
                   {wordObj.word}
                 </span>
                 <span className="text-gray-500 font-medium mb-3">{wordObj.gloss}</span>
                 
-                {/* Role Pill moved below to ensure it fits safely */}
                 <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-wider w-fit">
                   {wordObj.role}
                 </span>
@@ -85,6 +116,74 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
           ))}
         </div>
       </div>
+
+      {/* NEW: Cloze Practice items supporting variable hostSentences */}
+      {data.clozeItems && data.clozeItems.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
+            Quick Practice
+          </h3>
+          <div className="flex flex-col gap-4">
+            {data.clozeItems.map((item: any) => {
+              const res = clozeResults[item.id];
+              // We use acceptableAnswers[0] to figure out what part of the host sentence to blank out
+              const targetWord = item.acceptableAnswers[0];
+              const parts = item.hostSentence.split(new RegExp(`(${targetWord})`, 'i'));
+
+              return (
+                <div key={item.id} className={`p-5 rounded-2xl border-2 transition-colors ${res?.status === 'correct' ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+                  <div className="flex flex-wrap items-center gap-2 text-lg font-medium text-gray-900 leading-loose">
+                    {parts.map((part: string, i: number) => {
+                      if (part.toLowerCase() === targetWord.toLowerCase()) {
+                        return (
+                          <input
+                            key={i}
+                            type="text"
+                            value={clozeInputs[item.id] || ""}
+                            onChange={(e) => setClozeInputs(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            disabled={res?.status === 'correct'}
+                            className={`w-32 px-3 py-1 rounded-lg border-2 text-center focus:outline-hidden ${
+                              res?.status === 'correct' ? 'border-green-400 bg-green-100 text-green-900' :
+                              res?.status === 'incorrect' ? 'border-red-400 bg-red-50 text-red-900 focus:border-red-500' :
+                              'border-gray-300 focus:border-blue-500 bg-gray-50'
+                            }`}
+                            placeholder="type here"
+                          />
+                        );
+                      }
+                      return <span key={i}>{part}</span>;
+                    })}
+                  </div>
+
+                  {/* Feedback Area */}
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      {res?.status === 'incorrect' && (
+                        <p className="text-sm font-medium text-red-600 flex items-center gap-2">
+                          <XCircle size={16} /> {res.feedback}
+                        </p>
+                      )}
+                      {res?.status === 'correct' && (
+                        <p className="text-sm font-medium text-green-600 flex items-center gap-2">
+                          <CheckCircle2 size={16} /> Perfect!
+                        </p>
+                      )}
+                    </div>
+                    {res?.status !== 'correct' && (
+                      <button
+                        onClick={() => handleClozeCheck(item)}
+                        className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-sm font-bold rounded-lg transition-transform active:scale-95"
+                      >
+                        Check
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-auto pt-6 flex justify-end">
         <button 
