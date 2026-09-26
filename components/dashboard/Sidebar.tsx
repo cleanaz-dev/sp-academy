@@ -53,7 +53,7 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
 
   return (
     <ShadcnSidebar>
-      <SidebarHeader className="mt-4 flex items-center justify-center">
+      <SidebarHeader className="mt-1 flex items-center justify-center">
         <Image
           src="/logo1-up.png"
           width={1000}
