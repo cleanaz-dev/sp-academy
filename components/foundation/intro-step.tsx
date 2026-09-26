@@ -67,8 +67,18 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   };
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500">
+    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 max-w-4xl mx-auto">
       
+      {/* NEW: Intro Header Text at the top */}
+      <div className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          Lesson Overview
+        </h1>
+        <p className="text-lg text-gray-600">
+          Listen to the introduction below!
+        </p>
+      </div>
+
       {/* Intro Copy & Audio Players */}
       <div className="mb-10 flex flex-col gap-4">
         
@@ -108,7 +118,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
 
       </div>
 
-      {/* Target Sentence Area (Simplified since audio moved to intros) */}
+      {/* Target Sentence Area */}
       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 md:p-8 mb-8 text-center">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Main Target Sentence
@@ -136,7 +146,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
 
       {/* Footer / Start Action */}
       <div className="mt-12 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6">
-        <div>
+        <div className="text-center sm:text-left">
           <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Final Mission</h3>
           <p className="text-gray-900 font-medium">Roleplay: {freestyleTopic}</p>
         </div>
