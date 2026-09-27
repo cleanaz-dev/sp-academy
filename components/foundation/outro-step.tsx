@@ -3,9 +3,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Play, Volume2, Square, Frown, Meh, Smile, CheckCircle, PartyPopper } from "lucide-react";
 
+// Shared cap so the native and target cards truncate to the same length —
+// keeps both columns roughly the same height when placed side by side.
+const MAX_OUTRO_CHARS = 50;
+
+function truncateToChars(text: string, maxChars: number): string {
+  if (!text) return "";
+  if (text.length <= maxChars) return text;
+  const sliced = text.slice(0, maxChars);
+  const lastSpace = sliced.lastIndexOf(" ");
+  // avoid cutting mid-word unless the last space is way too early
+  const clean = lastSpace > maxChars * 0.6 ? sliced.slice(0, lastSpace) : sliced;
+  return `${clean.trimEnd()}…`;
+}
+
 export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void }) {
   const handoff = data.lessonHandoff || {};
-  
+
   // Audio state
   const [activeAudio, setActiveAudio] = useState<"native" | "target" | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -34,7 +48,7 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
     const audio = new Audio(srcKey);
     audioRef.current = audio;
     audio.onended = () => setActiveAudio(null);
-    
+
     audio.play().catch(err => {
       console.warn("Audio playback skipped (mock file not found locally):", err);
       setActiveAudio(null);
@@ -51,9 +65,12 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
   // Deduplicate arrays from handoff for a clean celebratory display
   const mastered = Array.from(new Set([...(handoff.taughtChunks || []), ...(handoff.blankedWords || [])]));
 
+  const outroNativeText = truncateToChars(handoff.outroNative, MAX_OUTRO_CHARS);
+  const outroTargetText = truncateToChars(handoff.outroTarget, MAX_OUTRO_CHARS);
+
   return (
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
-      
+
       {/* Header */}
       <div className="mb-10 text-center flex flex-col items-center">
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
@@ -64,35 +81,35 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
         </p>
       </div>
 
-      {/* Outro Audio Players */}
-      <div className="mb-10 flex flex-col gap-4">
+      {/* Outro Audio Players — side by side, text truncated to a matching length */}
+      <div className="mb-10 grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
         {/* Native Outro */}
-        <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <button 
-            onClick={() => toggleAudio("native", handoff.outroNativeAudio)} 
+        <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm flex gap-4 items-start">
+          <button
+            onClick={() => toggleAudio("native", handoff.outroNativeAudio)}
             className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
               activeAudio === 'native' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             {activeAudio === "native" ? <Square size={20} className="fill-current" /> : <Volume2 size={20} />}
           </button>
-          <p className="text-gray-700 text-lg flex-1">
-            {handoff.outroNative}
+          <p className="text-gray-700 text-base sm:text-lg flex-1 break-words" title={handoff.outroNative}>
+            {outroNativeText}
           </p>
         </div>
 
         {/* Target Outro */}
-        <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          <button 
-            onClick={() => toggleAudio("target", handoff.outroTargetAudio)} 
+        <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-sm flex gap-4 items-start">
+          <button
+            onClick={() => toggleAudio("target", handoff.outroTargetAudio)}
             className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-sm ${
               activeAudio === 'target' ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-50 text-blue-600'
             }`}
           >
             {activeAudio === "target" ? <Square size={20} className="fill-current" /> : <Play size={20} className="fill-current ml-1" />}
           </button>
-          <p className="text-blue-900 font-medium text-lg flex-1">
-            {handoff.outroTarget}
+          <p className="text-blue-900 font-medium text-base sm:text-lg flex-1 break-words" title={handoff.outroTarget}>
+            {outroTargetText}
           </p>
         </div>
       </div>
@@ -118,9 +135,9 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
       {/* User Feedback */}
       <div className="mt-auto border-t border-gray-100 pt-8 pb-4 text-center">
         <h3 className="text-xl font-bold text-gray-900 mb-6">How was today's lesson?</h3>
-        
+
         <div className="flex justify-center gap-4 sm:gap-8 mb-8">
-          <button 
+          <button
             onClick={() => setFeedback("hard")}
             className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all ${
               feedback === "hard" ? "bg-red-50 text-red-600 scale-110 shadow-sm ring-2 ring-red-200" : "text-gray-400 hover:bg-gray-50 hover:text-red-500 hover:scale-105"
@@ -129,8 +146,8 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
             <Frown size={48} />
             <span className="font-bold text-sm uppercase tracking-widest">Hard</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setFeedback("ok")}
             className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all ${
               feedback === "ok" ? "bg-blue-50 text-blue-600 scale-110 shadow-sm ring-2 ring-blue-200" : "text-gray-400 hover:bg-gray-50 hover:text-blue-500 hover:scale-105"
@@ -139,8 +156,8 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
             <Meh size={48} />
             <span className="font-bold text-sm uppercase tracking-widest">OK</span>
           </button>
-          
-          <button 
+
+          <button
             onClick={() => setFeedback("easy")}
             className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all ${
               feedback === "easy" ? "bg-green-50 text-green-600 scale-110 shadow-sm ring-2 ring-green-200" : "text-gray-400 hover:bg-gray-50 hover:text-green-500 hover:scale-105"
@@ -151,12 +168,12 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
           </button>
         </div>
 
-        <button 
+        <button
           onClick={handleFinish}
           disabled={!feedback}
           className={`w-full sm:w-80 mx-auto py-4 font-bold rounded-xl text-lg transition-all shadow-md active:scale-95 ${
-            feedback 
-              ? 'bg-gray-900 hover:bg-black text-white' 
+            feedback
+              ? 'bg-gray-900 hover:bg-black text-white'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
