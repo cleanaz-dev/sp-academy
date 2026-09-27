@@ -93,7 +93,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   };
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
+    <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
       <div className="mb-8 text-center">
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">

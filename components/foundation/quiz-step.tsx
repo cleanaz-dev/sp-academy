@@ -274,7 +274,7 @@ export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
   console.log("Current Quiz Item:", currentItem);
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 overflow-y-auto">
+    <div className="flex flex-col h-full p-8 overflow-y-auto">
       
       {/* Header & Progress */}
       <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-4">

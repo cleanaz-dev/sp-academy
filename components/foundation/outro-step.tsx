@@ -52,13 +52,10 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
   const mastered = Array.from(new Set([...(handoff.taughtChunks || []), ...(handoff.blankedWords || [])]));
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
+    <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
       {/* Header */}
       <div className="mb-10 text-center flex flex-col items-center">
-        <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mb-6 shadow-xs border border-yellow-200">
-          <PartyPopper size={32} />
-        </div>
         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
           Mission Accomplished!
         </h2>

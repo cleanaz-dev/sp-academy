@@ -67,7 +67,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
   };
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 max-w-4xl mx-auto">
+    <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
       
       {/* NEW: Intro Header Text at the top */}
       <div className="mb-8">

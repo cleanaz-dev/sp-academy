@@ -127,7 +127,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   );
 
   return (
-    <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500 overflow-y-auto">
+    <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
       {/* Header & Progress */}
       <div className="mb-10 text-center">
