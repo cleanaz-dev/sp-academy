@@ -11,9 +11,7 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
       
       {/* Header */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-bold tracking-widest uppercase mb-4">
-          <Sparkles size={16} /> Live Simulation
-        </div>
+        
         <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
           {freestyle.topic}
         </h2>
