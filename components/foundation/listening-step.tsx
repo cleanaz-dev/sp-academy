@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Square, ArrowRight, RotateCcw } from "lucide-react";
+import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
+import { useS3Media } from "@/context/s3-context"; // <-- Import the hook
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
+  // Resolve S3 Keys via our context
+  const { urls, isLoading: isAudioLoading } = useS3Media([data.audioS3Key]);
+  const resolvedAudioUrl = urls[0];
+
   // Audio state & ref
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -33,9 +38,10 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       return;
     }
 
-    if (!data.audioS3Key) return;
+    // <-- Use the resolved URL instead of the raw S3 Key
+    if (!resolvedAudioUrl) return; 
 
-    const audio = new Audio(data.audioS3Key);
+    const audio = new Audio(resolvedAudioUrl);
     audioRef.current = audio;
     audio.onended = () => setIsPlaying(false);
     
@@ -108,13 +114,22 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       <div className="flex justify-center mb-10">
         <button 
           onClick={toggleAudio}
+          disabled={isAudioLoading} // Prevent clicking while fetching presigned URL
           className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
-            isPlaying 
-              ? 'bg-blue-100 text-blue-600 ring-8 ring-blue-50' 
-              : 'bg-gray-900 text-white hover:bg-black hover:scale-105'
+            isAudioLoading 
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : isPlaying 
+                ? 'bg-blue-100 text-blue-600 ring-8 ring-blue-50' 
+                : 'bg-gray-900 text-white hover:bg-black hover:scale-105'
           }`}
         >
-          {isPlaying ? <Square size={28} className="fill-current" /> : <Play size={32} className="fill-current ml-1" />}
+          {isAudioLoading ? (
+            <Loader2 size={32} className="animate-spin" />
+          ) : isPlaying ? (
+            <Square size={28} className="fill-current" />
+          ) : (
+            <Play size={32} className="fill-current ml-1" />
+          )}
           {isPlaying && (
             <span className="absolute inset-0 rounded-full border-4 border-blue-400 animate-ping opacity-20"></span>
           )}

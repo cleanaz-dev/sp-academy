@@ -56,7 +56,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
       <button 
         onClick={() => handleSpeak(data.targetSentence, -1)}
         disabled={isLoading}
-        className="group w-full mb-10 p-8 bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-left transition-all hover:shadow-md hover:border-blue-300 relative overflow-hidden"
+        className="group w-full mb-10 p-8 bg-linear-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 text-left transition-all hover:shadow-md hover:border-blue-300 relative overflow-hidden shrink-0"
       >
         <div className="absolute top-8 right-8 text-blue-300 group-hover:text-blue-500 transition-colors">
           {isLoading && activeWordIndex === -1 ? <Loader2 className="animate-spin" size={28} /> : <Volume2 size={28} />}
@@ -71,7 +71,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
           {data.nativeSentence}
         </p>
 
-        {/* NEW: Highlight Group rendering correctly accommodates multi-word chunks */}
+        {/* Highlight Group rendering correctly accommodates multi-word chunks */}
         {data.highlightGroup && data.highlightGroup.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-4 border-t border-blue-200/50">
             <span className="text-sm font-semibold text-blue-800 flex items-center mr-2">Key Chunks:</span>
@@ -84,31 +84,38 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         )}
       </button>
       
-      {/* Word-by-Word Breakdown List */}
-      <div className="mb-12">
+      {/* Word-by-Word Breakdown List - MUCH MORE COMPACT */}
+      <div className="mb-8">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Word-by-Word Breakdown
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {data.words.map((wordObj: any, idx: number) => (
             <button 
               key={idx} 
               onClick={() => handleSpeak(wordObj.word, idx)}
               disabled={isLoading}
-              className="group flex items-start gap-4 p-5 bg-white hover:bg-gray-50 rounded-2xl border border-gray-200 hover:border-blue-200 transition-all text-left shadow-xs hover:shadow-sm"
+              className="group flex items-center gap-3 p-3 bg-white hover:bg-blue-50/50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all text-left shadow-xs"
             >
-              <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors mt-0.5">
-                {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={18} /> : <Volume2 size={18} />}
+              {/* Shrunk the icon and its container */}
+              <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
+                {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={14} /> : <Volume2 size={14} />}
               </div>
               
-              <div className="flex flex-col w-full">
-                <span className="font-bold text-xl text-gray-900 group-hover:text-blue-700 transition-colors">
-                  {wordObj.word}
-                </span>
-                <span className="text-gray-500 font-medium mb-3">{wordObj.gloss}</span>
+              <div className="flex flex-col">
+                {/* Word and Definition now sit together on the same line */}
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                    {wordObj.word}
+                  </span>
+                  <span className="text-gray-400 text-sm">
+                    = {wordObj.gloss}
+                  </span>
+                </div>
                 
-                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-wider w-fit">
+                {/* Role text is smaller and tighter */}
+                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">
                   {wordObj.role}
                 </span>
               </div>
@@ -117,7 +124,8 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         </div>
       </div>
 
-      {/* NEW: Cloze Practice items supporting variable hostSentences */}
+      {/* QUICK PRACTICE (COMMENTED OUT FOR NOW) */}
+      {/* 
       {data.clozeItems && data.clozeItems.length > 0 && (
         <div className="mb-8">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
@@ -126,7 +134,6 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
           <div className="flex flex-col gap-4">
             {data.clozeItems.map((item: any) => {
               const res = clozeResults[item.id];
-              // We use acceptableAnswers[0] to figure out what part of the host sentence to blank out
               const targetWord = item.acceptableAnswers[0];
               const parts = item.hostSentence.split(new RegExp(`(${targetWord})`, 'i'));
 
@@ -155,7 +162,6 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
                     })}
                   </div>
 
-                  {/* Feedback Area */}
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex-1">
                       {res?.status === 'incorrect' && (
@@ -183,7 +189,8 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
             })}
           </div>
         </div>
-      )}
+      )} 
+      */}
 
       <div className="mt-auto pt-6 flex justify-end">
         <button 
