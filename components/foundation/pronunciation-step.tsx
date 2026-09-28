@@ -34,7 +34,8 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   // Check if the current word has a specific "focus sound" from the new JSON
   const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions.includes(currentIndex));
 
-  const targetLang = "fr-FR"; 
+  // --- DYNAMIC LANGUAGE FETCHING ---
+  const targetLang = data.targetLang || "fr-FR"; 
 
   // Reset Azure's score and stop audio when we switch words
   useEffect(() => {

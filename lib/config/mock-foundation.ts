@@ -1,6 +1,8 @@
 export const MOCK_FOUNDATION_DATA_EN_FR = {
   userId: "usr_paul",
   foundationCourseId: "course_test",
+  nativeLang: "en-US",   // <--- ADD THIS
+  targetLang: "fr-FR",   // <--- ADD THIS
   orderIndex: 1,
   status: "ready",
   visualContent: {
@@ -254,6 +256,8 @@ export const MOCK_FOUNDATION_DATA_EN_ES = {
   foundationCourseId: "course_test",
   orderIndex: 1,
   status: "ready",
+  nativeLang: "en-US",   // <--- ADD THIS
+  targetLang: "es-Es",   // <--- ADD THIS
   visualContent: {
     imageS3Key: "foundation/usr_annalia/day1/visual.png",
     npcAudioS3Key: "foundation/usr_annalia/day1/npc.mp3",
