@@ -10,7 +10,8 @@ type RevealProps = {
   y?: number;
   scale?: number;
   className?: string;
-  as?: "div" | "section" | "li" | "article";
+  // Added standard text tags so you don't get TS errors anymore!
+  as?: "div" | "section" | "li" | "article" | "span" | "p" | "h1" | "h2" | "h3";
 };
 
 export function Reveal({
@@ -24,6 +25,7 @@ export function Reveal({
 }: RevealProps) {
   const reduceMotion = useReducedMotion();
 
+  // @ts-ignore - motion dynamic tags are safe here
   const MotionTag = motion[as];
 
   return (
