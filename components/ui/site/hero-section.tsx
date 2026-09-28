@@ -73,7 +73,7 @@ export default function HeroSection() {
             </Reveal>
 
             {/* Main Headline */}
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl text-[#0B192C]">
               
               <Reveal as="span" delay={0.3} className="block mb-2 whitespace-nowrap">
                 Real Conversations.
