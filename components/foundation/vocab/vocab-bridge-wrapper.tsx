@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Video, BookOpen, BrainCircuit, Mic, Award } from "lucide-react";
-import { MOCK_BRIDGE_DATA } from "@/lib/config/mock-vocab"; // Adjust path to where you saved the mock
+import { Check, Video, BookOpen, BrainCircuit, Mic, Award, Languages } from "lucide-react";
+
+// 1. Update these imports to match your EN_FR and EN_ES mock vocab files
+import { MOCK_BRIDGE_DATA_EN_FR, MOCK_BRIDGE_DATA_EN_ES } from "@/lib/config/mock-vocab"; 
+
+// 2. Import the LangStep we created earlier (adjust path if needed)
+import { LangStep } from "../lang-step";
 
 import { BridgeSceneStep } from "./bridge-scene-step";
 import { VocabMomentStep } from "./vocab-moment-step";
@@ -10,25 +15,36 @@ import { CooldownStep } from "./cooldown-step";
 import { BridgePronunciationStep } from "./bridge-pronunciation-step";
 import { BridgeOutroStep } from "./bridge-outro-step";
 
+// 3. Shift steps to make room for Language Setup
 const BRIDGE_STEPS = [
-  { id: 0, title: "Scene Context", icon: Video },
-  { id: 1, title: "New Vocabulary", icon: BookOpen },
-  { id: 2, title: "Cooldown Drills", icon: BrainCircuit },
-  { id: 3, title: "Pronunciation Check", icon: Mic },
-  { id: 4, title: "Bridge Complete", icon: Award },
+  { id: 0, title: "Language Setup", icon: Languages }, // NEW LANG STEP
+  { id: 1, title: "Scene Context", icon: Video },
+  { id: 2, title: "New Vocabulary", icon: BookOpen },
+  { id: 3, title: "Cooldown Drills", icon: BrainCircuit },
+  { id: 4, title: "Pronunciation Check", icon: Mic },
+  { id: 5, title: "Bridge Complete", icon: Award },
 ];
 
 export function VocabBridgeWrapper() {
   const [step, setStep] = useState(0); 
-  const data = MOCK_BRIDGE_DATA;
+  
+  // 4. Set a default so the sidebar doesn't crash on step 0
+  const [data, setData] = useState<any>(MOCK_BRIDGE_DATA_EN_FR);
+
+  // 5. Handle the language selection
+  const handleLanguageSelect = (lang: "FR" | "ES") => {
+    setData(lang === "FR" ? MOCK_BRIDGE_DATA_EN_FR : MOCK_BRIDGE_DATA_EN_ES);
+    setStep(1); // Move to BridgeSceneStep
+  };
 
   const renderStep = () => {
     switch (step) {
-      case 0: return <BridgeSceneStep data={data.bridgeScene} onNext={() => setStep(1)} />;
-      case 1: return <VocabMomentStep data={data.vocabMoment} onNext={() => setStep(2)} />;
-      case 2: return <CooldownStep data={data.cooldown} onNext={() => setStep(3)} />;
-      case 3: return <BridgePronunciationStep data={data.pronunciationCheck} onNext={() => setStep(4)} />;
-      case 4: return <BridgeOutroStep data={data} onFinish={() => alert("Bridge Complete! Back to Dashboard")} />;
+      case 0: return <LangStep onSelect={handleLanguageSelect} />;
+      case 1: return <BridgeSceneStep data={data.bridgeScene} onNext={() => setStep(2)} />;
+      case 2: return <VocabMomentStep data={data.vocabMoment} onNext={() => setStep(3)} />;
+      case 3: return <CooldownStep data={data.cooldown} onNext={() => setStep(4)} />;
+      case 4: return <BridgePronunciationStep data={data.pronunciationCheck} onNext={() => setStep(5)} />;
+      case 5: return <BridgeOutroStep data={data} onFinish={() => alert("Bridge Complete! Back to Dashboard")} />;
       default: return <div>Unknown Step</div>;
     }
   };
@@ -39,10 +55,10 @@ export function VocabBridgeWrapper() {
       <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
         <div className="mb-10">
           <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2">
-            Vocab Bridge • Index {data.meta.bridgeIndex}
+            Vocab Bridge • Index {data.meta?.bridgeIndex || 1}
           </p>
           <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
-            Cooldown & Review
+            {step === 0 ? "Prototype Setup" : "Cooldown & Review"}
           </h2>
         </div>
 
