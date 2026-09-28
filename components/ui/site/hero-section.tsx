@@ -49,10 +49,11 @@ export default function HeroSection() {
         {/* We will build out the background graphics when we do the right side */}
       </div>
 
-      <div className="container relative mx-auto flex min-h-screen max-w-7xl flex-col justify-center px-4 md:px-8">
+      {/* CHANGED: Removed 'container', updated to max-w-[1536px], and tweaked responsive padding */}
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1536px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
         
         {/* Main Content Split */}
-        <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-8 lg:py-20">
+        <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-12 xl:gap-20 lg:py-20">
           
           {/* ========================================= */}
           {/* LEFT SIDE CONTENT                         */}
@@ -75,7 +76,7 @@ export default function HeroSection() {
             </motion.div>
 
             {/* Main Headline */}
-            <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl text-[#0B192C]">
+            <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
               <motion.span 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -109,7 +110,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="mt-6 max-w-lg text-lg text-gray-500 sm:text-xl leading-relaxed"
+              className="mt-6 max-w-xl text-lg text-gray-500 sm:text-xl leading-relaxed"
             >
               SPOON makes language learning simple, fun, and effective.
               Build real-world skills, speak with confidence, and open
@@ -144,7 +145,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 }}
-              className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8"
+              className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none"
             >
               {BOTTOM_FEATURES.map((feature) => {
                 const Icon = feature.icon;
