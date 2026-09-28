@@ -187,7 +187,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
 
       {/* SHADCN WORD BANK SCROLL AREA */}
       <div className="mb-10 w-full shrink-0">
-        <ScrollArea className="max-h-[160px] w-full rounded-2xl border border-gray-100 bg-gray-50/50">
+        <ScrollArea className="max-h-[125px] w-full rounded-2xl border border-gray-100 bg-gray-50/50">
           <div className="flex flex-wrap justify-center gap-3 p-4">
             {availableWords.map((word, idx) => (
               <button
