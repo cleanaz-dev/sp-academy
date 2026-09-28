@@ -60,29 +60,37 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
       </div>
 
       {/* COMPACT Scene Description */}
-      <div className="flex items-start gap-2.5 mb-5 shrink-0 text-gray-700">
+      <div className="flex items-start gap-2.5 mb-6 shrink-0 text-gray-700">
         <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm font-medium leading-snug">
           {data.sceneDescription}
         </p>
       </div>
 
-      {/* Image & NPC Dialogue - Height constrained for screen fit */}
-      <div className="relative w-full h-48 sm:h-56 md:h-64 rounded-2xl overflow-hidden mb-6 shrink-0 shadow-sm border border-gray-100 bg-gray-50">
-        {imageUrl ? (
-          <img src={imageUrl} alt={data.altText} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            {isMediaLoading ? <Loader2 className="animate-spin text-gray-300 w-8 h-8" /> : <span className="text-gray-400 text-sm">Image not found</span>}
-          </div>
-        )}
+      {/* Image & NPC Dialogue - Width constrained to maintain aspect ratio without cropping */}
+      <div className="w-full max-w-xl mx-auto flex flex-col items-center mb-6 shrink-0">
+        {/* Full Image (No Cropping) */}
+        <div className="w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-50 flex items-center justify-center min-h-[150px]">
+          {imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={data.altText} 
+              // h-auto ensures it scales naturally based on its true aspect ratio (1344x768 or 1280x960)
+              className="w-full h-auto object-contain block" 
+            />
+          ) : (
+            <div className="w-full py-20 flex items-center justify-center">
+              {isMediaLoading ? <Loader2 className="animate-spin text-gray-300 w-8 h-8" /> : <span className="text-gray-400 text-sm">Image not found</span>}
+            </div>
+          )}
+        </div>
 
-        {/* Floating NPC Dialogue Box */}
-        <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-xl shadow-lg border border-gray-100/50 flex gap-3 sm:gap-4 items-center">
+        {/* Floating NPC Dialogue Box - Pulled out and overlapped using negative margin (-mt-8) */}
+        <div className="w-11/12 sm:w-10/12 bg-white/95 backdrop-blur-xl p-3 sm:p-4 rounded-xl shadow-lg border border-gray-100/50 flex gap-3 sm:gap-4 items-center relative z-10 -mt-8">
           <button
             onClick={toggleAudio}
             disabled={isMediaLoading || !audioUrl}
-            className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors ${
+            className={`shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-colors shadow-sm ${
               isMediaLoading ? "bg-gray-100 text-gray-400" :
               isPlaying ? "bg-blue-100 text-blue-700 ring-2 ring-blue-50" :
               "bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-600"
