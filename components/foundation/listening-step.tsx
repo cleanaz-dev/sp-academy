@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
+import { ScrollArea } from "@/components/ui/scroll-area"; // <-- Shadcn ScrollArea
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
   // Resolve S3 Keys via our context
@@ -100,7 +101,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   return (
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center shrink-0">
         <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-3">
           Listen & Build
         </h2>
@@ -110,7 +111,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       </div>
       
       {/* Big Audio Play Button */}
-      <div className="flex justify-center mb-10">
+      <div className="flex justify-center mb-10 shrink-0">
         <button 
           onClick={toggleAudio}
           disabled={isAudioLoading}
@@ -136,7 +137,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       </div>
       
       {/* Sentence Builder Drop Zone */}
-      <div className="mb-6">
+      <div className="mb-6 shrink-0">
         <div className={`min-h-[80px] w-full p-4 rounded-2xl border-2 border-dashed flex flex-wrap gap-2 items-center transition-colors ${
           status === "correct" ? "border-green-400 bg-green-50" : 
           status === "incorrect" ? "border-red-400 bg-red-50" : 
@@ -184,21 +185,30 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
         </div>
       </div>
 
-      {/* Word Bank */}
-      <div className="flex flex-wrap justify-center gap-3 mb-10">
-        {availableWords.map((word, idx) => (
-          <button
-            key={`bank-${idx}`}
-            onClick={() => handleAddWord(word, idx)}
-            className="px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 shadow-xs transition-all active:scale-95 text-lg"
-          >
-            {word}
-          </button>
-        ))}
+      {/* SHADCN WORD BANK SCROLL AREA */}
+      <div className="mb-10 w-full shrink-0">
+        <ScrollArea className="max-h-[160px] w-full rounded-2xl border border-gray-100 bg-gray-50/50">
+          <div className="flex flex-wrap justify-center gap-3 p-4">
+            {availableWords.map((word, idx) => (
+              <button
+                key={`bank-${idx}`}
+                onClick={() => handleAddWord(word, idx)}
+                className="px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 shadow-xs transition-all active:scale-95 text-lg"
+              >
+                {word}
+              </button>
+            ))}
+            {availableWords.length === 0 && (
+              <span className="text-gray-400 text-sm font-medium py-2">
+                All words used!
+              </span>
+            )}
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Feedback & Action Area */}
-      <div className="mt-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100">
+      <div className="mt-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 shrink-0">
         
         {/* Feedback Message */}
         <div className="flex-1 flex flex-col justify-center gap-1 w-full">
