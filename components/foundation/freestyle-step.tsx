@@ -12,7 +12,7 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
       {/* Header */}
       <div className="text-center mb-10">
         
-        <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
+        <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-4">
           {freestyle.topic}
         </h2>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">

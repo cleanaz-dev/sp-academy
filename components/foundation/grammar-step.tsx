@@ -44,7 +44,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
       <div className="mb-10">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+        <h2 className="text-xl md:text-4xl font-extrabold text-gray-900 mb-3">
           Grammar & Meaning
         </h2>
         <p className="text-gray-500 text-lg">

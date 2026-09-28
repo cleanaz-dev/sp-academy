@@ -143,7 +143,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       
       {/* Header & Progress */}
       <div className="mb-10 text-center">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6">
+        <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-6">
           Pronunciation Lab
         </h2>
         

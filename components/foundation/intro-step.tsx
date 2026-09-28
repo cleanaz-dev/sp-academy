@@ -68,7 +68,7 @@ export function IntroStep({ data, onNext }: { data: any; onNext: () => void }) {
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
       
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
           Lesson Overview
         </h1>
         <p className="text-lg text-gray-600">

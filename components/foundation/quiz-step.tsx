@@ -279,7 +279,7 @@ export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
       {/* Header & Progress */}
       <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+          <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-2">
             Knowledge Check
           </h2>
           <p className="text-gray-500 text-lg">
