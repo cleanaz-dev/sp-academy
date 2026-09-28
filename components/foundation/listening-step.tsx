@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
-import { useS3Media } from "@/context/s3-context"; // <-- Import the hook
+import { useS3Media } from "@/context/s3-context";
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
   // Resolve S3 Keys via our context
@@ -38,7 +38,6 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       return;
     }
 
-    // <-- Use the resolved URL instead of the raw S3 Key
     if (!resolvedAudioUrl) return; 
 
     const audio = new Audio(resolvedAudioUrl);
@@ -46,7 +45,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
     audio.onended = () => setIsPlaying(false);
     
     audio.play().catch(err => {
-      console.warn("Audio playback skipped (mock file not found locally):", err);
+      console.warn("Audio playback skipped:", err);
       setIsPlaying(false);
     });
     
@@ -89,7 +88,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       setFeedbackMsg("✅ Excellent ear! You nailed it.");
     } else {
       setStatus("incorrect");
-      setFeedbackMsg("❌ Not quite right. Listen to the audio again and check your word order.");
+      setFeedbackMsg("❌ Not quite right. Review your word order and try again.");
     }
   };
 
@@ -114,7 +113,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       <div className="flex justify-center mb-10">
         <button 
           onClick={toggleAudio}
-          disabled={isAudioLoading} // Prevent clicking while fetching presigned URL
+          disabled={isAudioLoading}
           className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
             isAudioLoading 
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -148,15 +147,40 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
               Tap words below to build the sentence...
             </span>
           )}
-          {selectedWords.map((word, idx) => (
-            <button
-              key={`selected-${idx}`}
-              onClick={() => handleRemoveWord(word, idx)}
-              className="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-xs font-bold text-gray-800 hover:bg-red-50 hover:border-red-200 transition-all active:scale-95 text-lg"
-            >
-              {word}
-            </button>
-          ))}
+          
+          {selectedWords.map((word, idx) => {
+            const expected = data.expectedOrder || [];
+            const isCorrectPosition = word === expected[idx];
+            
+            // Default word styling
+            let wordStyle = "bg-white border-gray-200 text-gray-800 hover:bg-red-50 hover:border-red-200";
+            
+            if (status === "correct") {
+              // Everything is perfect
+              wordStyle = "bg-green-500 border-green-600 text-white hover:bg-green-600";
+            } else if (status === "incorrect") {
+              // Post-check feedback (Red vs Green)
+              wordStyle = isCorrectPosition 
+                ? "bg-green-100 border-green-500 text-green-900 hover:bg-red-50 hover:border-red-300"
+                : "bg-red-100 border-red-400 text-red-900 hover:bg-red-200";
+            } else {
+              // Real-time hint as they build!
+              if (isCorrectPosition) {
+                wordStyle = "bg-green-50 border-green-300 text-green-800 hover:bg-red-50 hover:border-red-200";
+              }
+            }
+
+            return (
+              <button
+                key={`selected-${idx}`}
+                onClick={() => handleRemoveWord(word, idx)}
+                className={`px-4 py-2 border-2 rounded-xl shadow-xs font-bold transition-all active:scale-95 text-lg ${wordStyle}`}
+                title="Tap to remove"
+              >
+                {word}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -197,9 +221,9 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
             </div>
           )}
           
-          {/* NEW: Display the freeform contrast hint if they get it wrong */}
+          {/* Freeform contrast hint if they get it wrong */}
           {status === "incorrect" && data.contrast && (
-            <p className="text-sm font-medium text-red-400/80 animate-in fade-in">
+            <p className="text-sm font-medium text-red-400/80 animate-in fade-in mt-1">
               Hint — pay attention to: {data.contrast}
             </p>
           )}

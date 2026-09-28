@@ -43,8 +43,8 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
   return (
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       
-      <div className="mb-10">
-        <h2 className="text-xl md:text-4xl font-extrabold text-gray-900 mb-3">
+      <div className="mb-10 shrink-0">
+        <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-3">
           Grammar & Meaning
         </h2>
         <p className="text-gray-500 text-lg">
@@ -84,43 +84,46 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         )}
       </button>
       
-      {/* Word-by-Word Breakdown List - MUCH MORE COMPACT */}
+      {/* Word-by-Word Breakdown List - COMPACT & SCROLLABLE */}
       <div className="mb-8">
         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
           Word-by-Word Breakdown
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {data.words.map((wordObj: any, idx: number) => (
-            <button 
-              key={idx} 
-              onClick={() => handleSpeak(wordObj.word, idx)}
-              disabled={isLoading}
-              className="group flex items-center gap-3 p-3 bg-white hover:bg-blue-50/50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all text-left shadow-xs"
-            >
-              {/* Shrunk the icon and its container */}
-              <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
-                {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={14} /> : <Volume2 size={14} />}
-              </div>
-              
-              <div className="flex flex-col">
-                {/* Word and Definition now sit together on the same line */}
-                <div className="flex items-baseline gap-1.5 flex-wrap">
-                  <span className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                    {wordObj.word}
-                  </span>
-                  <span className="text-gray-400 text-sm">
-                    = {wordObj.gloss}
-                  </span>
+        {/* Scrollable Container added here */}
+        <div className="max-h-[280px] overflow-y-auto pr-2 pb-2 -mr-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {data.words.map((wordObj: any, idx: number) => (
+              <button 
+                key={idx} 
+                onClick={() => handleSpeak(wordObj.word, idx)}
+                disabled={isLoading}
+                className="group flex items-center gap-3 p-3 bg-white hover:bg-blue-50/50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all text-left shadow-xs"
+              >
+                {/* Shrunk the icon and its container */}
+                <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
+                  {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={14} /> : <Volume2 size={14} />}
                 </div>
                 
-                {/* Role text is smaller and tighter */}
-                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">
-                  {wordObj.role}
-                </span>
-              </div>
-            </button>
-          ))}
+                <div className="flex flex-col">
+                  {/* Word and Definition now sit together on the same line */}
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                      {wordObj.word}
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                      = {wordObj.gloss}
+                    </span>
+                  </div>
+                  
+                  {/* Role text is smaller and tighter */}
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">
+                    {wordObj.role}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -192,7 +195,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
       )} 
       */}
 
-      <div className="mt-auto pt-6 flex justify-end">
+      <div className="mt-auto pt-6 flex justify-end shrink-0">
         <button 
           onClick={onNext} 
           className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-lg shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2"
