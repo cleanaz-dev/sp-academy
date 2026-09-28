@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+// Make sure to adjust this import path to wherever you saved your Reveal component!
+import { Reveal } from "@/components/ui/reveal"; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Sparkles, ArrowRight, PlayCircle, Globe2, Zap, Users, Star } from "lucide-react";
@@ -49,7 +50,6 @@ export default function HeroSection() {
         {/* We will build out the background graphics when we do the right side */}
       </div>
 
-      {/* CHANGED: Removed 'container', updated to max-w-[1536px], and tweaked responsive padding */}
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1536px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
         
         {/* Main Content Split */}
@@ -58,72 +58,42 @@ export default function HeroSection() {
           {/* ========================================= */}
           {/* LEFT SIDE CONTENT                         */}
           {/* ========================================= */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="relative z-20 flex flex-1 flex-col items-center text-center lg:items-start lg:text-left pt-12 lg:pt-0"
-          >
+          <div className="relative z-20 flex flex-1 flex-col items-center text-center lg:items-start lg:text-left pt-12 lg:pt-0">
+            
             {/* Top Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-100/50"
-            >
-              <Sparkles className="h-4 w-4" />
-              Learn a new language, your way
-            </motion.div>
+            <Reveal delay={0.2} scale={0.9}>
+              <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-100/50">
+                <Sparkles className="h-4 w-4" />
+                Learn a new language, your way
+              </div>
+            </Reveal>
 
             {/* Main Headline */}
-            <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
-              <motion.span 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="block mb-2"
-              >
+            {/* Adjusted mobile base to text-4xl to ensure the whitespace-nowrap fits on small phones */}
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
+              
+              <Reveal as="span" delay={0.3} className="block mb-2 whitespace-nowrap">
                 Real Conversations.
-              </motion.span>
+              </Reveal>
               
-              <motion.span 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="block text-blue-500 mb-2"
-              >
+              <Reveal as="span" delay={0.4} className="block text-blue-500 mb-2">
                 Real Progress.
-              </motion.span>
+              </Reveal>
               
-              <motion.span 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="block"
-              >
+              <Reveal as="span" delay={0.5} className="block">
                 A <span className="text-green-500">Brighter</span> <span className="text-amber-500">You.</span>
-              </motion.span>
+              </Reveal>
             </h1>
 
             {/* Description Subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="mt-6 max-w-xl text-lg text-gray-500 sm:text-xl leading-relaxed"
-            >
+            <Reveal as="p" delay={0.6} className="mt-6 max-w-xl text-lg text-gray-500 sm:text-xl leading-relaxed">
               SPOON makes language learning simple, fun, and effective.
               Build real-world skills, speak with confidence, and open
               the door to new cultures — one lesson at a time.
-            </motion.p>
+            </Reveal>
 
             {/* CTAs */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start"
-            >
+            <Reveal delay={0.7} className="mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="/signup">
                 <Button className="h-14 w-full rounded-full bg-blue-500 px-8 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:bg-blue-600 sm:w-auto">
                   Start Learning Free
@@ -138,15 +108,10 @@ export default function HeroSection() {
                 <PlayCircle className="mr-2 h-5 w-5 text-blue-500" />
                 Watch How It Works
               </Button>
-            </motion.div>
+            </Reveal>
 
             {/* Bottom Mini Features List */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-              className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none"
-            >
+            <Reveal delay={0.9} className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none">
               {BOTTOM_FEATURES.map((feature) => {
                 const Icon = feature.icon;
                 return (
@@ -159,8 +124,9 @@ export default function HeroSection() {
                   </div>
                 );
               })}
-            </motion.div>
-          </motion.div>
+            </Reveal>
+
+          </div>
 
           {/* ========================================= */}
           {/* RIGHT SIDE PLACEHOLDER (For Next Step)    */}
