@@ -1,7 +1,7 @@
 "use client";
 
 // Make sure to adjust this import path to wherever you saved your Reveal component!
-import { Reveal } from "@/components/ui/reveal"; 
+import { Reveal } from "../misc/reveal";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Sparkles, ArrowRight, PlayCircle, Globe2, Zap, Users, Star } from "lucide-react";
@@ -50,7 +50,7 @@ export default function HeroSection() {
         {/* We will build out the background graphics when we do the right side */}
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1536px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
         
         {/* Main Content Split */}
         <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-12 xl:gap-20 lg:py-20">
