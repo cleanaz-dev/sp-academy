@@ -11,7 +11,6 @@ const s3Client = new S3Client({
   },
 });
 
-// New Batch Function
 export async function getPresignedUrls(keys: (string | undefined | null)[]) {
   const urls: Record<string, string> = {};
 
@@ -19,14 +18,19 @@ export async function getPresignedUrls(keys: (string | undefined | null)[]) {
     keys.map(async (key) => {
       if (!key) return;
       try {
+        // STRIP LEADING SLASHES (e.g. "/audio.mp3" becomes "audio.mp3")
+        const cleanKey = key.replace(/^\/+/, ""); 
+
         const command = new GetObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET_NAME!,
-          Key: key,
+          Bucket: process.env.AWS_BUCKET_NAME!,
+          Key: cleanKey, 
+          ResponseContentType: "audio/mpeg", // Force browser to treat it as audio
         });
+        
         urls[key] = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
       } catch (error) {
         console.error(`Error generating presigned URL for ${key}:`, error);
-        urls[key] = ""; // Fallback to empty string on failure
+        urls[key] = ""; 
       }
     })
   );
