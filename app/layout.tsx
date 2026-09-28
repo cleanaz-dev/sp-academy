@@ -1,12 +1,14 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Nunito } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 
-const nunito = Nunito({
+// Initialize Plus Jakarta Sans (Variable Font)
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "600", "700", "800", "900"],
+  // Defines a CSS variable so we can use it in Tailwind if needed
+  variable: "--font-jakarta", 
 });
 
 export const metadata: Metadata = {
@@ -41,8 +43,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={nunito.className}>
+    // Pass the CSS variable to the HTML tag
+    <html lang="en" className={jakarta.variable}>
+      {/* Apply the font class and smooth antialiasing */}
+      <body className={`${jakarta.className} antialiased`}>
         <ClerkProvider dynamic>
           {children}
           <Toaster
