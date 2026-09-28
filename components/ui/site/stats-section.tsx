@@ -59,7 +59,7 @@ const TESTIMONIALS = [
       "The lessons adapt to my level so I never feel overwhelmed. I'm finally confident enough to use my new skills in the real world.",
     author: "Lisa K.",
     role: "Learning English",
-    avatar: "🇬🇧", // Updated to English!
+    avatar: "🇬🇧",
     themeKey: "tertiary",
   },
 ] as const;

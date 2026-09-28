@@ -87,13 +87,13 @@ export default function HeroSection() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button
+              {/* <Button
                 variant="outline"
                 className="h-14 w-full rounded-full border-gray-200 px-8 text-lg font-semibold text-gray-700 transition-all hover:bg-gray-50 sm:w-auto"
               >
                 <PlayCircle className="mr-2 h-5 w-5 text-blue-500" />
                 Watch How It Works
-              </Button>
+              </Button> */}
             </Reveal>
 
             <Reveal delay={0.9} className="mt-12 lg:mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none">
