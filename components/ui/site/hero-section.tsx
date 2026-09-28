@@ -53,7 +53,7 @@ export default function HeroSection() {
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
         
         {/* Main Content Split */}
-        <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-12 xl:gap-20 lg:py-20">
+        <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-12 xl:gap-20">
           
           {/* ========================================= */}
           {/* LEFT SIDE CONTENT                         */}
