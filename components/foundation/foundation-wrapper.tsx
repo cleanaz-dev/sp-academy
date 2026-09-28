@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Circle, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target, Award } from "lucide-react";
-import { MOCK_FOUNDATION_DATA } from "@/lib/config/mock-foundation";
+import { Check, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target, Award, Languages } from "lucide-react";
 
+// Update these imports to match exactly how you named your two datasets!
+import { MOCK_FOUNDATION_DATA_EN_FR, MOCK_FOUNDATION_DATA_EN_ES } from "@/lib/config/mock-foundation";
+
+import { LangStep } from "./lang-step";
 import { IntroStep } from "./intro-step";
 import { VisualStep } from "./visual-step";
 import { GrammarStep } from "./grammar-step";
@@ -14,30 +17,40 @@ import { FreestyleStep } from "./freestyle-step";
 import { OutroStep } from "./outro-step";
 
 const STEPS_CONFIG = [
-  { id: 0, title: "Mission Briefing", icon: Flag },
-  { id: 1, title: "Scene Context", icon: ImageIcon },
-  { id: 2, title: "Grammar & Meaning", icon: BookOpen },
-  { id: 3, title: "Pronunciation Lab", icon: Mic },
-  { id: 4, title: "Listening Focus", icon: Headphones },
-  { id: 5, title: "Knowledge Check", icon: PenTool },
-  { id: 6, title: "Final Mission", icon: Target },
-  { id: 7, title: "Mission Debrief", icon: Award }, // NEW STEP!
+  { id: 0, title: "Language Setup", icon: Languages }, // NEW LANG STEP
+  { id: 1, title: "Mission Briefing", icon: Flag },
+  { id: 2, title: "Scene Context", icon: ImageIcon },
+  { id: 3, title: "Grammar & Meaning", icon: BookOpen },
+  { id: 4, title: "Pronunciation Lab", icon: Mic },
+  { id: 5, title: "Listening Focus", icon: Headphones },
+  { id: 6, title: "Knowledge Check", icon: PenTool },
+  { id: 7, title: "Final Mission", icon: Target },
+  { id: 8, title: "Mission Debrief", icon: Award },
 ];
 
 export function FoundationWrapper() {
   const [step, setStep] = useState(0); 
-  const data = MOCK_FOUNDATION_DATA;
+  
+  // Default to French just so the sidebar has data to read on initial load.
+  // We'll swap it dynamically when they click a card on Step 0.
+  const [data, setData] = useState(MOCK_FOUNDATION_DATA_EN_FR);
+
+  const handleLanguageSelect = (lang: "FR" | "ES") => {
+    setData(lang === "FR" ? MOCK_FOUNDATION_DATA_EN_FR : MOCK_FOUNDATION_DATA_EN_ES);
+    setStep(1); // Move to Intro Step
+  };
 
   const renderStep = () => {
     switch (step) {
-      case 0: return <IntroStep data={data} onNext={() => setStep(1)} />;
-      case 1: return <VisualStep data={data.visualContent} onNext={() => setStep(2)} />;
-      case 2: return <GrammarStep data={data.grammarContent} onNext={() => setStep(3)} />;
-      case 3: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(4)} />;
-      case 4: return <ListeningStep data={data.listeningContent} onNext={() => setStep(5)} />;
-      case 5: return <QuizStep data={data.quizContent} onNext={() => setStep(6)} />;
-      case 6: return <FreestyleStep data={data} onNext={() => setStep(7)} />;
-      case 7: return <OutroStep data={data} onFinish={() => alert("Course Complete! Routing to Dashboard...")} />;
+      case 0: return <LangStep onSelect={handleLanguageSelect} />;
+      case 1: return <IntroStep data={data} onNext={() => setStep(2)} />;
+      case 2: return <VisualStep data={data.visualContent} onNext={() => setStep(3)} />;
+      case 3: return <GrammarStep data={data.grammarContent} onNext={() => setStep(4)} />;
+      case 4: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(5)} />;
+      case 5: return <ListeningStep data={data.listeningContent} onNext={() => setStep(6)} />;
+      case 6: return <QuizStep data={data.quizContent} onNext={() => setStep(7)} />;
+      case 7: return <FreestyleStep data={data} onNext={() => setStep(8)} />;
+      case 8: return <OutroStep data={data} onFinish={() => alert("Course Complete! Routing to Dashboard...")} />;
       default:
         return <div>Unknown Step</div>;
     }
@@ -50,10 +63,10 @@ export function FoundationWrapper() {
       <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
         <div className="mb-10">
           <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
-            Course • Day {data.orderIndex}
+            Course • Day {data.orderIndex || 1}
           </p>
           <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
-            {data.lessonHandoff.theme}
+            {step === 0 ? "Prototype Setup" : data.lessonHandoff?.theme}
           </h2>
         </div>
 

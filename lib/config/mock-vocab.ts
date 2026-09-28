@@ -7,7 +7,7 @@
 // the payload's own vocabulary (bridgeScene, bridgeIndex, bridgeAssets,
 // bridgeLexicon) — rename if you've got a different convention.
 
-export const MOCK_BRIDGE_DATA = {
+export const MOCK_BRIDGE_DATA_EN_FR = {
   // RENAMED/RESHAPED: replaces the old top-level
   // userId / foundationCourseId / orderIndex / status fields.
   // - foundationCourseId -> courseId
@@ -227,6 +227,192 @@ export const MOCK_BRIDGE_DATA = {
     },
     unlockNext: true,
     bridgeLexicon: ["la voisine", "la poignée de main", "le couloir"],
+    usedShiftIds: [],
+  },
+};
+
+export const MOCK_BRIDGE_DATA_EN_ES = {
+  meta: {
+    userId: "usr_test",
+    courseId: "course_test",
+    bridgeIndex: 1,
+    nativeLanguage: "en-US",
+    targetLanguage: "es-ES",
+    firstName: "Annalia",
+    gender: "female",
+  },
+
+  bridgeScene: {
+    imageS3Key: "foundation/usr_test/day1/visual.png",
+    npcAudioS3Key:
+      "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/npc.mp3",
+    npcLine:
+      "¡Hola! Bienvenida al edificio. Soy Carmen, tu vecina del 4A. ¿Cómo te llamas?",
+    altText: "Scene about Greetings and Names",
+    videoS3Key:
+      "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/scene_animated.mp4",
+  },
+
+  vocabMoment: [
+    {
+      word: "la vecina",
+      gloss: "the neighbor",
+      audioS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_0.mp3",
+      labelHint: "la vecina",
+    },
+    {
+      word: "el pasillo",
+      gloss: "the hallway",
+      audioS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_1.mp3",
+      labelHint: "el pasillo",
+    },
+    {
+      word: "la planta",
+      gloss: "the plant",
+      audioS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_2.mp3",
+      labelHint: "la planta",
+    },
+  ],
+
+  // Discriminated union keyed on "mechanic".
+  // NOTE: "correct" is an array for word_coupling but a string for context_clash.
+  // NOTE: itemId is "" on every item; video_spotlight has no correct/feedback.
+  cooldown: [
+    {
+      mechanic: "word_coupling",
+      pillar: "lexical",
+      provenance: {
+        nodeId: "A1_greetings_and_names",
+        sourceChunkIds: ["Buenas"],
+        pillar: "lexical",
+        mechanic: "word_coupling",
+      },
+      itemId: "",
+      contextNative:
+        "It's your first afternoon in the new building. In the hallway, you see a woman watering a plant — she's your new neighbor.",
+      instructionNative: "What do you say to her first?",
+      targetWord: "la vecina",
+      options: ["Buenas", "la planta", "el pasillo"],
+      correct: ["Buenas"],
+      feedback: {
+        "la planta":
+          "'La planta' is the plant she's watering — it's a thing in the hallway, not something you say to her.",
+        "el pasillo":
+          "'El pasillo' is the hallway — that's where you're standing, not a greeting.",
+      },
+    },
+    {
+      mechanic: "variable_shift",
+      pillar: "morphosyntax",
+      provenance: {
+        nodeId: "A1_greetings_and_names",
+        sourceChunkIds: ["Buenas"],
+        pillar: "morphosyntax",
+        mechanic: "variable_shift",
+      },
+      itemId: "",
+      baseSentence: "Buenas tardes, encantada de conocerte. Soy Annalia.",
+      contextNative:
+        "That night, you run into your neighbor in the hallway again. This time she stops to talk, and you introduce yourself properly for the first time.",
+      instructionNative: "What do you say now?",
+      expected: ["Buenas, encantada de conocerte. Soy Annalia."],
+      expectedFolds: ["buenas, encantada de conocerte. soy annalia"],
+      rejectFeedback: {
+        "Buenas tardes, encantada de conocerte. Soy Annalia.":
+          "It's night now, so the afternoon greeting 'Buenas tardes' no longer fits — just say 'Buenas'.",
+        "Buenas noches, encantada de conocerte. Soy Annalia.":
+          "'Buenas noches' is mostly for saying goodbye at night — for a quick hello to a neighbor, 'Buenas' is the natural choice.",
+        "Buenas, encantado de conocerte. Soy Annalia.":
+          "'Encantado' is what a man says — Annalia is a woman, so she says 'encantada'.",
+      },
+    },
+    {
+      mechanic: "context_clash",
+      pillar: "pragmatic",
+      provenance: {
+        nodeId: "A1_greetings_and_names",
+        sourceChunkIds: ["Buenas"],
+        pillar: "pragmatic",
+        mechanic: "context_clash",
+      },
+      itemId: "",
+      contextNative:
+        "It's late afternoon and you've just moved into your new apartment. In the hallway, you run into a young woman carrying a potted plant — your new neighbor — and she greets you with a smile: 'Buenas tardes.'",
+      instructionNative: "Which response is most appropriate here?",
+      options: [
+        "Buenas tardes, soy la nueva vecina. Encantada de conocerte.",
+        "¡Hola, tía! ¿Qué pasa?",
+        "Buenas noches, ¿qué tal?",
+      ],
+      // NOTE: string here, not an array
+      correct: "Buenas tardes, soy la nueva vecina. Encantada de conocerte.",
+      feedback: {
+        "Buenas noches, ¿qué tal?":
+          "It's the middle of the afternoon, so 'buenas noches' would make you sound like you've lost track of time — that greeting is for evening and night. Use 'buenas tardes' instead.",
+        "¡Hola, tía! ¿Qué pasa?":
+          "'¡Hola, tía!' is slang you'd use with close friends, and to a neighbor you're meeting for the first time it comes across as too familiar. A warm 'buenas tardes' with a proper introduction hits the right note.",
+      },
+    },
+    {
+      mechanic: "video_spotlight",
+      pillar: "lexical",
+      provenance: {
+        nodeId: "A1_greetings_and_names",
+        sourceChunkIds: [
+          "Buenas",
+          "tardes",
+          "encantada",
+          "de",
+          "conocerte",
+          "Soy",
+        ],
+        pillar: "lexical",
+        mechanic: "video_spotlight",
+      },
+      itemId: "",
+      videoS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/scene_animated.mp4",
+      targetAudioS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_0.mp3",
+      targetWord: "la vecina",
+      contextNative: "Watch the scene carefully.",
+      instructionNative: "Who is greeting you in the hallway?",
+      options: ["la planta", "la vecina", "el pasillo"],
+      // NOTE: no "correct" or "feedback" — targetWord is the answer.
+    },
+  ],
+
+  pronunciationCheck: {
+    referenceText: "Buenas tardes, encantada de conocerte. Soy Annalia.",
+    engine: "azure",
+    focusSounds: [
+      {
+        sound: "soft r",
+        positions: [7],
+      },
+    ],
+  },
+
+  handoffFragment: {
+    primedChunks: [],
+    lingeringWeaknesses: [],
+    bridgeAssets: {
+      imageS3Key: "foundation/usr_test/day1/visual.png",
+      npcAudioS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/npc.mp3",
+      vocabMomentAudio: [
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_0.mp3",
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_1.mp3",
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/vocab_2.mp3",
+      ],
+      videoS3Key:
+        "vocab/en-US_es-ES/nodes/A1_greetings_and_names/2fc9f79bf2/scene_animated.mp4",
+    },
+    unlockNext: true,
+    bridgeLexicon: ["la vecina", "el pasillo", "la planta"],
     usedShiftIds: [],
   },
 };
