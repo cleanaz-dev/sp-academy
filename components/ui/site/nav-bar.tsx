@@ -5,9 +5,9 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { SpoonLogo } from "../misc/logo";
 
 // Adjust this import path to wherever you saved the SpoonLogo component!
-
 
 export default function NavigationBar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,22 +42,20 @@ export default function NavigationBar() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden items-center space-x-4 md:flex">
-            <Button variant="ghost" asChild>
-              <Link href="/sign-in">Sign In</Link>
+            <Button variant="ghost" nativeButton={false} render={<Link href="/sign-in" />}>
+              Sign In
             </Button>
-            <Button asChild>
-              <Link href="/sign-up">Sign Up</Link>
+            <Button nativeButton={false} render={<Link href="/sign-up" />}>
+              Sign Up
             </Button>
           </div>
 
           {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              {/* Note: I adjusted SheetTrigger to standard Shadcn usage if you are using standard radix-ui/shadcn */}
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-6 w-6 text-slate-800" />
-                </Button>
+              {/* Base UI: SheetTrigger takes the Button via the render prop, not asChild + child Button */}
+              <SheetTrigger render={<Button variant="ghost" size="icon" />}>
+                <Menu className="h-6 w-6 text-slate-800" />
               </SheetTrigger>
               <SheetContent side="right" className="bg-white">
                 <div className="mt-8 flex flex-col space-y-4">
@@ -94,17 +92,19 @@ export default function NavigationBar() {
                     <Button
                       variant="ghost"
                       className="w-full text-base h-12"
-                      asChild
+                      nativeButton={false}
+                      render={<Link href="/sign-in" />}
                       onClick={() => setIsOpen(false)}
                     >
-                      <Link href="/sign-in">Sign In</Link>
+                      Sign In
                     </Button>
                     <Button
                       className="w-full text-base h-12"
-                      asChild
+                      nativeButton={false}
+                      render={<Link href="/sign-up" />}
                       onClick={() => setIsOpen(false)}
                     >
-                      <Link href="/sign-up">Sign Up</Link>
+                      Sign Up
                     </Button>
                   </div>
                 </div>

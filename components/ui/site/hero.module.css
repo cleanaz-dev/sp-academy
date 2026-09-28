@@ -1,0 +1,244 @@
+/* hero.module.css — vector backdrop */
+
+/* ------------------------------------------------------------------
+   Container + palette
+   Colors are stored as bare RGB channels so we can fade them with
+   rgb(var(--blue) / 0.5). Each fade uses the SAME hue at alpha 0
+   (never the `transparent` keyword), which avoids the gray fringe.
+------------------------------------------------------------------- */
+.vectorContainer {
+  --blue: 121 194 242;
+  --blue-light: 178 224 255;
+  --blue-deep: 64 156 234;
+
+  --green: 107 217 134;
+  --green-light: 176 242 192;
+  --green-deep: 46 186 100;
+
+  --yellow: 253 209 73;
+  --yellow-light: 255 238 158;
+  --yellow-deep: 250 176 36;
+
+  /* Fine film grain (SVG noise). Kills gradient banding and makes the
+     flat colors feel printed rather than digital. Delete `var(--grain),`
+     from the three blob backgrounds to turn it off. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(100%, 650px);
+  aspect-ratio: 1 / 1; /* replaces the fixed 650px height so it scales on mobile */
+  z-index: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+/* ------------------------------------------------------------------
+   Soft color aura behind everything (gives the shapes a place to sit)
+------------------------------------------------------------------- */
+.vectorGlow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 28% 30%, rgb(var(--blue) / 0.28) 0%, rgb(var(--blue) / 0) 48%),
+    radial-gradient(circle at 74% 70%, rgb(var(--green) / 0.26) 0%, rgb(var(--green) / 0) 46%),
+    radial-gradient(circle at 24% 78%, rgb(var(--yellow) / 0.24) 0%, rgb(var(--yellow) / 0) 40%);
+  filter: blur(28px);
+}
+
+/* ------------------------------------------------------------------
+   Shared blob behavior
+   Layer order (top → bottom): grain, glossy highlight, base gradient.
+   background-blend-mode lists one mode per layer in the same order.
+------------------------------------------------------------------- */
+.vectorBlue,
+.vectorGreen,
+.vectorYellow {
+  position: absolute;
+  background-blend-mode: soft-light, normal, normal;
+  transform: translate3d(0, 0, 0) rotate(var(--r));
+  will-change: transform, border-radius;
+}
+
+/* ------------------------------------------------------------------
+   Blue: big, wide, leaning blob (top-left). Not a pill, not vertical.
+   Fades toward the bottom-right so it dissolves behind the subject.
+------------------------------------------------------------------- */
+.vectorBlue {
+  --r: -10deg;
+  top: 1%;
+  left: 2%;
+  width: 62%;
+  aspect-ratio: 10 / 9;
+  z-index: 1;
+  border-radius: 62% 38% 46% 54% / 58% 42% 58% 42%;
+  background:
+    var(--grain),
+    radial-gradient(70% 60% at 28% 22%, rgb(255 255 255 / 0.6) 0%, rgb(255 255 255 / 0) 70%),
+    linear-gradient(
+      150deg,
+      rgb(var(--blue-light)) 0%,
+      rgb(var(--blue)) 42%,
+      rgb(var(--blue-deep) / 0.5) 100%
+    );
+  filter: drop-shadow(0 26px 34px rgb(var(--blue-deep) / 0.26));
+  animation:
+    driftBlue 16s ease-in-out infinite,
+    morphBlue 22s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   Green: sweeping mass on the right, tucked behind the laptop side.
+   Opaque at the outer edge, fades inward.
+------------------------------------------------------------------- */
+.vectorGreen {
+  --r: 8deg;
+  top: 33%;
+  right: -4%;
+  width: 58%;
+  aspect-ratio: 8 / 7;
+  z-index: 2;
+  border-radius: 41% 59% 38% 62% / 55% 40% 60% 45%;
+  background:
+    var(--grain),
+    radial-gradient(60% 55% at 72% 24%, rgb(255 255 255 / 0.42) 0%, rgb(255 255 255 / 0) 70%),
+    linear-gradient(
+      205deg,
+      rgb(var(--green-light) / 0.95) 0%,
+      rgb(var(--green)) 48%,
+      rgb(var(--green-deep) / 0.6) 100%
+    );
+  filter: drop-shadow(0 24px 32px rgb(var(--green-deep) / 0.24));
+  animation:
+    driftGreen 19s ease-in-out infinite,
+    morphGreen 25s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   Yellow: smaller petal, bottom-left. Warm accent, most translucent.
+------------------------------------------------------------------- */
+.vectorYellow {
+  --r: 16deg;
+  bottom: 3%;
+  left: 3%;
+  width: 41%;
+  aspect-ratio: 9 / 8;
+  z-index: 3;
+  border-radius: 68% 32% 58% 42% / 46% 58% 42% 54%;
+  background:
+    var(--grain),
+    radial-gradient(60% 55% at 30% 24%, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0) 70%),
+    linear-gradient(
+      165deg,
+      rgb(var(--yellow-light)) 0%,
+      rgb(var(--yellow)) 50%,
+      rgb(var(--yellow-deep) / 0.7) 100%
+    );
+  filter: drop-shadow(0 20px 28px rgb(var(--yellow-deep) / 0.28));
+  animation:
+    driftYellow 14s ease-in-out infinite,
+    morphYellow 20s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------
+   Small outlined ring: one quiet accent above the subject's head
+------------------------------------------------------------------- */
+.vectorRing {
+  position: absolute;
+  top: 7%;
+  left: 57%;
+  width: 9%;
+  aspect-ratio: 1 / 1;
+  z-index: 4;
+  border-radius: 50%;
+  border: 3px solid rgb(var(--yellow-deep) / 0.5);
+}
+
+/* ------------------------------------------------------------------
+   Motion: slow drift + gentle morph. Keyframes omit 0%/100% so they
+   start and end on each element's own resting values.
+------------------------------------------------------------------- */
+@keyframes driftBlue {
+  50% { transform: translate3d(6px, -12px, 0) rotate(calc(var(--r) + 4deg)); }
+}
+@keyframes driftGreen {
+  50% { transform: translate3d(-8px, 10px, 0) rotate(calc(var(--r) - 4deg)); }
+}
+@keyframes driftYellow {
+  50% { transform: translate3d(8px, -8px, 0) rotate(calc(var(--r) + 5deg)); }
+}
+
+@keyframes morphBlue {
+  50% { border-radius: 48% 52% 60% 40% / 46% 60% 40% 54%; }
+}
+@keyframes morphGreen {
+  50% { border-radius: 56% 44% 48% 52% / 44% 56% 44% 56%; }
+}
+@keyframes morphYellow {
+  50% { border-radius: 52% 48% 44% 56% / 58% 44% 56% 42%; }
+}
+
+/* ------------------------------------------------------------------
+   Purple: small blob that sits ON the photo, covering the hard crop
+   of the laptop at the image's right edge.
+
+   It is NOT rendered inside .vectorContainer. Put it inside the image
+   wrapper, right after the <img>. Its own z-index (25) puts it above
+   the photo (20) and below the widgets (30 / 40).
+
+   Its position is relative to the image wrapper. Nudge top / right /
+   width / height until the crop line is hidden.
+------------------------------------------------------------------- */
+.vectorPurple {
+  --purple: 155 135 247;
+  --purple-light: 205 193 255;
+  --purple-deep: 118 92 232;
+  --r: 12deg;
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+
+  position: absolute;
+  top: 47%;
+  right: -18%;   /* was -8% — pushes it further right */
+  width: 27%;
+  height: 52%;
+  z-index: 25;
+  pointer-events: none;
+
+  border-radius: 58% 42% 52% 48% / 46% 56% 44% 54%;
+  background:
+    var(--grain),
+    radial-gradient(65% 55% at 30% 24%, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0) 70%),
+    linear-gradient(
+      160deg,
+      rgb(var(--purple-light) / 0.92) 0%,
+      rgb(var(--purple)) 50%,
+      rgb(var(--purple-deep) / 0.85) 100%
+    );
+  background-blend-mode: soft-light, normal, normal;
+  transform: translate3d(0, 0, 0) rotate(var(--r));
+  filter: drop-shadow(0 16px 22px rgb(var(--purple-deep) / 0.3));
+  will-change: transform, border-radius;
+  animation:
+    driftPurple 15s ease-in-out infinite,
+    morphPurple 21s ease-in-out infinite;
+}
+
+@keyframes driftPurple {
+  50% { transform: translate3d(-4px, 6px, 0) rotate(calc(var(--r) - 4deg)); }
+}
+@keyframes morphPurple {
+  50% { border-radius: 48% 52% 58% 42% / 56% 44% 56% 44%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vectorBlue,
+  .vectorGreen,
+  .vectorYellow,
+  .vectorPurple {
+    animation: none;
+  }
+}

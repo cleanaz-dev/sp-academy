@@ -6,36 +6,36 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Sparkles, ArrowRight, PlayCircle, Globe2, Zap, Users, Star } from "lucide-react";
 
+// The right-side visual (image, vector blobs, floating widgets) lives in its own component.
+// Adjust this import path to wherever you saved it.
+import HeroRightSide from "./hero-right-side";
+
 const BOTTOM_FEATURES = [
   {
     id: 1,
     icon: Globe2,
-    iconColor: "text-blue-500",
-    bgColor: "bg-blue-50",
+    bgColor: "bg-primary",
     title: "Real Conversations",
     desc: "Practice what you'll actually use",
   },
   {
     id: 2,
     icon: Zap,
-    iconColor: "text-green-500",
-    bgColor: "bg-green-50",
+    bgColor: "bg-secondary",
     title: "Personalized Learning",
     desc: "Built for your goals and level",
   },
   {
     id: 3,
     icon: Users,
-    iconColor: "text-purple-500",
-    bgColor: "bg-purple-50",
-    title: "Expert Teachers",
-    desc: "Native speakers, real support",
+    bgColor: "bg-tertiary",
+    title: "Your Pace, Your Progress",
+    desc: "Learning that adapts as you grow",
   },
   {
     id: 4,
     icon: Star,
-    iconColor: "text-amber-500",
-    bgColor: "bg-amber-50",
+    bgColor: "bg-accent",
     title: "Learn Anywhere",
     desc: "On your phone, tablet or computer",
   },
@@ -45,15 +45,6 @@ export default function HeroSection() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-white selection:bg-blue-100 flex flex-col">
       
-      {/* Background blobs / subtle gradients can go here */}
-      <div className="pointer-events-none absolute inset-0 z-0 h-full w-full">
-        {/* We will build out the background graphics when we do the right side */}
-      </div>
-
-      {/* 
-        Adjust `pt-8 lg:pt-16` below to increase/decrease top spacing. 
-        Removed min-h-screen & justify-center here so it doesn't force huge gaps.
-      */}
       <div className="relative mx-auto flex w-full max-w-[1600px] flex-col px-6 md:px-12 lg:px-16 xl:px-24 pt-8 lg:pt-16 pb-12 lg:pb-20">
         
         {/* Main Content Split */}
@@ -64,7 +55,6 @@ export default function HeroSection() {
           {/* ========================================= */}
           <div className="relative z-20 flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
             
-            {/* Top Badge */}
             <Reveal delay={0.2} scale={0.9}>
               <div className="mb-6 lg:mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-100/50">
                 <Sparkles className="h-4 w-4" />
@@ -72,30 +62,24 @@ export default function HeroSection() {
               </div>
             </Reveal>
 
-            {/* Main Headline */}
-            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl text-[#0B192C]">
-              
+            <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
               <Reveal as="span" delay={0.3} className="block mb-2 whitespace-nowrap">
                 Real Conversations.
               </Reveal>
-              
               <Reveal as="span" delay={0.4} className="block text-blue-500 mb-2">
                 Real Progress.
               </Reveal>
-              
               <Reveal as="span" delay={0.5} className="block">
                 A <span className="text-green-500">Brighter</span> <span className="text-amber-500">You.</span>
               </Reveal>
             </h1>
 
-            {/* Description Subtitle */}
             <Reveal as="p" delay={0.6} className="mt-6 max-w-xl text-lg text-gray-500 sm:text-xl leading-relaxed">
               SPOON makes language learning simple, fun, and effective.
               Build real-world skills, speak with confidence, and open
               the door to new cultures — one lesson at a time.
             </Reveal>
 
-            {/* CTAs */}
             <Reveal delay={0.7} className="mt-8 lg:mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="/signup">
                 <Button className="h-14 w-full rounded-full bg-blue-500 px-8 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:bg-blue-600 sm:w-auto">
@@ -103,7 +87,6 @@ export default function HeroSection() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              
               <Button
                 variant="outline"
                 className="h-14 w-full rounded-full border-gray-200 px-8 text-lg font-semibold text-gray-700 transition-all hover:bg-gray-50 sm:w-auto"
@@ -113,32 +96,30 @@ export default function HeroSection() {
               </Button>
             </Reveal>
 
-            {/* Bottom Mini Features List */}
             <Reveal delay={0.9} className="mt-12 lg:mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none">
               {BOTTOM_FEATURES.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={feature.id} className="flex flex-col items-center text-center lg:items-start lg:text-left">
-                    <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-full ${feature.bgColor}`}>
-                      <Icon className={`h-5 w-5 ${feature.iconColor}`} />
+                  <div
+                    key={feature.id}
+                    className={`flex flex-col items-center text-center lg:items-start lg:text-left rounded-2xl p-4 ${feature.bgColor}`}
+                  >
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                      <Icon className="h-5 w-5 text-white" />
                     </div>
-                    <h3 className="mb-1 text-sm font-bold text-gray-900">{feature.title}</h3>
-                    <p className="text-xs text-gray-500 leading-tight">{feature.desc}</p>
+                    <h3 className="mb-1 text-sm font-bold text-white">{feature.title}</h3>
+                    <p className="text-xs text-white/80 leading-tight">{feature.desc}</p>
                   </div>
                 );
               })}
             </Reveal>
-
           </div>
 
           {/* ========================================= */}
-          {/* RIGHT SIDE PLACEHOLDER (For Next Step)    */}
+          {/* RIGHT SIDE — IMAGE & UI WIDGETS            */}
+          {/* Desktop-only for now (hidden lg:flex inside) */}
           {/* ========================================= */}
-          <div className="relative z-10 flex flex-1 items-center justify-center hidden lg:flex">
-             <div className="h-[600px] w-full rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center text-gray-400 font-medium">
-               Right Side Graphics / Phone Mockup Will Go Here
-             </div>
-          </div>
+          <HeroRightSide />
 
         </div>
       </div>
