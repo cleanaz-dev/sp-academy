@@ -43,33 +43,36 @@ const BOTTOM_FEATURES = [
 
 export default function HeroSection() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-white selection:bg-blue-100">
+    <main className="relative min-h-screen overflow-hidden bg-white selection:bg-blue-100 flex flex-col">
       
       {/* Background blobs / subtle gradients can go here */}
       <div className="pointer-events-none absolute inset-0 z-0 h-full w-full">
         {/* We will build out the background graphics when we do the right side */}
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-24">
+      {/* 
+        Adjust `pt-8 lg:pt-16` below to increase/decrease top spacing. 
+        Removed min-h-screen & justify-center here so it doesn't force huge gaps.
+      */}
+      <div className="relative mx-auto flex w-full max-w-[1600px] flex-col px-6 md:px-12 lg:px-16 xl:px-24 pt-8 lg:pt-16 pb-12 lg:pb-20">
         
         {/* Main Content Split */}
-        <div className="flex w-full flex-col gap-12 py-10 lg:flex-row lg:items-center lg:gap-12 xl:gap-20">
+        <div className="flex w-full flex-col gap-12 lg:flex-row lg:items-center xl:gap-20">
           
           {/* ========================================= */}
           {/* LEFT SIDE CONTENT                         */}
           {/* ========================================= */}
-          <div className="relative z-20 flex flex-1 flex-col items-center text-center lg:items-start lg:text-left pt-12 lg:pt-0">
+          <div className="relative z-20 flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
             
             {/* Top Badge */}
             <Reveal delay={0.2} scale={0.9}>
-              <div className="mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-100/50">
+              <div className="mb-6 lg:mb-8 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-100/50">
                 <Sparkles className="h-4 w-4" />
                 Learn a new language, your way
               </div>
             </Reveal>
 
             {/* Main Headline */}
-            {/* Adjusted mobile base to text-4xl to ensure the whitespace-nowrap fits on small phones */}
             <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl xl:text-[80px] text-[#0B192C]">
               
               <Reveal as="span" delay={0.3} className="block mb-2 whitespace-nowrap">
@@ -93,7 +96,7 @@ export default function HeroSection() {
             </Reveal>
 
             {/* CTAs */}
-            <Reveal delay={0.7} className="mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
+            <Reveal delay={0.7} className="mt-8 lg:mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="/signup">
                 <Button className="h-14 w-full rounded-full bg-blue-500 px-8 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:bg-blue-600 sm:w-auto">
                   Start Learning Free
@@ -111,7 +114,7 @@ export default function HeroSection() {
             </Reveal>
 
             {/* Bottom Mini Features List */}
-            <Reveal delay={0.9} className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none">
+            <Reveal delay={0.9} className="mt-12 lg:mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 lg:gap-x-8 max-w-2xl lg:max-w-none">
               {BOTTOM_FEATURES.map((feature) => {
                 const Icon = feature.icon;
                 return (
