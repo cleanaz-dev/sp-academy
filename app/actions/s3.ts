@@ -18,13 +18,17 @@ export async function getPresignedUrls(keys: (string | undefined | null)[]) {
     keys.map(async (key) => {
       if (!key) return;
       try {
-        // STRIP LEADING SLASHES (e.g. "/audio.mp3" becomes "audio.mp3")
+        // Strip leading slashes just in case your mock data has them
         const cleanKey = key.replace(/^\/+/, ""); 
 
+        // Safely grab the right bucket name
+        const bucketName = process.env.AWS_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME;
+        if (!bucketName) throw new Error("AWS_BUCKET_NAME is not defined in env");
+
         const command = new GetObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME!,
-          Key: cleanKey, 
-          ResponseContentType: "audio/mpeg", // Force browser to treat it as audio
+          Bucket: bucketName,
+          Key: cleanKey,
+          // We removed ResponseContentType so videos/images don't break!
         });
         
         urls[key] = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
