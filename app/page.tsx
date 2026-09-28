@@ -1,12 +1,14 @@
-import FamilySection from "@/components/landing-page/FamilySection";
-import FeaturesSection from "@/components/landing-page/FeaturesSection";
+
 import FooterSection from "@/components/landing-page/FooterSection";
 
 
-import StatsSection from "@/components/landing-page/StatsSection";
+
+import FeaturesSection from "@/components/ui/site/feature-section";
 import HeroSection from "@/components/ui/site/hero-section";
 import NavigationBar from "@/components/ui/site/nav-bar";
-import React from "react";
+import PricingSection from "@/components/ui/site/pricing-section";
+import StatsSection from "@/components/ui/site/stats-section";
+
 
 export default function Home() {
   return (
@@ -15,7 +17,7 @@ export default function Home() {
       <NavigationBar />
       <HeroSection />
       <FeaturesSection />
-      <FamilySection />
+      <PricingSection />
       <StatsSection />
       <FooterSection />
     </div>
