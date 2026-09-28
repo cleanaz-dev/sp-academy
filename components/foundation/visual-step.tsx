@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Image as ImageIcon, Loader2, MapPin, ArrowRight, User, Play, Square } from "lucide-react";
-import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
+// REMOVE THIS: import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
+import { useS3Media } from "@/context/s3-context"; // <--- Import our new hook
 
 export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoadingImage, setIsLoadingImage] = useState<boolean>(true);
-  
+  // --- NEW: Use the S3 Context hook for all media ---
+  const { urls, isLoading: isLoadingMedia } = useS3Media([data.imageS3Key, data.npcAudioS3Key]);
+  const [imageUrl, npcAudioUrl] = urls; // Destructure in order of keys passed to useS3Media
+
   // Track which valid reply the user selected
   const [selectedReply, setSelectedReply] = useState<number | null>(null);
 
@@ -15,20 +17,8 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    async function fetchImage() {
-      if (!data.imageS3Key) {
-        setIsLoadingImage(false);
-        return;
-      }
-      setIsLoadingImage(true);
-      // Depending on your setup, you might fetch real URLs here
-      const url = await getPresignedImageUrl(data.imageS3Key);
-      setImageUrl(url);
-      setIsLoadingImage(false);
-    }
-    fetchImage();
-  }, [data.imageS3Key]);
+  // REMOVE: Old useEffect for fetching image
+  // useEffect(() => { /* ... old image fetch logic ... */ }, [data.imageS3Key]);
 
   // Cleanup audio if the component unmounts while playing
   useEffect(() => {
@@ -47,18 +37,19 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
       return;
     }
 
-    if (!data.npcAudioS3Key) return;
+    // Use the URL from the S3 Context hook
+    if (!npcAudioUrl) return; 
 
     if (audioRef.current) {
       audioRef.current.pause();
     }
 
-    const audio = new Audio(data.npcAudioS3Key);
+    const audio = new Audio(npcAudioUrl); // <--- Use resolved URL
     audioRef.current = audio;
     audio.onended = () => setIsPlayingAudio(false);
     
     audio.play().catch((err) => {
-      console.warn("Audio playback skipped (mock file not found locally):", err);
+      console.warn("Audio playback skipped:", err);
       setIsPlayingAudio(false);
     });
 
@@ -102,12 +93,12 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
       {/* Scene Visualization & NPC Quote */}
       <div className="relative mb-12">
         <div className="w-full h-72 md:h-96 bg-gray-100 rounded-2xl overflow-hidden relative border border-gray-200 flex items-center justify-center shadow-inner">
-          {isLoadingImage ? (
+          {isLoadingMedia ? ( // <--- Use isLoadingMedia
             <div className="flex flex-col items-center text-gray-400 gap-3">
               <Loader2 size={32} className="animate-spin text-blue-500" />
               <p className="text-sm font-medium tracking-wide">Loading simulation area...</p>
             </div>
-          ) : imageUrl ? (
+          ) : imageUrl ? ( // <--- Use imageUrl
             <img 
               src={imageUrl} 
               alt={data.altText} 
@@ -128,18 +119,20 @@ export function VisualStep({ data, onNext }: { data: any; onNext: () => void }) 
             {/* Interactive Play Button replaces the static MessageCircle icon */}
             <button 
               onClick={toggleAudio}
-              disabled={!data.npcAudioS3Key}
+              disabled={isLoadingMedia || !npcAudioUrl} // <--- Use isLoadingMedia and npcAudioUrl
               className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-sm ${
-                !data.npcAudioS3Key ? 'bg-gray-100 text-gray-300 cursor-not-allowed' :
+                isLoadingMedia || !npcAudioUrl ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : // <--- Use isLoadingMedia and npcAudioUrl
                 isPlayingAudio 
                   ? 'bg-blue-600 text-white' 
                   : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100'
               }`}
             >
-              {isPlayingAudio ? (
+              {isLoadingMedia ? ( // <--- Add loading spinner for audio button too
+                <Loader2 size={20} className="animate-spin" />
+              ) : isPlayingAudio ? (
                 <Square size={20} className="fill-current" />
               ) : (
-                <Play size={20} className="fill-current ml-1" /> // ml-1 offsets the triangle slightly so it looks optically centered
+                <Play size={20} className="fill-current ml-1" />
               )}
             </button>
 

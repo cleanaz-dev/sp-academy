@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Volume2, Square, Frown, Meh, Smile, CheckCircle, PartyPopper } from "lucide-react";
+import { Play, Volume2, Square, Frown, Meh, Smile, CheckCircle, Loader2 } from "lucide-react";
+import { useS3Media } from "@/context/s3-context"; // <--- 1. Import Hook
 
-// Shared cap so the native and target cards truncate to the same length —
-// keeps both columns roughly the same height when placed side by side.
+// Shared cap so the native and target cards truncate to the same length
 const MAX_OUTRO_CHARS = 50;
 
 function truncateToChars(text: string, maxChars: number): string {
@@ -19,6 +19,10 @@ function truncateToChars(text: string, maxChars: number): string {
 
 export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void }) {
   const handoff = data.lessonHandoff || {};
+
+  // --- 2. Resolve S3 Keys via Context ---
+  const { urls, isLoading } = useS3Media([handoff.outroNativeAudio, handoff.outroTargetAudio]);
+  const [nativeUrl, targetUrl] = urls;
 
   // Audio state
   const [activeAudio, setActiveAudio] = useState<"native" | "target" | null>(null);
@@ -36,21 +40,25 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
     };
   }, []);
 
-  const toggleAudio = (type: "native" | "target", srcKey: string) => {
+  // --- 3. Update toggleAudio to use the resolved URLs ---
+  const toggleAudio = (type: "native" | "target") => {
     if (activeAudio === type) {
       audioRef.current?.pause();
       setActiveAudio(null);
       return;
     }
 
+    const resolvedUrl = type === "native" ? nativeUrl : targetUrl;
+    if (!resolvedUrl) return;
+
     if (audioRef.current) audioRef.current.pause();
 
-    const audio = new Audio(srcKey);
+    const audio = new Audio(resolvedUrl);
     audioRef.current = audio;
     audio.onended = () => setActiveAudio(null);
 
     audio.play().catch(err => {
-      console.warn("Audio playback skipped (mock file not found locally):", err);
+      console.warn("Audio playback skipped:", err);
       setActiveAudio(null);
     });
 
@@ -77,21 +85,25 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
           Mission Accomplished!
         </h2>
         <p className="text-gray-500 text-lg max-w-xl">
-          You've completed Day {handoff.day}. Let's review what you learned and wrap things up.
+          You've completed Day {handoff.day || 1}. Let's review what you learned and wrap things up.
         </p>
       </div>
 
-      {/* Outro Audio Players — side by side, text truncated to a matching length */}
+      {/* Outro Audio Players */}
       <div className="mb-10 grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
         {/* Native Outro */}
         <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm flex gap-4 items-start">
           <button
-            onClick={() => toggleAudio("native", handoff.outroNativeAudio)}
+            onClick={() => toggleAudio("native")}
+            disabled={isLoading || !nativeUrl} // <--- Disable if loading
             className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+              isLoading ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
               activeAudio === 'native' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
-            {activeAudio === "native" ? <Square size={20} className="fill-current" /> : <Volume2 size={20} />}
+            {/* Show spinner while loading */}
+            {isLoading ? <Loader2 size={20} className="animate-spin" /> : 
+             activeAudio === "native" ? <Square size={20} className="fill-current" /> : <Volume2 size={20} />}
           </button>
           <p className="text-gray-700 text-base sm:text-lg flex-1 break-words" title={handoff.outroNative}>
             {outroNativeText}
@@ -101,12 +113,16 @@ export function OutroStep({ data, onFinish }: { data: any; onFinish: () => void 
         {/* Target Outro */}
         <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl shadow-sm flex gap-4 items-start">
           <button
-            onClick={() => toggleAudio("target", handoff.outroTargetAudio)}
+            onClick={() => toggleAudio("target")}
+            disabled={isLoading || !targetUrl} // <--- Disable if loading
             className={`shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+              isLoading ? 'bg-white text-gray-400 cursor-not-allowed border border-gray-200' :
               activeAudio === 'target' ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-50 text-blue-600'
             }`}
           >
-            {activeAudio === "target" ? <Square size={20} className="fill-current" /> : <Play size={20} className="fill-current ml-1" />}
+             {/* Show spinner while loading */}
+             {isLoading ? <Loader2 size={20} className="animate-spin" /> :
+             activeAudio === "target" ? <Square size={20} className="fill-current" /> : <Play size={20} className="fill-current ml-1" />}
           </button>
           <p className="text-blue-900 font-medium text-base sm:text-lg flex-1 break-words" title={handoff.outroTarget}>
             {outroTargetText}

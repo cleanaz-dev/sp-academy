@@ -2,12 +2,17 @@
 
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useSpeak } from "@/hooks/use-speak";
+import { useS3Media } from "@/context/s3-context"; // <--- 1. Import Hook
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear } from "lucide-react";
+import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear, Loader2 } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
   const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
+
+  // --- 2. Resolve the Full Sentence Audio Key via Context ---
+  const { urls, isLoading: isS3Loading } = useS3Media([data.audioS3Key]);
+  const fullSentenceAudioUrl = urls[0];
 
   // State to track which word/chunk we are practicing
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,7 +31,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex].phonetic;
   const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex].hint;
   
-  // NEW: Check if the current word has a specific "focus sound" from the new JSON
+  // Check if the current word has a specific "focus sound" from the new JSON
   const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions.includes(currentIndex));
 
   const targetLang = "fr-FR"; 
@@ -60,19 +65,22 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     }
   };
 
-  const toggleS3Audio = (s3Key: string) => {
+  // --- 3. Use the resolved URL instead of passing the raw key ---
+  const toggleS3Audio = () => {
     if (isPlayingS3) {
       stopAudio();
       return;
     }
+    if (!fullSentenceAudioUrl) return; // Guard against empty URL
+
     stopTTS();
     
-    const audio = new Audio(s3Key);
+    const audio = new Audio(fullSentenceAudioUrl);
     audioRef.current = audio;
     audio.onended = () => setIsPlayingS3(false);
     
     audio.play().catch(err => {
-      console.warn("Audio playback skipped (mock file not found locally):", err);
+      console.warn("Audio playback skipped:", err);
       setIsPlayingS3(false);
     });
     
@@ -83,7 +91,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     if (isRecording) return; // Don't play if mic is hot
 
     if (isFullSentenceStep && data.audioS3Key) {
-      toggleS3Audio(data.audioS3Key);
+      toggleS3Audio(); // No longer needs parameter
     } else {
       // Use browser TTS for the individual words
       if (isPlayingTTS) {
@@ -96,6 +104,10 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   };
 
   const isAudioActive = isPlayingS3 || isPlayingTTS;
+  
+  // Calculate if the listen button should be disabled or show loading
+  const isWaitingForS3 = isFullSentenceStep && isS3Loading;
+  const isPlayDisabled = isRecording || isWaitingForS3 || (isFullSentenceStep && !fullSentenceAudioUrl && !!data.audioS3Key);
 
   const handleNextWord = () => {
     stopAudio();
@@ -186,14 +198,16 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <button 
           onClick={handlePlayAudio}
-          disabled={isRecording}
+          disabled={isPlayDisabled} // <--- 4. Disable if recording OR waiting for S3
           className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg disabled:opacity-50 ${
             isAudioActive 
               ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50' 
               : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
           }`}
         >
-          {isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
+          {/* Show spinner if waiting for S3 */}
+          {isWaitingForS3 ? <Loader2 size={24} className="animate-spin text-gray-400" /> : 
+           isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
           {isAudioActive ? "Stop" : "Listen"}
         </button>
         
