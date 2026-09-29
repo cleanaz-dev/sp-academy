@@ -29,8 +29,8 @@ const STEPS_CONFIG = [
 ];
 
 export function FoundationWrapper() {
-  const [step, setStep] = useState(0); 
-  
+  const [step, setStep] = useState(0);
+
   // Default to French just so the sidebar has data to read on initial load.
   // We'll swap it dynamically when they click a card on Step 0.
   const [data, setData] = useState(MOCK_FOUNDATION_DATA_EN_FR);
@@ -58,7 +58,7 @@ export function FoundationWrapper() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-6 md:gap-8">
-      
+
       {/* LEFT SIDEBAR: STEPPER CARD */}
       <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
         <div className="mb-10">
@@ -73,7 +73,7 @@ export function FoundationWrapper() {
         <div className="relative">
           {/* Vertical connecting line */}
           <div className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-gray-100 rounded-full" />
-          
+
           <div className="flex flex-col gap-6 relative z-10">
             {STEPS_CONFIG.map((s, index) => {
               const isCompleted = step > index;
@@ -81,18 +81,39 @@ export function FoundationWrapper() {
               const Icon = s.icon;
 
               return (
-                <div key={s.id} className={`flex items-center gap-4 transition-all duration-300 ${isActive ? "opacity-100" : "opacity-50 hover:opacity-75"}`}>
+                <div
+                  key={s.id}
+                  className="flex items-center gap-4 transition-all duration-300"
+                >
                   {/* Step Icon / Status */}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 bg-white
-                    ${isCompleted ? "border-green-500 text-green-500" : 
-                      isActive ? "border-blue-600 text-blue-600 shadow-xs ring-4 ring-blue-50" : 
-                      "border-gray-200 text-gray-400"}
-                  `}>
-                    {isCompleted ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors duration-300 bg-white
+                      ${
+                        isCompleted
+                          ? "border-green-500 text-green-500"
+                          : isActive
+                          ? "border-blue-600 text-blue-600 shadow-xs ring-4 ring-blue-50"
+                          : "border-gray-300 text-gray-500"
+                      }
+                    `}
+                  >
+                    {isCompleted ? (
+                      <Check size={18} strokeWidth={3} />
+                    ) : (
+                      <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                    )}
                   </div>
-                  
+
                   {/* Step Title */}
-                  <div className={`font-semibold text-sm ${isActive ? "text-gray-900" : "text-gray-500"}`}>
+                  <div
+                    className={`text-sm transition-colors duration-300 ${
+                      isActive
+                        ? "font-bold text-gray-900"
+                        : isCompleted
+                        ? "font-semibold text-gray-700"
+                        : "font-semibold text-gray-600"
+                    }`}
+                  >
                     {s.title}
                   </div>
                 </div>
