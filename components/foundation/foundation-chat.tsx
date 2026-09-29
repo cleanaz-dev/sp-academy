@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Volume2, Loader2, Target, ShieldAlert, CheckCircle2, ArrowRight } from "lucide-react";
+import { Volume2, Loader2, ArrowRight, Lightbulb } from "lucide-react";
 
 import { useFreestyle } from "@/context/freestyle-context";
 import { FreestyleChatBubble } from "../freestyle/freestye-chat-bubble";
@@ -22,9 +22,9 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Extract the Foundation constraints we mapped earlier
+  // Extract the English hint we passed from the JSON
   const freestyleData = (session as any).freestyleData;
-  const { persona, requiredChunks } = freestyleData;
+  const { nativeSentence } = freestyleData;
 
   // Auto scroll
   useEffect(() => {
@@ -32,60 +32,33 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
   }, [messages, transcript, isProcessing]);
 
   return (
-    <div className="flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-4">
       
-      {/* LIVE Constraints & Persona Board - Replaces the static one from Step */}
-      <div className="grid md:grid-cols-2 gap-6 shrink-0">
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-inner">
-          <div className="flex items-center gap-2 mb-2 text-indigo-400">
-            <Target size={18} />
-            <h3 className="font-bold uppercase tracking-wider text-xs">Your Persona Context</h3>
+      {/* 💡 THE NEW SUGGESTION HINT - Minimalist and helpful */}
+      {nativeSentence && (
+        <div className="shrink-0 flex items-center gap-4 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+          <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0">
+            <Lightbulb size={20} className="text-indigo-400" />
           </div>
-          <p className="text-slate-300 font-medium text-sm">
-            Talking to: <span className="text-white font-bold">{persona}</span>
-          </p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-inner">
-          <div className="flex items-center gap-2 mb-3 text-emerald-400">
-            <ShieldAlert size={18} />
-            <h3 className="font-bold uppercase tracking-wider text-xs">Required Chunks</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {requiredChunks?.map((chunk: string) => {
-              // Automatically mark off required chunks when the user speaks them!
-              const isUsed = messages
-                .filter((m) => m.role === "user")
-                .some((m) => m.content.toLowerCase().includes(chunk.toLowerCase()));
-
-              return (
-                <span
-                  key={chunk}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold border transition-all duration-500 ${
-                    isUsed
-                      ? "bg-emerald-950/50 text-emerald-400 border-emerald-800/50 shadow-sm shadow-emerald-900/20"
-                      : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}
-                >
-                  {isUsed && <CheckCircle2 className="h-3.5 w-3.5" />}
-                  {chunk}
-                </span>
-              );
-            })}
+          <div>
+            <h4 className="text-[11px] font-bold text-indigo-400 uppercase tracking-widest mb-0.5">
+              Mission Hint
+            </h4>
+            <p className="text-slate-200 font-medium text-sm md:text-base">
+              Try saying: <span className="text-white font-bold">"{nativeSentence}"</span>
+            </p>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* CHAT AREA - Custom Dark Mode Base Style */}
-      <div className="relative flex flex-1 flex-col overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 shadow-xl shadow-black/20 ring-1 ring-white/5 transition-all min-h-[400px]">
-        
-        {/* Messages Area */}
-        <div className="flex-1 space-y-6 overflow-y-auto bg-transparent p-6 sm:p-8 scroll-smooth">
+      {/* CHAT AREA - Now takes up maximum height! */}
+      <div className="relative flex flex-1 flex-col overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 shadow-inner min-h-[300px]">
+        <div className="flex-1 space-y-6 overflow-y-auto p-6 sm:p-8 scroll-smooth">
           
           {messages.length === 0 && !isProcessing && !isRecording && (
             <div className="flex h-full flex-col items-center justify-center text-center opacity-60">
               <p className="text-sm font-medium text-slate-400">
-                Tap the microphone below and start speaking to begin...
+                Tap the microphone below and speak your hint to begin...
               </p>
             </div>
           )}
@@ -128,22 +101,25 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
           )}
           <div ref={messagesEndRef} className="h-4" />
         </div>
+      </div>
 
-        {/* Controls - Dark Mode styled wrapper for your base controls */}
-        <div className="z-10 bg-slate-900/90 backdrop-blur-md border-t border-slate-800">
+      {/* NEW BOTTOM ACTION BAR: Controls & End Button Side-by-Side */}
+      <div className="shrink-0 flex flex-col md:flex-row gap-4 h-auto md:h-[72px]">
+        
+        {/* We wrap the existing white controls in a full-width container so it matches the aesthetic */}
+        <div className="flex-1 bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-xl flex items-center justify-center">
           <FreestyleControls />
         </div>
-      </div>
-
-      {/* Footer / Finish Button */}
-      <div className="mt-auto flex justify-center shrink-0">
+        
+        {/* The End Button sits perfectly flush next to it on desktop */}
         <button 
           onClick={onEnd} 
-          className="w-full sm:w-auto px-12 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl text-lg shadow-xl shadow-indigo-900/50 transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full md:w-auto h-[72px] px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl md:rounded-3xl text-lg shadow-xl shadow-indigo-900/50 transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0"
         >
-          End Simulation & View Debrief <ArrowRight size={20} />
+          End Simulation <ArrowRight size={20} />
         </button>
       </div>
+
     </div>
   );
 }

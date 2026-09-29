@@ -1,18 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Target, Mic, ShieldAlert, ArrowRight, Play, Loader2 } from "lucide-react";
+import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
 import { FreestyleProvider } from "@/context/freestyle-context";
 import FoundationChat from "./foundation-chat";
 
-
 export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void }) {
-  const { freestyle, nativeLang, targetLang } = data;
+  const { freestyle, nativeLang, targetLang, grammarContent, visualContent } = data;
   
   const [activeSession, setActiveSession] = useState<any>(null);
   const [isStarting, setIsStarting] = useState(false);
 
-  // Initialize the session using the data from your JSON
   const handleStartSimulation = async () => {
     setIsStarting(true);
     try {
@@ -26,7 +24,12 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
         nativeLanguage: nativeLang,
         targetLanguage: targetLang,
         voiceGender: "female",
-        freestyleData: freestyle, // Passing all constraints into the session config
+        // We pass the exact sentences we need into the chat component
+        freestyleData: {
+          ...freestyle,
+          nativeSentence: grammarContent?.nativeSentence,
+          npcLine: visualContent?.npcLine
+        }, 
       };
 
       const res = await fetch("/api/freestyle/create", {
@@ -48,11 +51,11 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-4xl p-8 animate-in fade-in duration-700 overflow-y-auto text-slate-50">
+    <div className="flex flex-col h-full bg-slate-950 rounded-4xl p-8 animate-in fade-in duration-700 overflow-hidden text-slate-50">
       
       {/* Header - Stays visible in both states */}
-      <div className="text-center mb-10 shrink-0">
-        <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-4">
+      <div className="text-center mb-8 shrink-0">
+        <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
           {freestyle.topic}
         </h2>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
@@ -61,78 +64,51 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
       </div>
 
       {!activeSession ? (
-        <div className="flex flex-col flex-1">
-          {/* STATIC Constraints & Persona Board (Pre-simulation) */}
-          <div className="grid md:grid-cols-2 gap-6 mb-10 shrink-0">
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-3 mb-4 text-indigo-400">
-                <Target size={24} />
-                <h3 className="font-bold uppercase tracking-wider text-sm">Your Persona Context</h3>
-              </div>
-              <p className="text-slate-300 font-medium text-lg">
-                You are talking to <span className="text-white font-bold">{freestyle.persona}</span>.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800">
-              <div className="flex items-center gap-3 mb-4 text-emerald-400">
-                <ShieldAlert size={24} />
-                <h3 className="font-bold uppercase tracking-wider text-sm">Required Chunks</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {freestyle.requiredChunks.map((chunk: string, idx: number) => (
-                  <span key={idx} className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-emerald-300 text-sm font-medium">
-                    {chunk}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Start Simulation Area */}
-          <div className="flex-1 min-h-[300px] mb-10 relative rounded-2xl border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          
+          {/* Start Simulation Area - Now has way more room to breathe */}
+          <div className="flex-1 min-h-[350px] mb-8 relative rounded-3xl border-2 border-dashed border-slate-700 bg-slate-900/50 flex flex-col items-center justify-center p-8 text-center overflow-hidden">
             <div className="absolute inset-0 bg-indigo-500/5 blur-[100px] pointer-events-none" />
             
-            <div className="w-20 h-20 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-6 animate-pulse">
-              <Mic size={32} className="text-indigo-400" />
+            <div className="w-24 h-24 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center mb-8 animate-pulse">
+              <Mic size={40} className="text-indigo-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">AI Conversation Ready</h3>
-            <p className="text-slate-400 mb-8 max-w-md">
+            
+            <h3 className="text-2xl font-bold text-white mb-3">AI Conversation Ready</h3>
+            <p className="text-slate-400 mb-10 max-w-md text-lg">
               Tap the button below to initialize your AI Tutor and begin the voice simulation.
             </p>
             
             <button 
               onClick={handleStartSimulation}
               disabled={isStarting}
-              className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-indigo-900/50 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold rounded-2xl text-xl shadow-lg shadow-indigo-900/50 transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isStarting ? (
                 <>
-                  <Loader2 className="animate-spin" size={24} />
+                  <Loader2 className="animate-spin" size={28} />
                   Connecting...
                 </>
               ) : (
                 <>
-                  <Play size={24} fill="currentColor" />
+                  <Play size={28} fill="currentColor" />
                   Start Simulation
                 </>
               )}
             </button>
           </div>
 
-          {/* Optional skip before playing */}
-          <div className="mt-auto flex justify-center">
+          <div className="mt-auto flex justify-center shrink-0">
             <button 
               onClick={onNext} 
-              className="w-full sm:w-auto px-12 py-5 bg-slate-800 hover:bg-slate-700 text-slate-400 font-extrabold rounded-2xl text-lg transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2"
             >
-              Skip Step <ArrowRight size={20} />
+              Skip Step <ArrowRight size={18} />
             </button>
           </div>
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-500">
-          {/* Wraps our newly created FoundationChat with the context it needs */}
           <FreestyleProvider session={activeSession} onEnd={onNext}>
             <FoundationChat onEnd={onNext} />
           </FreestyleProvider>
