@@ -4,17 +4,10 @@ import { z } from "zod";
 
 export const maxDuration = 60;
 
-const MAX_TOKENS_BY_LEVEL = {
-  ZERO: 180,
-  EASY: 240,
-  MEDIUM: 320,
-  FLUENT: 450,
-} as const;
-
-// ─── Validation Schema ─────────────────────────────────────────
+// ─── Validation Schema (Now includes freestyleData) ────────────
 const ChatBodySchema = z.object({
-  mode: z.enum(["INTRODUCTION", "SPECIFIC", "RANDOM", "ARGUMENTATIVE"]),
-  level: z.enum(["ZERO", "EASY", "MEDIUM", "FLUENT"]).default("EASY"), // 🚨 ADDED "ZERO"
+  mode: z.string(),
+  level: z.string(),
   topic: z.string().optional(),
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
@@ -28,56 +21,18 @@ const ChatBodySchema = z.object({
     )
     .default([]),
   isOpening: z.boolean().default(false),
+  freestyleData: z.object({
+    persona: z.string(),
+    requiredChunks: z.array(z.string()),
+    npcLine: z.string().optional(),
+    nativeSentence: z.string().optional(),
+  }).passthrough().optional(), // passthrough in case we pass extra stuff from json
 });
 
-// ─── Level-Based Prompt Injections ─────────────────────────────
-const LEVEL_INSTRUCTIONS: Record<string, string> = {
-  // 🚨 ADDED "ZERO" INSTRUCTIONS
-  ZERO: `
-DIFFICULTY: ZERO / ABSOLUTE BEGINNER (Pre-A1)
-- You MUST speak using ONLY 1 or 2 extremely short sentences.
-- Use only the most basic, elementary vocabulary (colors, basic foods, simple greetings, yes/no).
-- Avoid all complex grammar.
-- Ask only very simple, direct questions (e.g., "What is your name?", "Do you like apples?").
-- Be overwhelmingly encouraging, warm, and patient.`,
-
-  EASY: `
-DIFFICULTY: EASY (A1-A2)
-- Be warm, patient, and highly supportive.
-- Speak in short, clear sentences. Avoid idioms, slang, and complex grammar.
-- React happily to their input before asking the next simple question.
-- If they struggle, gently steer the conversation to something very familiar (hobbies, food, weather).`,
-
-  MEDIUM: `
-DIFFICULTY: MEDIUM (B1-B2)
-- Be casually conversational and curious, like a friendly acquaintance.
-- Use natural vocabulary, some common idioms, and transitional phrases.
-- Acknowledge their ideas and share a brief perspective of your own before asking a thoughtful follow-up question.
-- Correct subtle mistakes naturally by just using the right word in your response.`,
-
-  FLUENT: `
-DIFFICULTY: FLUENT (C1-C2)
-- Be highly engaging and dynamic, like speaking with a native friend or colleague.
-- Speak at a natural native pace using nuance, humor, cultural references, and complex sentence structures.
-- Don't just ask questions—debate, joke, or deeply agree with them. 
-- Challenge their assumptions and push them to expand on their opinions.`,
-};
-
-// ─── Mode-Based Opening Prompts ────────────────────────────────
-const MODE_OPENING_TASKS: Record<string, (topic?: string) => string> = {
-  INTRODUCTION: () =>
-    `TASK: Warmly introduce yourself, share a brief, friendly detail about your day, and ask a simple warm-up question to get them talking.`,
-  SPECIFIC: (topic) =>
-    `TASK: Start a natural roleplay or conversation about: "${topic}". Set the scene conversationally, make a statement, and ask a question to draw them in.`,
-  RANDOM: () =>
-    `TASK: Share a brief, interesting thought about a completely random everyday topic, then ask them an engaging, open-ended question about it.`,
-  ARGUMENTATIVE: () =>
-    `TASK: Make a strong, slightly controversial statement. Briefly explain your stance and challenge them to share their perspective.`,
-};
 
 export async function POST(req: Request) {
   const requestId = Math.random().toString(36).substring(7);
-  console.log(`[CHAT-${requestId}] 🟢 Incoming Request`);
+  console.log(`[FOUNDATION-CHAT-${requestId}] 🟢 Incoming Request`);
 
   try {
     const rawBody = await req.json();
@@ -85,7 +40,7 @@ export async function POST(req: Request) {
 
     if (!parseResult.success) {
       console.error(
-        `[CHAT-${requestId}] ❌ Validation failed:`,
+        `[FOUNDATION-CHAT-${requestId}] ❌ Validation failed:`,
         z.flattenError(parseResult.error),
       );
       return NextResponse.json(
@@ -97,16 +52,12 @@ export async function POST(req: Request) {
     const {
       mode,
       level,
-      topic,
       targetLanguage,
       nativeLanguage,
       chatHistory,
       isOpening,
+      freestyleData
     } = parseResult.data;
-
-    console.log(
-      `[CHAT-${requestId}] Params: Mode=${mode}, Level=${level}, Target=${targetLanguage}, Native=${nativeLanguage}`,
-    );
 
     // Clean up chat history to prevent consecutive user prompts from crashing DeepSeek
     const sanitizedHistory: any[] = [];
@@ -119,7 +70,8 @@ export async function POST(req: Request) {
       }
     }
 
-    let systemPrompt = `You are a friendly, conversational native speaker having a natural voice chat with a learner.
+    // ─── DYNAMIC FOUNDATION PROMPT ─────────────────────────────
+    let systemPrompt = `You are an AI language tutor conducting a specific, highly-structured roleplay simulation.
 Target Language: ${targetLanguage}. Native Language: ${nativeLanguage}.
 
 CRITICAL FORMATTING RULES:
@@ -129,20 +81,31 @@ CRITICAL FORMATTING RULES:
 2. Do not wrap in markdown. Return raw JSON only.
 3. NO emojis in your text (it messes up text-to-speech).
 
-CONVERSATIONAL RULES:
-- Keep your response brief but conversational (2-4 sentences max).
-- ALWAYS react to what the user just said first (e.g., "That's interesting!", "I totally agree").
-- Share a brief thought of your own to make it feel like a real dialogue.
-- End your turn by naturally passing the conversation back to them, usually with a relevant question.`;
-
-    // Inject level-specific instructions
-    systemPrompt += `\n${LEVEL_INSTRUCTIONS[level]}`;
+ROLEPLAY CONTEXT:
+Your Persona: ${freestyleData?.persona || "A friendly conversational partner"}
+`;
 
     if (isOpening) {
-      const taskFn = MODE_OPENING_TASKS[mode];
-      systemPrompt += `\n\n${taskFn(topic)}`;
+      // 🚨 FORCE THE AI TO OPEN WITH THE NPC LINE
+      systemPrompt += `
+      This is the very first message of the interaction.
+      You MUST say exactly this line and nothing else: "${freestyleData?.npcLine}"
+      Do not add your own greetings, fluff, or extra questions. Just output that exact line in JSON format.
+      `;
     } else {
-      systemPrompt += `\n\nTASK: CONTINUE THE CONVERSATION. Acknowledge what the user just said, add a natural conversational thought of your own, and ask a follow-up question to keep the ${mode.toLowerCase()} dynamic alive.`;
+      // 🚨 FORCE THE AI TO BE A STRICT TUTOR FOR THE REQUIRED CHUNKS
+      const chunksStr = freestyleData?.requiredChunks?.join(", ") || "";
+      
+      systemPrompt += `
+      The user is a complete beginner (Level Zero). 
+      Their mission is to say the equivalent of: "${freestyleData?.nativeSentence}"
+      To succeed, they MUST use these required phrases in their response: [${chunksStr}].
+      
+      INSTRUCTIONS FOR YOUR RESPONSE:
+      1. Analyze what the user just said. Did they use the required phrases or successfully convey the meaning?
+      2. IF THEY FAILED or got stuck: DO NOT move the conversation forward. Gently prompt them in ${targetLanguage} to try again, hinting at the required words. Keep it very short.
+      3. IF THEY SUCCEEDED: Act as your persona, warmly acknowledge them in 1 or 2 very short, simple sentences, and naturally conclude this brief interaction.
+      `;
     }
 
     const messages = [
@@ -153,7 +116,7 @@ CONVERSATIONAL RULES:
     const apiKey = process.env.NOVITA_API_KEY;
     if (!apiKey) throw new Error("NOVITA_API_KEY is not configured.");
 
-    console.log(`[CHAT-${requestId}] 🚀 Sending request to Novita...`);
+    console.log(`[FOUNDATION-CHAT-${requestId}] 🚀 Sending request to Novita...`);
     const startTime = Date.now();
 
     const chatResponse = await fetch(
@@ -168,40 +131,34 @@ CONVERSATIONAL RULES:
           model: NovitaTextModel.QWEN_3_8_FLASH,
           messages: messages,
           response_format: { type: "json_object" },
-          // 🚨 SAFE TOKEN LIMITS SO THE API DOES NOT CRASH
-          max_tokens: 3000,
-          temperature: 0.9
+          max_tokens: 1500, // Kept safe for quick JSON responses
+          temperature: isOpening ? 0.1 : 0.7 // Low temp on opening ensures it repeats the npcLine exactly
         }),
       },
     );
 
     console.log(
-      `[CHAT-${requestId}] ⏱️ Novita responded in ${Date.now() - startTime}ms. Status: ${chatResponse.status}`,
+      `[FOUNDATION-CHAT-${requestId}] ⏱️ Novita responded in ${Date.now() - startTime}ms. Status: ${chatResponse.status}`,
     );
 
     if (!chatResponse.ok) {
       const errText = await chatResponse.text();
-      console.error(`[CHAT-${requestId}] ❌ Novita Error:`, errText);
+      console.error(`[FOUNDATION-CHAT-${requestId}] ❌ Novita Error:`, errText);
       throw new Error(`Novita returned ${chatResponse.status}`);
     }
 
     const chatData = await chatResponse.json();
-
     const choice = chatData.choices?.[0];
 
     if (!choice?.message?.content) {
       throw new Error("Novita returned no message content");
     }
 
-    console.log(`[CHAT-${requestId}] Usage:`, chatData.usage);
-    console.log(`[CHAT-${requestId}] Finish reason:`, choice.finish_reason);
-
     if (choice.finish_reason === "length") {
       throw new Error("AI response was truncated by max_tokens");
     }
 
     const rawContent = choice.message.content;
-    // const rawContent = chatData.choices?.[0]?.message?.content || "{}";
 
     // 🚨 SAFE JSON EXTRACTION
     let parsedContent: any;
@@ -209,7 +166,7 @@ CONVERSATIONAL RULES:
       parsedContent = JSON.parse(rawContent);
     } catch (e) {
       console.warn(
-        `[CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting regex extraction...`,
+        `[FOUNDATION-CHAT-${requestId}] ⚠️ AI didn't return perfect JSON. Attempting regex extraction...`,
       );
       const match = rawContent.match(/\{[\s\S]*\}/);
       if (match) {
@@ -231,9 +188,9 @@ CONVERSATIONAL RULES:
       meta: { level, mode, requestId },
     });
   } catch (error: any) {
-    console.error(`[CHAT-ERROR] ❌`, error.message || error);
+    console.error(`[FOUNDATION-CHAT-ERROR] ❌`, error.message || error);
     return NextResponse.json(
-      { error: "Failed to process chat", message: error.message },
+      { error: "Failed to process foundation chat", message: error.message },
       { status: 500 },
     );
   }
