@@ -1,5 +1,6 @@
 export const MOCK_FOUNDATION_DATA_EN_FR = {
   userId: "usr_paul",
+  name: "Paul",
   foundationCourseId: "course_test",
   nativeLang: "en-US",   // <--- ADD THIS
   targetLang: "fr-FR",   // <--- ADD THIS
@@ -253,6 +254,7 @@ export const MOCK_FOUNDATION_DATA_EN_FR = {
 
 export const MOCK_FOUNDATION_DATA_EN_ES = {
   userId: "usr_annalia",
+  name: "Annalia",
   foundationCourseId: "course_test",
   orderIndex: 1,
   status: "ready",
