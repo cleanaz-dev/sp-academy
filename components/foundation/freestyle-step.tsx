@@ -32,7 +32,7 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
         }, 
       };
 
-      const res = await fetch("/api/freestyle/create", {
+      const res = await fetch("/api/foundation/freestyle/create", {
         method: "POST",
         body: JSON.stringify({ ...config, aiAvatarUrl })
       });
