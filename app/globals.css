@@ -581,3 +581,8 @@ html {
 .animate-bg {
  @apply animate-[gradient_6s_ease_infinite] bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%]
 }
+
+
+.animate-dark-bg {
+ @apply animate-[gradient_6s_ease_infinite] bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%]
+}

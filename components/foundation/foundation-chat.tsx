@@ -25,6 +25,9 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
   const freestyleData = (session as any).freestyleData;
   const { nativeSentence } = freestyleData;
 
+  // AI avatar URL from the session (this line was missing)
+  const aiAvatarUrl = (session as any).aiAvatarUrl as string | undefined;
+
   // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,6 +69,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
               <FoundationFreestyleChatBubble
                 key={message.id}
                 message={message}
+                aiAvatarUrl={aiAvatarUrl}
                 onReplay={
                   message.role === "assistant" ? handleReplay : undefined
                 }
