@@ -14,12 +14,12 @@ model FoundationCourse {
 
 // ── One per user, created one at a time by the cycle ──
 model FoundationLesson {
-  id         String           @id @default(auto()) @map("_id") @db.ObjectId
-  foundationCourseId   String           @db.ObjectId
-  course     FoundationCourse @relation(fields: [foundationCourseId], references: [id])
-  userId     String           @db.ObjectId // lessons are personal now (adaptive)
-  user       User             @relation(fields: [userId], references: [id])
-  orderIndex Int
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  foundationCourseId String           @db.ObjectId
+  course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
+  userId             String           @db.ObjectId // lessons are personal now (adaptive)
+  user               User             @relation(fields: [userId], references: [id])
+  orderIndex         Int
 
   status String @default("building") // "building" | "ready" — lazy generation flag
 
@@ -37,7 +37,7 @@ model FoundationLesson {
   createdAt              DateTime                @default(now())
   FoundationFreestyleLog FoundationFreestyleLog?
 
-  @@unique([foundationCourseId, orderIndex])  // ← this is your idempotency guard, free
+  @@unique([foundationCourseId, orderIndex]) // ← this is your idempotency guard, free
   @@index([userId, foundationCourseId])
 }
 

@@ -84,6 +84,8 @@ model FreestyleSession {
   nativeLanguage String
   targetLanguage String
   voiceGender    VoiceGender    @default(FEMALE) // <-- ADD THIS (from your UI)
+  aiAvatarUrl    String?
+  isFoundation   Boolean?       @default(false)
 
   duration       Int           @default(0)
   status         SessionStatus @default(IN_PROGRESS)
