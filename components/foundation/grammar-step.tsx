@@ -3,6 +3,7 @@
 import { useSpeak } from "@/hooks/use-speak";
 import React, { useState } from "react";
 import { Volume2, Loader2, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { ScrollArea } from "../ui/scroll-area";
 
 export function GrammarStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isLoading } = useSpeak();
@@ -91,40 +92,41 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         </h3>
         
         {/* Scrollable Container added here */}
-        <div className="max-h-[280px] overflow-y-auto pr-2 pb-2 -mr-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {data.words.map((wordObj: any, idx: number) => (
-              <button 
-                key={idx} 
-                onClick={() => handleSpeak(wordObj.word, idx)}
-                disabled={isLoading}
-                className="group flex items-center gap-3 p-3 bg-white hover:bg-blue-50/50 rounded-xl border border-gray-100 hover:border-blue-200 transition-all text-left shadow-xs"
-              >
-                {/* Shrunk the icon and its container */}
-                <div className="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-blue-100 text-gray-400 group-hover:text-blue-600 flex items-center justify-center shrink-0 transition-colors">
-                  {isLoading && activeWordIndex === idx ? <Loader2 className="animate-spin" size={14} /> : <Volume2 size={14} />}
-                </div>
-                
-                <div className="flex flex-col">
-                  {/* Word and Definition now sit together on the same line */}
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-                      {wordObj.word}
-                    </span>
-                    <span className="text-gray-400 text-sm">
-                      = {wordObj.gloss}
-                    </span>
-                  </div>
-                  
-                  {/* Role text is smaller and tighter */}
-                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mt-0.5">
-                    {wordObj.role}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+       <ScrollArea className="max-h-[200px]">
+  <div className="grid grid-cols-1 gap-3 pr-3 pb-2 md:grid-cols-2">
+    {data.words.map((wordObj: any, idx: number) => (
+      <button
+        key={idx}
+        onClick={() => handleSpeak(wordObj.word, idx)}
+        disabled={isLoading}
+        className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-xs transition-all hover:border-blue-200 hover:bg-blue-50/50"
+      >
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-100 group-hover:text-blue-600">
+          {isLoading && activeWordIndex === idx ? (
+            <Loader2 className="animate-spin" size={14} />
+          ) : (
+            <Volume2 size={14} />
+          )}
         </div>
+
+        <div className="flex flex-col">
+          <div className="flex flex-wrap items-baseline gap-1.5">
+            <span className="font-bold text-gray-900 transition-colors group-hover:text-blue-700">
+              {wordObj.word}
+            </span>
+            <span className="text-sm text-gray-400">
+              = {wordObj.gloss}
+            </span>
+          </div>
+
+          <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+            {wordObj.role}
+          </span>
+        </div>
+      </button>
+    ))}
+  </div>
+</ScrollArea>
       </div>
 
       {/* QUICK PRACTICE (COMMENTED OUT FOR NOW) */}
