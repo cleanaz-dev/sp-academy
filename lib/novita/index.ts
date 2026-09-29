@@ -13,6 +13,7 @@ export const NovitaTextModel = {
   QWEN_3_8_FLASH: "qwen/qwen3.8-flash",
   KIMI_K3: "moonshotai/kimi-k3",
   GLM_5_3: "zai-org/glm-5.3",
+  GLM_5_3_FLASH: "zai-org/glm-5.3-flash",
   MACARON_V1_VENTI: "mindai/macaron-v1-venti"
 } as const;
 
