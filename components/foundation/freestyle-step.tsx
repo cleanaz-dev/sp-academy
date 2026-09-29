@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
 import { FreestyleProvider } from "@/context/freestyle-context";
 import FoundationChat from "./foundation-chat";
+import { FoundationProvider } from "@/context/foundation-context";
 
 export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { freestyle, nativeLang, targetLang, grammarContent, visualContent } = data;
@@ -109,9 +110,9 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-500">
-          <FreestyleProvider session={activeSession} onEnd={onNext}>
+          <FoundationProvider session={activeSession} onEnd={onNext}>
             <FoundationChat onEnd={onNext} />
-          </FreestyleProvider>
+          </FoundationProvider>
         </div>
       )}
     </div>
