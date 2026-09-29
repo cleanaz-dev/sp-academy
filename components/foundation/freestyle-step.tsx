@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
-import { FreestyleProvider } from "@/context/freestyle-context";
 import FoundationChat from "./foundation-chat";
 import { FoundationProvider } from "@/context/foundation-context";
 
