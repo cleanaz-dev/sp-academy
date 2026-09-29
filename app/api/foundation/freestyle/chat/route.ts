@@ -1,3 +1,4 @@
+// app/api/foundation/freestyle/chat/route.ts
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -79,7 +80,7 @@ CRITICAL FORMATTING RULES:
    - "text": Your response in ${targetLanguage}.
    - "translation": The exact translation of your response into ${nativeLanguage}.
 2. Do not wrap in markdown. Return raw JSON only.
-3. NO emojis in your text (it messes up text-to-speech).
+3. EMOJIS: In "text" you may use 1 or 2 emojis to make the reply feel warm and rewarding. Put them at the end of a sentence, never in the middle of a word or sentence. The emojis are removed before text-to-speech, so the sentence must read naturally without them. NEVER use emojis in "translation".
 
 ROLEPLAY CONTEXT:
 Your Persona: ${freestyleData?.persona || "A friendly conversational partner"}
@@ -90,7 +91,7 @@ Your Persona: ${freestyleData?.persona || "A friendly conversational partner"}
       systemPrompt += `
       This is the very first message of the interaction.
       You MUST say exactly this line and nothing else: "${freestyleData?.npcLine}"
-      Do not add your own greetings, fluff, or extra questions. Just output that exact line in JSON format.
+      Do not add your own greetings, fluff, extra questions, or emojis. Just output that exact line in JSON format.
       `;
     } else {
       // 🚨 FORCE THE AI TO BE A STRICT TUTOR FOR THE REQUIRED CHUNKS
@@ -103,8 +104,8 @@ Your Persona: ${freestyleData?.persona || "A friendly conversational partner"}
       
       INSTRUCTIONS FOR YOUR RESPONSE:
       1. Analyze what the user just said. Did they use the required phrases or successfully convey the meaning?
-      2. IF THEY FAILED or got stuck: DO NOT move the conversation forward. Gently prompt them in ${targetLanguage} to try again, hinting at the required words. Keep it very short.
-      3. IF THEY SUCCEEDED: Act as your persona, warmly acknowledge them in 1 or 2 very short, simple sentences, and naturally conclude this brief interaction.
+      2. IF THEY FAILED or got stuck: DO NOT move the conversation forward. Gently prompt them in ${targetLanguage} to try again, hinting at the required words. Keep it very short. End with ONE encouraging emoji (for example 💪 🙂 👍).
+      3. IF THEY SUCCEEDED: Act as your persona, warmly acknowledge them in 1 or 2 very short, simple sentences, and naturally conclude this brief interaction. End with ONE or TWO celebratory emojis (for example 🎉 👏 ✨ 🙌).
       `;
     }
 

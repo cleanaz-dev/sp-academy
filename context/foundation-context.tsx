@@ -18,6 +18,13 @@ import { FoundationSuggestionData } from "@/components/freestyle/freestyle-sugge
 // How many times the learner may reveal a suggestion per session
 const MAX_SUGGESTIONS = 3;
 
+// Emojis show in the chat bubble but must not reach text-to-speech
+const forSpeech = (text: string) =>
+  text
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
 interface FoundationContextType {
   session: FreestyleSessionConfig;
   messages: any[];
@@ -312,7 +319,7 @@ export function FoundationProvider({
         generateSuggestions([...chatHistory, newAiMessage]);
 
         await speak(
-          data.text,
+          forSpeech(data.text),
           session.targetLanguage,
           1.0,
           session.voiceGender,
@@ -424,7 +431,7 @@ export function FoundationProvider({
         handleEndSession,
         startRecording: () => startSpeech(session.targetLanguage),
         handleReplay: (text: string) =>
-          speak(text, session.targetLanguage, 1.0, session.voiceGender),
+          speak(forSpeech(text), session.targetLanguage, 1.0, session.voiceGender),
       }}
     >
       {children}
