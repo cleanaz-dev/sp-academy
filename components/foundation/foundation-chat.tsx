@@ -2,11 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { Volume2, Loader2, ArrowRight, Lightbulb } from "lucide-react";
-
-
-import { FreestyleChatBubble } from "../freestyle/freestye-chat-bubble";
-import { FreestyleControls } from "../freestyle/freestyle-controls";
 import { useFoundation } from "@/context/foundation-context";
+import { FoundationFreestyleControls } from "./foundation-freestyle-controls";
+import { FoundationFreestyleChatBubble } from "./foundation-freestye-chat-bubble";
 
 
 export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
@@ -65,7 +63,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
           )}
 
           {messages.map((message) => (
-            <FreestyleChatBubble
+            <FoundationFreestyleChatBubble
               key={message.id}
               message={message}
               onReplay={message.role === "assistant" ? handleReplay : undefined}
@@ -109,7 +107,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
         
         {/* We wrap the existing white controls in a full-width container so it matches the aesthetic */}
         <div className="flex-1 bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-xl flex items-center justify-center">
-          <FreestyleControls />
+          <FoundationFreestyleControls />
         </div>
         
         {/* The End Button sits perfectly flush next to it on desktop */}
