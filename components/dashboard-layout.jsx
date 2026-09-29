@@ -83,11 +83,11 @@ const navItems = [
   //   href: "/short-story",
   //   icon: <BookOpenText strokeWidth={1.5} />,
   // },
-  {
-    label: "Courses",
-    href: "/courses",
-    icon: <ScrollText strokeWidth={1.5} />,
-  },
+  // {
+  //   label: "Courses",
+  //   href: "/courses",
+  //   icon: <ScrollText strokeWidth={1.5} />,
+  // },
   {
     label: "Books",
     href: "/books",
