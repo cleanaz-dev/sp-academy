@@ -91,42 +91,42 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
           Word-by-Word Breakdown
         </h3>
         
-        {/* Scrollable Container added here */}
-       <ScrollArea className="max-h-[200px]">
-  <div className="grid grid-cols-1 gap-3 pr-3 pb-2 md:grid-cols-2">
-    {data.words.map((wordObj: any, idx: number) => (
-      <button
-        key={idx}
-        onClick={() => handleSpeak(wordObj.word, idx)}
-        disabled={isLoading}
-        className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-xs transition-all hover:border-blue-200 hover:bg-blue-50/50"
-      >
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-100 group-hover:text-blue-600">
-          {isLoading && activeWordIndex === idx ? (
-            <Loader2 className="animate-spin" size={14} />
-          ) : (
-            <Volume2 size={14} />
-          )}
-        </div>
+        {/* FIX: h-[200px] instead of max-h-[200px] */}
+        <ScrollArea className="h-[200px]">
+          <div className="grid grid-cols-1 gap-3 pr-3 pb-2 md:grid-cols-2">
+            {data.words.map((wordObj: any, idx: number) => (
+              <button
+                key={idx}
+                onClick={() => handleSpeak(wordObj.word, idx)}
+                disabled={isLoading}
+                className="group flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 text-left shadow-xs transition-all hover:border-blue-200 hover:bg-blue-50/50"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-100 group-hover:text-blue-600">
+                  {isLoading && activeWordIndex === idx ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : (
+                    <Volume2 size={14} />
+                  )}
+                </div>
 
-        <div className="flex flex-col">
-          <div className="flex flex-wrap items-baseline gap-1.5">
-            <span className="font-bold text-gray-900 transition-colors group-hover:text-blue-700">
-              {wordObj.word}
-            </span>
-            <span className="text-sm text-gray-400">
-              = {wordObj.gloss}
-            </span>
+                <div className="flex flex-col">
+                  <div className="flex flex-wrap items-baseline gap-1.5">
+                    <span className="font-bold text-gray-900 transition-colors group-hover:text-blue-700">
+                      {wordObj.word}
+                    </span>
+                    <span className="text-sm text-gray-400">
+                      = {wordObj.gloss}
+                    </span>
+                  </div>
+
+                  <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+                    {wordObj.role}
+                  </span>
+                </div>
+              </button>
+            ))}
           </div>
-
-          <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
-            {wordObj.role}
-          </span>
-        </div>
-      </button>
-    ))}
-  </div>
-</ScrollArea>
+        </ScrollArea>
       </div>
 
       {/* QUICK PRACTICE (COMMENTED OUT FOR NOW) */}
