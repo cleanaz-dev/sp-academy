@@ -28,7 +28,7 @@ export function FoundationFreestyleControls() {
   const outOfSuggestions = suggestionsLeft <= 0;
 
   return (
-    <div className="z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3">
+    <div className="z-10 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl md:rounded-3xl border border-slate-800 bg-slate-900 px-4 py-2">
       {/* LEFT: end session */}
       <div className="flex justify-start">
         <button
@@ -81,7 +81,7 @@ export function FoundationFreestyleControls() {
               ? "text-amber-400 hover:bg-amber-400/10 hover:text-amber-300 active:scale-95"
               : isSuggestionVisible
               ? "cursor-default bg-amber-400/10 text-amber-400"
-              : "cursor-not-allowed text-slate-600"
+              : "cursor-not-allowed text-slate-500"
           }`}
         >
           {isSuggestionsLoading ? (
@@ -103,7 +103,7 @@ export function FoundationFreestyleControls() {
           className={`${iconButton} ${
             canRetry
               ? "text-slate-300 hover:bg-white/5 hover:text-white active:scale-95"
-              : "cursor-not-allowed text-slate-600"
+              : "cursor-not-allowed text-slate-500"
           }`}
         >
           <RotateCcw className="h-5 w-5" />

@@ -116,7 +116,8 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
 
       {/* BOTTOM ACTION BAR */}
       <div className="shrink-0 flex flex-col md:flex-row gap-4 h-auto md:h-[72px]">
-        <div className="flex-1 bg-white rounded-2xl md:rounded-3xl overflow-hidden shadow-xl flex items-center justify-center">
+        {/* No background here: the controls draw their own dark bar and stretch to fill this slot */}
+        <div className="flex min-w-0 flex-1">
           <FoundationFreestyleControls />
         </div>
 
