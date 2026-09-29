@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import { Volume2, Loader2, ArrowRight, Lightbulb } from "lucide-react";
 
-import { useFreestyle } from "@/context/freestyle-context";
+
 import { FreestyleChatBubble } from "../freestyle/freestye-chat-bubble";
 import { FreestyleControls } from "../freestyle/freestyle-controls";
+import { useFoundation } from "@/context/foundation-context";
 
 
 export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
@@ -18,7 +19,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
     isPlaying,
     isSpeechLoading,
     handleReplay,
-  } = useFreestyle();
+  } = useFoundation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
