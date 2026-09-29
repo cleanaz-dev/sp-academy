@@ -10,9 +10,11 @@ import { useSpeech } from "@/context/speech-context";
 // --------------------------------------------------------
 function VerbalClozeQuestion({ 
   item, 
+  targetLang, // CHANGED
   onResolve 
 }: { 
   item: any, 
+  targetLang: string, // CHANGED
   onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void 
 }) {
   const { startRecording, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
@@ -43,7 +45,7 @@ function VerbalClozeQuestion({
       resetSpeechState();
       setLocalStatus("idle");
       onResolve("idle", "");
-      await startRecording("fr-FR"); // Force French target language
+      await startRecording(targetLang); // CHANGED (was "fr-FR")
     }
   };
 
@@ -247,7 +249,7 @@ function ReorderQuestion({
 // --------------------------------------------------------
 // MAIN PARENT COMPONENT
 // --------------------------------------------------------
-export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
+export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: string; onNext: () => void }) { // CHANGED
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
   const [feedback, setFeedback] = useState<string>("");
@@ -300,7 +302,7 @@ export function QuizStep({ data, onNext }: { data: any; onNext: () => void }) {
       {/* Dynamic Question Area */}
       <div className="flex-1 flex flex-col justify-center mb-8">
         {currentItem.type === "verbal_cloze" && (
-          <VerbalClozeQuestion key={currentItem.prompt} item={currentItem} onResolve={handleResolve} />
+          <VerbalClozeQuestion key={currentItem.prompt} item={currentItem} targetLang={targetLang} onResolve={handleResolve} /> // CHANGED
         )}
         {currentItem.type === "true_false" && (
           <TrueFalseQuestion key={currentItem.statement} item={currentItem} onResolve={handleResolve} />

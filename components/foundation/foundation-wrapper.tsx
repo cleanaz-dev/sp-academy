@@ -48,7 +48,7 @@ export function FoundationWrapper() {
       case 3: return <GrammarStep data={data.grammarContent} onNext={() => setStep(4)} />;
       case 4: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(5)} />;
       case 5: return <ListeningStep data={data.listeningContent} onNext={() => setStep(6)} />;
-      case 6: return <QuizStep data={data.quizContent} onNext={() => setStep(7)} />;
+      case 6: return <QuizStep data={data.quizContent} targetLang={data.targetLang} onNext={() => setStep(7)} />; // CHANGED
       case 7: return <FreestyleStep data={data} onNext={() => setStep(8)} />;
       case 8: return <OutroStep data={data} onFinish={() => alert("Course Complete! Routing to Dashboard...")} />;
       default:
