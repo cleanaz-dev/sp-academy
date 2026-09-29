@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
 import FoundationChat from "./foundation-chat";
+import { FoundationIntroOrSuggestion } from "./foundation-suggestion";
 import { FoundationProvider } from "@/context/foundation-context";
 
 export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void }) {
@@ -53,15 +54,17 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
   return (
     <div className="flex flex-col h-full bg-slate-950 rounded-4xl p-8 animate-in fade-in duration-700 overflow-hidden text-slate-50">
       
-      {/* Header - Stays visible in both states */}
-      <div className="text-center mb-8 shrink-0">
-        <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
-          {freestyle.topic}
-        </h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          {freestyle.openingLine}
-        </p>
-      </div>
+      {/* Header BEFORE the session starts (static, no provider yet) */}
+      {!activeSession && (
+        <div className="text-center mb-8 shrink-0">
+          <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
+            {freestyle.topic}
+          </h2>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            {freestyle.openingLine}
+          </p>
+        </div>
+      )}
 
       {!activeSession ? (
         <div className="flex flex-col flex-1 overflow-y-auto">
@@ -110,6 +113,14 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
       ) : (
         <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-500">
           <FoundationProvider session={activeSession} onEnd={onNext}>
+            {/* Header AFTER the session starts: inside the provider so it can show suggestions */}
+            <div className="text-center mb-8 shrink-0">
+              <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
+                {freestyle.topic}
+              </h2>
+              <FoundationIntroOrSuggestion intro={freestyle.openingLine} />
+            </div>
+
             <FoundationChat onEnd={onNext} />
           </FoundationProvider>
         </div>
