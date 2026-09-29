@@ -131,8 +131,8 @@ Your Persona: ${freestyleData?.persona || "A friendly conversational partner"}
           model: NovitaTextModel.QWEN_3_8_FLASH,
           messages: messages,
           response_format: { type: "json_object" },
-          max_tokens: 1500, // Kept safe for quick JSON responses
-          temperature: isOpening ? 0.1 : 0.7 // Low temp on opening ensures it repeats the npcLine exactly
+          max_tokens: 1500, 
+          temperature: isOpening ? 0.1 : 0.7 
         }),
       },
     );

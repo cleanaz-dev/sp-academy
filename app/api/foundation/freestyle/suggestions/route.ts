@@ -32,10 +32,10 @@ DO NOT include markdown, emojis, or anything outside the JSON braces.`;
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-v4-flash-0731",
+        model: "xiaomimimo/mimo-v2.6-flash",
         messages: messages,
         response_format: { type: "json_object" },
-        max_tokens: 600, // Very small output required
+        max_tokens: 1400,
         temperature: 0.7,
       }),
     });
