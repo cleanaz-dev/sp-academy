@@ -16,6 +16,12 @@ export interface SuggestionData {
   }[];
 }
 
+export interface FoundationSuggestionData {
+  starter: string;              // "Je voudrais..."
+  starterTranslation: string;   // meaning in native language
+  vocabulary: { word: string; definition: string }[]; // exactly 3
+}
+
 interface FreestyleSuggestionsPanelProps {
   suggestions: SuggestionData | null;
   isLoading?: boolean;

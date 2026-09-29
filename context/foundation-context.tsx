@@ -13,21 +13,30 @@ import { useSpeak } from "@/hooks/use-speak";
 import { convertBlobToWav } from "@/lib/audio-utils";
 import { FreestyleSessionConfig } from "@/components/freestyle/freestyle-wrapper";
 import { toast } from "sonner";
-import { SuggestionData } from "@/components/freestyle/freestyle-suggestions-panel";
+import { FoundationSuggestionData } from "@/components/freestyle/freestyle-suggestions-panel";
+
+// How many times the learner may reveal a suggestion per session
+const MAX_SUGGESTIONS = 3;
 
 interface FoundationContextType {
   session: FreestyleSessionConfig;
   messages: any[];
   isAiProcessing: boolean;
-  retriesLeft: number;
   canRetry: boolean;
   isProcessing: boolean;
   isRecording: boolean;
   isPlaying: boolean;
   isSpeechLoading: boolean;
   transcript: string;
-  suggestions: SuggestionData | null;
+
+  // suggestions
+  suggestions: FoundationSuggestionData | null;
   isSuggestionsLoading: boolean;
+  isSuggestionVisible: boolean;
+  suggestionsLeft: number;
+  canSuggest: boolean;
+  handleGetSuggestion: () => void;
+
   submitTurn: () => Promise<void>;
   handleRetry: () => void;
   handleEndSession: () => Promise<void>;
@@ -50,16 +59,22 @@ export function FoundationProvider({
 }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [retriesLeft, setRetriesLeft] = useState(3);
-
-  // States for Suggestions
-  const [suggestions, setSuggestions] = useState<SuggestionData | null>(null);
-  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   const [accumulatedMistakes, setAccumulatedMistakes] = useState<any[]>([]);
+
+  // --- Suggestions state ---
+  // `suggestions` = hint for the LATEST AI message (fetched in the background during the AI turn)
+  // `isSuggestionVisible` = has the learner spent a use to reveal it
+  // `suggestionsUsed` = reveals spent this session (max MAX_SUGGESTIONS)
+  const [suggestions, setSuggestions] =
+    useState<FoundationSuggestionData | null>(null);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [isSuggestionVisible, setIsSuggestionVisible] = useState(false);
+  const [suggestionsUsed, setSuggestionsUsed] = useState(0);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
+  const suggestionRequestIdRef = useRef(0); // ignores late responses from older AI turns
 
   const {
     startRecording: startSpeech,
@@ -68,7 +83,7 @@ export function FoundationProvider({
     transcript,
     resetSpeechState,
   } = useSpeech();
-  
+
   const {
     speak,
     isPlaying,
@@ -77,8 +92,16 @@ export function FoundationProvider({
   } = useSpeak();
 
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
-  const canRetry =
-    retriesLeft > 0 && (isRecording || messages.some((m) => m.role === "user"));
+
+  // Retry is unlimited: available while recording, or once there's a user turn to redo
+  const canRetry = isRecording || messages.some((m) => m.role === "user");
+
+  const suggestionsLeft = MAX_SUGGESTIONS - suggestionsUsed;
+  const canSuggest =
+    suggestionsLeft > 0 &&
+    !!suggestions &&
+    !isSuggestionVisible &&
+    !isAiProcessing;
 
   // Initial greeting
   useEffect(() => {
@@ -212,7 +235,10 @@ export function FoundationProvider({
     }
   };
 
+  // Runs in the background while the AI's reply is being spoken.
+  // Only stores the result; the learner spends a use when they tap the lightbulb.
   const generateSuggestions = async (updatedHistory: any[]) => {
+    const requestId = ++suggestionRequestIdRef.current;
     setIsSuggestionsLoading(true);
     try {
       // 🚨 UPDATED ROUTE: /api/foundation/freestyle/suggestions
@@ -225,14 +251,20 @@ export function FoundationProvider({
           chatHistory: updatedHistory,
         }),
       });
+
+      // A newer AI turn started while we were waiting, so drop this result
+      if (requestId !== suggestionRequestIdRef.current) return;
+
       if (res.ok) {
         const data = await res.json();
-        setSuggestions(data);
+        if (data?.starter) setSuggestions(data);
       }
     } catch (e) {
       console.error("Failed to fetch suggestions", e);
     } finally {
-      setIsSuggestionsLoading(false);
+      if (requestId === suggestionRequestIdRef.current) {
+        setIsSuggestionsLoading(false);
+      }
     }
   };
 
@@ -273,6 +305,10 @@ export function FoundationProvider({
         setMessages((prev) => [...prev, newAiMessage]);
         setIsAiProcessing(false);
 
+        // New AI message = new turn: put the header back to the intro
+        // and fetch a fresh suggestion for this message.
+        setSuggestions(null);
+        setIsSuggestionVisible(false);
         generateSuggestions([...chatHistory, newAiMessage]);
 
         await speak(
@@ -282,7 +318,7 @@ export function FoundationProvider({
           session.voiceGender,
         );
 
-        return; 
+        return;
       } catch (err: any) {
         if (err.name === "AbortError") return;
 
@@ -315,8 +351,6 @@ export function FoundationProvider({
 
     if (!userText) return;
 
-    setSuggestions(null);
-
     const newMsgId = Date.now();
     const newMsg = {
       id: newMsgId,
@@ -341,10 +375,10 @@ export function FoundationProvider({
     })();
   };
 
+  // Unlimited retries. Suggestions are left untouched: after a retry the
+  // learner is answering the same AI message, so its hint (and whether they
+  // already revealed it) still applies.
   const handleRetry = () => {
-    if (retriesLeft <= 0) return;
-    setRetriesLeft((prev) => prev - 1);
-
     if (abortControllerRef.current) abortControllerRef.current.abort();
     stopAudio();
     setIsAiProcessing(false);
@@ -360,13 +394,19 @@ export function FoundationProvider({
     }
   };
 
+  // Revealing costs one use. The suggestion was already fetched during the AI turn.
+  const handleGetSuggestion = () => {
+    if (!canSuggest) return;
+    setSuggestionsUsed((n) => n + 1);
+    setIsSuggestionVisible(true);
+  };
+
   return (
     <FoundationContext.Provider
       value={{
         session,
         messages,
         isAiProcessing,
-        retriesLeft,
         canRetry,
         isProcessing,
         isRecording,
@@ -375,6 +415,10 @@ export function FoundationProvider({
         transcript,
         suggestions,
         isSuggestionsLoading,
+        isSuggestionVisible,
+        suggestionsLeft,
+        canSuggest,
+        handleGetSuggestion,
         submitTurn,
         handleRetry,
         handleEndSession,
