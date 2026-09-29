@@ -103,7 +103,7 @@ export function FoundationWrapper() {
       </div>
 
       {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
-      <div className="flex-1 bg-white rounded-4xl shadow-xs border border-gray-100 overflow-hidden min-h-[600px] flex flex-col">
+      <div className="flex-1 bg-white rounded-4xl shadow-xs overflow-hidden min-h-[600px] flex flex-col">
         {renderStep()}
       </div>
 
