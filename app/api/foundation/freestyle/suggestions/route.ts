@@ -1,9 +1,18 @@
 // app/api/foundation/freestyle/suggestions/route.ts
 import { NextResponse } from "next/server";
 
+const TAG = "[suggestions]";
+
 export async function POST(req: Request) {
   try {
     const { targetLanguage, nativeLanguage, chatHistory } = await req.json();
+
+    console.log(`${TAG} 1. incoming request`, {
+      targetLanguage,
+      nativeLanguage,
+      historyLength: chatHistory?.length,
+      lastMessage: chatHistory?.[chatHistory.length - 1],
+    });
 
     const systemPrompt = `You are a helpful language tutor assisting a beginner learning ${targetLanguage}. Their native language is ${nativeLanguage}.
 Look at the conversation history and help the student reply to the AI's LAST message.
@@ -24,6 +33,13 @@ Rules:
     const messages = [
       { role: "system", content: systemPrompt },
       ...chatHistory.map((m: any) => ({ role: m.role, content: m.text })),
+      // The history ends on an assistant message, so without this the model
+      // may just continue that message instead of following the system prompt.
+      {
+        role: "user",
+        content:
+          "Give me the hint JSON for replying to the last message above. Respond with the JSON object only.",
+      },
     ];
 
     const response = await fetch("https://api.novita.ai/openai/v1/chat/completions", {
@@ -41,12 +57,49 @@ Rules:
       }),
     });
 
-    const data = await response.json();
-    const rawContent = data.choices?.[0]?.message?.content || "{}";
+    const rawBody = await response.text();
+    console.log(`${TAG} 2. novita status`, response.status, response.ok);
+    console.log(`${TAG} 3. novita raw body`, rawBody.slice(0, 3000));
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: "Upstream API error", detail: rawBody.slice(0, 500) },
+        { status: 502 },
+      );
+    }
+
+    let data: any;
+    try {
+      data = JSON.parse(rawBody);
+    } catch (e) {
+      console.error(`${TAG} 3b. novita body was not valid JSON`, e);
+      return NextResponse.json({ error: "Upstream returned non-JSON" }, { status: 502 });
+    }
+
+    const choice = data.choices?.[0];
+    const rawContent = choice?.message?.content || "";
+    console.log(`${TAG} 4. model output`, {
+      finish_reason: choice?.finish_reason,
+      contentLength: rawContent.length,
+      hasReasoningContent: Boolean(choice?.message?.reasoning_content),
+      content: rawContent,
+    });
 
     // Extract JSON safely
     const match = rawContent.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : {};
+    if (!match) {
+      console.error(`${TAG} 5. no JSON object found in model output`);
+      return NextResponse.json({ error: "No JSON in model output" }, { status: 502 });
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(match[0]);
+    } catch (e) {
+      console.error(`${TAG} 5b. JSON.parse failed on:`, match[0], e);
+      return NextResponse.json({ error: "Model returned invalid JSON" }, { status: 502 });
+    }
+    console.log(`${TAG} 5. parsed`, parsed);
 
     // Normalise so the UI never has to guard against a bad shape
     const clean = {
@@ -57,14 +110,16 @@ Rules:
         .slice(0, 3)
         .map((v: any) => ({ word: String(v.word), definition: String(v.definition) })),
     };
+    console.log(`${TAG} 6. cleaned`, clean);
 
     if (!clean.starter) {
+      console.error(`${TAG} 6b. cleaned starter is empty, parsed keys were:`, Object.keys(parsed));
       return NextResponse.json({ error: "Empty suggestion" }, { status: 502 });
     }
 
     return NextResponse.json(clean);
   } catch (error) {
-    console.error("Suggestions API failed:", error);
+    console.error(`${TAG} route crashed:`, error);
     return NextResponse.json({ error: "Failed to generate suggestions" }, { status: 500 });
   }
 }
