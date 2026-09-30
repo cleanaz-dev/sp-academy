@@ -79,55 +79,57 @@ export function FoundationFreestyleChatBubble({
       </Avatar>
 
       <div className="flex max-w-[80%] flex-col items-start gap-1">
-  {isThinking ? (
-    // Placeholder while the AI is generating its reply
-    <div className="flex items-center gap-3 rounded-3xl rounded-bl-sm border border-slate-700 bg-slate-800 px-5 py-3.5 shadow-xs">
-      <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
-      <span className="text-sm font-semibold text-slate-300">
-        Thinking...
-      </span>
-    </div>
-  ) : (
-    <>
-      {/* Main text: white bubble */}
-      <div className="p-4 rounded-3xl bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-xs text-[15px] leading-relaxed">
-        <p>{message.text}</p>
-      </div>
+        {isThinking ? (
+          // Placeholder while the AI is generating its reply
+          <div className="flex items-center gap-3 rounded-3xl rounded-bl-sm border border-slate-700 bg-slate-800 px-5 py-3.5 shadow-xs">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+            <span className="text-sm font-semibold text-slate-300">
+              Thinking...
+            </span>
+          </div>
+        ) : (
+          <>
+            {/* Main text & Audio: white bubble */}
+            <div className="px-4 py-3.5 rounded-3xl bg-white border border-gray-100 text-gray-900 rounded-bl-sm shadow-xs text-[15px] leading-relaxed">
+              <p>{message.text}</p>
 
-      {/* Translation: transparent bg, sits on the dark chat surface */}
-      {message.translation && (
-        <p className="px-2 text-sm italic leading-relaxed text-slate-400">
-          {message.translation}
-        </p>
-      )}
+              {onReplay && (
+                <div className="mt-2 -ml-2">
+                  <button
+                    onClick={() => onReplay(message.text)}
+                    disabled={isBusy}
+                    aria-label="Replay message"
+                    className={`flex w-fit items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors active:scale-95 disabled:cursor-not-allowed
+                      ${
+                        isActive
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40"
+                      }`}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Volume2
+                        className={`w-3.5 h-3.5 ${
+                          isPlayingNow ? "animate-pulse" : ""
+                        }`}
+                      />
+                    )}
+                    {isLoading
+                      ? "Loading..."
+                      : isPlayingNow
+                        ? "Speaking..."
+                        : "Replay"}
+                  </button>
+                </div>
+              )}
+            </div>
 
-            {onReplay && (
-              <button
-                onClick={() => onReplay(message.text)}
-                disabled={isBusy}
-                aria-label="Replay message"
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors active:scale-95 disabled:cursor-not-allowed
-                  ${
-                    isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40"
-                  }`}
-              >
-                {isLoading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Volume2
-                    className={`w-3.5 h-3.5 ${
-                      isPlayingNow ? "animate-pulse" : ""
-                    }`}
-                  />
-                )}
-                {isLoading
-                  ? "Loading..."
-                  : isPlayingNow
-                    ? "Speaking..."
-                    : "Replay"}
-              </button>
+            {/* Translation: transparent bg, sits on the dark chat surface */}
+            {message.translation && (
+              <p className="px-2 mt-0.5 text-sm italic leading-relaxed text-slate-400">
+                {message.translation}
+              </p>
             )}
           </>
         )}
