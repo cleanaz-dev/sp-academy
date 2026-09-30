@@ -49,6 +49,8 @@ interface FoundationContextType {
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
   handleReplay: (text: string) => Promise<void>;
+
+  dismissSuggestion: () => void;
 }
 
 const FoundationContext = createContext<FoundationContextType | undefined>(
@@ -82,6 +84,7 @@ export function FoundationProvider({
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
   const suggestionRequestIdRef = useRef(0); // ignores late responses from older AI turns
+  const usedSuggestionRef = useRef(false); // did this turn use a hint
 
   const {
     startRecording: startSpeech,
@@ -161,23 +164,24 @@ export function FoundationProvider({
   };
 
   const evaluateUserTurn = async (
-    userText: string,
-    messageId: number,
-    pronunciationData: any = null,
-  ) => {
-    try {
-      // 🚨 UPDATED ROUTE: /api/foundation/freestyle/evaluate-turn
-      const res = await fetch("/api/foundation/freestyle/evaluate-turn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userText,
-          targetLanguage: session.targetLanguage,
-          nativeLanguage: session.nativeLanguage,
-          level: session.level,
-          pronunciationData,
-        }),
-      });
+  userText: string,
+  messageId: number,
+  pronunciationData: any = null,
+  usedSuggestion = false,
+) => {
+  try {
+    const res = await fetch("/api/foundation/freestyle/evaluate-turn", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userText,
+        targetLanguage: session.targetLanguage,
+        nativeLanguage: session.nativeLanguage,
+        level: session.level,
+        pronunciationData,
+        usedSuggestion,
+      }),
+    });
 
       if (!res.ok) return;
 
@@ -315,8 +319,9 @@ export function FoundationProvider({
         // New AI message = new turn: put the header back to the intro
         // and fetch a fresh suggestion for this message.
         setSuggestions(null);
-        setIsSuggestionVisible(false);
-        generateSuggestions([...chatHistory, newAiMessage]);
+setIsSuggestionVisible(false);
+usedSuggestionRef.current = false;
+generateSuggestions([...chatHistory, newAiMessage]);
 
         await speak(
           forSpeech(data.text),
@@ -352,61 +357,74 @@ export function FoundationProvider({
     }
   };
 
-  const submitTurn = async () => {
-    const audioBlob = await stopRecording();
-    const userText = transcript.trim();
+const submitTurn = async () => {
+  const audioBlob = await stopRecording();
+  const userText = transcript.trim();
 
-    if (!userText) return;
+  if (!userText) return;
 
-    const newMsgId = Date.now();
-    const newMsg = {
-      id: newMsgId,
-      role: "user",
-      text: userText,
-      isAnalyzingPronunciation: !!audioBlob,
-      pronunciationScore: undefined,
-    };
+  const usedSuggestion = usedSuggestionRef.current;
 
-    const updatedMessages = [...messages, newMsg];
-    setMessages(updatedMessages);
-    resetSpeechState();
-
-    handleAiTurn(false, updatedMessages);
-
-    (async () => {
-      let pronunData = null;
-      if (audioBlob) {
-        pronunData = await analyzePronunciation(audioBlob, userText, newMsgId);
-      }
-      await evaluateUserTurn(userText, newMsgId, pronunData);
-    })();
+  const newMsgId = Date.now();
+  const newMsg = {
+    id: newMsgId,
+    role: "user",
+    text: userText,
+    usedSuggestion,
+    isAnalyzingPronunciation: !!audioBlob,
+    pronunciationScore: undefined,
   };
+
+  const updatedMessages = [...messages, newMsg];
+  setMessages(updatedMessages);
+  setIsSuggestionVisible(false); // bubble leaves once they answer
+  resetSpeechState();
+
+  handleAiTurn(false, updatedMessages);
+
+  (async () => {
+    let pronunData = null;
+    if (audioBlob) {
+      pronunData = await analyzePronunciation(audioBlob, userText, newMsgId);
+    }
+    await evaluateUserTurn(userText, newMsgId, pronunData, usedSuggestion);
+  })();
+};
 
   // Unlimited retries. Suggestions are left untouched: after a retry the
   // learner is answering the same AI message, so its hint (and whether they
   // already revealed it) still applies.
-  const handleRetry = () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    stopAudio();
-    setIsAiProcessing(false);
+const handleRetry = () => {
+  if (abortControllerRef.current) abortControllerRef.current.abort();
+  stopAudio();
+  setIsAiProcessing(false);
 
-    if (isRecording) {
-      stopRecording();
-      resetSpeechState();
-    } else {
-      setMessages((prev) => {
-        const lastUserIndex = prev.map((m) => m.role).lastIndexOf("user");
-        return lastUserIndex !== -1 ? prev.slice(0, lastUserIndex) : prev;
-      });
-    }
-  };
-
-  // Revealing costs one use. The suggestion was already fetched during the AI turn.
-  const handleGetSuggestion = () => {
-    if (!canSuggest) return;
-    setSuggestionsUsed((n) => n + 1);
+  if (usedSuggestionRef.current && suggestions) {
     setIsSuggestionVisible(true);
-  };
+  }
+
+  if (isRecording) {
+    stopRecording();
+    resetSpeechState();
+  } else {
+    setMessages((prev) => {
+      const lastUserIndex = prev.map((m) => m.role).lastIndexOf("user");
+      return lastUserIndex !== -1 ? prev.slice(0, lastUserIndex) : prev;
+    });
+  }
+};
+
+const handleGetSuggestion = () => {
+  if (!canSuggest) return;
+  setSuggestionsUsed((n) => n + 1);
+  usedSuggestionRef.current = true;
+  setIsSuggestionVisible(true);
+};
+
+// Hides the bubble only. The use is NOT refunded and the turn stays flagged.
+const dismissSuggestion = () => setIsSuggestionVisible(false);
+
+  
 
   return (
     <FoundationContext.Provider
@@ -429,6 +447,7 @@ export function FoundationProvider({
         submitTurn,
         handleRetry,
         handleEndSession,
+        dismissSuggestion,
         startRecording: () => startSpeech(session.targetLanguage),
         handleReplay: (text: string) =>
           speak(forSpeech(text), session.targetLanguage, 1.0, session.voiceGender),
