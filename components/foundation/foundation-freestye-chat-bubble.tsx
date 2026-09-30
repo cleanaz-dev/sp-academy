@@ -87,7 +87,7 @@ export function FoundationFreestyleChatBubble({
         <span className="text-sm font-medium">Thinking...</span>
       </div>
     ) : (
-      <div className="flex flex-col items-start gap-2">
+      <div className="flex items-start gap-4">
         {/* Text */}
         <div className="text-[15px] leading-relaxed text-gray-900">
           <p>{message.text}</p>
@@ -113,7 +113,7 @@ export function FoundationFreestyleChatBubble({
                 className={`h-3.5 w-3.5 ${isPlayingNow ? "animate-pulse" : ""}`}
               />
             )}
-            {isLoading ? "Loading..." : isPlayingNow ? "Speaking..." : "Replay"}
+            {isLoading ? "" : isPlayingNow ? "" : ""}
           </button>
         )}
       </div>
