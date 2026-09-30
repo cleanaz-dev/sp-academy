@@ -1,26 +1,47 @@
 "use client";
 
-import { Volume2 } from "lucide-react";
+import { useState } from "react";
+import { Volume2, Loader2 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface FreestyleChatBubbleProps {
   message: any;
-  onReplay?: (text: string) => void;
+  onReplay?: (text: string) => void | Promise<void>;
   aiAvatarUrl?: string;
+  isPlaying?: boolean;
+  isSpeechLoading?: boolean;
 }
 
 export function FoundationFreestyleChatBubble({
   message,
   onReplay,
   aiAvatarUrl,
+  isPlaying = false,
+  isSpeechLoading = false,
 }: FreestyleChatBubbleProps) {
   const { user } = useUser();
 
+  // Hooks must run before any early return
+  const [isThisReplaying, setIsThisReplaying] = useState(false);
+
+  const isBusy = isPlaying || isSpeechLoading;
+  const showLoading = isThisReplaying && isSpeechLoading;
+  const showPlaying = isThisReplaying && isPlaying && !isSpeechLoading;
+
+  const handleReplayClick = async () => {
+    if (!onReplay || isBusy) return;
+    setIsThisReplaying(true);
+    try {
+      await onReplay(message.text);
+    } finally {
+      setIsThisReplaying(false);
+    }
+  };
+
   // User message
   if (message.role === "user") {
-    const initial =
-      user?.firstName?.[0] ?? user?.username?.[0] ?? "U";
+    const initial = user?.firstName?.[0] ?? user?.username?.[0] ?? "U";
 
     return (
       <div className="flex items-end justify-end gap-3 animate-in slide-in-from-bottom-1">
@@ -73,7 +94,7 @@ export function FoundationFreestyleChatBubble({
           <p>{message.text}</p>
 
           {message.translation && (
-            <p className="mt-2 text-sm text-gray-500 italic border-t border-gray-50 pt-2">
+            <p className="mt-2 text-sm text-secondary italic border-t border-transparent pt-2">
               {message.translation}
             </p>
           )}
@@ -81,11 +102,24 @@ export function FoundationFreestyleChatBubble({
 
         {onReplay && (
           <button
-            onClick={() => onReplay(message.text)}
-            className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 hover:text-indigo-700 transition-colors px-3 py-1.5 rounded-full hover:bg-indigo-50 active:scale-95"
+            onClick={handleReplayClick}
+            disabled={isBusy}
+            aria-label="Replay message"
+            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors active:scale-95 disabled:cursor-not-allowed
+              ${
+                isThisReplaying
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 disabled:opacity-40"
+              }`}
           >
-            <Volume2 className="w-3.5 h-3.5" />
-            Replay
+            {showLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Volume2
+                className={`w-3.5 h-3.5 ${showPlaying ? "animate-pulse" : ""}`}
+              />
+            )}
+            {showLoading ? "Loading..." : showPlaying ? "Playing..." : "Replay"}
           </button>
         )}
       </div>

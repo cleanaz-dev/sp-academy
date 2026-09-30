@@ -5,6 +5,7 @@ import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
 import FoundationChat from "./foundation-chat";
 import { FoundationIntroOrSuggestion } from "./foundation-suggestion";
 import { FoundationProvider } from "@/context/foundation-context";
+import { AudioProvider } from "@/context/audio-context";
 
 export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { freestyle, nativeLang, targetLang, grammarContent, visualContent } = data;
@@ -113,6 +114,7 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
       ) : (
         <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-500">
           <FoundationProvider session={activeSession} onEnd={onNext}>
+            <AudioProvider>
             {/* Header AFTER the session starts: inside the provider so it can show suggestions */}
             <div className="text-center mb-8 shrink-0">
               <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
@@ -122,6 +124,7 @@ export function FreestyleStep({ data, onNext }: { data: any; onNext: () => void 
             </div>
 
             <FoundationChat onEnd={onNext} />
+            </AudioProvider>
           </FoundationProvider>
         </div>
       )}

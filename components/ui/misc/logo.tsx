@@ -53,7 +53,7 @@ function LogoBlock({ colorClass, letter }: LogoBlockProps) {
 
   // Width of each colored background block.
   // Increase this if the blocks still look too narrow.
-  const blockWidth = '1.30em';
+  const blockWidth = '1.32em';
 
   // Height of each colored background block.
   // Increase this if the blocks need to look taller.

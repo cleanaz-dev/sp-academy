@@ -48,7 +48,7 @@ interface FoundationContextType {
   handleRetry: () => void;
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
-  handleReplay: (text: string) => void;
+  handleReplay: (text: string) => Promise<void>;
 }
 
 const FoundationContext = createContext<FoundationContextType | undefined>(

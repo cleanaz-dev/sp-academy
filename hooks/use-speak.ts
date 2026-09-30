@@ -37,7 +37,7 @@ export function useSpeak() {
     async (
       text: string,
       targetLanguage: string,
-      speed: number = 1.0,
+      speed: number = 0.9,
       gender?: "male" | "female",
     ) => {
       try {

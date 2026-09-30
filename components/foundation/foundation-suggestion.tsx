@@ -1,14 +1,16 @@
 "use client";
 
+import { Volume2, Loader2 } from "lucide-react";
 import { useFoundation } from "@/context/foundation-context";
 
-/**
- * Sits under the mission title. Shows the intro line by default and swaps in
- * the AI suggestion after the learner taps the lightbulb.
- * Must be rendered INSIDE <FoundationProvider>.
- */
 export function FoundationIntroOrSuggestion({ intro }: { intro: string }) {
-  const { suggestions, isSuggestionVisible } = useFoundation();
+  const {
+    suggestions,
+    isSuggestionVisible,
+    handleReplay,
+    isPlaying,
+    isSpeechLoading,
+  } = useFoundation();
 
   const showSuggestion = isSuggestionVisible && !!suggestions;
 
@@ -19,12 +21,30 @@ export function FoundationIntroOrSuggestion({ intro }: { intro: string }) {
     >
       {showSuggestion ? (
         <div key="suggestion" className="flex flex-col items-center gap-2">
-          <p className="text-lg text-slate-200">
-            <span className="font-semibold text-white">{suggestions.starter}</span>
-            <span className="ml-2 text-sm italic text-slate-400">
-              {suggestions.starterTranslation}
-            </span>
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg text-slate-200">
+              <span className="font-semibold text-white">
+                {suggestions.starter}
+              </span>
+              <span className="ml-2 text-sm italic text-slate-400">
+                {suggestions.starterTranslation}
+              </span>
+            </p>
+
+            <button
+              type="button"
+              onClick={() => handleReplay(suggestions.starter)}
+              disabled={isPlaying || isSpeechLoading}
+              aria-label="Listen to suggested sentence"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+            >
+              {isSpeechLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+            </button>
+          </div>
 
           <ul className="flex flex-wrap justify-center gap-2">
             {suggestions.vocabulary?.map((v) => (

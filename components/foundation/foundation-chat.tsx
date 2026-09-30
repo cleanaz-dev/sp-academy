@@ -64,17 +64,16 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
                 </p>
               </div>
             )}
-
-            {messages.map((message) => (
-              <FoundationFreestyleChatBubble
-                key={message.id}
-                message={message}
-                aiAvatarUrl={aiAvatarUrl}
-                onReplay={
-                  message.role === "assistant" ? handleReplay : undefined
-                }
-              />
-            ))}
+{messages.map((message) => (
+  <FoundationFreestyleChatBubble
+    key={message.id}
+    message={message}
+    aiAvatarUrl={aiAvatarUrl}
+    isPlaying={isPlaying}
+    isSpeechLoading={isSpeechLoading}
+    onReplay={message.role === "assistant" ? handleReplay : undefined}
+  />
+))}
 
             {/* Live Transcript Bubble */}
             {isRecording && transcript && (

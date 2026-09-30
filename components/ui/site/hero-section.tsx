@@ -70,7 +70,7 @@ export default function HeroSection() {
                 Real Progress.
               </Reveal>
               <Reveal as="span" delay={0.5} className="block">
-                A <span className="text-green-500">Brighter</span> <span className="text-amber-500">You.</span>
+               <span className="text-secondary">A</span>  <span className="text-accent">Brighter</span> <span className="text-tertiary">You.</span>
               </Reveal>
             </h1>
 
