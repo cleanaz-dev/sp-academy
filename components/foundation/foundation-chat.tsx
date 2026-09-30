@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Volume2, Loader2, ArrowRight, Lightbulb } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Lightbulb } from "lucide-react";
 import { useFoundation } from "@/context/foundation-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FoundationFreestyleControls } from "./foundation-freestyle-controls";
-import { FoundationFreestyleChatBubble } from "./foundation-freestye-chat-bubble";
+import {
+  FoundationFreestyleChatBubble,
+  type TtsStatus,
+} from "./foundation-freestye-chat-bubble";
 
 export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
   const {
@@ -14,6 +17,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
     isRecording,
     transcript,
     isProcessing,
+    isAiProcessing,
     isPlaying,
     isSpeechLoading,
     handleReplay,
@@ -21,12 +25,48 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Which message the learner manually replayed (null = the AI's auto-spoken reply)
+  const [replayingId, setReplayingId] = useState<number | null>(null);
+
   // Extract the English hint we passed from the JSON
   const freestyleData = (session as any).freestyleData;
   const { nativeSentence } = freestyleData;
 
-  // AI avatar URL from the session (this line was missing)
+  // AI avatar URL from the session
   const aiAvatarUrl = (session as any).aiAvatarUrl as string | undefined;
+
+  const isAudioBusy = isPlaying || isSpeechLoading;
+
+  // Newest assistant message = the one auto-spoken after each AI turn
+  const lastAssistantId = [...messages]
+    .reverse()
+    .find((m) => m.role === "assistant")?.id;
+
+  // Show the "Thinking..." placeholder while the AI is generating
+  const showThinking = isAiProcessing && !isRecording;
+
+  const getTtsStatus = (message: any): TtsStatus => {
+    if (message.role !== "assistant") return "idle";
+
+    const isActiveMessage =
+      replayingId === message.id ||
+      (replayingId === null && message.id === lastAssistantId);
+
+    if (!isActiveMessage) return "idle";
+    if (isSpeechLoading) return "loading";
+    if (isPlaying) return "playing";
+    return "idle";
+  };
+
+  const handleReplayMessage = async (id: number, text: string) => {
+    if (isAudioBusy) return;
+    setReplayingId(id);
+    try {
+      await handleReplay(text);
+    } finally {
+      setReplayingId(null);
+    }
+  };
 
   // Auto scroll
   useEffect(() => {
@@ -64,16 +104,21 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
                 </p>
               </div>
             )}
-{messages.map((message) => (
-  <FoundationFreestyleChatBubble
-    key={message.id}
-    message={message}
-    aiAvatarUrl={aiAvatarUrl}
-    isPlaying={isPlaying}
-    isSpeechLoading={isSpeechLoading}
-    onReplay={message.role === "assistant" ? handleReplay : undefined}
-  />
-))}
+
+            {messages.map((message) => (
+              <FoundationFreestyleChatBubble
+                key={message.id}
+                message={message}
+                aiAvatarUrl={aiAvatarUrl}
+                ttsStatus={getTtsStatus(message)}
+                isBusy={isAudioBusy}
+                onReplay={
+                  message.role === "assistant"
+                    ? (text) => handleReplayMessage(message.id, text)
+                    : undefined
+                }
+              />
+            ))}
 
             {/* Live Transcript Bubble */}
             {isRecording && transcript && (
@@ -85,27 +130,13 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
               </div>
             )}
 
-            {/* AI / TTS Loading Indicator */}
-            {isProcessing && !isRecording && (
-              <div className="flex items-start gap-2 duration-300 animate-in fade-in zoom-in">
-                <div className="flex items-center gap-3 rounded-2xl rounded-bl-sm border border-slate-700 bg-slate-800 px-5 py-3.5 shadow-xs">
-                  {isPlaying || isSpeechLoading ? (
-                    <>
-                      <Volume2 className="h-5 w-5 animate-pulse text-indigo-400" />
-                      <span className="text-sm font-semibold text-slate-300">
-                        Speaking...
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
-                      <span className="text-sm font-semibold text-slate-300">
-                        Thinking...
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
+            {/* AI "Thinking..." placeholder, rendered by the chat bubble */}
+            {showThinking && (
+              <FoundationFreestyleChatBubble
+                message={{ id: "thinking", role: "assistant", text: "" }}
+                aiAvatarUrl={aiAvatarUrl}
+                ttsStatus="thinking"
+              />
             )}
 
             <div ref={messagesEndRef} className="h-4" />
