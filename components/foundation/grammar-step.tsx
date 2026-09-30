@@ -92,7 +92,7 @@ export function GrammarStep({ data, onNext }: { data: any; onNext: () => void })
         </h3>
         
         {/* FIX: h-[200px] instead of max-h-[200px] */}
-        <ScrollArea className="h-[200px]">
+        <ScrollArea className="h-[300px]">
           <div className="grid grid-cols-1 gap-3 pr-3 pb-2 md:grid-cols-2">
             {data.words.map((wordObj: any, idx: number) => (
               <button
