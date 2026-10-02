@@ -1,9 +1,9 @@
-export const MOCK_FOUNDATION_DATA_EN_FR = {
+export const MOCK_FOUNDATION_DATA_EN_FR_V0 = {
   userId: "usr_paul",
   name: "Paul",
   foundationCourseId: "course_test",
-  nativeLang: "en-US",   // <--- ADD THIS
-  targetLang: "fr-FR",   // <--- ADD THIS
+  nativeLang: "en-US", // <--- ADD THIS
+  targetLang: "fr-FR", // <--- ADD THIS
   orderIndex: 1,
   status: "ready",
   visualContent: {
@@ -251,6 +251,471 @@ export const MOCK_FOUNDATION_DATA_EN_FR = {
       "It's 9 p.m. and Paul runs into his neighbor in the hallway. He greets her with 'Bonjour' and says 'Je suis Paul.'",
   },
 };
+export const MOCK_FOUNDATION_DATA_EN_FR = {
+  userId: "usr_Paul",
+  foundationCourseId: "course_test",
+  name: "Paul",
+  orderIndex: 1,
+  nativeLang: "en-US",
+  targetLang: "fr-FR",
+  status: "ready",
+  visualContent: {
+    imageS3Key: "foundation/usr_Paul/day1/visual.png",
+    npcAudioS3Key: "foundation/usr_Paul/day1/npc.mp3",
+    sceneDescription:
+      "In the tidy hallway of your apartment building, a friendly neighbor you've never met greets you beside the potted plants and introduces herself.",
+    altText:
+      "A tidy apartment hallway with pale walls and several potted plants lined along the floor; a smiling woman in her fifties stands facing the viewer, extending her hand in greeting.",
+    npcLine:
+      "Bonjour ! Moi c'est Madame Laurent, votre voisine du troisième étage.",
+    constraint: {
+      requiredChunk: "enchanté",
+      validReplies: [
+        "Enchanté, Madame Laurent !",
+        "Bonjour ! Enchanté de faire votre connaissance.",
+        "Enchanté ! Je viens d'emménager ici.",
+      ],
+    },
+  },
+  grammarContent: {
+    targetSentence: "Bonjour, je suis Paul, enchanté.",
+    nativeSentence: "Hello, I'm Paul — nice to meet you.",
+    romanizedSentence: null,
+    words: [
+      {
+        word: "Bonjour",
+        gloss: "hello / good day",
+        role: "greeting (interjection)",
+      },
+      {
+        word: "je",
+        gloss: "I",
+        role: "subject pronoun",
+      },
+      {
+        word: "suis",
+        gloss: "am",
+        role: "verb (1st person of être)",
+      },
+      {
+        word: "Paul",
+        gloss: "Paul",
+        role: "name (complement of the verb)",
+      },
+      {
+        word: "enchanté",
+        gloss: "nice to meet you",
+        role: "fixed polite phrase (masculine form)",
+      },
+    ],
+    highlightGroup: ["Bonjour", "je suis", "enchanté"],
+    clozeItems: [
+      {
+        id: "cloze-1",
+        hostSentence: "Bonjour, je suis Paul, enchanté.",
+        blankPosition: 2,
+        acceptableAnswers: ["suis"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "es",
+            feedback: "With 'je', say 'je suis' — 'es' only goes with 'tu'.",
+          },
+          {
+            wrong: "est",
+            feedback:
+              "'Est' goes with he or she; when giving your own name, say 'je suis'.",
+          },
+        ],
+      },
+      {
+        id: "cloze-2",
+        hostSentence: "Bonjour, je suis Paul, enchanté.",
+        blankPosition: 4,
+        acceptableAnswers: ["enchanté", "Enchanté"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "enchantée",
+            feedback: "You are a man, so drop the final -e and say 'enchanté'.",
+          },
+          {
+            wrong: "merci",
+            feedback:
+              "'Merci' means 'thank you'; to say 'nice to meet you', use 'enchanté'.",
+          },
+        ],
+      },
+      {
+        id: "cloze-3",
+        hostSentence: "Merci beaucoup, monsieur.",
+        blankPosition: 0,
+        acceptableAnswers: ["Merci", "merci"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "bonjour",
+            feedback: "'Bonjour' is a greeting; to thank someone, say 'merci'.",
+          },
+          {
+            wrong: "s'il vous plaît",
+            feedback:
+              "'S'il vous plaît' means 'please'; to thank someone, say 'merci'.",
+          },
+        ],
+      },
+    ],
+  },
+  pronunciationData: {
+    referenceText: "Bonjour, je suis Paul, enchanté.",
+    audioS3Key: "foundation/usr_Paul/day1/pronunciation.mp3",
+    breakdown: [
+      {
+        text: "Bonjour",
+        phonetic: "bɔ̃.ʒuʁ",
+        hint: "The 'on' in bonjour is one nasal vowel — say 'bon' without a clear n sound.",
+      },
+      {
+        text: "je suis",
+        phonetic: "ʒə.sɥi",
+        hint: null,
+      },
+      {
+        text: "Paul",
+        phonetic: "pɔl",
+        hint: null,
+      },
+      {
+        text: "enchanté",
+        phonetic: "ɑ̃.ʃɑ̃.te",
+        hint: "Both 'en' and 'chan' are nasal vowels; the final 'é' sounds like 'ay'.",
+      },
+    ],
+    focusSounds: [
+      {
+        sound: "nasal on (ɔ̃)",
+        positions: [0],
+      },
+    ],
+  },
+  listeningContent: {
+    id: "listen-1",
+    referenceText: "Bonjour, je suis Paul, enchanté.",
+    audioS3Key: "foundation/usr_Paul/day1/listening.mp3",
+    expectedOrder: ["Bonjour", "je", "suis", "Paul", "enchanté"],
+    wordBank: [
+      "je",
+      "Paul",
+      "enchantée",
+      "bonsoir",
+      "es",
+      "suis",
+      "Bonjour",
+      "enchanté",
+    ],
+    contrast:
+      "daytime vs evening greeting, masculine vs feminine agreement, and first vs second person verb form",
+  },
+  quizContent: {
+    items: [
+      {
+        type: "verbal_cloze",
+        prompt: "Bonjour, je ___ Paul, enchanté.",
+        hint: "The 'am' in 'I am' (1st person of être)",
+        acceptableAnswers: ["suis", "Suis"],
+        feedback: "Use 'suis' — 'je suis' means 'I am'.",
+      },
+      {
+        type: "reorder",
+        prompt: "Translate: 'Hello, I'm Paul — nice to meet you.'",
+        expectedWords: ["Bonjour,", "je", "suis", "Paul,", "enchanté."],
+        scrambledBank: [
+          "je",
+          "Bonjour,",
+          "suis",
+          "Paul,",
+          "enchanté.",
+          "sont",
+          "enchantée",
+          "bonsoir",
+        ],
+      },
+      {
+        type: "true_false",
+        statement:
+          "It's 9 p.m. and Paul runs into his neighbor in the hallway. He greets her with 'Bonjour' — that's the right greeting for the evening.",
+        isTrue: false,
+        explanation:
+          "In the evening, use 'Bonsoir'; 'Bonjour' is for the daytime.",
+      },
+      {
+        type: "verbal_cloze",
+        prompt: "Bonjour, je suis Paul, ___.",
+        hint: "Polite phrase for 'nice to meet you' (masculine form)",
+        acceptableAnswers: ["enchanté", "Enchanté"],
+        feedback:
+          "Say 'enchanté' — the polite 'nice to meet you', with no extra 'e' since Paul is a man.",
+      },
+    ],
+    passThreshold: 0.7,
+  },
+  freestyle: {
+    mode: "SPECIFIC",
+    level: "ZERO",
+    topic: "Greeting a Neighbor",
+    persona:
+      "a friendly neighbor you run into in the hallway of your apartment building",
+    requiredChunks: ["Bonjour", "Enchanté", "Je suis"],
+    openingLine:
+      "Paul, you bump into your neighbor in the hallway of your apartment building — greet them in French, tell them your name politely, and say 'nice to meet you'.",
+  },
+  lessonHandoff: {
+    day: 1,
+    theme: "Greetings and Names",
+    targetSentence: "Bonjour, je suis Paul, enchanté.",
+    chunks: [
+      "bonjour / bon après-midi",
+      "bonjour (le matin, poli)",
+      "bonsoir",
+      "enchanté(e)",
+      "merci",
+      "polite name statement (I am / my name is — polite form)",
+      "please call me [name]",
+    ],
+    npcLine:
+      "Bonjour ! Moi c'est Madame Laurent, votre voisine du troisième étage.",
+    freestyleTopic: "Greeting a Neighbor",
+    introNative:
+      "Hi Paul! Today you'll learn how to greet a neighbor politely and tell them your name in French.",
+    introTarget:
+      "Salut Paul ! Aujourd'hui, on apprend à dire bonjour et à se présenter en français.",
+    outroNative:
+      "Great job, Paul! You can now greet someone politely and introduce yourself in French. How do you feel about the lesson?",
+    outroTarget:
+      "Bravo Paul ! Tu sais maintenant dire bonjour et te présenter en français. Comment tu te sens ?",
+    introNativeAudio: "foundation/usr_Paul/day1/intro_native.mp3",
+    introTargetAudio: "foundation/usr_Paul/day1/intro_target.mp3",
+    outroNativeAudio: "foundation/usr_Paul/day1/outro_native.mp3",
+    outroTargetAudio: "foundation/usr_Paul/day1/outro_target.mp3",
+    npcAudio: "foundation/usr_Paul/day1/npc.mp3",
+    taughtChunks: ["Bonjour", "je suis", "enchanté"],
+    blankedWords: ["suis", "enchanté", "Merci"],
+    wrongAnswers: [
+      "es",
+      "est",
+      "enchantée",
+      "merci",
+      "bonjour",
+      "s'il vous plaît",
+    ],
+    pronunciationSound: "nasal on (ɔ̃)",
+    listeningContrast:
+      "daytime vs evening greeting, masculine vs feminine agreement, and first vs second person verb form",
+    visualRequiredChunk: "enchanté",
+    sceneDescription:
+      "In the tidy hallway of your apartment building, a friendly neighbor you've never met greets you beside the potted plants and introduces herself.",
+    freestylePersona:
+      "a friendly neighbor you run into in the hallway of your apartment building",
+    trueFalseStatement:
+      "It's 9 p.m. and Paul runs into his neighbor in the hallway. He greets her with 'Bonjour' — that's the right greeting for the evening.",
+    wordAudio: {
+      bonjour: {
+        m: "foundation/words/fr-FR/m/bonjour.mp3",
+        f: "foundation/words/fr-FR/f/bonjour.mp3",
+      },
+      je: {
+        m: "foundation/words/fr-FR/m/je.mp3",
+        f: "foundation/words/fr-FR/f/je.mp3",
+      },
+      suis: {
+        m: "foundation/words/fr-FR/m/suis.mp3",
+        f: "foundation/words/fr-FR/f/suis.mp3",
+      },
+      paul: {
+        m: "foundation/words/fr-FR/m/paul.mp3",
+        f: "foundation/words/fr-FR/f/paul.mp3",
+      },
+      enchanté: {
+        m: "foundation/words/fr-FR/m/enchanté.mp3",
+        f: "foundation/words/fr-FR/f/enchanté.mp3",
+      },
+      es: {
+        m: "foundation/words/fr-FR/m/es.mp3",
+        f: "foundation/words/fr-FR/f/es.mp3",
+      },
+      est: {
+        m: "foundation/words/fr-FR/m/est.mp3",
+        f: "foundation/words/fr-FR/f/est.mp3",
+      },
+      enchantée: {
+        m: "foundation/words/fr-FR/m/enchantée.mp3",
+        f: "foundation/words/fr-FR/f/enchantée.mp3",
+      },
+      merci: {
+        m: "foundation/words/fr-FR/m/merci.mp3",
+        f: "foundation/words/fr-FR/f/merci.mp3",
+      },
+      beaucoup: {
+        m: "foundation/words/fr-FR/m/beaucoup.mp3",
+        f: "foundation/words/fr-FR/f/beaucoup.mp3",
+      },
+      monsieur: {
+        m: "foundation/words/fr-FR/m/monsieur.mp3",
+        f: "foundation/words/fr-FR/f/monsieur.mp3",
+      },
+      sil: {
+        m: "foundation/words/fr-FR/m/sil.mp3",
+        f: "foundation/words/fr-FR/f/sil.mp3",
+      },
+      vous: {
+        m: "foundation/words/fr-FR/m/vous.mp3",
+        f: "foundation/words/fr-FR/f/vous.mp3",
+      },
+      plaît: {
+        m: "foundation/words/fr-FR/m/plaît.mp3",
+        f: "foundation/words/fr-FR/f/plaît.mp3",
+      },
+      bonsoir: {
+        m: "foundation/words/fr-FR/m/bonsoir.mp3",
+        f: "foundation/words/fr-FR/f/bonsoir.mp3",
+      },
+      sont: {
+        m: "foundation/words/fr-FR/m/sont.mp3",
+        f: "foundation/words/fr-FR/f/sont.mp3",
+      },
+      moi: {
+        m: "foundation/words/fr-FR/m/moi.mp3",
+        f: "foundation/words/fr-FR/f/moi.mp3",
+      },
+      cest: {
+        m: "foundation/words/fr-FR/m/cest.mp3",
+        f: "foundation/words/fr-FR/f/cest.mp3",
+      },
+      madame: {
+        m: "foundation/words/fr-FR/m/madame.mp3",
+        f: "foundation/words/fr-FR/f/madame.mp3",
+      },
+      laurent: {
+        m: "foundation/words/fr-FR/m/laurent.mp3",
+        f: "foundation/words/fr-FR/f/laurent.mp3",
+      },
+      votre: {
+        m: "foundation/words/fr-FR/m/votre.mp3",
+        f: "foundation/words/fr-FR/f/votre.mp3",
+      },
+      voisine: {
+        m: "foundation/words/fr-FR/m/voisine.mp3",
+        f: "foundation/words/fr-FR/f/voisine.mp3",
+      },
+      du: {
+        m: "foundation/words/fr-FR/m/du.mp3",
+        f: "foundation/words/fr-FR/f/du.mp3",
+      },
+      troisième: {
+        m: "foundation/words/fr-FR/m/troisième.mp3",
+        f: "foundation/words/fr-FR/f/troisième.mp3",
+      },
+      étage: {
+        m: "foundation/words/fr-FR/m/étage.mp3",
+        f: "foundation/words/fr-FR/f/étage.mp3",
+      },
+      de: {
+        m: "foundation/words/fr-FR/m/de.mp3",
+        f: "foundation/words/fr-FR/f/de.mp3",
+      },
+      faire: {
+        m: "foundation/words/fr-FR/m/faire.mp3",
+        f: "foundation/words/fr-FR/f/faire.mp3",
+      },
+      connaissance: {
+        m: "foundation/words/fr-FR/m/connaissance.mp3",
+        f: "foundation/words/fr-FR/f/connaissance.mp3",
+      },
+      viens: {
+        m: "foundation/words/fr-FR/m/viens.mp3",
+        f: "foundation/words/fr-FR/f/viens.mp3",
+      },
+      demménager: {
+        m: "foundation/words/fr-FR/m/demménager.mp3",
+        f: "foundation/words/fr-FR/f/demménager.mp3",
+      },
+      ici: {
+        m: "foundation/words/fr-FR/m/ici.mp3",
+        f: "foundation/words/fr-FR/f/ici.mp3",
+      },
+      salut: {
+        m: "foundation/words/fr-FR/m/salut.mp3",
+        f: "foundation/words/fr-FR/f/salut.mp3",
+      },
+      aujourdhui: {
+        m: "foundation/words/fr-FR/m/aujourdhui.mp3",
+        f: "foundation/words/fr-FR/f/aujourdhui.mp3",
+      },
+      on: {
+        m: "foundation/words/fr-FR/m/on.mp3",
+        f: "foundation/words/fr-FR/f/on.mp3",
+      },
+      apprend: {
+        m: "foundation/words/fr-FR/m/apprend.mp3",
+        f: "foundation/words/fr-FR/f/apprend.mp3",
+      },
+      à: {
+        m: "foundation/words/fr-FR/m/à.mp3",
+        f: "foundation/words/fr-FR/f/à.mp3",
+      },
+      dire: {
+        m: "foundation/words/fr-FR/m/dire.mp3",
+        f: "foundation/words/fr-FR/f/dire.mp3",
+      },
+      et: {
+        m: "foundation/words/fr-FR/m/et.mp3",
+        f: "foundation/words/fr-FR/f/et.mp3",
+      },
+      se: {
+        m: "foundation/words/fr-FR/m/se.mp3",
+        f: "foundation/words/fr-FR/f/se.mp3",
+      },
+      présenter: {
+        m: "foundation/words/fr-FR/m/présenter.mp3",
+        f: "foundation/words/fr-FR/f/présenter.mp3",
+      },
+      en: {
+        m: "foundation/words/fr-FR/m/en.mp3",
+        f: "foundation/words/fr-FR/f/en.mp3",
+      },
+      français: {
+        m: "foundation/words/fr-FR/m/français.mp3",
+        f: "foundation/words/fr-FR/f/français.mp3",
+      },
+      bravo: {
+        m: "foundation/words/fr-FR/m/bravo.mp3",
+        f: "foundation/words/fr-FR/f/bravo.mp3",
+      },
+      tu: {
+        m: "foundation/words/fr-FR/m/tu.mp3",
+        f: "foundation/words/fr-FR/f/tu.mp3",
+      },
+      sais: {
+        m: "foundation/words/fr-FR/m/sais.mp3",
+        f: "foundation/words/fr-FR/f/sais.mp3",
+      },
+      maintenant: {
+        m: "foundation/words/fr-FR/m/maintenant.mp3",
+        f: "foundation/words/fr-FR/f/maintenant.mp3",
+      },
+      te: {
+        m: "foundation/words/fr-FR/m/te.mp3",
+        f: "foundation/words/fr-FR/f/te.mp3",
+      },
+      comment: {
+        m: "foundation/words/fr-FR/m/comment.mp3",
+        f: "foundation/words/fr-FR/f/comment.mp3",
+      },
+      sens: {
+        m: "foundation/words/fr-FR/m/sens.mp3",
+        f: "foundation/words/fr-FR/f/sens.mp3",
+      },
+    },
+  },
+};
+
 
 export const MOCK_FOUNDATION_DATA_EN_ES = {
   userId: "usr_annalia",
@@ -258,8 +723,8 @@ export const MOCK_FOUNDATION_DATA_EN_ES = {
   foundationCourseId: "course_test",
   orderIndex: 1,
   status: "ready",
-  nativeLang: "en-US",   // <--- ADD THIS
-  targetLang: "es-Es",   // <--- ADD THIS
+  nativeLang: "en-US", // <--- ADD THIS
+  targetLang: "es-Es", // <--- ADD THIS
   visualContent: {
     imageS3Key: "foundation/usr_annalia/day1/visual.png",
     npcAudioS3Key: "foundation/usr_annalia/day1/npc.mp3",
@@ -493,7 +958,8 @@ export const MOCK_FOUNDATION_DATA_EN_ES = {
     mode: "SPECIFIC",
     level: "ZERO",
     topic: "Greeting a Neighbor",
-    persona: "a friendly neighbor in the entrance hall of your apartment building",
+    persona:
+      "a friendly neighbor in the entrance hall of your apartment building",
     requiredChunks: ["Buenos días", "Encantado de conocerte", "Soy"],
     openingLine:
       "Anna-leah, it's morning and you run into a neighbor in the entrance hall of your apartment building — greet them, give your name, and say it's nice to meet them, in Spanish.",
@@ -529,9 +995,17 @@ export const MOCK_FOUNDATION_DATA_EN_ES = {
     npcAudio: "foundation/usr_annalia/day1/npc.mp3",
     taughtChunks: ["Buenas", "tardes", "Soy", "Encantado", "de", "conocerte"],
     blankedWords: ["Soy", "Encantado", "gracias", "tardes"],
-    wrongAnswers: ["Es", "Estoy", "Encantada", "Encantados", "gracia", "buenas"],
+    wrongAnswers: [
+      "Es",
+      "Estoy",
+      "Encantada",
+      "Encantados",
+      "gracia",
+      "buenas",
+    ],
     pronunciationSound: "soft r",
-    listeningContrast: "afternoon vs evening greeting and masculine vs feminine form",
+    listeningContrast:
+      "afternoon vs evening greeting and masculine vs feminine form",
     visualRequiredChunk: "Encantado de conocerte",
     sceneDescription:
       "In the tidy hallway of your apartment building, a friendly neighbor standing near the potted plants by her door greets you and introduces herself as the new resident.",
