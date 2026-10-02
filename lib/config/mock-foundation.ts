@@ -716,8 +716,513 @@ export const MOCK_FOUNDATION_DATA_EN_FR = {
   },
 };
 
-
 export const MOCK_FOUNDATION_DATA_EN_ES = {
+  userId: "usr_anna",
+  foundationCourseId: "course_test",
+  orderIndex: 1,
+  status: "ready",
+  name: "Anna",
+  nativeLang: "en-US",
+  targetLang: "fr-FR",
+  visualContent: {
+    imageS3Key: "foundation/usr_anna/day1/visual.png",
+    npcAudioS3Key: "foundation/usr_anna/day1/npc.mp3",
+    sceneDescription:
+      "In the tidy hallway of your apartment building, a neighbor you have never met greets you in the afternoon beside the potted plants by her door.",
+    altText:
+      "A tidy apartment hallway with light walls, wooden doors, and several potted plants lined along the floor. A smiling woman in her forties stands by one of the doors, extending her hand in greeting toward the viewer.",
+    npcLine: "¡Hola! ¿Eres la nueva vecina del 4A? Yo soy Carmen, la del 3B.",
+    constraint: {
+      requiredChunk: "encantada de conocerte",
+      validReplies: [
+        "Sí, soy la nueva vecina, encantada de conocerte.",
+        "Sí, encantada de conocerte. Vivo en el 4A.",
+        "Claro, encantada de conocerte.",
+      ],
+    },
+  },
+  grammarContent: {
+    targetSentence: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+    nativeSentence: "Good afternoon. I'm Anna. Nice to meet you.",
+    romanizedSentence: null,
+    words: [
+      {
+        word: "Buenas",
+        gloss: "good (feminine plural, part of the greeting)",
+        role: "interjection",
+      },
+      {
+        word: "tardes",
+        gloss: "afternoons (with 'buenas' = good afternoon)",
+        role: "interjection",
+      },
+      {
+        word: "Soy",
+        gloss: "I am",
+        role: "verb",
+      },
+      {
+        word: "Anna",
+        gloss: "Anna (the speaker's name)",
+        role: "name",
+      },
+      {
+        word: "encantada",
+        gloss: "delighted (feminine form)",
+        role: "adjective",
+      },
+      {
+        word: "de",
+        gloss: "to (links 'delighted' with 'to meet you')",
+        role: "connector",
+      },
+      {
+        word: "conocerte",
+        gloss: "to meet you",
+        role: "verb",
+      },
+    ],
+    highlightGroup: ["Buenas tardes", "Soy Anna", "encantada de conocerte"],
+    clozeItems: [
+      {
+        id: "cloze-1",
+        hostSentence: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+        blankPosition: 2,
+        acceptableAnswers: ["Soy", "soy"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "Es",
+            feedback:
+              "'Es' is for other people; use 'Soy' when you give your own name.",
+          },
+          {
+            wrong: "Estoy",
+            feedback: "Names go with 'soy', not 'estoy' — say 'Soy Anna'.",
+          },
+        ],
+      },
+      {
+        id: "cloze-2",
+        hostSentence: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+        blankPosition: 4,
+        acceptableAnswers: ["Encantada", "encantada"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "Encantado",
+            feedback:
+              "You are the speaker (Anna), so use the feminine form 'Encantada'.",
+          },
+          {
+            wrong: "Mucho",
+            feedback:
+              "'Mucho' belongs to 'mucho gusto'; this phrase is 'Encantada de conocerte'.",
+          },
+        ],
+      },
+      {
+        id: "cloze-3",
+        hostSentence: "Buenos días, señora.",
+        blankPosition: 1,
+        acceptableAnswers: ["días", "dias"],
+        wrongAnswerFeedback: [
+          {
+            wrong: "tardes",
+            feedback:
+              "'Tardes' pairs with 'buenas'; with 'Buenos' the greeting is 'buenos días'.",
+          },
+          {
+            wrong: "noches",
+            feedback:
+              "'Noches' takes 'buenas' — 'buenas noches'. Here 'Buenos' signals 'días'.",
+          },
+        ],
+      },
+    ],
+  },
+  pronunciationData: {
+    referenceText: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+    audioS3Key: "foundation/usr_anna/day1/pronunciation.mp3",
+    breakdown: [
+      {
+        text: "Buenas",
+        phonetic: "ˈbwe.nas",
+        hint: null,
+      },
+      {
+        text: "tardes",
+        phonetic: "ˈtar.des",
+        hint: "The 'r' is one quick tap, like the 'tt' in the American English 'butter' — not the English 'r'.",
+      },
+      {
+        text: "Soy",
+        phonetic: "ˈsoj",
+        hint: null,
+      },
+      {
+        text: "Anna",
+        phonetic: "ˈa.na",
+        hint: null,
+      },
+      {
+        text: "Encantada",
+        phonetic: "en.kan.ˈta.ða",
+        hint: "The 'd' between vowels is soft, like the 'th' in 'this'.",
+      },
+      {
+        text: "de",
+        phonetic: "ðe",
+        hint: null,
+      },
+      {
+        text: "conocerte",
+        phonetic: "ko.no.ˈθer.te",
+        hint: "The 'r' here is the same quick tap as in 'tardes'.",
+      },
+    ],
+    focusSounds: [
+      {
+        sound: "soft r",
+        positions: [7],
+      },
+    ],
+  },
+  listeningContent: {
+    id: "listen-1",
+    referenceText: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+    audioS3Key: "foundation/usr_anna/day1/listening.mp3",
+    expectedOrder: [
+      "Buenas",
+      "tardes",
+      "Soy",
+      "Anna",
+      "Encantada",
+      "de",
+      "conocerte",
+    ],
+    wordBank: [
+      "Anna",
+      "eres",
+      "tardes",
+      "Soy",
+      "de",
+      "Encantada",
+      "conocerte",
+      "Buenas",
+      "encantado",
+      "noches",
+    ],
+    contrast:
+      "afternoon vs evening greeting; feminine vs masculine form; yo vs tú verb form",
+  },
+  quizContent: {
+    items: [
+      {
+        type: "verbal_cloze",
+        prompt: "Buenas ___. Soy Anna. Encantada de conocerte.",
+        hint: "The part of the day after noon (this greeting uses the plural form)",
+        acceptableAnswers: ["tardes", "Tardes"],
+        feedback:
+          "Use 'tardes' — 'Buenas tardes' is the fixed greeting for 'Good afternoon'.",
+      },
+      {
+        type: "reorder",
+        prompt: "Translate: 'Good afternoon. I'm Anna. Nice to meet you.'",
+        expectedWords: [
+          "Buenas",
+          "tardes.",
+          "Soy",
+          "Anna.",
+          "Encantada",
+          "de",
+          "conocerte.",
+        ],
+        scrambledBank: [
+          "tardes.",
+          "Buenas",
+          "encantado",
+          "conocerte.",
+          "Soy",
+          "Anna.",
+          "Encantada",
+          "buenos",
+          "noches",
+          "de",
+        ],
+      },
+      {
+        type: "true_false",
+        statement:
+          "It's 9 in the morning, and Anna greets her neighbor with 'Buenas tardes.'",
+        isTrue: false,
+        explanation:
+          "In the morning, say 'Buenos días'; 'Buenas tardes' is only for the afternoon.",
+      },
+      {
+        type: "verbal_cloze",
+        prompt: "Buenas tardes. ___ Anna. Encantada de conocerte.",
+        hint: "The polite one-word way to say 'I am' before your name",
+        acceptableAnswers: ["soy", "Soy"],
+        feedback:
+          "Use 'Soy' — the polite chunk for 'I am' when giving your name.",
+      },
+    ],
+    passThreshold: 0.7,
+  },
+  freestyle: {
+    mode: "SPECIFIC",
+    level: "ZERO",
+    topic: "Greetings and Introductions",
+    persona: "a friendly neighbor in the lobby of your apartment building",
+    requiredChunks: ["Buenos días", "Encantada de conocerte", "Soy ..."],
+    openingLine:
+      "Anna, it's morning and you run into a neighbor in your building's lobby — greet them for the time of day, tell them your name, and say 'nice to meet you', replying in Spanish.",
+  },
+  lessonHandoff: {
+    day: 1,
+    theme: "Greetings and Names",
+    targetSentence: "Buenas tardes. Soy Anna. Encantada de conocerte.",
+    chunks: [
+      "hola / buenas tardes",
+      "buenos días",
+      "buenas noches",
+      "encantado de conocerte / mucho gusto",
+      "gracias",
+      "polite name statement (I am / my name is — polite form)",
+      "please call me [name]",
+    ],
+    npcLine: "¡Hola! ¿Eres la nueva vecina del 4A? Yo soy Carmen, la del 3B.",
+    freestyleTopic: "Greetings and Introductions",
+    introNative:
+      "Hi Anna! Today you'll learn how to greet a neighbor in Spanish and introduce yourself politely, just like you'd do in the hallway of your building in Spain.",
+    introTarget:
+      "¡Hola, Anna! Hoy aprendemos a saludar y a decir tu nombre en español.",
+    outroNative:
+      "Great job, Anna! You can now greet someone by the time of day and introduce yourself in Spanish. How do you feel about today's lesson?",
+    outroTarget:
+      "¡Muy bien, Anna! Ya sabes saludar y dar tu nombre en español. ¿Cómo te sientes con la lección de hoy?",
+    introNativeAudio: "foundation/usr_anna/day1/intro_native.mp3",
+    introTargetAudio: "foundation/usr_anna/day1/intro_target.mp3",
+    outroNativeAudio: "foundation/usr_anna/day1/outro_native.mp3",
+    outroTargetAudio: "foundation/usr_anna/day1/outro_target.mp3",
+    npcAudio: "foundation/usr_anna/day1/npc.mp3",
+    taughtChunks: ["Buenas tardes", "Soy Anna", "encantada de conocerte"],
+    blankedWords: ["Soy", "Encantada", "días", "tardes"],
+    wrongAnswers: ["Es", "Estoy", "Encantado", "Mucho", "tardes", "noches"],
+    pronunciationSound: "soft r",
+    listeningContrast:
+      "afternoon vs evening greeting; feminine vs masculine form; yo vs tú verb form",
+    visualRequiredChunk: "encantada de conocerte",
+    sceneDescription:
+      "In the tidy hallway of your apartment building, a neighbor you have never met greets you in the afternoon beside the potted plants by her door.",
+    freestylePersona:
+      "a friendly neighbor in the lobby of your apartment building",
+    trueFalseStatement:
+      "It's 9 in the morning, and Anna greets her neighbor with 'Buenas tardes.'",
+    wordAudio: {
+      buenas: {
+        m: "foundation/words/es-ES/m/buenas.mp3",
+        f: "foundation/words/es-ES/f/buenas.mp3",
+      },
+      tardes: {
+        m: "foundation/words/es-ES/m/tardes.mp3",
+        f: "foundation/words/es-ES/f/tardes.mp3",
+      },
+      soy: {
+        m: "foundation/words/es-ES/m/soy.mp3",
+        f: "foundation/words/es-ES/f/soy.mp3",
+      },
+      anna: {
+        m: "foundation/words/es-ES/m/anna.mp3",
+        f: "foundation/words/es-ES/f/anna.mp3",
+      },
+      encantada: {
+        m: "foundation/words/es-ES/m/encantada.mp3",
+        f: "foundation/words/es-ES/f/encantada.mp3",
+      },
+      de: {
+        m: "foundation/words/es-ES/m/de.mp3",
+        f: "foundation/words/es-ES/f/de.mp3",
+      },
+      conocerte: {
+        m: "foundation/words/es-ES/m/conocerte.mp3",
+        f: "foundation/words/es-ES/f/conocerte.mp3",
+      },
+      es: {
+        m: "foundation/words/es-ES/m/es.mp3",
+        f: "foundation/words/es-ES/f/es.mp3",
+      },
+      estoy: {
+        m: "foundation/words/es-ES/m/estoy.mp3",
+        f: "foundation/words/es-ES/f/estoy.mp3",
+      },
+      encantado: {
+        m: "foundation/words/es-ES/m/encantado.mp3",
+        f: "foundation/words/es-ES/f/encantado.mp3",
+      },
+      mucho: {
+        m: "foundation/words/es-ES/m/mucho.mp3",
+        f: "foundation/words/es-ES/f/mucho.mp3",
+      },
+      buenos: {
+        m: "foundation/words/es-ES/m/buenos.mp3",
+        f: "foundation/words/es-ES/f/buenos.mp3",
+      },
+      días: {
+        m: "foundation/words/es-ES/m/días.mp3",
+        f: "foundation/words/es-ES/f/días.mp3",
+      },
+      señora: {
+        m: "foundation/words/es-ES/m/señora.mp3",
+        f: "foundation/words/es-ES/f/señora.mp3",
+      },
+      dias: {
+        m: "foundation/words/es-ES/m/dias.mp3",
+        f: "foundation/words/es-ES/f/dias.mp3",
+      },
+      noches: {
+        m: "foundation/words/es-ES/m/noches.mp3",
+        f: "foundation/words/es-ES/f/noches.mp3",
+      },
+      eres: {
+        m: "foundation/words/es-ES/m/eres.mp3",
+        f: "foundation/words/es-ES/f/eres.mp3",
+      },
+      hola: {
+        m: "foundation/words/es-ES/m/hola.mp3",
+        f: "foundation/words/es-ES/f/hola.mp3",
+      },
+      la: {
+        m: "foundation/words/es-ES/m/la.mp3",
+        f: "foundation/words/es-ES/f/la.mp3",
+      },
+      nueva: {
+        m: "foundation/words/es-ES/m/nueva.mp3",
+        f: "foundation/words/es-ES/f/nueva.mp3",
+      },
+      vecina: {
+        m: "foundation/words/es-ES/m/vecina.mp3",
+        f: "foundation/words/es-ES/f/vecina.mp3",
+      },
+      del: {
+        m: "foundation/words/es-ES/m/del.mp3",
+        f: "foundation/words/es-ES/f/del.mp3",
+      },
+      "4a": {
+        m: "foundation/words/es-ES/m/4a.mp3",
+        f: "foundation/words/es-ES/f/4a.mp3",
+      },
+      yo: {
+        m: "foundation/words/es-ES/m/yo.mp3",
+        f: "foundation/words/es-ES/f/yo.mp3",
+      },
+      carmen: {
+        m: "foundation/words/es-ES/m/carmen.mp3",
+        f: "foundation/words/es-ES/f/carmen.mp3",
+      },
+      "3b": {
+        m: "foundation/words/es-ES/m/3b.mp3",
+        f: "foundation/words/es-ES/f/3b.mp3",
+      },
+      sí: {
+        m: "foundation/words/es-ES/m/sí.mp3",
+        f: "foundation/words/es-ES/f/sí.mp3",
+      },
+      vivo: {
+        m: "foundation/words/es-ES/m/vivo.mp3",
+        f: "foundation/words/es-ES/f/vivo.mp3",
+      },
+      en: {
+        m: "foundation/words/es-ES/m/en.mp3",
+        f: "foundation/words/es-ES/f/en.mp3",
+      },
+      el: {
+        m: "foundation/words/es-ES/m/el.mp3",
+        f: "foundation/words/es-ES/f/el.mp3",
+      },
+      claro: {
+        m: "foundation/words/es-ES/m/claro.mp3",
+        f: "foundation/words/es-ES/f/claro.mp3",
+      },
+      hoy: {
+        m: "foundation/words/es-ES/m/hoy.mp3",
+        f: "foundation/words/es-ES/f/hoy.mp3",
+      },
+      aprendemos: {
+        m: "foundation/words/es-ES/m/aprendemos.mp3",
+        f: "foundation/words/es-ES/f/aprendemos.mp3",
+      },
+      a: {
+        m: "foundation/words/es-ES/m/a.mp3",
+        f: "foundation/words/es-ES/f/a.mp3",
+      },
+      saludar: {
+        m: "foundation/words/es-ES/m/saludar.mp3",
+        f: "foundation/words/es-ES/f/saludar.mp3",
+      },
+      y: {
+        m: "foundation/words/es-ES/m/y.mp3",
+        f: "foundation/words/es-ES/f/y.mp3",
+      },
+      decir: {
+        m: "foundation/words/es-ES/m/decir.mp3",
+        f: "foundation/words/es-ES/f/decir.mp3",
+      },
+      tu: {
+        m: "foundation/words/es-ES/m/tu.mp3",
+        f: "foundation/words/es-ES/f/tu.mp3",
+      },
+      nombre: {
+        m: "foundation/words/es-ES/m/nombre.mp3",
+        f: "foundation/words/es-ES/f/nombre.mp3",
+      },
+      español: {
+        m: "foundation/words/es-ES/m/español.mp3",
+        f: "foundation/words/es-ES/f/español.mp3",
+      },
+      muy: {
+        m: "foundation/words/es-ES/m/muy.mp3",
+        f: "foundation/words/es-ES/f/muy.mp3",
+      },
+      bien: {
+        m: "foundation/words/es-ES/m/bien.mp3",
+        f: "foundation/words/es-ES/f/bien.mp3",
+      },
+      ya: {
+        m: "foundation/words/es-ES/m/ya.mp3",
+        f: "foundation/words/es-ES/f/ya.mp3",
+      },
+      sabes: {
+        m: "foundation/words/es-ES/m/sabes.mp3",
+        f: "foundation/words/es-ES/f/sabes.mp3",
+      },
+      dar: {
+        m: "foundation/words/es-ES/m/dar.mp3",
+        f: "foundation/words/es-ES/f/dar.mp3",
+      },
+      cómo: {
+        m: "foundation/words/es-ES/m/cómo.mp3",
+        f: "foundation/words/es-ES/f/cómo.mp3",
+      },
+      te: {
+        m: "foundation/words/es-ES/m/te.mp3",
+        f: "foundation/words/es-ES/f/te.mp3",
+      },
+      sientes: {
+        m: "foundation/words/es-ES/m/sientes.mp3",
+        f: "foundation/words/es-ES/f/sientes.mp3",
+      },
+      con: {
+        m: "foundation/words/es-ES/m/con.mp3",
+        f: "foundation/words/es-ES/f/con.mp3",
+      },
+      lección: {
+        m: "foundation/words/es-ES/m/lección.mp3",
+        f: "foundation/words/es-ES/f/lección.mp3",
+      },
+    },
+  },
+};
+export const MOCK_FOUNDATION_DATA_EN_ES_V0 = {
   userId: "usr_annalia",
   name: "Annalia",
   foundationCourseId: "course_test",
