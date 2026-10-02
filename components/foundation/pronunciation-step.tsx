@@ -4,59 +4,66 @@ import { usePronunciation } from "@/context/pronunciation-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { useWordAudio } from "@/context/word-audio-context";
 import React, { useState, useEffect } from "react";
-import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear } from "lucide-react";
+import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear, Loader2 } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
-  // TTS for the full sentence
   const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
-  
-  // Native S3 audio (with fallback) for individual words
-  const { playWord, isPlaying: isPlayingWord, stopAudio: stopWordAudio, targetLang } = useWordAudio();
-
-  // Speech assessment
+  const { playWord, isPlaying: isPlayingWord, stopAudio: stopWordAudio, targetLang: contextLang } = useWordAudio();
   const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
 
-  // Step state
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Guarantee targetLang is never undefined
+  const targetLang = contextLang || data.targetLang || "fr-FR";
+
   const breakdown = data.breakdown || [];
-  const totalSteps = breakdown.length + 1; // All words + 1 for final full sentence
+  const totalSteps = breakdown.length + 1;
   const isFullSentenceStep = currentIndex === breakdown.length;
 
   const currentText = isFullSentenceStep ? data.referenceText : breakdown[currentIndex]?.text || "";
   const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex]?.phonetic;
   const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex]?.hint;
   
-  const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions.includes(currentIndex));
-
+  const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions?.includes(currentIndex));
   const isAudioActive = isFullSentenceStep ? isPlayingTTS : isPlayingWord;
 
   const stopAllAudio = () => {
-    stopTTS();
-    stopWordAudio();
+    try {
+      stopTTS();
+      stopWordAudio();
+    } catch (e) {
+      console.warn("Error stopping audio:", e);
+    }
   };
 
-  // Reset assessment and stop audio on step change
   useEffect(() => {
     reset();
     stopAllAudio();
-  }, [currentIndex, reset]);
+  }, [currentIndex]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => stopAllAudio();
   }, []);
 
-  const handleRecordToggle = () => {
+  const handleRecordToggle = async () => {
     stopAllAudio();
+
     if (isRecording) {
+      // If manually canceled
       cancelAssessment();
-    } else {
-      assessSpeech(currentText, targetLang);
+      return;
     }
+
+    if (!currentText || !targetLang) {
+      console.error("Missing text or targetLang:", { currentText, targetLang });
+      return;
+    }
+
+    // Start assessment (Azure automatically stops on silence and scores)
+    await assessSpeech(currentText, targetLang);
   };
 
-  const handlePlayAudio = () => {
+  const handlePlayAudio = async () => {
     if (isRecording) return;
 
     if (isAudioActive) {
@@ -67,11 +74,9 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     stopAllAudio();
 
     if (isFullSentenceStep) {
-      // Sentence uses useSpeak
-      speak(currentText, targetLang);
+      await speak(currentText, targetLang);
     } else {
-      // Individual words use WordAudioContext (defaults to male voice)
-      playWord(currentText, "m");
+      await playWord(currentText, "m");
     }
   };
 
@@ -182,8 +187,8 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
               : 'bg-gray-900 hover:bg-black border-gray-900 text-white'
           }`}
         >
-          {isRecording ? <Square size={24} className="fill-current" /> : <Mic size={24} />}
-          {isRecording ? "Stop Recording" : "Record"}
+          {isRecording ? <Loader2 size={24} className="animate-spin" /> : <Mic size={24} />}
+          {isRecording ? "Listening... (speak now)" : "Record"}
         </button>
       </div>
 
