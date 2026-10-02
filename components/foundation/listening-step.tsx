@@ -3,14 +3,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
-import { ScrollArea } from "@/components/ui/scroll-area"; // <-- Shadcn ScrollArea
+import { useWordAudio } from "@/context/word-audio-context";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
-  // Resolve S3 Keys via our context
+  // Word audio context to pronounce words as they are tapped
+  const { playWord, stopAudio: stopWordAudio } = useWordAudio();
+
+  // Resolve full sentence S3 audio key
   const { urls, isLoading: isAudioLoading } = useS3Media([data.audioS3Key]);
   const resolvedAudioUrl = urls[0];
 
-  // Audio state & ref
+  // Full sentence audio state & ref
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -31,6 +35,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       audioRef.current.src = "";
     }
     setIsPlaying(false);
+    stopWordAudio();
   };
 
   const toggleAudio = () => {
@@ -40,6 +45,8 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
     }
 
     if (!resolvedAudioUrl) return; 
+
+    stopWordAudio();
 
     const audio = new Audio(resolvedAudioUrl);
     audioRef.current = audio;
@@ -53,8 +60,11 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
     setIsPlaying(true);
   };
 
-  // Move word from Bank to Sentence
+  // Move word from Bank to Sentence & PLAY AUDIO
   const handleAddWord = (word: string, idx: number) => {
+    stopAudio();
+    playWord(word, "m"); // Play native audio (m voice by default)
+
     setStatus("idle");
     setSelectedWords([...selectedWords, word]);
     const newAvailable = [...availableWords];
@@ -73,6 +83,7 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
 
   // Reset the whole board
   const handleReset = () => {
+    stopAudio();
     setStatus("idle");
     setSelectedWords([]);
     setAvailableWords(data.wordBank || []);
@@ -157,15 +168,12 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
             let wordStyle = "bg-white border-gray-200 text-gray-800 hover:bg-red-50 hover:border-red-200";
             
             if (status === "correct") {
-              // Everything is perfect
               wordStyle = "bg-green-500 border-green-600 text-white hover:bg-green-600";
             } else if (status === "incorrect") {
-              // Post-check feedback (Red vs Green)
               wordStyle = isCorrectPosition 
                 ? "bg-green-100 border-green-500 text-green-900 hover:bg-red-50 hover:border-red-300"
                 : "bg-red-100 border-red-400 text-red-900 hover:bg-red-200";
             } else {
-              // Real-time hint as they build!
               if (isCorrectPosition) {
                 wordStyle = "bg-green-50 border-green-300 text-green-800 hover:bg-red-50 hover:border-red-200";
               }

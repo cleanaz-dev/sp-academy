@@ -1222,6 +1222,8 @@ export const MOCK_FOUNDATION_DATA_EN_ES = {
     },
   },
 };
+
+
 export const MOCK_FOUNDATION_DATA_EN_ES_V0 = {
   userId: "usr_annalia",
   name: "Annalia",

@@ -2,63 +2,53 @@
 
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useSpeak } from "@/hooks/use-speak";
-import { useS3Media } from "@/context/s3-context"; // <--- 1. Import Hook
-import React, { useState, useEffect, useRef } from "react";
-import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear, Loader2 } from "lucide-react";
+import { useWordAudio } from "@/context/word-audio-context";
+import React, { useState, useEffect } from "react";
+import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
+  // TTS for the full sentence
   const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
+  
+  // Native S3 audio (with fallback) for individual words
+  const { playWord, isPlaying: isPlayingWord, stopAudio: stopWordAudio, targetLang } = useWordAudio();
+
+  // Speech assessment
   const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
 
-  // --- 2. Resolve the Full Sentence Audio Key via Context ---
-  const { urls, isLoading: isS3Loading } = useS3Media([data.audioS3Key]);
-  const fullSentenceAudioUrl = urls[0];
-
-  // State to track which word/chunk we are practicing
+  // Step state
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // S3 Audio State for the full sentence
-  const [isPlayingS3, setIsPlayingS3] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // If there's no breakdown array (fallback to old JSON), just use the full sentence
   const breakdown = data.breakdown || [];
-  const totalSteps = breakdown.length + 1; // All words + 1 for the final full sentence
+  const totalSteps = breakdown.length + 1; // All words + 1 for final full sentence
   const isFullSentenceStep = currentIndex === breakdown.length;
 
-  // Get current text based on step
-  const currentText = isFullSentenceStep ? data.referenceText : breakdown[currentIndex].text;
-  const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex].phonetic;
-  const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex].hint;
+  const currentText = isFullSentenceStep ? data.referenceText : breakdown[currentIndex]?.text || "";
+  const currentPhonetic = isFullSentenceStep ? null : breakdown[currentIndex]?.phonetic;
+  const currentHint = isFullSentenceStep ? "Put it all together!" : breakdown[currentIndex]?.hint;
   
-  // Check if the current word has a specific "focus sound" from the new JSON
   const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions.includes(currentIndex));
 
-  // --- DYNAMIC LANGUAGE FETCHING ---
-  const targetLang = data.targetLang || "fr-FR"; 
+  const isAudioActive = isFullSentenceStep ? isPlayingTTS : isPlayingWord;
 
-  // Reset Azure's score and stop audio when we switch words
-  useEffect(() => {
-    reset();
-    stopAudio();
-  }, [currentIndex, reset]);
-
-  // Cleanup audio if component unmounts
-  useEffect(() => {
-    return () => stopAudio();
-  }, []);
-
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-    }
-    setIsPlayingS3(false);
+  const stopAllAudio = () => {
     stopTTS();
+    stopWordAudio();
   };
 
+  // Reset assessment and stop audio on step change
+  useEffect(() => {
+    reset();
+    stopAllAudio();
+  }, [currentIndex, reset]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => stopAllAudio();
+  }, []);
+
   const handleRecordToggle = () => {
-    stopAudio();
+    stopAllAudio();
     if (isRecording) {
       cancelAssessment();
     } else {
@@ -66,61 +56,35 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     }
   };
 
-  // --- 3. Use the resolved URL instead of passing the raw key ---
-  const toggleS3Audio = () => {
-    if (isPlayingS3) {
-      stopAudio();
+  const handlePlayAudio = () => {
+    if (isRecording) return;
+
+    if (isAudioActive) {
+      stopAllAudio();
       return;
     }
-    if (!fullSentenceAudioUrl) return; // Guard against empty URL
 
-    stopTTS();
-    
-    const audio = new Audio(fullSentenceAudioUrl);
-    audioRef.current = audio;
-    audio.onended = () => setIsPlayingS3(false);
-    
-    audio.play().catch(err => {
-      console.warn("Audio playback skipped:", err);
-      setIsPlayingS3(false);
-    });
-    
-    setIsPlayingS3(true);
-  };
+    stopAllAudio();
 
-  const handlePlayAudio = () => {
-    if (isRecording) return; // Don't play if mic is hot
-
-    if (isFullSentenceStep && data.audioS3Key) {
-      toggleS3Audio(); // No longer needs parameter
+    if (isFullSentenceStep) {
+      // Sentence uses useSpeak
+      speak(currentText, targetLang);
     } else {
-      // Use browser TTS for the individual words
-      if (isPlayingTTS) {
-        stopTTS();
-      } else {
-        stopAudio();
-        speak(currentText, targetLang);
-      }
+      // Individual words use WordAudioContext (defaults to male voice)
+      playWord(currentText, "m");
     }
   };
 
-  const isAudioActive = isPlayingS3 || isPlayingTTS;
-  
-  // Calculate if the listen button should be disabled or show loading
-  const isWaitingForS3 = isFullSentenceStep && isS3Loading;
-  const isPlayDisabled = isRecording || isWaitingForS3 || (isFullSentenceStep && !fullSentenceAudioUrl && !!data.audioS3Key);
-
   const handleNextWord = () => {
-    stopAudio();
+    stopAllAudio();
     if (currentIndex < totalSteps - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      onNext(); // Advance to Listening Step
+      onNext();
     }
   };
 
-  // Helper for rendering Azure score bars
-  const ScoreBar = ({ label, value }: { label: string, value: number }) => (
+  const ScoreBar = ({ label, value }: { label: string; value: number }) => (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
         <span className="text-gray-500">{label}</span>
@@ -199,16 +163,14 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <button 
           onClick={handlePlayAudio}
-          disabled={isPlayDisabled} // <--- 4. Disable if recording OR waiting for S3
+          disabled={isRecording}
           className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg disabled:opacity-50 ${
             isAudioActive 
               ? 'bg-blue-50 border-blue-200 text-blue-700 ring-4 ring-blue-50' 
               : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
           }`}
         >
-          {/* Show spinner if waiting for S3 */}
-          {isWaitingForS3 ? <Loader2 size={24} className="animate-spin text-gray-400" /> : 
-           isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
+          {isAudioActive ? <Square size={24} className="fill-current" /> : <Volume2 size={24} />}
           {isAudioActive ? "Stop" : "Listen"}
         </button>
         
@@ -225,7 +187,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         </button>
       </div>
 
-      {/* AZURE RESULTS DISPLAY */}
+      {/* Azure Results Display */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 flex items-start gap-3">
           <AlertCircle className="shrink-0 mt-0.5" size={20} />

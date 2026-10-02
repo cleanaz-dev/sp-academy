@@ -3,19 +3,19 @@
 import React, { useState, useEffect } from "react";
 import { Mic, ArrowRight, CheckCircle2, XCircle, AlertCircle, RotateCcw, Square } from "lucide-react";
 import { useSpeech } from "@/context/speech-context";
-
+import { useWordAudio } from "@/context/word-audio-context";
 
 // --------------------------------------------------------
 // 1. VERBAL CLOZE COMPONENT
 // --------------------------------------------------------
 function VerbalClozeQuestion({ 
   item, 
-  targetLang, // CHANGED
+  targetLang, 
   onResolve 
 }: { 
-  item: any, 
-  targetLang: string, // CHANGED
-  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void 
+  item: any; 
+  targetLang: string; 
+  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void; 
 }) {
   const { startRecording, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
   const [localStatus, setLocalStatus] = useState<"idle" | "correct" | "incorrect">("idle");
@@ -25,7 +25,6 @@ function VerbalClozeQuestion({
     if (!isRecording || !transcript) return;
 
     const spokenText = transcript.toLowerCase();
-    // Check if any of the acceptable answers are currently in the transcript
     const isMatch = item.acceptableAnswers.some((ans: string) => spokenText.includes(ans.toLowerCase()));
 
     if (isMatch) {
@@ -38,18 +37,16 @@ function VerbalClozeQuestion({
   const handleToggleMic = async () => {
     if (isRecording) {
       await stopRecording();
-      // If they manually stopped and it wasn't caught by the live check:
       setLocalStatus("incorrect");
       onResolve("incorrect", `❌ You said: "${transcript || "Nothing detected"}". Try again!`);
     } else {
       resetSpeechState();
       setLocalStatus("idle");
       onResolve("idle", "");
-      await startRecording(targetLang); // CHANGED (was "fr-FR")
+      await startRecording(targetLang);
     }
   };
 
-  // Split the prompt at the "___" to place the blank in the correct spot
   const promptParts = item.prompt.split("___");
 
   return (
@@ -105,6 +102,7 @@ function VerbalClozeQuestion({
     </div>
   );
 }
+
 // --------------------------------------------------------
 // 2. TRUE/FALSE COMPONENT
 // --------------------------------------------------------
@@ -112,8 +110,8 @@ function TrueFalseQuestion({
   item, 
   onResolve 
 }: { 
-  item: any, 
-  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void 
+  item: any; 
+  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void; 
 }) {
   const [guessed, setGuessed] = useState<boolean | null>(null);
 
@@ -161,20 +159,25 @@ function TrueFalseQuestion({
 }
 
 // --------------------------------------------------------
-// 3. REORDER COMPONENT
+// 3. REORDER COMPONENT (Plays audio when words are tapped)
 // --------------------------------------------------------
 function ReorderQuestion({ 
   item, 
   onResolve 
 }: { 
-  item: any, 
-  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void 
+  item: any; 
+  onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void; 
 }) {
+  const { playWord } = useWordAudio();
+
   const [availableWords, setAvailableWords] = useState<string[]>(item.scrambledBank);
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [localStatus, setLocalStatus] = useState<"idle" | "correct" | "incorrect">("idle");
 
   const handleAddWord = (word: string, idx: number) => {
+    // Play native audio (m voice by default)
+    playWord(word, "m");
+
     setLocalStatus("idle");
     onResolve("idle", "");
     setSelectedWords([...selectedWords, word]);
@@ -249,7 +252,9 @@ function ReorderQuestion({
 // --------------------------------------------------------
 // MAIN PARENT COMPONENT
 // --------------------------------------------------------
-export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: string; onNext: () => void }) { // CHANGED
+export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: string; onNext: () => void }) {
+  const { stopAudio } = useWordAudio();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
   const [feedback, setFeedback] = useState<string>("");
@@ -263,17 +268,15 @@ export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: 
   };
 
   const handleNextQuestion = () => {
+    stopAudio();
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
       setStatus("idle");
       setFeedback("");
     } else {
-      onNext(); // Move to Freestyle!
+      onNext();
     }
   };
-  console.log("Quiz Data:", data);
-  console.log("Current Index:", currentIndex);
-  console.log("Current Quiz Item:", currentItem);
 
   return (
     <div className="flex flex-col h-full p-8 overflow-y-auto">
@@ -302,7 +305,7 @@ export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: 
       {/* Dynamic Question Area */}
       <div className="flex-1 flex flex-col justify-center mb-8">
         {currentItem.type === "verbal_cloze" && (
-          <VerbalClozeQuestion key={currentItem.prompt} item={currentItem} targetLang={targetLang} onResolve={handleResolve} /> // CHANGED
+          <VerbalClozeQuestion key={currentItem.prompt} item={currentItem} targetLang={targetLang} onResolve={handleResolve} />
         )}
         {currentItem.type === "true_false" && (
           <TrueFalseQuestion key={currentItem.statement} item={currentItem} onResolve={handleResolve} />
