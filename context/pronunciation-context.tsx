@@ -6,7 +6,10 @@ import type * as sdk from "microsoft-cognitiveservices-speech-sdk";
 import { getAzureSpeechToken } from "@/app/actions/azure-speech";
 import { PronunciationScore, evaluatePronunciation } from "../lib/azure/index";
 
+export type AssessmentStatus = "idle" | "listening" | "analyzing";
+
 interface PronunciationContextProps {
+  status: AssessmentStatus;
   isRecording: boolean;
   score: PronunciationScore | null;
   error: string | null;
@@ -18,7 +21,7 @@ interface PronunciationContextProps {
 const PronunciationContext = createContext<PronunciationContextProps | undefined>(undefined);
 
 export const PronunciationProvider = ({ children }: { children: ReactNode }) => {
-  const [isRecording, setIsRecording] = useState(false);
+  const [status, setStatus] = useState<AssessmentStatus>("idle");
   const [score, setScore] = useState<PronunciationScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognizerRef = useRef<sdk.SpeechRecognizer | null>(null);
@@ -27,36 +30,56 @@ export const PronunciationProvider = ({ children }: { children: ReactNode }) => 
     try {
       setScore(null);
       setError(null);
-      const token = await getAzureSpeechToken();
-      setIsRecording(true);
+      setStatus("listening");
 
-      const result = await evaluatePronunciation(text, targetLanguage, token, (recognizer) => {
-        recognizerRef.current = recognizer;
-      });
+      const token = await getAzureSpeechToken();
+
+      const result = await evaluatePronunciation(
+        text,
+        targetLanguage,
+        token,
+        (recognizer) => {
+          recognizerRef.current = recognizer;
+        },
+        () => {
+          // Called when silence is detected
+          setStatus("analyzing");
+        }
+      );
 
       setScore(result);
     } catch (err: any) {
-      setError(err.message || err.toString());
+      setError(typeof err === "string" ? err : err.message || err.toString());
     } finally {
       recognizerRef.current = null;
-      setIsRecording(false);
+      setStatus("idle");
     }
   }, []);
 
   const cancelAssessment = useCallback(() => {
     recognizerRef.current?.close();
     recognizerRef.current = null;
-    setIsRecording(false);
+    setStatus("idle");
   }, []);
 
   const reset = useCallback(() => {
     setScore(null);
     setError(null);
-    setIsRecording(false);
+    setStatus("idle");
   }, []);
 
   return (
-    <PronunciationContext.Provider value={{ isRecording, score, error, assessSpeech, cancelAssessment, reset }}>
+    <PronunciationContext.Provider
+      value={{
+        status,
+        isRecording: status === "listening" || status === "analyzing",
+        score,
+        error,
+        assessSpeech,
+        cancelAssessment,
+        reset,
+      }}
+    >
       {children}
     </PronunciationContext.Provider>
   );

@@ -9,11 +9,11 @@ import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
   const { playWord, isPlaying: isPlayingWord, stopAudio: stopWordAudio, targetLang: contextLang } = useWordAudio();
-  const { isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
+  const { status, isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Guarantee targetLang is never undefined
+  // Guarantee valid language code
   const targetLang = contextLang || data.targetLang || "fr-FR";
 
   const breakdown = data.breakdown || [];
@@ -49,7 +49,6 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     stopAllAudio();
 
     if (isRecording) {
-      // If manually canceled
       cancelAssessment();
       return;
     }
@@ -59,7 +58,6 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
       return;
     }
 
-    // Start assessment (Azure automatically stops on silence and scores)
     await assessSpeech(currentText, targetLang);
   };
 
@@ -83,7 +81,7 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   const handleNextWord = () => {
     stopAllAudio();
     if (currentIndex < totalSteps - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     } else {
       onNext();
     }
@@ -117,7 +115,6 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
           Pronunciation Lab
         </h2>
         
-        {/* Step Indicator (Dots) */}
         <div className="flex items-center justify-center gap-2 mb-2">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <div 
@@ -181,14 +178,31 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
         
         <button 
           onClick={handleRecordToggle}
+          disabled={status === "analyzing"}
           className={`flex-1 py-5 px-6 font-bold rounded-2xl flex items-center justify-center gap-3 transition-all border shadow-xs text-lg ${
-            isRecording 
+            status === "analyzing"
+              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 ring-4 ring-indigo-50'
+              : status === "listening"
               ? 'bg-red-50 border-red-200 text-red-600 ring-4 ring-red-500/20 animate-pulse' 
               : 'bg-gray-900 hover:bg-black border-gray-900 text-white'
           }`}
         >
-          {isRecording ? <Loader2 size={24} className="animate-spin" /> : <Mic size={24} />}
-          {isRecording ? "Listening... (speak now)" : "Record"}
+          {status === "analyzing" ? (
+            <>
+              <Loader2 size={24} className="animate-spin text-indigo-600" />
+              Analyzing pronunciation...
+            </>
+          ) : status === "listening" ? (
+            <>
+              <Square size={24} className="fill-current" />
+              Listening... (speak now)
+            </>
+          ) : (
+            <>
+              <Mic size={24} />
+              Record
+            </>
+          )}
         </button>
       </div>
 
