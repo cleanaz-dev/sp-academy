@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { Check, Flag, Image as ImageIcon, BookOpen, Mic, Headphones, PenTool, Target, Award, Languages } from "lucide-react";
 
-// Update these imports to match exactly how you named your two datasets!
+type FoundationData = 
+  | typeof MOCK_FOUNDATION_DATA_EN_FR 
+  | typeof MOCK_FOUNDATION_DATA_EN_ES;
+
 import { MOCK_FOUNDATION_DATA_EN_FR, MOCK_FOUNDATION_DATA_EN_ES } from "@/lib/config/mock-foundation";
 
 import { LangStep } from "./lang-step";
@@ -33,7 +36,7 @@ export function FoundationWrapper() {
 
   // Default to French just so the sidebar has data to read on initial load.
   // We'll swap it dynamically when they click a card on Step 0.
-  const [data, setData] = useState(MOCK_FOUNDATION_DATA_EN_FR);
+  const [data, setData] = useState<FoundationData>(MOCK_FOUNDATION_DATA_EN_FR);
 
   const handleLanguageSelect = (lang: "FR" | "ES") => {
     setData(lang === "FR" ? MOCK_FOUNDATION_DATA_EN_FR : MOCK_FOUNDATION_DATA_EN_ES);

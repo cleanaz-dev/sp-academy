@@ -719,11 +719,11 @@ export const MOCK_FOUNDATION_DATA_EN_FR = {
 export const MOCK_FOUNDATION_DATA_EN_ES = {
   userId: "usr_anna",
   foundationCourseId: "course_test",
-  orderIndex: 1,
-  status: "ready",
   name: "Anna",
+  orderIndex: 1,
   nativeLang: "en-US",
-  targetLang: "fr-FR",
+  targetLang: "es-ES",
+  status: "ready",
   visualContent: {
     imageS3Key: "foundation/usr_anna/day1/visual.png",
     npcAudioS3Key: "foundation/usr_anna/day1/npc.mp3",
