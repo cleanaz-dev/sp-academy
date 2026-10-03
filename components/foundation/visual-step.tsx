@@ -11,7 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
-import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
+import { useMatrix } from "@/context/matrix-context";
 
 export function VisualStep({
   data,
@@ -20,7 +20,6 @@ export function VisualStep({
   data: any;
   onNext: () => void;
 }) {
-  // Resolve Image and NPC Audio URLs
   const { urls, isLoading: isMediaLoading } = useS3Media([
     data.imageS3Key,
     data.npcAudioS3Key,
@@ -31,14 +30,17 @@ export function VisualStep({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedReply, setSelectedReply] = useState<string | null>(null);
 
-  // <-- GRAB THE MATRIX CART -->
   const { trackInteraction } = useMatrix();
 
-  // Track "Seen" when the component mounts
+  // <-- PREVENT DOUBLE TRACKING -->
+  const hasTrackedSeen = useRef(false);
+  const hasTrackedHeard = useRef(false);
+
+  // Track "Seen" when the component mounts (Only Once!)
   useEffect(() => {
-    if (data.constraint?.requiredChunk) {
-      // Log that they were exposed to the required chunk
+    if (data.constraint?.requiredChunk && !hasTrackedSeen.current) {
       trackInteraction(data.constraint.requiredChunk, { seen: 1 });
+      hasTrackedSeen.current = true;
     }
   }, [data.constraint?.requiredChunk, trackInteraction]);
 
@@ -60,9 +62,10 @@ export function VisualStep({
     }
     if (!audioUrl) return;
 
-    // LOG THAT THEY HEARD THE CHUNK!
-    if (data.constraint?.requiredChunk) {
+    // LOG THAT THEY HEARD THE CHUNK! (Only track the first time they play it)
+    if (data.constraint?.requiredChunk && !hasTrackedHeard.current) {
       trackInteraction(data.constraint.requiredChunk, { heard: 1 });
+      hasTrackedHeard.current = true;
     }
 
     const audio = new Audio(audioUrl);
@@ -78,8 +81,8 @@ export function VisualStep({
   const handleNext = () => {
     if (audioRef.current) audioRef.current.pause();
 
-    // <-- LOG THE SUCCESSFUL SELECTION -->
-    // If they picked a valid reply, they successfully used the required chunk!
+    // LOG THE SUCCESSFUL SELECTION
+    // Because all provided choices in this step are valid, any selection is a 'tappedCorrect'
     if (selectedReply && data.constraint?.requiredChunk) {
       trackInteraction(data.constraint.requiredChunk, { tappedCorrect: 1 });
     }
@@ -109,7 +112,6 @@ export function VisualStep({
 
       {/* Image & NPC Dialogue */}
       <div className="w-full max-w-xl mx-auto flex flex-col items-center mb-6 shrink-0">
-        {/* Full Image */}
         <div className="w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-50 flex items-center justify-center min-h-[150px]">
           {imageUrl ? (
             <img

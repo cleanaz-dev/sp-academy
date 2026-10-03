@@ -2,11 +2,13 @@
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import prisma from "@/lib/prisma"; // Added Prisma import
 
 export const maxDuration = 60;
 
-// ─── Validation Schema (Now includes freestyleData) ────────────
+// ─── Validation Schema (Now includes freestyleData and userId) ────────────
 const ChatBodySchema = z.object({
+  userId: z.string(), // Added userId to the schema
   mode: z.string(),
   level: z.string(),
   topic: z.string().optional(),
@@ -27,7 +29,7 @@ const ChatBodySchema = z.object({
     requiredChunks: z.array(z.string()),
     npcLine: z.string().optional(),
     nativeSentence: z.string().optional(),
-  }).passthrough().optional(), // passthrough in case we pass extra stuff from json
+  }).passthrough().optional(),
 });
 
 
@@ -51,6 +53,7 @@ export async function POST(req: Request) {
     }
 
     const {
+      userId, // Destructure userId
       mode,
       level,
       targetLanguage,
@@ -59,6 +62,52 @@ export async function POST(req: Request) {
       isOpening,
       freestyleData
     } = parseResult.data;
+
+    // --- Matrix Tracking Setup ---
+    // Find or create the Language Profile for this user
+    const profile = await prisma.languageProfile.upsert({
+        where: {
+            userId_languageCode: { userId, languageCode: targetLanguage },
+        },
+        update: {},
+        create: {
+            userId,
+            languageCode: targetLanguage,
+        },
+    });
+    const languageProfileId = profile.id;
+
+    // Track initial exposure to required chunks when the conversation opens
+    if (isOpening && freestyleData?.requiredChunks && freestyleData.requiredChunks.length > 0) {
+      console.log(`[FOUNDATION-CHAT-${requestId}] Tracking initial seen/heard for required chunks.`);
+      const trackingPromises = freestyleData.requiredChunks.map(chunk =>
+        prisma.wordStat.upsert({
+          where: {
+            languageProfileId_word: {
+              languageProfileId,
+              word: chunk,
+            },
+          },
+          update: {
+            seenCount: { increment: 1 },
+            heardCount: { increment: 1 }, // Assuming the AI's opening implies they heard/read it
+            lastSeenAt: new Date(),
+            lastHeardAt: new Date(),
+          },
+          create: {
+            languageProfileId,
+            word: chunk,
+            seenCount: 1,
+            heardCount: 1,
+            lastSeenAt: new Date(),
+            lastHeardAt: new Date(),
+            status: "NEW", // Or a more specific status like "EXPOSED"
+          },
+        })
+      );
+      await Promise.all(trackingPromises);
+    }
+    // --- End Matrix Tracking Setup ---
 
     // Clean up chat history to prevent consecutive user prompts from crashing DeepSeek
     const sanitizedHistory: any[] = [];

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Mic, ArrowRight, CheckCircle2, XCircle, AlertCircle, RotateCcw, Square } from "lucide-react";
 import { useSpeech } from "@/context/speech-context";
 import { useWordAudio } from "@/context/word-audio-context";
+import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
 
 // --------------------------------------------------------
 // 1. VERBAL CLOZE COMPONENT
@@ -20,6 +21,18 @@ function VerbalClozeQuestion({
   const { startRecording, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
   const [localStatus, setLocalStatus] = useState<"idle" | "correct" | "incorrect">("idle");
 
+  // <-- MATRIX TRACKING -->
+  const { trackInteraction } = useMatrix();
+  const hasTrackedSeen = useRef(false);
+  const targetWord = item.acceptableAnswers[0]; // The primary correct answer
+
+  useEffect(() => {
+    if (!hasTrackedSeen.current && targetWord) {
+      trackInteraction(targetWord, { seen: 1 });
+      hasTrackedSeen.current = true;
+    }
+  }, [targetWord, trackInteraction]);
+
   // Live evaluation: Check transcript in real-time
   useEffect(() => {
     if (!isRecording || !transcript) return;
@@ -30,14 +43,30 @@ function VerbalClozeQuestion({
     if (isMatch) {
       stopRecording();
       setLocalStatus("correct");
+
+      // TRACK SUCCESSFUL SPOKEN ATTEMPT
+      trackInteraction(targetWord, { 
+        tappedCorrect: 1, 
+        spokenAttempt: true, 
+        spokenScore: 100 // Perfect score proxy since we used Deepgram!
+      });
+
       onResolve("correct", "✅ Excellent pronunciation!");
     }
-  }, [transcript, isRecording, item, stopRecording, onResolve]);
+  }, [transcript, isRecording, item, stopRecording, onResolve, targetWord, trackInteraction]);
 
   const handleToggleMic = async () => {
     if (isRecording) {
       await stopRecording();
       setLocalStatus("incorrect");
+      
+      // TRACK FAILED SPOKEN ATTEMPT
+      trackInteraction(targetWord, { 
+        tappedWrong: 1, 
+        spokenAttempt: true, 
+        spokenScore: 0 
+      });
+
       onResolve("incorrect", `❌ You said: "${transcript || "Nothing detected"}". Try again!`);
     } else {
       resetSpeechState();
@@ -114,12 +143,27 @@ function TrueFalseQuestion({
   onResolve: (status: "idle" | "correct" | "incorrect", msg: string) => void; 
 }) {
   const [guessed, setGuessed] = useState<boolean | null>(null);
+  
+  // <-- MATRIX TRACKING -->
+  const { trackInteraction } = useMatrix();
+  const hasTrackedSeen = useRef(false);
+  // Optional: If you assign a targetWord to True/False questions in your schema, it tracks it!
+  const targetWord = item.targetWord || item.targetChunk; 
+
+  useEffect(() => {
+    if (targetWord && !hasTrackedSeen.current) {
+      trackInteraction(targetWord, { seen: 1 });
+      hasTrackedSeen.current = true;
+    }
+  }, [targetWord, trackInteraction]);
 
   const handleGuess = (guess: boolean) => {
     setGuessed(guess);
     if (guess === item.isTrue) {
+      if (targetWord) trackInteraction(targetWord, { tappedCorrect: 1 });
       onResolve("correct", "✅ Correct! " + item.explanation);
     } else {
+      if (targetWord) trackInteraction(targetWord, { tappedWrong: 1 });
       onResolve("incorrect", "❌ Not quite. " + item.explanation);
     }
   };
@@ -159,7 +203,7 @@ function TrueFalseQuestion({
 }
 
 // --------------------------------------------------------
-// 3. REORDER COMPONENT (Plays audio when words are tapped)
+// 3. REORDER COMPONENT
 // --------------------------------------------------------
 function ReorderQuestion({ 
   item, 
@@ -170,13 +214,31 @@ function ReorderQuestion({
 }) {
   const { playWord } = useWordAudio();
 
+  // <-- MATRIX TRACKING -->
+  const { trackInteraction } = useMatrix();
+  const hasTrackedSeen = useRef(false);
+  const heardWords = useRef<Set<string>>(new Set());
+
   const [availableWords, setAvailableWords] = useState<string[]>(item.scrambledBank);
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [localStatus, setLocalStatus] = useState<"idle" | "correct" | "incorrect">("idle");
 
+  // Track "seen" on mount
+  useEffect(() => {
+    if (!hasTrackedSeen.current && item.scrambledBank) {
+      item.scrambledBank.forEach((w: string) => trackInteraction(w, { seen: 1 }));
+      hasTrackedSeen.current = true;
+    }
+  }, [item.scrambledBank, trackInteraction]);
+
   const handleAddWord = (word: string, idx: number) => {
-    // Play native audio (m voice by default)
     playWord(word, "m");
+
+    // Track "heard"
+    if (!heardWords.current.has(word)) {
+      trackInteraction(word, { heard: 1 });
+      heardWords.current.add(word);
+    }
 
     setLocalStatus("idle");
     onResolve("idle", "");
@@ -198,6 +260,16 @@ function ReorderQuestion({
   // Evaluate whenever they select all expected words
   useEffect(() => {
     if (selectedWords.length === item.expectedWords.length) {
+      
+      // Track correct/wrong taps
+      selectedWords.forEach((word, i) => {
+        if (word === item.expectedWords[i]) {
+          trackInteraction(word, { tappedCorrect: 1 });
+        } else {
+          trackInteraction(word, { tappedWrong: 1 });
+        }
+      });
+
       const isPerfectMatch = selectedWords.every((word, i) => word === item.expectedWords[i]);
       if (isPerfectMatch) {
         setLocalStatus("correct");
@@ -207,7 +279,7 @@ function ReorderQuestion({
         onResolve("incorrect", "❌ Not quite right. Check your word order.");
       }
     }
-  }, [selectedWords, item.expectedWords, onResolve]);
+  }, [selectedWords, item.expectedWords, onResolve, trackInteraction]);
 
   return (
     <div className="flex flex-col w-full max-w-2xl mx-auto animate-in slide-in-from-bottom-4 duration-300">
@@ -274,7 +346,7 @@ export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: 
       setStatus("idle");
       setFeedback("");
     } else {
-      onNext();
+      onNext(); // Proceed to conversational AI step!
     }
   };
 
@@ -335,7 +407,6 @@ export function QuizStep({ data, targetLang, onNext }: { data: any; targetLang: 
           {currentIndex === totalQuestions - 1 ? "Enter AI Conversation" : "Next Question"} <ArrowRight size={20} />
         </button>
       </div>
-
     </div>
   );
 }

@@ -1,15 +1,21 @@
+// app/api/foundation/freestyle/evaluate/route.ts
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import prisma from "@/lib/prisma"; // Added Prisma import
 
 export const maxDuration = 30;
 
 const EvaluateBodySchema = z.object({
+  userId: z.string(), // Added userId to the schema
   userText: z.string().min(1),
   targetLanguage: z.string(),
   nativeLanguage: z.string(),
   level: z.enum(["EASY", "MEDIUM", "FLUENT", "ZERO"]).default("EASY"),
   pronunciationData: z.any().optional(),
+  freestyleData: z.object({ // Added freestyleData to the schema
+    requiredChunks: z.array(z.string()),
+  }).passthrough().optional(),
 });
 
 export async function POST(req: Request) {
@@ -26,12 +32,70 @@ export async function POST(req: Request) {
       );
     }
 
-    const { userText, targetLanguage, nativeLanguage, level, pronunciationData } =
-      parseResult.data;
+    const { 
+      userId, // Destructure userId
+      userText, 
+      targetLanguage, 
+      nativeLanguage, 
+      level, 
+      pronunciationData,
+      freestyleData // Destructure freestyleData
+    } = parseResult.data;
 
     console.log(
       `[EVAL-${requestId}] Evaluating turn. Level: ${level}, Text: "${userText}"`,
     );
+
+    // --- Matrix Tracking Setup ---
+    // Find or create the Language Profile for this user
+    const profile = await prisma.languageProfile.upsert({
+        where: {
+            userId_languageCode: { userId, languageCode: targetLanguage },
+        },
+        update: {},
+        create: {
+            userId,
+            languageCode: targetLanguage,
+        },
+    });
+    const languageProfileId = profile.id;
+
+    // 1. Track spoken attempts and scores from pronunciationData (word-level)
+    if (pronunciationData?.words && pronunciationData.words.length > 0) {
+      console.log(`[EVAL-${requestId}] Tracking word-level pronunciation scores.`);
+      const wordPronunciationPromises = pronunciationData.words.map((wordStat: any) =>
+        prisma.wordStat.upsert({
+          where: {
+            languageProfileId_word: {
+              languageProfileId,
+              word: wordStat.word,
+            },
+          },
+          update: {
+            spokenAttempts: { increment: 1 },
+            // Assign the latest accuracyScore as avgSpokenScore for simplicity.
+            // For a true rolling average, you'd need more complex logic.
+            avgSpokenScore: wordStat.accuracyScore, 
+            lastSpokenAt: new Date(),
+          },
+          create: {
+            languageProfileId,
+            word: wordStat.word,
+            seenCount: 1, // Assume if they pronounced it, they've seen it.
+            spokenAttempts: 1,
+            avgSpokenScore: wordStat.accuracyScore,
+            lastSpokenAt: new Date(),
+            status: "NEW",
+          },
+        })
+      );
+      await Promise.all(wordPronunciationPromises);
+    }
+
+    // Prepare for tracking required chunks (after AI evaluation)
+    const requiredChunks = freestyleData?.requiredChunks || [];
+    let userSucceededWithRequiredChunks = false; 
+
 
     let levelInstruction = "";
     if (level === "EASY") {
@@ -109,7 +173,6 @@ Do not wrap in markdown. Return raw JSON only.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: `Evaluate this text: "${userText}"` }
           ],
-          // Removed response_format to prevent 400 errors on some Qwen models
           max_tokens: 1000,
           temperature: 0.1,
         }),
@@ -136,11 +199,52 @@ Do not wrap in markdown. Return raw JSON only.`;
       }
     }
 
-    // Rock-solid fallback so it's NEVER undefined and catches hallucinations
     const corrections = Array.isArray(parsedContent?.corrections) ? parsedContent.corrections : [];
     const hasMistakes = (parsedContent?.hasMistakes === true) || (corrections.length > 0);
 
     const finalResult = { hasMistakes, corrections };
+
+    // Determine if user successfully used required chunks for this turn
+    // Simple check: userText contains all required chunks (case-insensitive)
+    // Only count success if there are no other mistakes *or* the mistakes are minor and don't obscure the chunks
+    userSucceededWithRequiredChunks = requiredChunks.every(chunk => 
+      userText.toLowerCase().includes(chunk.toLowerCase())
+    ) && !hasMistakes; // Adjust this logic as needed: e.g., allow minor mistakes.
+
+    // 3. Track spoken attempt for required chunks (outcome-based)
+    if (requiredChunks.length > 0) {
+      console.log(`[EVAL-${requestId}] Tracking required chunks attempt. Success: ${userSucceededWithRequiredChunks}`);
+      const requiredChunkPromises = requiredChunks.map(chunk =>
+        prisma.wordStat.upsert({
+          where: {
+            languageProfileId_word: {
+              languageProfileId,
+              word: chunk,
+            },
+          },
+          update: {
+            spokenAttempts: { increment: 1 },
+            spokenScore: userSucceededWithRequiredChunks ? 100 : 0, // Proxy score: 100 for success, 0 for failure
+            lastSpokenAt: new Date(),
+            tappedCorrect: userSucceededWithRequiredChunks ? { increment: 1 } : undefined,
+            tappedWrong: userSucceededWithRequiredChunks ? undefined : { increment: 1 },
+          },
+          create: {
+            languageProfileId,
+            word: chunk,
+            seenCount: 1, // Assume they've seen the required chunk if attempting to speak it
+            spokenAttempts: 1,
+            spokenScore: userSucceededWithRequiredChunks ? 100 : 0,
+            lastSpokenAt: new Date(),
+            tappedCorrect: userSucceededWithRequiredChunks ? 1 : 0,
+            tappedWrong: userSucceededWithRequiredChunks ? 0 : 1,
+            status: "NEW",
+          },
+        })
+      );
+      await Promise.all(requiredChunkPromises);
+    }
+    // --- End Matrix Tracking ---
 
     console.log(
       `[EVAL-${requestId}] ✅ Finished in ${Date.now() - startTime}ms. Mistakes: ${finalResult.hasMistakes}, Count: ${finalResult.corrections.length}`,

@@ -36,7 +36,10 @@ export async function POST(req: Request, { params }: Params) {
         { status: 400 },
       );
     }
-    const { interactions } = body;
+    
+    // FIX: Extract from parsedBody.data instead of body 
+    // This ensures Zod's .default(0) values are actually applied!
+    const { interactions } = parsedBody.data;
 
     if (!interactions || !Array.isArray(interactions)) {
       return NextResponse.json(
@@ -58,10 +61,13 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     // 4. Upsert the Word Stats
-    const upsertPromises = interactions.map((interaction: any) => {
+    const upsertPromises = interactions.map((interaction) => {
+      // Safely calculate bump (checking if spokenScore exists to avoid NaN)
       const interactionMasteryBump =
         interaction.tappedCorrect * 1 +
-        (interaction.spokenAttempt ? (interaction.spokenScore / 100) * 3 : 0);
+        (interaction.spokenAttempt && interaction.spokenScore !== undefined
+          ? (interaction.spokenScore / 100) * 3
+          : 0);
 
       return prisma.wordStat.upsert({
         where: {
@@ -72,6 +78,7 @@ export async function POST(req: Request, { params }: Params) {
         },
         update: {
           seenCount: { increment: interaction.seen || 0 },
+          heardCount: { increment: interaction.heard || 0 }, // <-- ADDED
           tappedCorrect: { increment: interaction.tappedCorrect || 0 },
           tappedWrong: { increment: interaction.tappedWrong || 0 },
           spokenAttempts: { increment: interaction.spokenAttempt ? 1 : 0 },
@@ -80,6 +87,7 @@ export async function POST(req: Request, { params }: Params) {
             ? interaction.spokenScore
             : undefined,
           lastSeenAt: new Date(),
+          ...(interaction.heard ? { lastHeardAt: new Date() } : {}), // <-- ADDED
           ...(interaction.tappedCorrect || interaction.tappedWrong
             ? { lastTappedAt: new Date() }
             : {}),
@@ -90,11 +98,13 @@ export async function POST(req: Request, { params }: Params) {
           languageProfileId: profile.id,
           word: interaction.word,
           seenCount: interaction.seen || 1,
+          heardCount: interaction.heard || 0, // <-- ADDED
           tappedCorrect: interaction.tappedCorrect || 0,
           tappedWrong: interaction.tappedWrong || 0,
           spokenAttempts: interaction.spokenAttempt ? 1 : 0,
           avgSpokenScore: interaction.spokenScore || null,
           lastSeenAt: new Date(),
+          lastHeardAt: interaction.heard ? new Date() : null, // <-- ADDED
           lastTappedAt:
             interaction.tappedCorrect || interaction.tappedWrong
               ? new Date()

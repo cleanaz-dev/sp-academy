@@ -3,13 +3,19 @@
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { useWordAudio } from "@/context/word-audio-context";
-import React, { useState, useEffect } from "react";
+import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
+import React, { useState, useEffect, useRef } from "react";
 import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear, Loader2 } from "lucide-react";
 
 export function PronunciationStep({ data, onNext }: { data: any; onNext: () => void }) {
   const { speak, isPlaying: isPlayingTTS, stop: stopTTS } = useSpeak();
   const { playWord, isPlaying: isPlayingWord, stopAudio: stopWordAudio, targetLang: contextLang } = useWordAudio();
   const { status, isRecording, score, error, assessSpeech, cancelAssessment, reset } = usePronunciation();
+
+  // <-- MATRIX TRACKING -->
+  const { trackInteraction } = useMatrix();
+  const trackedSeen = useRef<Set<string>>(new Set());
+  const trackedHeard = useRef<Set<string>>(new Set());
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -26,6 +32,24 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
   
   const activeFocusSound = data.focusSounds?.find((fs: any) => fs.positions?.includes(currentIndex));
   const isAudioActive = isFullSentenceStep ? isPlayingTTS : isPlayingWord;
+
+  // 1. TRACK "SEEN" (Whenever the flashcard advances to a new word)
+  useEffect(() => {
+    if (currentText && !trackedSeen.current.has(currentText)) {
+      trackInteraction(currentText, { seen: 1 });
+      trackedSeen.current.add(currentText);
+    }
+  }, [currentText, trackInteraction]);
+
+  // 2. TRACK "SPOKEN" (Whenever Azure successfully returns a score)
+  useEffect(() => {
+    if (score && currentText) {
+      trackInteraction(currentText, {
+        spokenAttempt: true,
+        spokenScore: score.pronunciationScore, // Passing the core score!
+      });
+    }
+  }, [score, currentText, trackInteraction]);
 
   const stopAllAudio = () => {
     try {
@@ -70,6 +94,12 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
     }
 
     stopAllAudio();
+
+    // 3. TRACK "HEARD" (Only track the first time they play audio for this specific step)
+    if (currentText && !trackedHeard.current.has(currentText)) {
+      trackInteraction(currentText, { heard: 1 });
+      trackedHeard.current.add(currentText);
+    }
 
     if (isFullSentenceStep) {
       await speak(currentText, targetLang);
@@ -246,7 +276,6 @@ export function PronunciationStep({ data, onNext }: { data: any; onNext: () => v
           {isFullSentenceStep ? "Finish Practice" : "Next Word"} <ArrowRight size={20} />
         </button>
       </div>
-
     </div>
   );
 }

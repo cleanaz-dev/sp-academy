@@ -5,10 +5,17 @@ import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
 import { useWordAudio } from "@/context/word-audio-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
 
 export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
   // Word audio context to pronounce words as they are tapped
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
+
+  // <-- MATRIX TRACKING -->
+  const { trackInteraction } = useMatrix();
+  const hasTrackedSeen = useRef(false);
+  const hasHeardMainAudio = useRef(false);
+  const heardWords = useRef<Set<string>>(new Set());
 
   // Resolve full sentence S3 audio key
   const { urls, isLoading: isAudioLoading } = useS3Media([data.audioS3Key]);
@@ -23,6 +30,16 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
   const [feedbackMsg, setFeedbackMsg] = useState<string>("");
+
+  // 1. TRACK "SEEN" FOR ENTIRE WORD BANK ON MOUNT
+  useEffect(() => {
+    if (!hasTrackedSeen.current && data.wordBank) {
+      data.wordBank.forEach((word: string) => {
+        trackInteraction(word, { seen: 1 });
+      });
+      hasTrackedSeen.current = true;
+    }
+  }, [data.wordBank, trackInteraction]);
 
   // Cleanup audio if component unmounts
   useEffect(() => {
@@ -48,6 +65,14 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
 
     stopWordAudio();
 
+    // 2. TRACK "HEARD" FOR EXPECTED WORDS (Only track once per step)
+    if (!hasHeardMainAudio.current && data.expectedOrder) {
+      data.expectedOrder.forEach((word: string) => {
+        trackInteraction(word, { heard: 1 });
+      });
+      hasHeardMainAudio.current = true;
+    }
+
     const audio = new Audio(resolvedAudioUrl);
     audioRef.current = audio;
     audio.onended = () => setIsPlaying(false);
@@ -64,6 +89,12 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   const handleAddWord = (word: string, idx: number) => {
     stopAudio();
     playWord(word, "m"); // Play native audio (m voice by default)
+
+    // 3. TRACK "HEARD" FOR INDIVIDUAL WORD CLICKS
+    if (!heardWords.current.has(word)) {
+      trackInteraction(word, { heard: 1 });
+      heardWords.current.add(word);
+    }
 
     setStatus("idle");
     setSelectedWords([...selectedWords, word]);
@@ -92,6 +123,16 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   // Check if they built the right sentence
   const handleCheck = () => {
     const expected = data.expectedOrder || [];
+    
+    // 4. TRACK CORRECT / WRONG TAPS
+    selectedWords.forEach((word, i) => {
+      if (word === expected[i]) {
+        trackInteraction(word, { tappedCorrect: 1 });
+      } else {
+        trackInteraction(word, { tappedWrong: 1 });
+      }
+    });
+
     const isCorrectLength = selectedWords.length === expected.length;
     const isPerfectMatch = isCorrectLength && selectedWords.every((word, i) => word === expected[i]);
 
@@ -269,7 +310,6 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
           </button>
         )}
       </div>
-
     </div>
   );
 }

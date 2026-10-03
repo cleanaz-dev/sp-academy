@@ -1,11 +1,39 @@
 // app/api/foundation/freestyle/suggestions/route.ts
 import { NextResponse } from "next/server";
+import { z } from "zod"; // Added z import
+import prisma from "@/lib/prisma"; // Added Prisma import
 
 const TAG = "[suggestions]";
 
+// Define schema for suggestions body
+const SuggestionsBodySchema = z.object({
+  userId: z.string(), // Added userId to the schema
+  targetLanguage: z.string(),
+  nativeLanguage: z.string(),
+  chatHistory: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        text: z.string(),
+      }),
+    )
+    .default([]),
+});
+
 export async function POST(req: Request) {
   try {
-    const { targetLanguage, nativeLanguage, chatHistory } = await req.json();
+    const rawBody = await req.json();
+    const parseResult = SuggestionsBodySchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      console.error(`${TAG} ❌ Validation failed:`, z.flattenError(parseResult.error));
+      return NextResponse.json(
+        { error: "Invalid request body", details: z.flattenError(parseResult.error) },
+        { status: 400 },
+      );
+    }
+
+    const { userId, targetLanguage, nativeLanguage, chatHistory } = parseResult.data;
 
     console.log(`${TAG} 1. incoming request`, {
       targetLanguage,
@@ -13,6 +41,21 @@ export async function POST(req: Request) {
       historyLength: chatHistory?.length,
       lastMessage: chatHistory?.[chatHistory.length - 1],
     });
+
+    // --- Matrix Tracking Setup ---
+    // Find or create the Language Profile for this user
+    const profile = await prisma.languageProfile.upsert({
+        where: {
+            userId_languageCode: { userId, languageCode: targetLanguage },
+        },
+        update: {},
+        create: {
+            userId,
+            languageCode: targetLanguage,
+        },
+    });
+    const languageProfileId = profile.id;
+    // --- End Matrix Tracking Setup ---
 
     const systemPrompt = `You are a helpful language tutor assisting a beginner learning ${targetLanguage}. Their native language is ${nativeLanguage}.
 Look at the conversation history and help the student reply to the AI's LAST message.
@@ -33,8 +76,6 @@ Rules:
     const messages = [
       { role: "system", content: systemPrompt },
       ...chatHistory.map((m: any) => ({ role: m.role, content: m.text })),
-      // The history ends on an assistant message, so without this the model
-      // may just continue that message instead of following the system prompt.
       {
         role: "user",
         content:
@@ -57,20 +98,20 @@ Rules:
       }),
     });
 
-    const rawBody = await response.text();
+    const rawResponseBody = await response.text(); // Renamed to avoid conflict with `rawBody`
     console.log(`${TAG} 2. novita status`, response.status, response.ok);
-    console.log(`${TAG} 3. novita raw body`, rawBody.slice(0, 3000));
+    console.log(`${TAG} 3. novita raw body`, rawResponseBody.slice(0, 3000));
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Upstream API error", detail: rawBody.slice(0, 500) },
+        { error: "Upstream API error", detail: rawResponseBody.slice(0, 500) },
         { status: 502 },
       );
     }
 
     let data: any;
     try {
-      data = JSON.parse(rawBody);
+      data = JSON.parse(rawResponseBody);
     } catch (e) {
       console.error(`${TAG} 3b. novita body was not valid JSON`, e);
       return NextResponse.json({ error: "Upstream returned non-JSON" }, { status: 502 });
@@ -111,6 +152,35 @@ Rules:
         .map((v: any) => ({ word: String(v.word), definition: String(v.definition) })),
     };
     console.log(`${TAG} 6. cleaned`, clean);
+
+    // --- Matrix Tracking ---
+    // Track seen for suggested vocabulary words
+    if (clean.vocabulary.length > 0) {
+      console.log(`${TAG} Tracking seen for suggested vocabulary.`);
+      const vocabTrackingPromises = clean.vocabulary.map((vocabItem: any) =>
+        prisma.wordStat.upsert({
+          where: {
+            languageProfileId_word: {
+              languageProfileId,
+              word: vocabItem.word,
+            },
+          },
+          update: {
+            seenCount: { increment: 1 },
+            lastSeenAt: new Date(),
+          },
+          create: {
+            languageProfileId,
+            word: vocabItem.word,
+            seenCount: 1,
+            lastSeenAt: new Date(),
+            status: "NEW", // Or a more specific status like "SUGGESTED"
+          },
+        })
+      );
+      await Promise.all(vocabTrackingPromises);
+    }
+    // --- End Matrix Tracking ---
 
     if (!clean.starter) {
       console.error(`${TAG} 6b. cleaned starter is empty, parsed keys were:`, Object.keys(parsed));
