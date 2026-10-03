@@ -1,5 +1,5 @@
 model ReadABook {
-  id             String          @id @default(cuid())
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
   title          String
   description    String?
   coverImage     String?
@@ -13,9 +13,9 @@ model ReadABook {
 }
 
 model ReadABookPage {
-  id          String     @id @default(cuid())
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
   ReadABook   ReadABook? @relation(fields: [readABookId], references: [id])
-  readABookId String?
+  readABookId String?    @db.ObjectId
   pageNumber  Int
   content     String
   imageUrl    String

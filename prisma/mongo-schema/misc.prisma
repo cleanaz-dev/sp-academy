@@ -1,5 +1,5 @@
 model Story {
-  id                String            @id @default(cuid())
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
   title             String?
   topic             String
   difficulty        String
@@ -22,23 +22,23 @@ model Story {
 }
 
 model StoryQuestions {
-  id        String   @id @default(cuid())
-  storyId   String   
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  storyId   String   @db.ObjectId
   story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
   question  String[]
   answer    String[]
   mark      String
   user      User     @relation(fields: [userId], references: [id])
-  userId    String   
+  userId    String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model BookReport {
-  id        String       @id @default(cuid())
-  userId    String       
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String       @db.ObjectId
   user      User         @relation(fields: [userId], references: [id])
-  bookId    String      
+  bookId    String       @db.ObjectId
   book      Book         @relation(fields: [bookId], references: [id])
   startDate DateTime     @default(now())
   endDate   DateTime?
@@ -51,8 +51,8 @@ model BookReport {
 }
 
 model Book {
-  id     String @id @default(cuid())
-  userId String 
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 
   title    String
@@ -79,7 +79,7 @@ model Book {
 }
 
 model ReadingLog {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   dateRead     DateTime @default(now())
   startPage    Int
   endPage      Int
@@ -88,13 +88,13 @@ model ReadingLog {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   book         Book?    @relation(fields: [bookId], references: [id])
-  bookId       String?
+  bookId       String?  @db.ObjectId
   user         User?    @relation(fields: [userId], references: [id])
-  userId       String?  
+  userId       String?  @db.ObjectId
 }
 
 model EmailTemplate {
-  id             String          @id @default(cuid())
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
   templateName   String
   subject        String
   content        String
@@ -113,9 +113,9 @@ enum HandlebarsType {
 }
 
 model EmailSchedule {
-  id           String         @id @default(cuid())
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
   scheduleName String
-  templateId   String         @unique
+  templateId   String         @db.ObjectId
   status       ScheduleStatus @default(ACTIVE)
   frequency    String // DAILY, WEEKLY, MONTHLY
   startDate    DateTime       @default(now())
@@ -136,8 +136,8 @@ model EmailSchedule {
 }
 
 model ScheduleExecutionLog {
-  id         String        @id @default(cuid())
-  scheduleId String       
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  scheduleId String        @db.ObjectId
   runAt      DateTime      @default(now())
   status     String // success, failure
   details    String? // Additional details or error message
@@ -145,7 +145,7 @@ model ScheduleExecutionLog {
 }
 
 model DailyJournal {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   transcript  String
   s3Key       String?
   language    String   @default("en-US")
@@ -156,7 +156,7 @@ model DailyJournal {
   updatedAt DateTime @updatedAt
 
   User   User?   @relation(fields: [userId], references: [id])
-  userId String? 
+  userId String? @db.ObjectId
 
   systemTasks SystemTask[]
   review      JournalReview?
@@ -183,7 +183,7 @@ enum SystemTaskType {
 }
 
 model SystemTask {
-  id       String         @id @default(cuid())
+  id       String         @id @default(auto()) @map("_id") @db.ObjectId
   type     SystemTaskType @default(SPEECH_PRONUNCIATION_ANALYSIS)
   status   TaskStatus     @default(PENDING)
   payload  Json? // Initial params sent to Lambda
@@ -191,7 +191,7 @@ model SystemTask {
   metadata Json?
   result   String?
 
-  journalId String?
+  journalId String?       @db.ObjectId
   journal   DailyJournal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
@@ -199,7 +199,7 @@ model SystemTask {
 }
 
 model JournalReview {
-  id                String  @id @default(cuid())
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
   overallScore      Float?
   accuracyScore     Float?
   fluencyScore      Float?
@@ -209,13 +209,13 @@ model JournalReview {
   targetLanguage    String?
 
   // New LLM Fields
-  summaryFeedback       String?
-  finalTranscript       String?
-  translation           String?
+  summaryFeedback       String? @db.String
+  finalTranscript       String? @db.String
+  translation           String? @db.String
   grammarMistakes       Json? // Array of grammar mistake objects
   vocabularySuggestions Json? // Array of vocab objects
 
-  journalId String       @unique
+  journalId String       @unique @db.ObjectId
   journal   DailyJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())

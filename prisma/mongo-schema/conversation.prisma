@@ -1,5 +1,5 @@
 model Conversation {
-  id                 String               @id @default(cuid())
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
   title              String
   scenario           String?
   metadata           Json?
@@ -10,7 +10,7 @@ model Conversation {
   vocabulary         Json[]
   characters         Json[]
   dialogue           Json[]
-  userId             String               
+  userId             String               @db.ObjectId
   user               User                 @relation(fields: [userId], references: [id])
   messages           Json?
   imageUrl           String?
@@ -24,10 +24,10 @@ model Conversation {
 }
 
 model ConversationRecord {
-  id                  String       @id @default(cuid())
-  userId              String       
+  id                  String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String       @db.ObjectId
   user                User         @relation(fields: [userId], references: [id])
-  conversationId      String      
+  conversationId      String       @db.ObjectId
   conversation        Conversation @relation(fields: [conversationId], references: [id])
   messages            Json?
   analysis            Json?
@@ -37,10 +37,10 @@ model ConversationRecord {
 }
 
 model ConversationReview {
-  id             String       @id @default(cuid())
-  userId         String       
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String       @db.ObjectId
   user           User         @relation(fields: [userId], references: [id])
-  conversationId String       
+  conversationId String       @unique @db.ObjectId
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   mistakes       Json[] // <-- Change from Json? to Json[]
 
@@ -75,8 +75,8 @@ enum VoiceGender {
 }
 
 model FreestyleSession {
-  id             String         @id @default(cuid())
-  userId         String        
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String         @db.ObjectId
   user           User           @relation(fields: [userId], references: [id])
   mode           FreestyleMode
   level          FreestyleLevel @default(EASY) // <-- ADD THIS
@@ -105,8 +105,8 @@ model FreestyleSession {
 }
 
 model FreestyleReview {
-  id                 String           @id @default(cuid())
-  freestyleSessionId String           @unique
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  freestyleSessionId String           @unique @db.ObjectId
   session            FreestyleSession @relation(fields: [freestyleSessionId], references: [id], onDelete: Cascade)
 
   mistakes        Json[]
@@ -129,8 +129,8 @@ enum LambdaStatus {
 }
 
 model LanguageProfile {
-  id           String @id @default(cuid())
-  userId       String 
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String @db.ObjectId
   languageCode String // e.g., "fr-FR", "es-ES"
   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -141,8 +141,8 @@ model LanguageProfile {
 }
 
 model WordStat {
-  id                String @id @default(cuid())
-  languageProfileId String
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  languageProfileId String @db.ObjectId
   word              String // e.g., "bonjour", "la plante"
 
   // 1. Passive Metrics

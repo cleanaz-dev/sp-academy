@@ -1,6 +1,6 @@
 // ── The shared skeleton. Cached by cacheKey, generated ONCE per combo ──
 model FoundationCourse {
-  id        String             @id @default(cuid())
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
   cacheKey  String             @unique // "en-US:es-ES:beginner:travel"
   title     String
   // Planner-generated day-by-day outline, no content yet:
@@ -14,10 +14,10 @@ model FoundationCourse {
 
 // ── One per user, created one at a time by the cycle ──
 model FoundationLesson {
-  id                 String           @id @default(cuid())
-  foundationCourseId String
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  foundationCourseId String           @db.ObjectId
   course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
-  userId             String           // lessons are personal now (adaptive)
+  userId             String           @db.ObjectId // lessons are personal now (adaptive)
   user               User             @relation(fields: [userId], references: [id])
   orderIndex         Int
 
@@ -43,16 +43,16 @@ model FoundationLesson {
 
 // ── Merged: UserFoundation is gone, folded in here ──
 model FoundationProgress {
-  id     String @id @default(cuid())
-  userId String @unique
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @unique @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 
-  foundationCourseId String
+  foundationCourseId String @db.ObjectId
   status             String @default("in_progress") // "in_progress" | "completed"
   currentDay         Int    @default(1)
   currentStage       String @default("lesson_ready") // "lesson_ready" | "lesson_done" | "freestyle_pending"
 
-  completedLessonIds String[]
+  completedLessonIds String[] @db.ObjectId
 
   totalXp        Int   @default(0)
   overallFluency Float @default(0)
@@ -65,14 +65,14 @@ model FoundationProgress {
 // ── The freestyle session = your assessment engine ──
 // ── Links a foundation day to its freestyle session + stores what the cycle needs ──
 model FoundationFreestyleLog {
-  id     String @id @default(cuid())
-  userId String 
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 
-  lessonId String           @unique
+  lessonId String           @db.ObjectId
   lesson   FoundationLesson @relation(fields: [lessonId], references: [id])
 
-  freestyleSessionId String
+  freestyleSessionId String           @db.ObjectId
   freestyleSession   FreestyleSession @relation(fields: [freestyleSessionId], references: [id])
 
   // What the cycle actually consumes (your FreestyleReview already has the
@@ -82,4 +82,6 @@ model FoundationFreestyleLog {
   passed          Boolean @default(false)
 
   createdAt DateTime @default(now())
+
+  @@unique([lessonId]) // one freestyle session per lesson day
 }

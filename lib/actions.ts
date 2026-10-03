@@ -1233,29 +1233,27 @@ export async function updateLessonAndCourseProgress({
         });
       }
 
-      // 2. Update lesson progress
-      await tx.progress.upsert({
-        where: {
-          userId_lessonId: {
-            userId,
-            lessonId,
-          },
-        },
-        update: {
-          status: "COMPLETED",
-          score,
-          completedAt: new Date(),
-          enrollmentId: enrollment.id, // Make sure this is set
-        },
-        create: {
-          userId,
-          lessonId,
-          enrollmentId: enrollment.id,
-          status: "COMPLETED",
-          score,
-          completedAt: new Date(),
-        },
-      });
+      // // 2. Update lesson progress
+      // await tx.progress.upsert({
+      //   where: {
+      //     user: { userId },
+      //     lesson: { id: lessonId },
+      //   },
+      //   update: {
+      //     status: "COMPLETED",
+      //     score,
+      //     completedAt: new Date(),
+      //     enrollmentId: enrollment.id, // Make sure this is set
+      //   },
+      //   create: {
+      //     userId,
+      //     lessonId,
+      //     enrollmentId: enrollment.id,
+      //     status: "COMPLETED",
+      //     score,
+      //     completedAt: new Date(),
+      //   },
+      // });
 
       // 3. Calculate new progress percentage
       const totalLessons = await tx.lesson.count({

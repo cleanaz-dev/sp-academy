@@ -121,79 +121,81 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. CALCULATE SCORE VIA NOVITA AI
-    const userScore = await getUserScoreNovita({
-      userMessage: message,
-      recentHistory: history?.slice(-4) || [],
-      targetLanguage: targetLanguage || "English",
-      vocabulary,
-      title,
-    });
+    // // 3. CALCULATE SCORE VIA NOVITA AI
+    // const userScore = await getUserScoreNovita({
+    //   userMessage: message,
+    //   recentHistory: history?.slice(-4) || [],
+    //   targetLanguage: targetLanguage || "English",
+    //   vocabulary,
+    //   title,
+    // });
 
-    const scoreVal = userScore?.score ?? 100;
-    const labelVal = userScore?.label || "Excellent";
-    const badLabels = ["OK", "Poor", "Weak", "Bad"];
-    const isLowScore = scoreVal < 80;
-    const shouldSave = badLabels.includes(labelVal) || isLowScore;
+    // const scoreVal = userScore?.score ?? 100;
+    // const labelVal = userScore?.label || "Excellent";
+    // const badLabels = ["OK", "Poor", "Weak", "Bad"];
+    // const isLowScore = scoreVal < 80;
+    // const shouldSave = badLabels.includes(labelVal) || isLowScore;
 
-    // 4. PERSIST MISTAKE IF NEEDED
-    if (shouldSave) {
-      const dbUser = await prisma.user.findFirst({
-        where: { userId: clerkUserId },
-        select: { id: true },
-      });
+    // // 4. PERSIST MISTAKE IF NEEDED
+    // if (shouldSave) {
+    //   const dbUser = await prisma.user.findFirst({
+    //     where: { userId: clerkUserId },
+    //     select: { id: true },
+    //   });
 
-      if (dbUser) {
-        const newMistake: Prisma.InputJsonObject = {
-          id: crypto.randomUUID(),
-          type: "GRAMMAR",
-          original: message,
-          improved: userScore?.improvedResponse ?? null,
-          explanation: userScore?.explanation ?? null,
-          score: scoreVal,
-          label: labelVal,
-          corrections: (userScore?.corrections ?? []) as unknown as Prisma.InputJsonValue,
-          timestamp: new Date().toISOString(),
-        };
+    //   if (dbUser) {
+    //     const newMistake: Prisma.InputJsonObject = {
+    //       id: crypto.randomUUID(),
+    //       type: "GRAMMAR",
+    //       original: message,
+    //       improved: userScore?.improvedResponse ?? null,
+    //       explanation: userScore?.explanation ?? null,
+    //       score: scoreVal,
+    //       label: labelVal,
+    //       corrections: (userScore?.corrections ?? []) as unknown as Prisma.InputJsonValue,
+    //       timestamp: new Date().toISOString(),
+    //     };
 
-        // Fetch existing review mistakes if any
-        const existingReview = await prisma.conversationReview.findUnique({
-          where: { conversationId },
-          select: { mistakes: true },
-        });
+    //     // // Fetch existing review mistakes if any
+    //     // const existingReview = await prisma.conversationReview.findUnique({
+    //     //   where: { conversationId },
+    //     //   select: { mistakes: true },
+    //     // });
 
-        const currentMistakes: Prisma.InputJsonValue[] = Array.isArray(existingReview?.mistakes)
-          ? (existingReview.mistakes as Prisma.InputJsonValue[])
-          : existingReview?.mistakes
-          ? [existingReview.mistakes as Prisma.InputJsonValue]
-          : [];
+    //     const currentMistakes: Prisma.InputJsonValue[] = Array.isArray(existingReview?.mistakes)
+    //       ? (existingReview.mistakes as Prisma.InputJsonValue[])
+    //       : existingReview?.mistakes
+    //       ? [existingReview.mistakes as Prisma.InputJsonValue]
+    //       : [];
 
-        const updatedMistakes: Prisma.InputJsonValue[] = [...currentMistakes, newMistake];
+    //     const updatedMistakes: Prisma.InputJsonValue[] = [...currentMistakes, newMistake];
 
-        await prisma.conversationReview.upsert({
-          where: { conversationId },
-          create: {
-            userId: dbUser.id,
-            conversationId,
-            mistakes: [newMistake],
-          },
-          update: {
-            mistakes: updatedMistakes,
-          },
-        });
-      } else {
-        console.warn(`User with Clerk ID ${clerkUserId} not found in DB`);
-      }
-    }
+    //     await prisma.conversationReview.upsert({
+    //       where: { conversationId },
+    //       create: {
+    //         userId: dbUser.id,
+    //         conversationId,
+    //         mistakes: [newMistake],
+    //       },
+    //       update: {
+    //         mistakes: updatedMistakes,
+    //       },
+    //     });
+    //   } else {
+    //     console.warn(`User with Clerk ID ${clerkUserId} not found in DB`);
+    //   }
+    // }
 
-    // 5. RETURN RESULT TO FRONTEND
-    return NextResponse.json({
-      label: userScore?.label ?? "OK",
-      score: userScore?.score ?? null,
-      explanation: userScore?.explanation,
-      improvedResponse: userScore?.improvedResponse,
-      corrections: userScore?.corrections ?? [],
-    });
+    // // 5. RETURN RESULT TO FRONTEND
+    // return NextResponse.json({
+    //   label: userScore?.label ?? "OK",
+    //   score: userScore?.score ?? null,
+    //   explanation: userScore?.explanation,
+    //   improvedResponse: userScore?.improvedResponse,
+    //   corrections: userScore?.corrections ?? [],
+    // });
+
+    return NextResponse.json({ message: "Score API is currently disabled for testing." });
   } catch (error) {
     console.error("Score API Error:", error);
     return NextResponse.json(

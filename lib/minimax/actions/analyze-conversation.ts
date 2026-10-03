@@ -103,17 +103,17 @@ Return a JSON object with this exact structure, no markdown:
       data: { analysis: toJson(analysis) },
     }),
     // Save mistakes to review so the student can study them later
-    prisma.conversationReview.upsert({
-      where: { conversationId: conversation.id },
-      update: {
-        mistakes: analysis.grammarMistakes.map(toJson),
-      },
-      create: {
-        userId,
-        conversationId: conversation.id,
-        mistakes: analysis.grammarMistakes.map(toJson),
-      },
-    }),
+    // prisma.conversationReview.upsert({
+    //   where: { conversationId: conversation.id },
+    //   update: {
+    //     mistakes: analysis.grammarMistakes.map(toJson),
+    //   },
+    //   create: {
+    //     userId,
+    //     conversationId: conversation.id,
+    //     mistakes: analysis.grammarMistakes.map(toJson),
+    //   },
+    // }),
   ]);
 
   return analysis;

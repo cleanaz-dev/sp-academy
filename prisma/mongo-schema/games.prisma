@@ -1,5 +1,5 @@
 model Game {
-  id             String   @id @default(cuid())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   title          String // e.g., "Duck a Wear"
   description    String?
   rules          String
@@ -22,10 +22,10 @@ model Game {
 }
 
 model GameScore {
-  id        String   @id @default(cuid())
-  userId    String   
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
-  gameId    String   
+  gameId    String   @db.ObjectId
   game      Game     @relation(fields: [gameId], references: [id])
   score     Int
   createdAt DateTime @default(now())
@@ -35,8 +35,8 @@ model GameScore {
 }
 
 model GameSoundEffects {
-  id            String   @id @default(cuid())
-  gameId        String   
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  gameId        String   @db.ObjectId
   game          Game     @relation(fields: [gameId], references: [id])
   correctAnswer String
   wrongAnswer   String?
@@ -51,8 +51,8 @@ model GameSoundEffects {
 }
 
 model GameVariation {
-  id     String @id @default(cuid())
-  gameId String 
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  gameId String @db.ObjectId
   game   Game   @relation(fields: [gameId], references: [id])
 
   targetLanguage Languages      @default(ENGLISH)
@@ -83,7 +83,7 @@ enum GameDifficulty {
 }
 
 model UselessGameModel {
-  id          String @id @default(cuid())
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
   uselessJson Json?
 
   createdAt DateTime @default(now())
