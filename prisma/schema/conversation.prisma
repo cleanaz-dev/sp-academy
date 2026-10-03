@@ -127,3 +127,48 @@ enum LambdaStatus {
   SUCCESS
   FAILED
 }
+
+model LanguageProfile {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String @db.ObjectId
+  languageCode String // e.g., "fr-FR", "es-ES"
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  wordStats WordStat[]
+
+  // A user can only have ONE profile per language
+  @@unique([userId, languageCode])
+}
+
+model WordStat {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  languageProfileId String @db.ObjectId
+  word              String // e.g., "bonjour", "la plante"
+
+  // 1. Passive Metrics
+  seenCount   Int      @default(0)
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @updatedAt
+
+  // 2. Active Metrics (Tapping / Multiple Choice / Sorting)
+  tappedCorrect Int       @default(0)
+  tappedWrong   Int       @default(0)
+  lastTappedAt  DateTime?
+
+  // 3. Production Metrics (Azure Pronunciation)
+  spokenAttempts Int       @default(0)
+  avgSpokenScore Float? // Out of 100
+  lastSpokenAt   DateTime?
+
+  // 4. Algorithm / Spaced Repetition (SRS)
+  masteryScore   Float     @default(0) // Calculated based on above metrics
+  status         String    @default("NEW") // NEW, LEARNING, FAMILIAR, MASTERED
+  nextReviewDate DateTime?
+
+  languageProfile LanguageProfile @relation(fields: [languageProfileId], references: [id], onDelete: Cascade)
+
+  // Ensures we only have one row per word, per user's language profile
+  @@unique([languageProfileId, word])
+  // Index for fast querying when building review sessions
+  @@index([nextReviewDate])
+}
