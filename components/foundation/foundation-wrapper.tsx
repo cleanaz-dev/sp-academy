@@ -19,6 +19,7 @@ import { QuizStep } from "./quiz-step";
 import { FreestyleStep } from "./freestyle-step";
 import { OutroStep } from "./outro-step";
 import { WordAudioProvider } from "@/context/word-audio-context";
+import { MatrixProvider, useMatrix } from "@/context/matrix-context";
 
 const STEPS_CONFIG = [
   { id: 0, title: "Language Setup", icon: Languages },
@@ -32,26 +33,43 @@ const STEPS_CONFIG = [
   { id: 8, title: "Mission Debrief", icon: Award },
 ];
 
-export function FoundationWrapper() {
+function FoundationContent() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<FoundationData>(MOCK_FOUNDATION_DATA_EN_FR);
+  
+  const { syncCart } = useMatrix();
+
+  // Extract userId from your webhook mock data structure
+  // Handles both root-level userId and meta.userId variations
+  const userId = (data as any).userId || (data as any).meta?.userId || "usr_Paul";
+  // Fallback to "fr-FR" if not explicitly in the mock data root
+  const targetLang = (data as any).targetLanguage || (data as any).targetLang || "fr-FR";
 
   const handleLanguageSelect = (lang: "FR" | "ES") => {
     setData(lang === "FR" ? MOCK_FOUNDATION_DATA_EN_FR : MOCK_FOUNDATION_DATA_EN_ES);
     setStep(1);
   };
 
+  // INTERCEPTOR: Sync the matrix cart to DB, then change step
+  const handleNext = (nextStepIndex: number) => {
+    syncCart(userId, targetLang);
+    setStep(nextStepIndex);
+  };
+
   const renderStep = () => {
     switch (step) {
       case 0: return <LangStep onSelect={handleLanguageSelect} />;
-      case 1: return <IntroStep data={data} onNext={() => setStep(2)} />;
-      case 2: return <VisualStep data={data.visualContent} onNext={() => setStep(3)} />;
-      case 3: return <GrammarStep data={data.grammarContent} onNext={() => setStep(4)} />;
-      case 4: return <PronunciationStep data={data.pronunciationData} onNext={() => setStep(5)} />;
-      case 5: return <ListeningStep data={data.listeningContent} onNext={() => setStep(6)} />;
-      case 6: return <QuizStep data={data.quizContent} targetLang={data.targetLang} onNext={() => setStep(7)} />;
-      case 7: return <FreestyleStep data={data} onNext={() => setStep(8)} />;
-      case 8: return <OutroStep data={data} onFinish={() => alert("Course Complete! Routing to Dashboard...")} />;
+      case 1: return <IntroStep data={data} onNext={() => handleNext(2)} />;
+      case 2: return <VisualStep data={data.visualContent} onNext={() => handleNext(3)} />;
+      case 3: return <GrammarStep data={data.grammarContent} onNext={() => handleNext(4)} />;
+      case 4: return <PronunciationStep data={data.pronunciationData} onNext={() => handleNext(5)} />;
+      case 5: return <ListeningStep data={data.listeningContent} onNext={() => handleNext(6)} />;
+      case 6: return <QuizStep data={data.quizContent} targetLang={targetLang} onNext={() => handleNext(7)} />;
+      case 7: return <FreestyleStep data={data} onNext={() => handleNext(8)} />;
+      case 8: return <OutroStep data={data} onFinish={() => {
+          syncCart(userId, targetLang); // Final sync before routing away
+          alert("Course Complete! Routing to Dashboard...");
+      }} />;
       default:
         return <div>Unknown Step</div>;
     }
@@ -59,8 +77,8 @@ export function FoundationWrapper() {
 
   return (
     <WordAudioProvider
-      wordAudio={data.lessonHandoff?.wordAudio}
-      targetLang={data.targetLang}
+      wordAudio={data.lessonHandoff?.wordAudio || (data as any).wordAudio}
+      targetLang={targetLang}
     >
       <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen flex flex-col md:flex-row gap-6 md:gap-8">
 
@@ -68,10 +86,10 @@ export function FoundationWrapper() {
         <div className="w-full md:w-72 lg:w-80 shrink-0 bg-white rounded-4xl shadow-xs border border-gray-100 p-6 md:p-8 h-fit">
           <div className="mb-10">
             <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2">
-              Course • Day {data.orderIndex || 1}
+              Course • Day {data.orderIndex || (data as any).bridgeIndex || 1}
             </p>
             <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">
-              {step === 0 ? "Prototype Setup" : data.lessonHandoff?.theme}
+              {step === 0 ? "Prototype Setup" : data.lessonHandoff?.theme || "Greetings"}
             </h2>
           </div>
 
@@ -132,5 +150,14 @@ export function FoundationWrapper() {
 
       </div>
     </WordAudioProvider>
+  );
+}
+
+// Wrap the entire component tree with the MatrixProvider so the content inside can use the hook
+export function FoundationWrapper() {
+  return (
+    <MatrixProvider>
+      <FoundationContent />
+    </MatrixProvider>
   );
 }

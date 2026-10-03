@@ -1,8 +1,23 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { z } from "zod";
+
+export const InteractionSchema = z.object({
+  word: z.string().min(1),
+  seen: z.number().int().nonnegative().default(0),
+  heard: z.number().int().nonnegative().default(0), // <-- ADDED
+  tappedCorrect: z.number().int().nonnegative().default(0),
+  tappedWrong: z.number().int().nonnegative().default(0),
+  spokenAttempt: z.boolean().default(false),
+  spokenScore: z.number().min(0).max(100).optional(),
+});
+
+export const MatrixSyncPayloadSchema = z.object({
+  interactions: z.array(InteractionSchema).min(1),
+});
 
 interface Params {
-    params: Promise<{ userId: string; targetLang: string }>;
+  params: Promise<{ userId: string; targetLang: string }>;
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -12,10 +27,22 @@ export async function POST(req: Request, { params }: Params) {
 
     // 2. The body now ONLY needs to care about the actual interaction data
     const body = await req.json();
-    const { interactions } = body; 
+
+    const parsedBody = MatrixSyncPayloadSchema.safeParse(body);
+
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { error: "Invalid data format", details: parsedBody.error.format() },
+        { status: 400 },
+      );
+    }
+    const { interactions } = body;
 
     if (!interactions || !Array.isArray(interactions)) {
-      return NextResponse.json({ error: "Invalid interactions payload" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid interactions payload" },
+        { status: 400 },
+      );
     }
 
     // 3. Find or create the Language Profile for this user
@@ -23,7 +50,7 @@ export async function POST(req: Request, { params }: Params) {
       where: {
         userId_languageCode: { userId, languageCode: targetLang },
       },
-      update: {}, 
+      update: {},
       create: {
         userId,
         languageCode: targetLang,
@@ -32,9 +59,8 @@ export async function POST(req: Request, { params }: Params) {
 
     // 4. Upsert the Word Stats
     const upsertPromises = interactions.map((interaction: any) => {
-      
-      const interactionMasteryBump = 
-        (interaction.tappedCorrect * 1) + 
+      const interactionMasteryBump =
+        interaction.tappedCorrect * 1 +
         (interaction.spokenAttempt ? (interaction.spokenScore / 100) * 3 : 0);
 
       return prisma.wordStat.upsert({
@@ -50,13 +76,15 @@ export async function POST(req: Request, { params }: Params) {
           tappedWrong: { increment: interaction.tappedWrong || 0 },
           spokenAttempts: { increment: interaction.spokenAttempt ? 1 : 0 },
           // Rolling average logic placeholder
-          avgSpokenScore: interaction.spokenAttempt 
-            ? interaction.spokenScore 
+          avgSpokenScore: interaction.spokenAttempt
+            ? interaction.spokenScore
             : undefined,
           lastSeenAt: new Date(),
-          ...(interaction.tappedCorrect || interaction.tappedWrong ? { lastTappedAt: new Date() } : {}),
+          ...(interaction.tappedCorrect || interaction.tappedWrong
+            ? { lastTappedAt: new Date() }
+            : {}),
           ...(interaction.spokenAttempt ? { lastSpokenAt: new Date() } : {}),
-          masteryScore: { increment: interactionMasteryBump }
+          masteryScore: { increment: interactionMasteryBump },
         },
         create: {
           languageProfileId: profile.id,
@@ -67,10 +95,13 @@ export async function POST(req: Request, { params }: Params) {
           spokenAttempts: interaction.spokenAttempt ? 1 : 0,
           avgSpokenScore: interaction.spokenScore || null,
           lastSeenAt: new Date(),
-          lastTappedAt: (interaction.tappedCorrect || interaction.tappedWrong) ? new Date() : null,
+          lastTappedAt:
+            interaction.tappedCorrect || interaction.tappedWrong
+              ? new Date()
+              : null,
           lastSpokenAt: interaction.spokenAttempt ? new Date() : null,
           masteryScore: interactionMasteryBump,
-          status: "NEW"
+          status: "NEW",
         },
       });
     });
@@ -78,9 +109,11 @@ export async function POST(req: Request, { params }: Params) {
     await prisma.$transaction(upsertPromises);
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error("Matrix Sync Error:", error);
-    return NextResponse.json({ error: "Failed to sync matrix" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to sync matrix" },
+      { status: 500 },
+    );
   }
 }

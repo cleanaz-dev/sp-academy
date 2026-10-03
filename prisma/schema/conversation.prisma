@@ -150,6 +150,10 @@ model WordStat {
   firstSeenAt DateTime @default(now())
   lastSeenAt  DateTime @updatedAt
 
+  // Passive Listening (NEW)
+  heardCount  Int       @default(0)
+  lastHeardAt DateTime?
+
   // 2. Active Metrics (Tapping / Multiple Choice / Sorting)
   tappedCorrect Int       @default(0)
   tappedWrong   Int       @default(0)
