@@ -1,4 +1,4 @@
-// app/api/foundation/freestyle/evaluate/route.ts
+// app/api/foundation/freestyle/evaluate-turn/route.ts
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -224,7 +224,7 @@ Do not wrap in markdown. Return raw JSON only.`;
           },
           update: {
             spokenAttempts: { increment: 1 },
-            spokenScore: userSucceededWithRequiredChunks ? 100 : 0, // Proxy score: 100 for success, 0 for failure
+            avgSpokenScore: userSucceededWithRequiredChunks ? 100 : 0, // Proxy score: 100 for success, 0 for failure
             lastSpokenAt: new Date(),
             tappedCorrect: userSucceededWithRequiredChunks ? { increment: 1 } : undefined,
             tappedWrong: userSucceededWithRequiredChunks ? undefined : { increment: 1 },
@@ -234,7 +234,7 @@ Do not wrap in markdown. Return raw JSON only.`;
             word: chunk,
             seenCount: 1, // Assume they've seen the required chunk if attempting to speak it
             spokenAttempts: 1,
-            spokenScore: userSucceededWithRequiredChunks ? 100 : 0,
+            avgSpokenScore: userSucceededWithRequiredChunks ? 100 : 0,
             lastSpokenAt: new Date(),
             tappedCorrect: userSucceededWithRequiredChunks ? 1 : 0,
             tappedWrong: userSucceededWithRequiredChunks ? 0 : 1,

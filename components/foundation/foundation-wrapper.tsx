@@ -66,7 +66,7 @@ function FoundationContent() {
       case 5: return <ListeningStep data={data.listeningContent} onNext={() => handleNext(6)} />;
       case 6: return <QuizStep data={data.quizContent} targetLang={targetLang} onNext={() => handleNext(7)} />;
       case 7: return <FreestyleStep data={data} onNext={() => handleNext(8)} />;
-      case 8: return <OutroStep data={data} onFinish={() => {
+      case 8: return <OutroStep data={data} targetLang={targetLang} userId={userId} onFinish={() => {
           syncCart(userId, targetLang); // Final sync before routing away
           alert("Course Complete! Routing to Dashboard...");
       }} />;
