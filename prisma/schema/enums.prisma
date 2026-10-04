@@ -94,9 +94,11 @@ enum LessonType {
   Exercise
 }
 
-enum Role {
+enum UserRole {
   USER
   STUDENT
   TEACHER
   ADMIN
+  CUSTOMER
+  SUPER_ADMIN
 }
