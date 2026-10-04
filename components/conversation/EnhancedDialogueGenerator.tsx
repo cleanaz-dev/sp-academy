@@ -1,4 +1,4 @@
-// components/conversation/EnhancedDialogueGenerator.jsx
+// components/conversation/EnhancedDialogueGenerator.tsx
 "use client";
 import { useState } from "react";
 import { Label } from "../ui/label";
@@ -19,6 +19,18 @@ import {
   LEARNING_CONTENT,
 } from "@/lib/config/dialog-config";
 
+type Preview = {
+  vocabulary: { word: string; context: string }[];
+  keyPhrases: string[];
+  culturalNotes: string[];
+  levelRequirements: {
+    vocabulary?: number;
+    grammarTopics: string[];
+    expectedFluency: string;
+    conversationGoals: string[];
+  } | null;
+};
+
 export default function EnhancedDialogueGenerator() {
   const [selectedScenario, setSelectedScenario] = useState("");
   const [scenarioTitle, setScenarioTitle] = useState("");
@@ -32,14 +44,14 @@ export default function EnhancedDialogueGenerator() {
   const [targetLanguage, setTargetLanguage] = useState("fr");
 
   // Preview state for showing relevant information based on selections
-  const [preview, setPreview] = useState({
-    vocabulary: [],
-    keyPhrases: [],
-    culturalNotes: [],
-    levelRequirements: null,
-  });
+const [preview, setPreview] = useState<Preview>({
+  vocabulary: [],
+  keyPhrases: [],
+  culturalNotes: [],
+  levelRequirements: null,
+});
 
-  const updatePreview = (scenario, level, focus) => {
+  const updatePreview = (scenario:any, level: any, focus: any) => {
     const selectedScenario = LEARNING_CONTENT.scenarios.find(
       (s) => s.id === scenario,
     );
@@ -111,15 +123,15 @@ export default function EnhancedDialogueGenerator() {
             },
             scenario: {
               type: selectedScenario,
-              context: selectedScenarioData.context,
-              label: selectedScenarioData.context.label,
+              context: selectedScenarioData!.context,
+              label: selectedScenarioData!.context.label,
               keyPhrases:
-                selectedScenarioData.context.keyPhrases[selectedLevel],
+                selectedScenarioData!.context.keyPhrases[selectedLevel],
               vocabulary:
-                selectedScenarioData.context.vocabulary[selectedLevel],
-              culturalNotes: selectedScenarioData.context.culturalNotes,
-              roles: selectedScenarioData.context.roles,
-              situation: selectedScenarioData.context.situation,
+                selectedScenarioData!.context.vocabulary[selectedLevel],
+              culturalNotes: selectedScenarioData!.context.culturalNotes,
+              roles: selectedScenarioData!.context.roles,
+              situation: selectedScenarioData!.context.situation,
             },
             level: {
               type: selectedLevel,
@@ -176,7 +188,7 @@ export default function EnhancedDialogueGenerator() {
               <Label className="mb-2 block text-sm font-medium">
                 Your Language
               </Label>
-              <Select value={nativeLanguage} onValueChange={setNativeLanguage}>
+          <Select value={nativeLanguage} onValueChange={(v) => setNativeLanguage(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your language..." />
                 </SelectTrigger>
@@ -194,7 +206,7 @@ export default function EnhancedDialogueGenerator() {
               <Label className="mb-2 block text-sm font-medium">
                 Language to Learn
               </Label>
-              <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+              <Select value={targetLanguage} onValueChange={(v) => setTargetLanguage(v ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select language to learn..." />
                 </SelectTrigger>
