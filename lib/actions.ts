@@ -501,36 +501,30 @@ export async function getReadingLogsByBookReportId(bookReportId: string) {
   }
 }
 
-export async function editReadingLog(formData) {
-  let log = null;
+export async function editReadingLog(formData: FormData) {
   try {
     const shortSummary = formData.get("shortSummary");
     const readingLogId = formData.get("readingLogId");
-    console.log("Form Data:", formData);
-    console.log("Short Summary:", shortSummary);
-    console.log("Reading Log ID:", readingLogId);
 
-    if (!shortSummary || !readingLogId) {
+    if (typeof shortSummary !== "string" || typeof readingLogId !== "string" || !shortSummary || !readingLogId) {
       throw new Error("Invalid data");
     }
 
-    log = await prisma.readingLog.update({
+    const log = await prisma.readingLog.update({
       where: { id: readingLogId },
       data: { shortSummary },
       select: { bookId: true },
     });
+
+    revalidatePath(`/books/${log.bookId}`);
     return { success: true };
   } catch (error) {
-    console.error("Error editing reading log:", error.message);
+    console.error("Error editing reading log:", error instanceof Error ? error.message : error);
     throw new Error("Failed to edit reading log");
-  } finally {
-    if (log) {
-      revalidatePath(`/books/${log.bookReportId}`);
-    }
   }
 }
 
-export async function deleteReadingLog(readingLogId) {
+export async function deleteReadingLog(readingLogId: string) {
   try {
     // First get the reading log with its book details before deleting
     const readingLog = await prisma.readingLog.findUnique({
@@ -551,6 +545,10 @@ export async function deleteReadingLog(readingLogId) {
 
     // Store book reference before deleting the log
     const book = readingLog.book;
+
+    if (!book) {
+      throw new Error("Associated book not found");
+    }
 
     // Delete the reading log
     await prisma.readingLog.delete({
@@ -771,6 +769,10 @@ export async function getAccountSettingsByUserId(userId:string) {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
     });
+
+    if(!user) {
+      throw new Error("User not found");
+    }
     const accountSettings = await prisma.accountSettings.findUnique({
       where: { userId: user.id },
     });
@@ -909,6 +911,10 @@ export async function getAchievementsByUserId(userId: string) {
     const user = await prisma.user.findFirst({
       where: { userId: userId },
     });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
     const userAchievements = await prisma.userProgress.findMany({
       where: { userId: user.id },
       include: {
@@ -1342,6 +1348,9 @@ export async function getEnrolledCourseExercises(userId: string) {
         Course: true,
       },
     });
+    if (!user) {
+      throw new Error("User not found");
+    }
     const enrollments = await prisma.enrollment.findMany({
       where: { userId: user.id },
       include: {
@@ -1379,6 +1388,10 @@ export async function getLessonExercisesByEnrolledUser(
     const user = await prisma.user.findFirst({
       where: { userId: userId },
     });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
     // Step 1: Check if the user is enrolled in the course
     const enrollment = await prisma.enrollment.findUnique({
       where: {
@@ -1461,7 +1474,7 @@ export async function getUserAvatarImage(userId: string) {
       },
     });
 
-    if (!user) {
+    if (!user || !user.AccountSettings) {
       throw new Error("User not found");
     }
 
