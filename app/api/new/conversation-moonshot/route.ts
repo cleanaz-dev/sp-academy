@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     console.log(`🎯 ALL MOONSHOT CALLS COMPLETED in ${moonshotTime}ms`);
 
     // ✅ TTS Logic (Works exactly the same with the new function)
-    let audio = null;
+    let audio: string | null = null;
     try {
       const ttsStart = Date.now();
       console.log("🎙️ Starting Deepgram TTS synthesis for AI response...");

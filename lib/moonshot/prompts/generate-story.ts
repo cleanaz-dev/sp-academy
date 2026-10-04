@@ -1,4 +1,3 @@
-
 import { moonshotAPI } from "../client";
 
 export async function generateStory(formData: FormData) {
@@ -54,7 +53,10 @@ export async function generateStory(formData: FormData) {
       temperature: 0.7,
     });
 
-    const storyData = JSON.parse(completion.choices[0].message.content.trim());
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response from model");
+
+    const storyData = JSON.parse(content.trim());
     console.log(storyData);
     return { success: true, data: storyData };
   } catch (error: any) {

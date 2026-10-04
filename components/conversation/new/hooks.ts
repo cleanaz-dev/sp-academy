@@ -663,47 +663,43 @@ const analyzeAzurePronunciation = useCallback(
   [id, targetLanguage, getFullLanguageCode]
 );
 
-  const stopRecording = () => {
-    setIsRecording(false);
+const stopRecording = () => {
+  setIsRecording(false);
 
-    // Stop Deepgram connection
-    if (deepgramConnectionRef.current) {
+  // Stop Deepgram connection
+  if (deepgramConnectionRef.current) {
+    try {
+      deepgramConnectionRef.current.finish();
+    } catch (e) {
+      console.warn("Error finishing connection:", e);
+    }
+    deepgramConnectionRef.current = null;
+  }
+
+  // Release microphone (must happen before the recorder ref is nulled)
+  mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
+
+  // Stop MediaRecorder
+  if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current.state !== "inactive") {
       try {
-        deepgramConnectionRef.current.finish();
+        mediaRecorderRef.current.stop();
       } catch (e) {
-        console.warn("Error finishing connection:", e);
+        console.warn("Error stopping recorder:", e);
       }
-      deepgramConnectionRef.current = null;
     }
+    mediaRecorderRef.current = null;
+  }
 
-    // Stop MediaRecorder
-    if (mediaRecorderRef.current) {
-      if (mediaRecorderRef.current.state !== "inactive") {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch (e) {
-          console.warn("Error stopping recorder:", e);
-        }
-      }
-      mediaRecorderRef.current = null;
-    }
+  // Clear interval
+  if (audioIntervalRef.current) {
+    clearInterval(audioIntervalRef.current);
+    audioIntervalRef.current = null;
+  }
 
-    // Clear interval
-    if (audioIntervalRef.current) {
-      clearInterval(audioIntervalRef.current);
-      audioIntervalRef.current = null;
-    }
-
-    // Stop all tracks to release microphone
-    if (mediaRecorderRef.current?.stream) {
-      mediaRecorderRef.current.stream
-        .getTracks()
-        .forEach((track) => track.stop());
-    }
-
-    // Clean up chunks
-    audioChunksRef.current = [];
-  };
+  // Clean up chunks
+  audioChunksRef.current = [];
+};
 
   const toggleRecording = useCallback(async () => {
     // CRITICAL: Check for secure context first

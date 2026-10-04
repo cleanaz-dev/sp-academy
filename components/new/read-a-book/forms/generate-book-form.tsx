@@ -96,7 +96,7 @@ export default function GenerateBookForm({
                 name="targetLanguage"
                 required
                 value={targetLanguage}
-                onValueChange={setTargetLanguage}
+                onValueChange={(v) => setTargetLanguage(v ?? "")}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select target language" />
@@ -117,7 +117,7 @@ export default function GenerateBookForm({
                 name="nativeLanguage"
                 required
                 value={nativeLanguage}
-                onValueChange={setNativeLanguage}
+                onValueChange={(v) => setNativeLanguage(v ?? "")}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select native language" />
@@ -193,7 +193,7 @@ export default function GenerateBookForm({
                 name="difficulty"
                 required
                 value={difficulty}
-                onValueChange={setDifficulty}
+                onValueChange={(v) => setDifficulty(v ?? "")}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select difficulty" />
@@ -216,7 +216,7 @@ export default function GenerateBookForm({
                 name="genre"
                 required
                 value={genre}
-                onValueChange={setGenre}
+                onValueChange={(v) => setGenre(v ?? "")}
               >
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Select genre" />

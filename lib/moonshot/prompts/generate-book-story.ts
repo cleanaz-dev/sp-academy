@@ -33,7 +33,9 @@ export interface BookGenerationResponse {
 }
 
 // Update your generateBookStory function
-export async function generateBookStory(requestData: BookGenerationRequest): Promise<BookGenerationResponse> {
+export async function generateBookStory(
+  requestData: BookGenerationRequest,
+): Promise<BookGenerationResponse> {
   try {
     const {
       title,
@@ -45,7 +47,7 @@ export async function generateBookStory(requestData: BookGenerationRequest): Pro
       genre,
       targetLanguage,
       nativeLanguage,
-      contentFocus
+      contentFocus,
     } = requestData;
 
     // Validation
@@ -66,9 +68,11 @@ export async function generateBookStory(requestData: BookGenerationRequest): Pro
 
     const targetLangName = languageNames[targetLanguage];
     const nativeLangName = languageNames[nativeLanguage];
-    
+
     // Build content focus description
-    const focusDescriptions = contentFocus.map((focus: string) => contentFocusLabels[focus]).join(", ");
+    const focusDescriptions = contentFocus
+      .map((focus: string) => contentFocusLabels[focus])
+      .join(", ");
 
     const prompt = `Generate a ${genre} story in ${targetLangName} with exactly ${numberOfPages} pages for ${difficulty} level students.
 
@@ -136,7 +140,11 @@ Respond with ONLY a JSON object in the following format, no additional text:
       temperature: 0.7,
     });
 
-    const storyData = JSON.parse(completion.choices[0].message.content.trim());
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response from model");
+
+    const storyData = JSON.parse(content.trim());
+
     console.log(storyData);
     return { success: true, data: storyData };
   } catch (error: any) {

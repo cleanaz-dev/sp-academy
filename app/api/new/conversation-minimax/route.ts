@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     console.log(`🎯 ALL MiniMax CALLS COMPLETED in ${moonshotTime}ms`);
 
     // ✅ ADD TTS - Synthesize the AI's response (NOT the user's input)
-    let audio = null;
+    let audio: string | null = null;
     try {
       const ttsStart = Date.now();
       console.log("🎙️ Starting TTS synthesis for AI response...");

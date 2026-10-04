@@ -72,40 +72,23 @@ export async function handleFreestyleReview(task: SystemTask, body: unknown) {
       vocabUpgrades,
     } = review;
 
+    const jsonOrNull = (v: unknown) =>
+      v ? (v as Prisma.InputJsonValue) : Prisma.JsonNull;
+
     await prisma.$transaction(async (tx) => {
+      const data = {
+        lambdaStatus: LambdaStatus.SUCCESS,
+        mistakes: mistakes as Prisma.InputJsonValue[],
+        overallFeedback: jsonOrNull(overallFeedback),
+        metrics: jsonOrNull(metrics),
+        grammarAnalysis: jsonOrNull(grammarAnalysis),
+        vocabUpgrades: jsonOrNull(vocabUpgrades),
+      };
+
       await tx.freestyleReview.upsert({
         where: { freestyleSessionId: sessionId },
-        update: {
-          lambdaStatus: LambdaStatus.SUCCESS,
-          // mistakes is Json[] in Prisma, so we pass it as an array
-          mistakes: mistakes as Prisma.InputJsonValue[],
-          // The rest are Json? in Prisma, so we just cast them as InputJsonValue or null
-          overallFeedback: overallFeedback
-            ? (overallFeedback as Prisma.InputJsonValue)
-            : null,
-          metrics: metrics ? (metrics as Prisma.InputJsonValue) : null,
-          grammarAnalysis: grammarAnalysis
-            ? (grammarAnalysis as Prisma.InputJsonValue)
-            : null,
-          vocabUpgrades: vocabUpgrades
-            ? (vocabUpgrades as Prisma.InputJsonValue)
-            : null,
-        },
-        create: {
-          freestyleSessionId: sessionId,
-          lambdaStatus: LambdaStatus.SUCCESS,
-          mistakes: mistakes as Prisma.InputJsonValue[],
-          overallFeedback: overallFeedback
-            ? (overallFeedback as Prisma.InputJsonValue)
-            : null,
-          metrics: metrics ? (metrics as Prisma.InputJsonValue) : null,
-          grammarAnalysis: grammarAnalysis
-            ? (grammarAnalysis as Prisma.InputJsonValue)
-            : null,
-          vocabUpgrades: vocabUpgrades
-            ? (vocabUpgrades as Prisma.InputJsonValue)
-            : null,
-        },
+        update: data,
+        create: { freestyleSessionId: sessionId, ...data },
       });
 
       await tx.freestyleSession.update({

@@ -6,8 +6,8 @@ import GameCodeModal from "./game-code-modal"; // <-- Import the modal
 interface Game {
   id: string;
   title: string;
-  description?: string;
-  imageUrl?: string;
+  description?: string | null;
+  imageUrl?: string | null;
   type: string;
   code?: string | null;
 }

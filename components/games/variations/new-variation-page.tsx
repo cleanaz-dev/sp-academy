@@ -173,7 +173,7 @@ export default function NewVariationPage({ game }: Props) {
                   </Label>
                   <Select
                     value={targetLanguage}
-                    onValueChange={setTargetLanguage}
+                    onValueChange={(v) => setTargetLanguage(v ?? "")}
                   >
                     <SelectTrigger
                       id="targetLanguage"
@@ -204,7 +204,7 @@ export default function NewVariationPage({ game }: Props) {
                   </Label>
                   <Select
                     value={nativeLanguage}
-                    onValueChange={setNativeLanguage}
+                    onValueChange={(v) => setNativeLanguage(v ?? "")}
                   >
                     <SelectTrigger
                       id="nativeLanguage"
@@ -233,7 +233,7 @@ export default function NewVariationPage({ game }: Props) {
                   >
                     Difficulty Level
                   </Label>
-                  <Select value={difficulty} onValueChange={setDifficulty}>
+                  <Select value={difficulty} onValueChange={(v) => setDifficulty(v ?? "")}>
                     <SelectTrigger
                       id="difficulty"
                       className="w-full bg-white transition-all focus:ring-2 focus:ring-blue-600"

@@ -1,16 +1,11 @@
-
 import EduCenterPage from "@/components/edu-centre/edu-centre-page";
-import { getAllCourses, getUserbyUserId } from "@/lib/actions";
-import { auth } from "@clerk/nextjs/server";
+import { getAllCourses } from "@/lib/actions";
+import { requireUser } from "@/lib/auth-guard";
 
-export default async function page() {
-  const { userId } = await auth();
+export default async function Page() {
+  const user = await requireUser();
   const courses = await getAllCourses();
-  const user = await getUserbyUserId(userId);
 
-  return (
-    <>
-      <EduCenterPage courses={courses} userId={user.id} />
-    </>
-  );
+
+  return <EduCenterPage courses={courses} userId={user.id} />;
 }

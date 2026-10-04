@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     });
 
     // 2. Generate Audio (Deepgram is fast)
-    let audio = null;
+    let audio: Awaited<ReturnType<typeof textToSpeech>> | null = null;
     if (aiResponse.targetLanguage) {
       try {
         audio = await textToSpeech(aiResponse.targetLanguage, {
