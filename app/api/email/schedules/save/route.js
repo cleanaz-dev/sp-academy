@@ -1,7 +1,7 @@
 //api/email/schedules/save/route.js
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 // api/email/schedules/save/route.js
 export async function POST(request) {

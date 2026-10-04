@@ -1,7 +1,7 @@
 // app/api/conversation/score/route.ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 const NOVITA_API_URL = "https://api.novita.ai/openai/v1/chat/completions";

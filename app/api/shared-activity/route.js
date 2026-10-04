@@ -1,5 +1,5 @@
 // app/api/shared-activity/route.js
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { auth, getAuth } from "@clerk/nextjs/server";
 import { headers as nextHeaders, cookies } from "next/headers";

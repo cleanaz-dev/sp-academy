@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { lambda, createCommand } from "@/lib/aws/lambda";
 import { GameVariationTaskMeta } from "@/lib/schema/games/game-variation-task-metadata-schema";

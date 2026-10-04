@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { Clock, CheckCircle, MessageSquare } from "lucide-react";

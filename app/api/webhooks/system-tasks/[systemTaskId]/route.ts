@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-conversation-images";
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";

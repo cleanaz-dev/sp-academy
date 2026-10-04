@@ -1,6 +1,6 @@
 // practice-vocabulary/[id]/page.jsx
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import PracticeSession from "@/components/short-stories/PracticeSession";
 import { auth } from "@clerk/nextjs";
 

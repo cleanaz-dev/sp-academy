@@ -1,6 +1,6 @@
 //api/generate/sound-effects/save/route.js
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { uploadAudioToS3Bucket } from "@/lib/uploadAudio";
 
 export async function POST(request) {

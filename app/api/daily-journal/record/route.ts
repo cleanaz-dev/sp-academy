@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { createCommand, lambda } from "@/lib/aws/lambda";
 import { uploadPrivateAudioToS3Bucket } from "@/lib/aws/services/s3-upload-audio"; 

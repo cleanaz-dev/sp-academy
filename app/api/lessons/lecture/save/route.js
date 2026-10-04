@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { uploadImage } from "@/lib/uploadImage";
 import Anthropic from "@anthropic-ai/sdk"; // Import the Anthropic SDK
 

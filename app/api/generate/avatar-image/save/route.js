@@ -1,6 +1,6 @@
 //api/generate/avatar-image/save/route.js
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { uploadImage } from "@/lib/uploadImage";
 

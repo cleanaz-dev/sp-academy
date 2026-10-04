@@ -1,7 +1,7 @@
 // app/api/foundation/freestyle/suggestions/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod"; // Added z import
-import prisma from "@/lib/prisma"; // Added Prisma import
+import { prisma } from "@/lib/prisma"; // Added Prisma import
 
 const TAG = "[suggestions]";
 

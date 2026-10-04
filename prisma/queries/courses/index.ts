@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function getCourseById(id: string) {
   const course = await prisma.course.findFirst({

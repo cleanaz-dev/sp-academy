@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { lambda, createCommand } from "@/lib/aws/lambda";
 
 export async function POST(request: Request) {

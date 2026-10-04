@@ -1,6 +1,6 @@
 // lib/workflows/handlers/create-billing-info.ts
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 
 

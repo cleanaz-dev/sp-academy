@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { SpeechAnalysisPayloadSchema } from "@/lib/schema/speech-analysis-schema";
 import { TaskStatus } from "@prisma/client";
 import { NextResponse } from "next/server";

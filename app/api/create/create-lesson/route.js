@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import axios from "axios"; // Ensure axios is imported
 
 export async function POST(request) {

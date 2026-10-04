@@ -1,5 +1,5 @@
 //api/quiz/route.js
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { updateLessonAndCourseProgress } from "@/lib/actions";

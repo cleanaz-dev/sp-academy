@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import GameVariationsPage from "@/components/games/variations/game-variation-page";
 
 

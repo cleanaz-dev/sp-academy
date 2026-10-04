@@ -1,6 +1,6 @@
 // api/conversation/update/route.js
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function PUT(request) {
   try {

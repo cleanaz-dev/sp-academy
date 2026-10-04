@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function isEnrolledInCourse(courseId: string, userId: string) {
   const enrollment = await prisma.enrollment.findFirst({

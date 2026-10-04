@@ -2,7 +2,7 @@
 import { NovitaTextModel } from "@/lib/novita";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma"; // Added Prisma import
+import { prisma } from "@/lib/prisma"; // Added Prisma import
 
 export const maxDuration = 30;
 

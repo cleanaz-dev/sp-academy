@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { saveConversationDialogue } from "@/lib/actions";
 import { createCommand, lambda } from "@/lib/aws/lambda";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {

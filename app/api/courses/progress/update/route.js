@@ -1,6 +1,6 @@
 // app/api/courses/progress/update/route.js
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
