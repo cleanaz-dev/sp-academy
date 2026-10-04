@@ -1,7 +1,7 @@
 "use server";
 
 import { notFound, redirect } from "next/navigation";
-import prisma from "./prisma";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { headers } from "next/headers";
