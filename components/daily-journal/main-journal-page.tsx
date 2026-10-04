@@ -44,7 +44,7 @@ export default function MainJournalPage({ journals = [], nativeLanguage = "en-US
   );
 }
 
-function JournalPageContent({ journals, nativeLanguage }: { journals: any[], nativeLanguage?: string }) {
+function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: any[], nativeLanguage?: string }) {
   // Initialize calendar with current EST time
   const [currentDate, setCurrentDate] = useState(getESTDate());
   
