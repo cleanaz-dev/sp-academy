@@ -12,7 +12,6 @@ export type Plan = {
   description: string;
   features: string[];
   cta: { label: string; href: string };
-  stripe: { productId: string; priceId: string };
 };
 
 export type PricingData = {
@@ -55,10 +54,6 @@ export const PRICING_DATA: PricingData = {
         label: "Become a founder",
         href: "/signup",
       },
-      stripe: {
-        productId: process.env.NEXT_PUBLIC_STRIPE_FOUNDER_PRODUCT_ID ?? "",
-        priceId: process.env.NEXT_PUBLIC_STRIPE_FOUNDER_PRICE_ID ?? "",
-      },
     },
     {
       id: "unlimited",
@@ -66,7 +61,7 @@ export const PRICING_DATA: PricingData = {
       label: "For serious learners",
       accent: "secondary",
       featured: false,
-      price: "$39", // placeholder, set your real price
+      price: "$100", // placeholder, set your real price
       originalPrice: "",
       period: "/month",
       description: "Everything in Spoon with no daily limits on lessons.",
@@ -81,10 +76,7 @@ export const PRICING_DATA: PricingData = {
         label: "Go unlimited",
         href: "/signup",
       },
-      stripe: {
-        productId: process.env.NEXT_PUBLIC_STRIPE_UNLIMITED_PRODUCT_ID ?? "",
-        priceId: process.env.NEXT_PUBLIC_STRIPE_UNLIMITED_PRICE_ID ?? "",
-      },
+     
     },
     {
       id: "enterprise",
@@ -108,10 +100,7 @@ export const PRICING_DATA: PricingData = {
         label: "Contact sales",
         href: "/contact",
       },
-      stripe: {
-        productId: "",
-        priceId: "",
-      },
+     
     },
   ],
 };
