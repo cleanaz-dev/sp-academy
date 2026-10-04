@@ -15,11 +15,11 @@ const languages = [
   { name: "English", flag: "🇬🇧" },
   { name: "French", flag: "🇫🇷" },
   { name: "Spanish", flag: "🇪🇸" },
-  { name: "German", flag: "🇩🇪" },
-  { name: "Italian", flag: "🇮🇹" },
-  { name: "Portuguese", flag: "🇵🇹" },
-  { name: "Japanese", flag: "🇯🇵" },
-  { name: "Korean", flag: "🇰🇷" },
+  // { name: "German", flag: "🇩🇪" },
+  // { name: "Italian", flag: "🇮🇹" },
+  // { name: "Portuguese", flag: "🇵🇹" },
+  // { name: "Japanese", flag: "🇯🇵" },
+  // { name: "Korean", flag: "🇰🇷" },
 ];
 
 const levels = [
