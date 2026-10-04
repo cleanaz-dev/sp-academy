@@ -28,10 +28,20 @@ const PLAN_ICONS: Record<string, LucideIcon> = {
   enterprise: Building2,
 };
 
+// Plans that get a solid, filled card with white text.
+const SOLID_PLANS = ["founder", "unlimited"];
+
 // Full class strings so Tailwind can detect them (no dynamic string building).
 const ACCENTS: Record<
   PlanAccent,
-  { text: string; chip: string; featured: string; focus: string }
+  {
+    text: string;
+    chip: string;
+    featured: string;
+    focus: string;
+    solid: string;
+    solidButtonText: string;
+  }
 > = {
   primary: {
     text: "text-primary",
@@ -39,6 +49,8 @@ const ACCENTS: Record<
     featured:
       "border-primary/40 shadow-[0_0_0_4px_hsl(var(--primary)/0.1),0_1px_2px_hsl(var(--foreground)/0.06),0_24px_60px_hsl(var(--foreground)/0.07)]",
     focus: "focus-visible:outline-primary",
+    solid: "bg-primary border-primary shadow-2xl",
+    solidButtonText: "text-primary",
   },
   secondary: {
     text: "text-secondary",
@@ -46,6 +58,8 @@ const ACCENTS: Record<
     featured:
       "border-secondary/40 shadow-[0_0_0_4px_hsl(var(--secondary)/0.1),0_1px_2px_hsl(var(--foreground)/0.06),0_24px_60px_hsl(var(--foreground)/0.07)]",
     focus: "focus-visible:outline-secondary",
+    solid: "bg-secondary border-secondary shadow-2xl",
+    solidButtonText: "text-secondary",
   },
   tertiary: {
     text: "text-tertiary",
@@ -53,6 +67,8 @@ const ACCENTS: Record<
     featured:
       "border-tertiary/40 shadow-[0_0_0_4px_hsl(var(--tertiary)/0.1),0_1px_2px_hsl(var(--foreground)/0.06),0_24px_60px_hsl(var(--foreground)/0.07)]",
     focus: "focus-visible:outline-tertiary",
+    solid: "bg-tertiary border-tertiary shadow-2xl",
+    solidButtonText: "text-tertiary",
   },
 };
 
@@ -68,29 +84,29 @@ export default function PricingSection() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-async function startCheckout(plan: Plan) {
-  setError(null);
-  setLoadingId(plan.id);
+  async function startCheckout(plan: Plan) {
+    setError(null);
+    setLoadingId(plan.id);
 
-  try {
-    const response = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ planId: plan.id }),
-    });
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: plan.id }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok || !data.url) {
-      throw new Error("Checkout failed");
+      if (!response.ok || !data.url) {
+        throw new Error("Checkout failed");
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setError("We couldn't start checkout. Please try again.");
+      setLoadingId(null);
     }
-
-    window.location.href = data.url;
-  } catch {
-    setError("We couldn't start checkout. Please try again.");
-    setLoadingId(null);
   }
-}
 
   return (
     <section
@@ -128,7 +144,7 @@ async function startCheckout(plan: Plan) {
             const Icon = PLAN_ICONS[plan.id] ?? Sparkles;
             const accent = ACCENTS[plan.accent];
             const isLoading = loadingId === plan.id;
-            const isFounder = plan.id === "founder";
+            const isSolid = SOLID_PLANS.includes(plan.id);
             const usesCheckout = plan.id !== "enterprise";
 
             return (
@@ -141,8 +157,8 @@ async function startCheckout(plan: Plan) {
                 <article
                   aria-labelledby={`plan-${plan.id}-name`}
                   className={`${CARD_BASE} ${
-                    isFounder
-                      ? "bg-primary border-primary shadow-2xl"
+                    isSolid
+                      ? accent.solid
                       : `bg-card/90 backdrop-blur-xl ${
                           plan.featured ? accent.featured : CARD_DEFAULT
                         }`
@@ -152,8 +168,8 @@ async function startCheckout(plan: Plan) {
                     aria-hidden="true"
                     strokeWidth={1.15}
                     className={`pointer-events-none absolute -right-12 top-6 -z-10 size-44 -rotate-[7deg] md:-right-8 md:size-52 ${
-                      isFounder
-                        ? "text-primary-foreground opacity-[0.15]"
+                      isSolid
+                        ? "text-white opacity-[0.15]"
                         : `${accent.text} opacity-[0.055]`
                     }`}
                   />
@@ -161,7 +177,7 @@ async function startCheckout(plan: Plan) {
                   <div className="relative z-10 flex w-full flex-col">
                     <span
                       className={`inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest before:h-px before:w-7 before:bg-current before:content-[''] ${
-                        isFounder ? "text-primary-foreground" : accent.text
+                        isSolid ? "text-white" : accent.text
                       }`}
                     >
                       {plan.label}
@@ -170,9 +186,7 @@ async function startCheckout(plan: Plan) {
                     <h3
                       id={`plan-${plan.id}-name`}
                       className={`mt-3.5 text-balance text-[clamp(1.75rem,2.6vw,2.25rem)] font-bold leading-[1.03] tracking-[-0.04em] ${
-                        isFounder
-                          ? "text-primary-foreground"
-                          : "text-foreground"
+                        isSolid ? "text-white" : "text-foreground"
                       }`}
                     >
                       {plan.name}
@@ -181,9 +195,7 @@ async function startCheckout(plan: Plan) {
                     <div className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                       <span
                         className={`text-[clamp(2.5rem,4.5vw,3.5rem)] font-bold leading-none tracking-[-0.05em] ${
-                          isFounder
-                            ? "text-primary-foreground"
-                            : "text-foreground"
+                          isSolid ? "text-white" : "text-foreground"
                         }`}
                       >
                         {plan.price}
@@ -192,8 +204,8 @@ async function startCheckout(plan: Plan) {
                       {plan.period && (
                         <span
                           className={`text-base font-medium ${
-                            isFounder
-                              ? "text-primary-foreground/80"
+                            isSolid
+                              ? "text-white/80"
                               : "text-muted-foreground"
                           }`}
                         >
@@ -204,8 +216,8 @@ async function startCheckout(plan: Plan) {
                       {plan.originalPrice && (
                         <span
                           className={`text-base font-medium line-through ${
-                            isFounder
-                              ? "text-primary-foreground/60"
+                            isSolid
+                              ? "text-white/60"
                               : "text-muted-foreground/80"
                           }`}
                         >
@@ -217,9 +229,7 @@ async function startCheckout(plan: Plan) {
 
                     <p
                       className={`mt-4 text-[clamp(1rem,1.35vw,1.05rem)] leading-[1.7] ${
-                        isFounder
-                          ? "text-primary-foreground/90"
-                          : "text-muted-foreground"
+                        isSolid ? "text-white/90" : "text-muted-foreground"
                       }`}
                     >
                       {plan.description}
@@ -227,25 +237,21 @@ async function startCheckout(plan: Plan) {
 
                     <ul
                       className={`mt-6 grid gap-3 border-t pt-6 ${
-                        isFounder
-                          ? "border-primary-foreground/20"
-                          : "border-border/80"
+                        isSolid ? "border-white/20" : "border-border/80"
                       }`}
                     >
                       {plan.features.map((feature) => (
                         <li
                           key={feature}
                           className={`flex items-start gap-3 text-[0.95rem] font-medium leading-snug ${
-                            isFounder
-                              ? "text-primary-foreground/90"
-                              : "text-foreground/85"
+                            isSolid ? "text-white/90" : "text-foreground/85"
                           }`}
                         >
                           <span
                             aria-hidden="true"
                             className={`mt-0.5 inline-grid size-5 flex-none place-items-center rounded-full ${
-                              isFounder
-                                ? "bg-primary-foreground/20 text-primary-foreground"
+                              isSolid
+                                ? "bg-white/20 text-white"
                                 : accent.chip
                             }`}
                           >
@@ -263,8 +269,8 @@ async function startCheckout(plan: Plan) {
                           disabled={isLoading}
                           onClick={() => startCheckout(plan)}
                           className={
-                            isFounder
-                              ? `${CTA_BASE} border-white bg-white text-primary hover:bg-white/90 focus-visible:outline-white`
+                            isSolid
+                              ? `${CTA_BASE} border-white bg-white ${accent.solidButtonText} hover:bg-white/90 focus-visible:outline-white`
                               : `${CTA_BASE} border-purple-600 bg-purple-600 text-white hover:bg-purple-700 ${accent.focus}`
                           }
                         >
