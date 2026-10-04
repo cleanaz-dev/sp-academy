@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Building2,
   Check,
+  Infinity as InfinityIcon,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const PLANS = pricingData.plans;
 
 const PLAN_ICONS: Record<string, LucideIcon> = {
   founder: Sparkles,
+  unlimited: InfinityIcon,
   enterprise: Building2,
 };
 
@@ -66,36 +68,29 @@ export default function PricingSection() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function startCheckout(plan: Plan) {
-    // No Stripe price yet: send them to signup instead of a dead checkout.
-    if (!plan.stripe.priceId) {
-      window.location.href = plan.cta.href;
-      return;
+async function startCheckout(plan: Plan) {
+  setError(null);
+  setLoadingId(plan.id);
+
+  try {
+    const response = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId: plan.id }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.url) {
+      throw new Error("Checkout failed");
     }
 
-    setError(null);
-    setLoadingId(plan.id);
-
-    try {
-      // Create this route to return { url } from stripe.checkout.sessions.create
-      const response = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: plan.stripe.priceId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.url) {
-        throw new Error("Checkout failed");
-      }
-
-      window.location.href = data.url;
-    } catch {
-      setError("We couldn't start checkout. Please try again.");
-      setLoadingId(null);
-    }
+    window.location.href = data.url;
+  } catch {
+    setError("We couldn't start checkout. Please try again.");
+    setLoadingId(null);
   }
+}
 
   return (
     <section
@@ -128,12 +123,13 @@ export default function PricingSection() {
           </p>
         </Reveal>
 
-        <div className="mx-auto mt-[clamp(2rem,4vh,3rem)] grid max-w-[58rem] grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+        <div className="mx-auto mt-[clamp(2rem,4vh,3rem)] grid max-w-6xl grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3">
           {PLANS.map((plan, index) => {
             const Icon = PLAN_ICONS[plan.id] ?? Sparkles;
             const accent = ACCENTS[plan.accent];
             const isLoading = loadingId === plan.id;
             const isFounder = plan.id === "founder";
+            const usesCheckout = plan.id !== "enterprise";
 
             return (
               <Reveal
@@ -261,12 +257,16 @@ export default function PricingSection() {
                     </ul>
 
                     <div className="mt-auto pt-8">
-                      {isFounder ? (
+                      {usesCheckout ? (
                         <Button
                           type="button"
                           disabled={isLoading}
                           onClick={() => startCheckout(plan)}
-                          className={`${CTA_BASE} border-white bg-white text-primary hover:bg-white/90 focus-visible:outline-white`}
+                          className={
+                            isFounder
+                              ? `${CTA_BASE} border-white bg-white text-primary hover:bg-white/90 focus-visible:outline-white`
+                              : `${CTA_BASE} border-purple-600 bg-purple-600 text-white hover:bg-purple-700 ${accent.focus}`
+                          }
                         >
                           {isLoading ? "Redirecting…" : plan.cta.label}
                           {!isLoading && (
