@@ -26,7 +26,6 @@ export async function setupFirstLesson(payload: InvokeEduBuilderPayload) {
   // 3. Log the system task
   const task = await prisma.systemTask.create({
     data: {
-      user: { connect: { id: payload.userId } },
       type: "SPOON_GENERATION",
       status: "PENDING",
       payload: JSON.stringify({
@@ -38,6 +37,7 @@ export async function setupFirstLesson(payload: InvokeEduBuilderPayload) {
         type: payload.type,
         foundationCourseId: course.id,
         foundationLessonId: lesson.id,
+        userId: payload.userId,
         spoon: payload.spoon,
       },
     },
