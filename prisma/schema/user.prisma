@@ -1,18 +1,18 @@
 model User {
-  id                    String   @id @default(cuid())
-  userId                String?  @unique // CHANGED: was required, Better Auth won't fill it
-  email                 String   @unique
-  name                  String
+  id     String  @id @default(cuid())
+  userId String? @unique // CHANGED: was required, Better Auth won't fill it
+  email  String  @unique
+  name   String
 
-  emailVerified         Boolean  @default(false) // NEW
-  image                 String?                  // NEW
-  username              String?  @unique         // NEW
-  displayUsername       String?                  // NEW
-  firstName             String?                  // NEW
-  lastName              String?                  // NEW
+  emailVerified   Boolean @default(false) // NEW
+  image           String? // NEW
+  username        String? @unique // NEW
+  displayUsername String? // NEW
+  firstName       String? // NEW
+  lastName        String? // NEW
 
-  sessions              Session[]                // NEW
-  accounts              Account[]                // NEW
+  sessions Session[] // NEW
+  accounts Account[] // NEW
 
   role                  UserRole                @default(CUSTOMER)
   createdAt             DateTime                @default(now())
@@ -52,6 +52,7 @@ model User {
   FoundationLesson       FoundationLesson[]
   FoundationFreestyleLog FoundationFreestyleLog[]
   languageProfiles       LanguageProfile[]
+  foundationCourses      FoundationCourse[]
 }
 
 model BillingInformation {
@@ -101,9 +102,9 @@ model Teacher {
 
 model Journal {
   id           String   @id @default(cuid())
-  userId       String   
+  userId       String
   user         User     @relation(fields: [userId], references: [id])
-  callId       String   
+  callId       String
   record       Boolean?
   recordingUrl String?
   length       String?
@@ -156,7 +157,7 @@ model Achievement {
 
 model UserProgress {
   id            String      @id @default(cuid())
-  userId        String      
+  userId        String
   user          User        @relation(fields: [userId], references: [id])
   achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
   achievementId String
@@ -177,9 +178,9 @@ model Category {
 
 model Like {
   id         String   @id @default(cuid())
-  userId     String   
+  userId     String
   user       User     @relation(fields: [userId], references: [id])
-  activityId String   
+  activityId String
   type       String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

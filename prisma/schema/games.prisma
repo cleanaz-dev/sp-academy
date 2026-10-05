@@ -23,9 +23,9 @@ model Game {
 
 model GameScore {
   id        String   @id @default(cuid())
-  userId    String   
+  userId    String
   user      User     @relation(fields: [userId], references: [id])
-  gameId    String   
+  gameId    String
   game      Game     @relation(fields: [gameId], references: [id])
   score     Int
   createdAt DateTime @default(now())
@@ -36,7 +36,7 @@ model GameScore {
 
 model GameSoundEffects {
   id            String   @id @default(cuid())
-  gameId        String   
+  gameId        String
   game          Game     @relation(fields: [gameId], references: [id])
   correctAnswer String
   wrongAnswer   String?
@@ -52,7 +52,7 @@ model GameSoundEffects {
 
 model GameVariation {
   id     String @id @default(cuid())
-  gameId String 
+  gameId String
   game   Game   @relation(fields: [gameId], references: [id])
 
   targetLanguage Languages      @default(ENGLISH)

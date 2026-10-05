@@ -1,27 +1,25 @@
 model Lesson {
-  id                 String            @id @default(cuid())
-  title              String
-  subject            String?
-  description        String?
-  duration           String?
-  level              Int?
-  content            String
-  type               LessonType?
-  coverUrl           String?
-  topics             Json?
-  teacher            Teacher?          @relation(fields: [teacherId], references: [id])
-  teacherId          String?
-  quiz               Quiz?
-  course             Course?           @relation(fields: [courseId], references: [id])
-  courseId           String?
-  orderIndex         Int? // Add this to maintain lesson order in course
-  exercise           Exercise[]
-  Lecture            Lecture[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  FoundationCourse   FoundationCourse? @relation(fields: [foundationCourseId], references: [id])
-  foundationCourseId String?
-  Progress           Progress[]
+  id          String      @id @default(cuid())
+  title       String
+  subject     String?
+  description String?
+  duration    String?
+  level       Int?
+  content     String
+  type        LessonType?
+  coverUrl    String?
+  topics      Json?
+  teacher     Teacher?    @relation(fields: [teacherId], references: [id])
+  teacherId   String?
+  quiz        Quiz?
+  course      Course?     @relation(fields: [courseId], references: [id])
+  courseId    String?
+  orderIndex  Int? // Add this to maintain lesson order in course
+  exercise    Exercise[]
+  Lecture     Lecture[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Progress    Progress[]
 }
 
 model Lecture {
@@ -86,7 +84,7 @@ model QuizResult {
 
 model PronunciationSession {
   id                 String              @id @default(cuid())
-  userId             String              
+  userId             String
   user               User                @relation(fields: [userId], references: [id])
   referenceText      String
   recognizedText     String
@@ -118,7 +116,7 @@ model PronunciationWord {
 
 model PronunciationProgress {
   id               String    @id @default(cuid())
-  userId           String    
+  userId           String
   user             User      @relation(fields: [userId], references: [id])
   language         String
   totalSessions    Int       @default(0)
@@ -134,7 +132,7 @@ model PronunciationProgress {
 
 model PracticeSession {
   id            String         @id @default(cuid())
-  userId        String         
+  userId        String
   user          User           @relation(fields: [userId], references: [id])
   storyId       String         @unique // New field to link to specific story
   story         Story          @relation(fields: [storyId], references: [id])
@@ -171,7 +169,7 @@ model PracticeAttempt {
 
 model LearningProgress {
   id                 String    @id @default(cuid())
-  userId             String    
+  userId             String
   user               User      @relation(fields: [userId], references: [id])
   level              String    @default("beginner")
   language           Languages @default(ENGLISH)
@@ -197,8 +195,8 @@ model Course {
 
 model Enrollment {
   id             String           @id @default(cuid())
-  userId         String          
-  courseId       String           
+  userId         String
+  courseId       String
   user           User             @relation(fields: [userId], references: [id])
   course         Course           @relation(fields: [courseId], references: [id])
   status         EnrollmentStatus

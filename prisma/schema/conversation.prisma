@@ -10,7 +10,7 @@ model Conversation {
   vocabulary         Json[]
   characters         Json[]
   dialogue           Json[]
-  userId             String               
+  userId             String
   user               User                 @relation(fields: [userId], references: [id])
   messages           Json?
   imageUrl           String?
@@ -25,9 +25,9 @@ model Conversation {
 
 model ConversationRecord {
   id                  String       @id @default(cuid())
-  userId              String       
+  userId              String
   user                User         @relation(fields: [userId], references: [id])
-  conversationId      String      
+  conversationId      String
   conversation        Conversation @relation(fields: [conversationId], references: [id])
   messages            Json?
   analysis            Json?
@@ -38,9 +38,9 @@ model ConversationRecord {
 
 model ConversationReview {
   id             String       @id @default(cuid())
-  userId         String       
+  userId         String
   user           User         @relation(fields: [userId], references: [id])
-  conversationId String       
+  conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   mistakes       Json[] // <-- Change from Json? to Json[]
 
@@ -76,7 +76,7 @@ enum VoiceGender {
 
 model FreestyleSession {
   id             String         @id @default(cuid())
-  userId         String        
+  userId         String
   user           User           @relation(fields: [userId], references: [id])
   mode           FreestyleMode
   level          FreestyleLevel @default(EASY) // <-- ADD THIS
@@ -130,7 +130,7 @@ enum LambdaStatus {
 
 model LanguageProfile {
   id           String @id @default(cuid())
-  userId       String 
+  userId       String
   languageCode String // e.g., "fr-FR", "es-ES"
   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 

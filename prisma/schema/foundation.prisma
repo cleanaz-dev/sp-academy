@@ -1,85 +1,95 @@
-// ── The shared skeleton. Cached by cacheKey, generated ONCE per combo ──
-model FoundationCourse {
-  id        String             @id @default(cuid())
-  cacheKey  String             @unique // "en-US:es-ES:beginner:travel"
-  title     String
-  // Planner-generated day-by-day outline, no content yet:
-  // [{ day: 1, theme: "...", targetChunks: [...] }, ...]
-  outline   Json
-  dayCount  Int                @default(7)
-  lessons   FoundationLesson[]
-  createdAt DateTime           @default(now())
-  Lesson    Lesson[]
+enum FoundationLessonStatus {
+  BUILDING
+  IN_PROGRESS
+  COMPLETED
 }
 
-// ── One per user, created one at a time by the cycle ──
+model FoundationCourse {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  nativeLanguage String // E.g., "es-ES" or "Spanish"
+  targetLanguage String
+  cacheKey       String // e.g., "en-US:es-ES:beginner:travel"
+
+  // Planner-generated day-by-day outline
+  outline Json?
+
+  lessons  FoundationLesson[]
+  progress FoundationProgress? // One-to-one link for easy progress fetching
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Since courses are now personal, cacheKey shouldn't be globally @unique. 
+  // This prevents the user from accidentally creating the exact same course twice:
+  @@unique([userId, cacheKey])
+}
+
 model FoundationLesson {
-  id                 String           @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  title  String?
+
   foundationCourseId String
   course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
-  userId             String           // lessons are personal now (adaptive)
-  user               User             @relation(fields: [userId], references: [id])
-  orderIndex         Int
 
-  status String @default("building") // "building" | "ready" — lazy generation flag
+  orderIndex Int
 
-  // Primitive-shaped payloads (Zod parses these on the frontend):
-  visualContent     Json? // S3 key, NPC line, scene, dialogue constraint
-  grammarContent    Json? // sentence pair, word glosses, cloze items + answer keys + feedback
-  pronunciationData Json? // focus sounds + positions in reference text (for Shadow)
-  listeningContent  Json? // reference text, options, correct index
-  quizContent       Json? // item keys + feedback (same-day review for v1)
+  // Replaced string with an Enum
+  status FoundationLessonStatus @default(BUILDING)
+
+  // Primitive-shaped payloads
+  visualContent     Json?
+  grammarContent    Json?
+  pronunciationData Json?
+  listeningContent  Json?
+  quizContent       Json?
   lessonHandoff     Json?
+  freestyle         Json?
 
-  // Config for the freestyle session that completes this day:
-  freestyle Json? // { tier, topic, persona, requiredChunks, openingLine }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  createdAt              DateTime                @default(now())
-  FoundationFreestyleLog FoundationFreestyleLog?
-
-  @@unique([foundationCourseId, orderIndex]) // ← this is your idempotency guard, free
+  @@unique([foundationCourseId, orderIndex]) // Idempotency guard
   @@index([userId, foundationCourseId])
 }
 
-// ── Merged: UserFoundation is gone, folded in here ──
 model FoundationProgress {
   id     String @id @default(cuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  foundationCourseId String
-  status             String @default("in_progress") // "in_progress" | "completed"
-  currentDay         Int    @default(1)
-  currentStage       String @default("lesson_ready") // "lesson_ready" | "lesson_done" | "freestyle_pending"
+  foundationCourseId String           @unique
+  course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
 
-  completedLessonIds String[]
+  currentSpoon        Int      @default(1)
+  completedLessonIds String[] // Store the IDs of completed lessons here
 
+  // Gamification & Stats
   totalXp        Int   @default(0)
   overallFluency Float @default(0)
-  skillMastery   Json? // { "rr": 85, "past_tense": 60 } — updated by freestyle + quiz results
-  itemResults    Json? // [{ itemId, firstTryCorrect, nextDue }] — SKIP for v1, add later
-
-  updatedAt DateTime @updatedAt
-}
-
-// ── The freestyle session = your assessment engine ──
-// ── Links a foundation day to its freestyle session + stores what the cycle needs ──
-model FoundationFreestyleLog {
-  id     String @id @default(cuid())
-  userId String 
-  user   User   @relation(fields: [userId], references: [id])
-
-  lessonId String           @unique
-  lesson   FoundationLesson @relation(fields: [lessonId], references: [id])
-
-  freestyleSessionId String
-  freestyleSession   FreestyleSession @relation(fields: [freestyleSessionId], references: [id])
-
-  // What the cycle actually consumes (your FreestyleReview already has the
-  // deep analysis — this is just the planner-facing summary):
-  attemptedChunks Json? // ["pedir", "quiero + inf"]
-  landedChunks    Json? // what they used correctly
-  passed          Boolean @default(false)
+  skillMastery   Json? // e.g., { "rr": 85, "past_tense": 60 }
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensures a user only has one progress tracker per course instance
+  @@unique([userId, foundationCourseId])
+}
+
+model FoundationFreestyleLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Condensed everything into a single results JSON
+  results Json?
+
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  freestyleSession   FreestyleSession? @relation(fields: [freestyleSessionId], references: [id])
+  freestyleSessionId String?
 }
