@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { requireAdmin } from "@/lib/auth-guard";
 import { NextResponse } from "next/server";
 
 const NOVITA_API_KEY = process.env.NOVITA_API_KEY!;
@@ -69,25 +69,13 @@ async function pollNovitaTaskResult(taskId: string, maxAttempts = 15): Promise<s
 export async function POST(req: Request) {
   try {
     console.log("[Preview Route] Incoming request");
-
-    // Auth Check
-    const { userId } = await auth();
-    if (!userId) {
-      console.warn("[Preview Route] Unauthorized - no userId");
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+ // Auth + admin check
+    const { user, error: authError } = await requireAdmin();
+    if (authError) {
+      console.warn("[Preview Route] Unauthorized or forbidden");
+      return authError;
     }
-    console.log(`[Preview Route] Authenticated userId: ${userId}`);
-
-    const isUserAdmin = await prisma.user.findUnique({
-      where: { userId },
-      select: { id: true, role: true },
-    });
-
-    if (!isUserAdmin || isUserAdmin.role !== "ADMIN") {
-      console.warn(`[Preview Route] Forbidden - userId ${userId} role: ${isUserAdmin?.role}`);
-      return NextResponse.json({ message: "Forbidden Request" }, { status: 403 });
-    }
-    console.log(`[Preview Route] Admin check passed for userId: ${userId}`);
+    console.log(`[Preview Route] Admin check passed for user: ${user.id}`);
 
     const body = await req.json();
     const { type, language, theme, imageStyle } = body;

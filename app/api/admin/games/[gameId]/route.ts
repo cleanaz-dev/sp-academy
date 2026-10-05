@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth-guard"; // wherever your helper file lives
 import { NextResponse } from "next/server";
 
 interface Params {
@@ -12,13 +12,13 @@ export async function DELETE(req: Request, { params }: Params) {
   const { gameId } = await params;
 
   // Auth Check
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session?.user) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   const isUserAdmin = await prisma.user.findUnique({
-    where: { userId },
+    where: { id: session.user.id },
     select: { id: true, role: true },
   });
 

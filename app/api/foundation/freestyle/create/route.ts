@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth-guard";
 
 export async function POST(request: Request) {
   try {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireUser();
+    const userId = user.id;
 
     const body = await request.json();
     const {
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
 
     const session = await prisma.freestyleSession.create({
       data: {
-        user: { connect: { userId: clerkUserId } },
+        user: { connect: { id: userId } },
         mode: "SPECIFIC",
         topic: topic || null,
         nativeLanguage: nativeLanguage,

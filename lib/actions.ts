@@ -46,7 +46,7 @@ export async function getAllLessons() {
 export async function getUserbyUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
     return user;
   } catch (error) {
@@ -71,7 +71,7 @@ export const recordJournal = async (formData: FormData) => {
       journalId,
     };
 
-    const response = await fetch("https://sp-academy.vercel.app/api/journal", {
+    const response = await fetch("https://spoonacademy.com/api/journal", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -106,7 +106,7 @@ export const recordConversation = async (formData: FormData) => {
     };
 
     const response = await fetch(
-      "https://sp-academy.vercel.app/api/conversation/call-user",
+      "https://spoonacademy.com/api/conversation/call-user",
       {
         method: "POST",
         headers: {
@@ -120,7 +120,7 @@ export const recordConversation = async (formData: FormData) => {
       throw new Error(`Error: ${response.statusText}`);
     }
   } catch (error) {
-    console.error("Failed to record journal:", error);
+    console.error("Failed to record conversation:", error);
   }
 
   redirect("/home");
@@ -129,7 +129,7 @@ export const recordConversation = async (formData: FormData) => {
 export const getJournalByUserId = async (userId: string) => {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
       include: { Journal: true },
     });
 
@@ -156,7 +156,7 @@ export const deleteJournalById = async (id: string) => {
 };
 
 // lib/actions.js
-export async function saveStory(formData) {
+export async function saveStory(formData: any) {
   try {
     console.log("Saving story with audio URL:", formData.audioUrl);
 
@@ -303,7 +303,7 @@ export async function recordStoryQuestions(formData: FormData) {
 
     // Make the API request
     const response = await fetch(
-      "https://spoon-academy.vercel.app/api/short-story-questions",
+      "https://spoonacademy.com/api/short-story-questions",
       {
         method: "POST",
         headers: {
@@ -335,7 +335,7 @@ export async function createBookReport(formData: FormData) {
     const parsed = createBookReportSchema.parse(raw);
 
     const user = await prisma.user.findFirst({
-      where: { userId: parsed.userId },
+      where: { id: parsed.userId },
     });
 
     if (!user) {
@@ -454,7 +454,7 @@ export async function getBooksByUserId(
 
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) return [];
@@ -608,7 +608,7 @@ const LEVEL_ENUM_MAP = {
   advanced: "ADVANCED",
 };
 
-export async function saveConversationDialogue(data) {
+export async function saveConversationDialogue(data: any) {
   try {
     const {
       userId,
@@ -627,7 +627,7 @@ export async function saveConversationDialogue(data) {
 
     // 1. Find user (or connect directly if userId is @unique in Prisma)
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -688,7 +688,7 @@ export async function getAllConversations() {
   }
 }
 
-export async function getConversationById(conversationId) {
+export async function getConversationById(conversationId: string) {
   try {
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
@@ -703,10 +703,10 @@ export async function getConversationById(conversationId) {
   }
 }
 
-export async function getConversationAnalysisByUserId(userId) {
+export async function getConversationAnalysisByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -719,7 +719,7 @@ export async function getConversationAnalysisByUserId(userId) {
   } catch (error) {}
 }
 
-export async function updateAccountSettings(data) {
+export async function updateAccountSettings(data: any) {
   try {
     console.log("data:", data);
     const {
@@ -767,7 +767,7 @@ export async function updateAccountSettings(data) {
 export async function getAccountSettingsByUserId(userId:string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if(!user) {
@@ -909,7 +909,7 @@ export async function getAllAchievements() {
 export async function getAchievementsByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -935,7 +935,7 @@ export async function getAchievementsByUserId(userId: string) {
 export async function getUserDataByUserId(userId: string) {
   try {
     const userData = await prisma.user.findFirst({
-      where: { userId },
+      where: { id: userId },
       include: {
         Book: true,
         UserProgress: {
@@ -1116,7 +1116,7 @@ export async function getCourseById(courseId: string) {
 export async function getIdByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
       select: {
         id: true,
       },
@@ -1139,7 +1139,7 @@ export async function getCourseByEnrolledUser(
 ) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -1185,7 +1185,7 @@ export async function getCourseByEnrolledUser(
 export async function getReadNotificationsByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -1311,7 +1311,7 @@ export async function getExercisesByEnrolledUser(
 ) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
     if (!user) {
       throw new Error("User not found");
@@ -1342,7 +1342,7 @@ export async function getExercisesByEnrolledUser(
 export async function getEnrolledCourseExercises(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
       include: {
         Enrollment: true,
         Course: true,
@@ -1386,7 +1386,7 @@ export async function getLessonExercisesByEnrolledUser(
 ) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -1431,7 +1431,7 @@ export async function getLessonExercisesByEnrolledUser(
 export async function getAllCoursesByUserId(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!user) {
@@ -1464,7 +1464,7 @@ export async function getUserAvatarImage(userId: string) {
   try {
     console.log("user id:", userId);
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
       select: {
         AccountSettings: {
           select: {
@@ -1569,7 +1569,7 @@ export async function getLimitedGameData() {
 export async function isAdmin(userId: string) {
   try {
     const user = await prisma.user.findFirst({
-      where: { userId: userId },
+      where: { id: userId },
       select: {
         role: true,
       },

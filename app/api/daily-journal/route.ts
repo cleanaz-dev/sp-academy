@@ -1,15 +1,16 @@
+import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
+  const user = await requireUser();
+  const userId = user.id;
 
   try {
     const dailyJournals = await prisma.dailyJournal.findMany({
         where: {
             User: {
-                userId
+                id: userId
             }
         }
     })

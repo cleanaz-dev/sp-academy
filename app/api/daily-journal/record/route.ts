@@ -4,18 +4,20 @@ import { auth } from "@clerk/nextjs/server";
 import { createCommand, lambda } from "@/lib/aws/lambda";
 import { uploadPrivateAudioToS3Bucket } from "@/lib/aws/services/s3-upload-audio"; 
 import { v4 as uuidv4 } from "uuid";
+import { requireUser } from "@/lib/auth-guard";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
+    const user = await requireUser();
+    const userId = user.id;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({ where: { userId } });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // const user = await prisma.user.findUnique({ where: { id: userId } });
+    // if (!user) {
+    //   return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // }
 
     const formData = await req.formData();
     const audioFile = formData.get("audio") as File | null;
