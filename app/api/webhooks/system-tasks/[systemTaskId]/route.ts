@@ -3,6 +3,7 @@ import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-con
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
+import { handleSpoonGeneration } from "@/lib/system-tasks/handlers/handle-spoon-generation";
 import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -55,6 +56,9 @@ export async function POST(req: Request, { params }: Params) {
       }
       case SystemTaskType.FREESTYLE_REVIEW: {
         return await handleFreestyleReview(task,body)
+      }
+      case SystemTaskType.SPOON_GENERATION: {
+        return await handleSpoonGeneration(task, body);
       }
 
 

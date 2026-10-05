@@ -1,6 +1,5 @@
 model User {
   id     String  @id @default(cuid())
-  userId String? @unique // CHANGED: was required, Better Auth won't fill it
   email  String  @unique
   name   String
 

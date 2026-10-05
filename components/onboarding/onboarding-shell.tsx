@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Globe2, Languages, Sparkles, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Globe2,
+  Languages,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { LANGUAGES, LEVELS, GOALS, USERNAME_RE, EMAIL_RE } from "./constants";
@@ -74,8 +81,15 @@ export default function OnboardingShell({
   };
 
   const handleCompleteOnboarding = async () => {
-    const payload = {
-      userId: session?.user?.id,
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      console.error("No user ID found");
+      return;
+    }
+
+    await invokeEduBuilder({
+      userId,
       firstName,
       gender: "unspecified",
       spoon: 1,
@@ -87,10 +101,7 @@ export default function OnboardingShell({
       type: "lang",
       isOnboarding: true,
       sessionId,
-    };
-    console.log("Complete Onboarding Payload:", payload);
-    // TODO: POST payload to server
-    await invokeEduBuilder(payload);
+    });
   };
 
   const nextStep = async () => {
@@ -127,7 +138,8 @@ export default function OnboardingShell({
         setStep(2);
       } catch (err) {
         setError(
-          (err as { message?: string })?.message ?? "Something went wrong. Please try again."
+          (err as { message?: string })?.message ??
+            "Something went wrong. Please try again.",
         );
       } finally {
         setSubmitting(false);
@@ -182,7 +194,9 @@ export default function OnboardingShell({
                   key="account"
                   icon={<UserRound className="h-5 w-5" />}
                   eyebrow="Welcome to Spoon"
-                  title={hasAccount ? "Finish your profile" : "Create your account"}
+                  title={
+                    hasAccount ? "Finish your profile" : "Create your account"
+                  }
                   description={
                     hasAccount
                       ? "Just a couple of details and you're in."
@@ -225,7 +239,9 @@ export default function OnboardingShell({
                         onClick={() => setNativeLanguage(item.name)}
                       >
                         <span className="text-2xl">{item.flag}</span>
-                        <span className="flex-1 font-bold text-gray-900">{item.name}</span>
+                        <span className="flex-1 font-bold text-gray-900">
+                          {item.name}
+                        </span>
                       </SelectionCard>
                     ))}
                   </div>
@@ -241,14 +257,18 @@ export default function OnboardingShell({
                   description="Choose the language you want to start mastering."
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {LANGUAGES.filter((item) => item.name !== nativeLanguage).map((item) => (
+                    {LANGUAGES.filter(
+                      (item) => item.name !== nativeLanguage,
+                    ).map((item) => (
                       <SelectionCard
                         key={item.name}
                         selected={targetLanguage === item.name}
                         onClick={() => setTargetLanguage(item.name)}
                       >
                         <span className="text-2xl">{item.flag}</span>
-                        <span className="flex-1 font-bold text-gray-900">{item.name}</span>
+                        <span className="flex-1 font-bold text-gray-900">
+                          {item.name}
+                        </span>
                       </SelectionCard>
                     ))}
                   </div>

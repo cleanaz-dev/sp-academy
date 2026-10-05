@@ -18,6 +18,7 @@ export interface InvokeEduBuilderPayload {
   type: string;
   isOnboarding: boolean;
   previous_lessons?: JsonValue[];
+  sessionId?: string;
 }
 
 export async function invokeEduBuilder(payload: InvokeEduBuilderPayload) {
