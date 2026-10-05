@@ -11,6 +11,7 @@ import { createBookReportSchema } from "./zod/books/create-book-report-schema";
 import { generateNovitaImage } from "@/lib/novita";
 import { auth } from "@clerk/nextjs/server";
 import { createCommand, lambda } from "./aws/lambda";
+import { requireUser } from "./auth-guard";
 
 const anthropic = new Anthropic({
   apiKey: process.env.CLAUDE_API_KEY,
@@ -1681,13 +1682,13 @@ export async function generateGameThumbnail(
   prompt: string,
 ): Promise<GenerateThumbnailResult> {
   try {
-    const { userId } = await auth();
+    const isUser = await requireUser();
+    const userId = isUser.id;
     if (!userId) {
       return { success: false, error: "Unauthorized" };
     }
-
     const user = await prisma.user.findUnique({
-      where: { userId },
+      where: { id: userId },
       select: { role: true },
     });
 

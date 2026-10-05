@@ -4,7 +4,7 @@ export async function isEnrolledInCourse(courseId: string, userId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
       courseId,
-      user: { userId },
+      user: { id: userId },
     },
   });
 
@@ -14,7 +14,7 @@ export async function isEnrolledInCourse(courseId: string, userId: string) {
 export async function isEnrolledInLesson(lessonId: string, userId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
-      user: { userId },
+      user: { id: userId },
       course: {
         lessons: {
           some: { id: lessonId },

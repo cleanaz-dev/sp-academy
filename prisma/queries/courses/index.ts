@@ -15,7 +15,7 @@ export async function getCourseById(id: string) {
 export async function isEnrolled(courseId: string, userId: string) {
   const enrollment = await prisma.enrollment.findFirst({
     where: {
-      user: { userId: userId },
+      user: { id: userId },
       courseId: courseId,
     },
   });
@@ -25,7 +25,7 @@ export async function isEnrolled(courseId: string, userId: string) {
 export async function getAllCoursesByUserId(userId: string) {
   return await prisma.course.findMany({
     where: {
-      enrollments: { some: { user: { userId } } },
+      enrollments: { some: { user: { id: userId } } },
     },
     include: {
       enrollments: true,

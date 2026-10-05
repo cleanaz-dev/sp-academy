@@ -10,8 +10,8 @@ export async function setupNextLesson(payload: InvokeEduBuilderPayload) {
   // 1. Create the next lesson bucket
   const lesson = await prisma.foundationLesson.create({
     data: {
-      userId: payload.userId,
-      foundationCourseId: payload.foundationCourseId,
+      user: { connect: { id: payload.userId } },
+      course: { connect: { id: payload.foundationCourseId } },
       orderIndex: payload.spoon, 
     },
   });
@@ -19,7 +19,7 @@ export async function setupNextLesson(payload: InvokeEduBuilderPayload) {
   // 2. Log the system task
   const task = await prisma.systemTask.create({
     data: {
-      userId: payload.userId,
+      user: { connect: { id: payload.userId } },
       type: "SPOON_GENERATION",
       status: "PENDING",
       payload: JSON.stringify({ 

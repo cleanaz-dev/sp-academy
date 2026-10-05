@@ -12,7 +12,6 @@ const createGameSchema = z.object({
   difficulty: z.coerce.number().min(1).max(10),
   type: z.enum(["Verbal", "Visual", "Acoustic", "Speech_Describe"]),
   code: z.string().optional(),
-  theme: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -31,7 +30,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description, rules, imageUrl, difficulty, type, code, theme } =
+    const { title, description, rules, imageUrl, difficulty, type, code } =
       validation.data;
 
     // Upload to S3 privately and get the Key
@@ -58,7 +57,6 @@ export async function POST(req: Request) {
         difficulty,
         type,
         code,
-        theme,
       },
     });
 
