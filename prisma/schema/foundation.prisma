@@ -19,8 +19,9 @@ model FoundationCourse {
   lessons  FoundationLesson[]
   progress FoundationProgress? // One-to-one link for easy progress fetching
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  foundationBridges FoundationBridge[]
 
   // Since courses are now personal, cacheKey shouldn't be globally @unique. 
   // This prevents the user from accidentally creating the exact same course twice:
@@ -28,9 +29,9 @@ model FoundationCourse {
 }
 
 model FoundationLesson {
-  id     String @id @default(cuid())
+  id     String  @id @default(cuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
   title  String?
 
   foundationCourseId String
@@ -50,8 +51,9 @@ model FoundationLesson {
   lessonHandoff     Json?
   freestyle         Json?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  foundationBridge FoundationBridge?
 
   @@unique([foundationCourseId, orderIndex]) // Idempotency guard
   @@index([userId, foundationCourseId])
@@ -65,7 +67,7 @@ model FoundationProgress {
   foundationCourseId String           @unique
   course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
 
-  currentSpoon        Int      @default(1)
+  currentSpoon       Int      @default(1)
   completedLessonIds String[] // Store the IDs of completed lessons here
 
   // Gamification & Stats
@@ -92,4 +94,27 @@ model FoundationFreestyleLog {
   updatedAt          DateTime          @updatedAt
   freestyleSession   FreestyleSession? @relation(fields: [freestyleSessionId], references: [id])
   freestyleSessionId String?
+}
+
+model FoundationBridge {
+  id                 String           @id @default(cuid())
+  userId             String
+  foundationCourseId String
+  course             FoundationCourse @relation(fields: [foundationCourseId], references: [id])
+  foundationLessonId String           @unique
+  lesson             FoundationLesson @relation(fields: [foundationLessonId], references: [id])
+
+  bridgeIndex        Int
+  bridgeScene        Json
+  vocabMoment        Json
+  cooldown           Json
+  pronunciationCheck Json
+  handoffFragment    Json
+  wordAudio          Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([foundationCourseId, bridgeIndex]) // idempotency, same as lessons
+  @@index([userId])
 }

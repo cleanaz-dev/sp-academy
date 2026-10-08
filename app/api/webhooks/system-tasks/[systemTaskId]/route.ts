@@ -1,9 +1,12 @@
+// api/webhooks/system-tasks/[taskId]/route.ts
+
 import { prisma } from "@/lib/prisma";
 import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-conversation-images";
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
 import { handleSpoonGeneration } from "@/lib/system-tasks/handlers/handle-spoon-generation";
+import { handleVocabBridgeGeneration } from "@/lib/system-tasks/handlers/handle-vocab-bridge";
 import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -58,9 +61,14 @@ export async function POST(req: Request, { params }: Params) {
         return await handleFreestyleReview(task,body)
       }
       case SystemTaskType.SPOON_GENERATION: {
+        // THIS IS WHERE ARE AT !!!
         return await handleSpoonGeneration(task, body);
       }
 
+      case SystemTaskType.VOCAB_BRIDGE_GENERATION: {
+        // ALMOST DONE
+        return await handleVocabBridgeGeneration(task,body)
+      }
 
       default:
         return NextResponse.json(
