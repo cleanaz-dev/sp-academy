@@ -1,8 +1,9 @@
 "use server";
 import { lambda, createCommand } from "@/lib/aws/lambda";
+import { prisma } from "@/lib/prisma";
 import { JsonValue } from "@prisma/client/runtime/library";
-import { setupFirstLesson } from "@/lib/foundation/setup-first-lesson"; // update path as needed
-import { setupNextLesson } from "@/lib/foundation/setup-next-lesson";   // update path as needed
+import { setupFirstLesson } from "@/lib/foundation/setup-first-lesson";
+import { setupNextLesson } from "@/lib/foundation/setup-next-lesson";
 
 export interface InvokeEduBuilderPayload {
   userId: string;
@@ -21,48 +22,88 @@ export interface InvokeEduBuilderPayload {
   sessionId?: string;
 }
 
-export async function invokeEduBuilder(payload: InvokeEduBuilderPayload) {
-  
-  // 1. Call the appropriate DB setup function based on isOnboarding
-  const dbContext = payload.isOnboarding
-    ? await setupFirstLesson(payload)
-    : await setupNextLesson(payload);
+export type InvokeEduBuilderResult =
+  | { ok: true; lessonId: string; taskId: string }
+  | { ok: false; error: string };
 
-  // 2. Construct final payload for the Lambda (includes the newly created DB IDs!)
-  // If 'previous_lessons' is in the payload, the spread operator (...) automatically includes it.
+// Both setup functions must return this exact shape
+export interface LessonDbContext {
+  courseId: string;
+  lessonId: string;
+  taskId: string; // lesson task
+  vocabTaskId: string; // vocab bridge task
+  webhookUrl: string; // lesson callback
+  vocabWebhookUrl: string; // vocab callback
+}
+
+export async function invokeEduBuilder(
+  payload: InvokeEduBuilderPayload,
+): Promise<InvokeEduBuilderResult> {
+  // 1. DB setup
+  let dbContext: LessonDbContext;
+  try {
+    dbContext = payload.isOnboarding
+      ? await setupFirstLesson(payload)
+      : await setupNextLesson(payload);
+  } catch (error) {
+    console.error("❌ Lesson setup failed:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Setup failed",
+    };
+  }
+
+  // 2. Lambda payload
   const lambdaPayload = {
     ...payload,
+    type: "lang",
+    day: payload.spoon, // the lambdas read "day", not "spoon"
     foundationCourseId: dbContext.courseId,
-    foundationLessonId: dbContext.lessonId, // Allows the Lambda to update the DB row when finished
+    foundationLessonId: dbContext.lessonId,
+    webhookUrl: dbContext.webhookUrl,
+    vocabWebhookUrl: dbContext.vocabWebhookUrl,
   };
 
-  console.log("Invoking edu builder with payload:", lambdaPayload);
-
-  // 3. Trigger the Lambda
-  const command = createCommand({
-    functionName: "spoon-edu-builder",
-    payload: JSON.stringify(lambdaPayload),
-    invocationType: "Event",
+  console.log("Invoking edu builder", {
+    userId: payload.userId,
+    spoon: payload.spoon,
+    ...dbContext,
+    previousLessons: payload.previous_lessons?.length ?? 0,
   });
-  
-  console.log("Sending command to edu builder:", command);
 
+  // 3. Fire the lambda (async)
   try {
-    const response = await lambda.send(command);
+    const response = await lambda.send(
+      createCommand({
+        functionName: "spoon-edu-builder",
+        payload: JSON.stringify(lambdaPayload),
+        invocationType: "Event",
+      }),
+    );
 
-    if (response.Payload) {
-      const resultString = new TextDecoder("utf-8").decode(response.Payload);
-      const result = JSON.parse(resultString);
-      console.log("✅ Lambda Response:", result);
-    } else {
-      console.log(
-        "✅ Async Lambda invoked successfully (Status:",
-        response.StatusCode,
-        ")",
-      );
+    if (response.StatusCode !== 202) {
+      throw new Error(`Unexpected lambda status: ${response.StatusCode}`);
     }
+
+    console.log("✅ Edu builder queued", dbContext);
+    return { ok: true, lessonId: dbContext.lessonId, taskId: dbContext.taskId };
   } catch (error) {
-    console.error("❌ Error invoking Lambda:", error);
-    console.log("🕒 Run failed at:", new Date().toISOString());
+    console.error("❌ Error invoking Lambda:", error, new Date().toISOString());
+
+    // Clean up so a retry doesn't hit "lesson already exists"
+    await prisma.systemTask
+      .updateMany({
+        where: { id: { in: [dbContext.taskId, dbContext.vocabTaskId] } },
+        data: { status: "FAILED" },
+      })
+      .catch((e) => console.error("Could not mark tasks failed", e));
+    await prisma.foundationLesson
+      .delete({ where: { id: dbContext.lessonId } })
+      .catch((e) => console.error("Could not delete empty lesson", e));
+
+    return {
+      ok: false,
+      error: "Could not start the next lesson. Please try again.",
+    };
   }
 }
