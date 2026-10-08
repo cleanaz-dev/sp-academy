@@ -36,6 +36,7 @@ import { WordAudioProvider } from "@/context/word-audio-context";
 import { MatrixProvider, useMatrix } from "@/context/matrix-context";
 import { useRouter } from "next/navigation";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
+import { completeLesson } from "@/app/actions/complete-lesson";
 
 const STEPS_CONFIG = [
   { id: 0, title: "Language Setup", icon: Languages },
@@ -149,6 +150,15 @@ function FoundationContent() {
             userId={userId}
             onFinish={async (feedback) => {
               await syncCart(userId, targetLang);
+
+              // Mark this lesson done and save the Hard/OK/Easy rating
+              await completeLesson({
+                courseId,
+                orderIndex: currentDay,
+                feedback,
+              });
+
+              // Kick off the next lesson
               const res = await invokeEduBuilder({
                 ...profileData,
                 foundationCourseId: courseId,
@@ -157,6 +167,7 @@ function FoundationContent() {
                 ],
               });
               if (!res.ok) throw new Error(res.error);
+
               router.push("/learning-hub");
             }}
           />

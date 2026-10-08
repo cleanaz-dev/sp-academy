@@ -52,6 +52,7 @@ model FoundationLesson {
   freestyle         Json?
 
   completedAt      DateTime?
+  feedback String?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   foundationBridge FoundationBridge?
