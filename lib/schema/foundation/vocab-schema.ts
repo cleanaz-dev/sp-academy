@@ -4,6 +4,11 @@ import { wordAudioSchema } from "./lesson-schema";
 
 const s3Key = z.string().min(1);
 
+// Audio keys the Lambda can legitimately send as "": TTS failed (the frontend
+// just skips playback), or no audio exists for that word (e.g. a target word
+// with an article like "la porte" has no entry in wordAudio).
+const optionalS3Key = z.string();
+
 const provenanceSchema = z.object({
   nodeId: z.string(),
   sourceChunkIds: z.array(z.string()),
@@ -47,7 +52,7 @@ const contextClash = cooldownBase.extend({
 const videoSpotlight = cooldownBase.extend({
   mechanic: z.literal("video_spotlight"),
   videoS3Key: s3Key,
-  targetAudioS3Key: s3Key,
+  targetAudioS3Key: optionalS3Key, // "" when no audio exists for the target word
   targetWord: z.string(),
   options: z.array(z.string()).min(2),
 });
@@ -61,7 +66,7 @@ export const cooldownItemSchema = z.discriminatedUnion("mechanic", [
 
 export const bridgeSceneSchema = z.object({
   imageS3Key: s3Key,
-  npcAudioS3Key: s3Key,
+  npcAudioS3Key: optionalS3Key, // "" when NPC TTS failed
   npcLine: z.string(),
   altText: z.string(),
   videoS3Key: s3Key.optional(), // present in some runs, absent in others
@@ -70,7 +75,7 @@ export const bridgeSceneSchema = z.object({
 export const vocabMomentItemSchema = z.object({
   word: z.string(),
   gloss: z.string(),
-  audioS3Key: s3Key,
+  audioS3Key: optionalS3Key, // "" when that word's TTS failed
   labelHint: z.string(),
 });
 
@@ -85,7 +90,7 @@ export const handoffFragmentSchema = z.object({
   lingeringWeaknesses: z.array(z.unknown()), // same
   bridgeAssets: z.object({
     imageS3Key: s3Key,
-    npcAudioS3Key: s3Key,
+    npcAudioS3Key: optionalS3Key, // same value as bridgeScene.npcAudioS3Key
     vocabMomentAudio: z.array(s3Key),
     videoS3Key: s3Key.optional(),
   }),
