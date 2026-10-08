@@ -20,6 +20,10 @@ export async function handleVocabBridgeGeneration(task: SystemTask, body: unknow
   const data = parsed.data;
   const { userId, courseId, bridgeIndex } = data.meta;
 
+  console.log(
+    `[vocab-bridge] received task ${task.id} (user=${userId}, course=${courseId}, bridgeIndex=${bridgeIndex})`
+  );
+
   // 2. Find the lesson this bridge belongs to (bridgeIndex === lesson.orderIndex)
   const lesson = await prisma.foundationLesson.findUnique({
     where: {
@@ -88,7 +92,15 @@ export async function handleVocabBridgeGeneration(task: SystemTask, body: unknow
     console.error("[vocab-bridge] pusher failed", err);
   }
 
-  // TODO: mark the SystemTask complete the same way your other handlers do
+  // 6. Mark the task complete
+  await prisma.systemTask.update({
+    where: { id: task.id },
+    data: { status: "COMPLETED" },
+  });
+
+  console.log(
+    `[vocab-bridge] completed task ${task.id} (bridgeId=${bridge.id}, lessonId=${lesson.id})`
+  );
 
   return NextResponse.json({ bridgeId: bridge.id, lessonId: lesson.id });
 }

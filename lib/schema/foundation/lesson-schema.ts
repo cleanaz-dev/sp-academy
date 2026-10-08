@@ -1,4 +1,4 @@
-// lib/schemas/foundation-lesson.ts
+// lib/schemas/lesson-schema.ts
 import { z } from "zod";
 
 const s3Key = z.string().min(1);

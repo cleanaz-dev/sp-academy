@@ -83,6 +83,8 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
 
   // TODO: mark the SystemTask complete the same way your other handlers do
 
+  console.log(`[spoon-generation] ✅ lesson saved: lessonId=${lesson.id} task=${task.id}`);
+
   // The lambda reads `lessonId` from this response to trigger the vocab builder
   return NextResponse.json({ lessonId: lesson.id });
 }

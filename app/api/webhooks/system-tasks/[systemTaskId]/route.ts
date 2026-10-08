@@ -36,7 +36,10 @@ export async function POST(req: Request, { params }: Params) {
     });
 
     if (!task) {
-      return NextResponse.json({ message: "Task does not exist" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Task does not exist" },
+        { status: 404 },
+      );
     }
 
     // Parse webhook JSON body
@@ -49,39 +52,37 @@ export async function POST(req: Request, { params }: Params) {
       }
 
       case SystemTaskType.GAME_SCHEMA_GENERATION: {
-        return await handleGameSchema(task,body)
+        return await handleGameSchema(task, body);
       }
       case SystemTaskType.GAME_VARIATION_GENERATION: {
-         return await handleGameVariation(task, body);
+        return await handleGameVariation(task, body);
       }
       case SystemTaskType.CONVERSATION_IMAGE_GENERATION: {
-        return await handleConversationImages(task,body)
+        return await handleConversationImages(task, body);
       }
       case SystemTaskType.FREESTYLE_REVIEW: {
-        return await handleFreestyleReview(task,body)
+        return await handleFreestyleReview(task, body);
       }
       case SystemTaskType.SPOON_GENERATION: {
         // THIS IS WHERE ARE AT !!!
         return await handleSpoonGeneration(task, body);
       }
-
       case SystemTaskType.VOCAB_BRIDGE_GENERATION: {
         // ALMOST DONE
-        return await handleVocabBridgeGeneration(task,body)
+        return await handleVocabBridgeGeneration(task, body);
       }
 
       default:
         return NextResponse.json(
           { message: `Unhandled task type: ${task.type}` },
-          { status: 400 }
+          { status: 400 },
         );
     }
   } catch (err: any) {
     console.error("Webhook processing error:", err);
     return NextResponse.json(
       { message: err.message || "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
