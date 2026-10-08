@@ -7,21 +7,33 @@ import { foundationBridgeWebhookSchema } from "@/lib/schema/foundation/vocab-sch
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
-export async function handleVocabBridgeGeneration(task: SystemTask, body: unknown) {
+export async function handleVocabBridgeGeneration(
+  task: SystemTask,
+  body: unknown,
+) {
   // 1. Validate
   const parsed = foundationBridgeWebhookSchema.safeParse(body);
   if (!parsed.success) {
-    console.error(`[vocab-bridge] invalid payload for task ${task.id}`, parsed.error.issues);
+    console.error(
+      `[vocab-bridge] invalid payload for task ${task.id}`,
+      parsed.error.issues,
+    );
     return NextResponse.json(
       { message: "Invalid payload", issues: parsed.error.issues },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const data = parsed.data;
   const { userId, courseId, bridgeIndex } = data.meta;
+  
+  const { wordAudio, ...rest } = data;
+  console.log(
+    `[vocab-bridge] parsed body for task ${task.id} (wordAudio: ${Object.keys(wordAudio ?? {}).length} words):`,
+    JSON.stringify(rest, null, 2),
+  );
 
   console.log(
-    `[vocab-bridge] received task ${task.id} (user=${userId}, course=${courseId}, bridgeIndex=${bridgeIndex})`
+    `[vocab-bridge] received task ${task.id} (user=${userId}, course=${courseId}, bridgeIndex=${bridgeIndex})`,
   );
 
   // 2. Find the lesson this bridge belongs to (bridgeIndex === lesson.orderIndex)
@@ -39,7 +51,7 @@ export async function handleVocabBridgeGeneration(task: SystemTask, body: unknow
     // 409 so the vocab lambda knows to retry if the lesson webhook hasn't landed yet
     return NextResponse.json(
       { message: "Lesson not found for this bridge" },
-      { status: 409 }
+      { status: 409 },
     );
   }
 
@@ -99,7 +111,7 @@ export async function handleVocabBridgeGeneration(task: SystemTask, body: unknow
   });
 
   console.log(
-    `[vocab-bridge] completed task ${task.id} (bridgeId=${bridge.id}, lessonId=${lesson.id})`
+    `[vocab-bridge] completed task ${task.id} (bridgeId=${bridge.id}, lessonId=${lesson.id})`,
   );
 
   return NextResponse.json({ bridgeId: bridge.id, lessonId: lesson.id });
