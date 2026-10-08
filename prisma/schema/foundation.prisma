@@ -51,6 +51,7 @@ model FoundationLesson {
   lessonHandoff     Json?
   freestyle         Json?
 
+  completedAt      DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   foundationBridge FoundationBridge?
@@ -112,9 +113,16 @@ model FoundationBridge {
   handoffFragment    Json
   wordAudio          Json
 
+  // NEW: completion tracking
+  completedAt DateTime?
+  passed      Boolean   @default(false)
+  score       Float?
+  attempts    Int       @default(0)
+  results     Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([foundationCourseId, bridgeIndex]) // idempotency, same as lessons
+  @@unique([foundationCourseId, bridgeIndex])
   @@index([userId])
 }
