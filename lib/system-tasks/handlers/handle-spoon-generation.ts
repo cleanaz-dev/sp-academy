@@ -8,10 +8,25 @@ import { foundationLessonWebhookSchema } from "@/lib/schema/foundation/lesson-sc
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
 export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
+  // Log the full incoming body (indented) before anything can reject it
+  console.log(
+    `[spoon-generation] received body for task ${task.id}:\n${JSON.stringify(body, null, 2)}`
+  );
+
   // 1. Validate
   const parsed = foundationLessonWebhookSchema.safeParse(body);
   if (!parsed.success) {
-    console.error(`[spoon-generation] invalid payload for task ${task.id}`, parsed.error.issues);
+    console.error(
+      `[spoon-generation] invalid payload for task ${task.id}:\n${JSON.stringify(
+        parsed.error.issues.map((i) => ({
+          path: i.path.join("."),
+          code: i.code,
+          message: i.message,
+        })),
+        null,
+        2
+      )}`
+    );
     return NextResponse.json(
       { message: "Invalid payload", issues: parsed.error.issues },
       { status: 400 }
@@ -19,12 +34,19 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
   }
   const data = parsed.data;
 
+  console.log(
+    `[spoon-generation] payload valid (user=${data.userId}, course=${data.foundationCourseId}, orderIndex=${data.orderIndex})`
+  );
+
   // 2. Make sure the course exists and belongs to this user
   const course = await prisma.foundationCourse.findFirst({
     where: { id: data.foundationCourseId, userId: data.userId },
     select: { id: true },
   });
   if (!course) {
+    console.warn(
+      `[spoon-generation] course not found: course=${data.foundationCourseId} user=${data.userId} task=${task.id}`
+    );
     return NextResponse.json({ message: "Foundation course not found" }, { status: 404 });
   }
 
@@ -46,6 +68,10 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
     existing?.status === FoundationLessonStatus.COMPLETED
       ? FoundationLessonStatus.COMPLETED
       : FoundationLessonStatus.IN_PROGRESS;
+
+  console.log(
+    `[spoon-generation] upserting lesson (existing=${existing?.status ?? "none"} -> status=${status})`
+  );
 
   const content = {
     title: data.lessonHandoff.theme,
