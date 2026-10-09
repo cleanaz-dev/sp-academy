@@ -34,7 +34,7 @@ export default async function Page({
         {/* Top Left Branding */}
         <div className="relative z-10 flex items-center p-10">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-white tracking-tight">
-            🥄 Spoon Academy
+            Spoon Academy
           </Link>
         </div>
 
