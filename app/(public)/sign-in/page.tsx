@@ -29,7 +29,7 @@ export default async function Page({
           priority
         />
         {/* Gradient overlay for readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/40" />
         
         {/* Top Left Branding */}
         <div className="relative z-10 flex items-center p-10">
