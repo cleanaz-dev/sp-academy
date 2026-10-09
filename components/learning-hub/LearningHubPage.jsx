@@ -43,7 +43,7 @@ const formatDate = (dateString) => {
   }).format(new Date(dateString));
 };
 
-export default function LearningHubPage({ reviews, userId }) {
+export default function LearningHubPage({ reviews, path, userId }) {
   const [activeTab, setActiveTab] = useState("freestyle");
   const [searchQuery, setSearchQuery] = useState("");
 
