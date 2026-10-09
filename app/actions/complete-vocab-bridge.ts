@@ -34,7 +34,7 @@ export async function completeVocabBridge({
       },
     });
 
-    return { ok: true, bridge: updatedBridge };
+    return { ok: true };
   } catch (error) {
     console.error("❌ Failed to complete vocab bridge:", error);
     return {
