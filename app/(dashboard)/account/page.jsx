@@ -15,8 +15,8 @@ import { ProfileCompletion } from "@/components/account/ProfileCompletion";
 import { GeneralSettings } from "@/components/account/GeneralSettings";
 
 export default async function AccountSettings() {
-  const { userId } = auth();
-  const settings = await getAccountSettingsByUserId(userId);
+  const user = requireUser();
+  const settings = await getAccountSettingsByUserId(user.id);
 
   return (
     <main className="space-y-4 pb-10">

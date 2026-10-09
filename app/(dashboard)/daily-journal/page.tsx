@@ -1,15 +1,16 @@
 import MainJournalPage from "@/components/daily-journal/main-journal-page";
+import { requireUser } from "@/lib/auth-guard";
 
 import { getDailyJournals } from "@/prisma/queries/daily-journals/get-daily-journals";
-import { auth } from "@clerk/nextjs/server";
+
 import { redirect } from "next/navigation";
 
 export default async function Page() {
-  const { userId } = await auth();
+  const user = await requireUser();
 
-  if(!userId) return redirect('/sign-in')
+  if(!user) return redirect('/sign-in')
 
-  const dailyJournals = await getDailyJournals(userId);
+  const dailyJournals = await getDailyJournals(user.id);
 
   return <MainJournalPage journals={dailyJournals} />;
 }

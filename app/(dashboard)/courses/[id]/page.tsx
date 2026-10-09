@@ -1,17 +1,18 @@
 import CoursePage from "@/components/courses/CoursesPage";
+import { requireUser } from "@/lib/auth-guard";
 import { getCourseById, isEnrolled } from "@/prisma/queries/courses";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 export default async function Page({ params }) {
   const { id } = await params;
-  const { userId } = await auth();
-
-  if (!userId) {
+  const user = await requireUser()
+  const userId = user.id
+  if (!user) {
     redirect("/sign-in");
   }
 
-  const enrolled = await isEnrolled(id, userId);
+  const enrolled = await isEnrolled(id, user.id);
   
   if (!enrolled) {
     return (

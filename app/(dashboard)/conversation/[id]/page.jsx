@@ -11,8 +11,8 @@ export default async function page({ params }) {
   console.log("id", id)
   const conversation = await getConversationById(id);
 
-  const { userId } = await auth();
-  const avatarUrl = await getUserAvatarImage(userId);
+  const user = await requiredUser();
+  const avatarUrl = await getUserAvatarImage(user.id);
 
   return (
     <>

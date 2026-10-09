@@ -11,7 +11,6 @@ import {
 } from "./foundation-freestye-chat-bubble";
 import { FoundationSuggestionBubble } from "./foudation-suggestion-bubble";
 
-
 export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
   const {
     session,
@@ -23,7 +22,7 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
     isPlaying,
     isSpeechLoading,
     handleReplay,
-    isSuggestionVisible
+    isSuggestionVisible,
   } = useFoundation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -76,9 +75,9 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, transcript, isProcessing]);
 
-   useEffect(() => {
-  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-}, [messages, transcript, isProcessing, isSuggestionVisible]);
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, transcript, isProcessing, isSuggestionVisible]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,11 +126,8 @@ export default function FoundationChat({ onEnd }: { onEnd: () => void }) {
               />
             ))}
 
-
-{/* Suggestion ghost bubble */}
-<FoundationSuggestionBubble />
-
-{/* Live Transcript Bubble */}
+            {/* Suggestion ghost bubble */}
+            <FoundationSuggestionBubble />
 
             {/* Live Transcript Bubble */}
             {isRecording && transcript && (

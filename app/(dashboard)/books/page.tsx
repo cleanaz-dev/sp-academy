@@ -1,12 +1,14 @@
 import BookCard from "@/components/books/BookCard";
 import CreateBookReportCard from "@/components/books/CreateBookReportCard";
 import { getBooksByUserId } from "@/lib/actions";
+import { requireUser } from "@/lib/auth-guard";
 import { auth } from "@clerk/nextjs/server";
 import { LibraryBig } from "lucide-react";
 
 export default async function BookReportsPage() {
-  const { userId } = await auth();
-  const books = await getBooksByUserId(userId);
+  const user = await requireUser()
+
+  const books = await getBooksByUserId(user.id);
 
   // console.log("Books data:", books);
 

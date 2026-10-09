@@ -5,8 +5,8 @@ import { auth } from "@clerk/nextjs/server";
 import { Lock, Unlock } from "lucide-react";
 
 export default async function AchievementsPage() {
-  const { userId } = auth();
-  const userAchievements = await getAchievementsByUserId(userId);
+  const user = await requireUser();
+  const userAchievements = await getAchievementsByUserId(user.id);
 
   return (
     <main className="min-h-screen bg-gray-50 py-8">
