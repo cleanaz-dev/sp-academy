@@ -1,20 +1,18 @@
+import { getUserLanguage } from "@/app/actions/get-user-language";
 import FreestyleWrapper from "@/components/freestyle/freestyle-wrapper";
-import { currentUser } from "@clerk/nextjs/server";
+import { requireUser } from "@/lib/auth-guard";
 
 export default async function FreestylePage() {
-  const user = await currentUser();
-  
-  const defaultNative = "en-US";
-  const defaultTarget = "fr-FR";
+  const user = await requireUser();
+  const { lang } = await getUserLanguage(user.id);
 
-  // const userReviews = getUserReview() need to add this here or somewhere else....
+  const defaultNative = lang.nativeLanguage;
+  const defaultTarget = lang.targetLanguage ?? "fr-FR";
 
   return (
-    // 1. Removed 'h-full'
-    // 2. Added 'h-[calc(100dvh-72px)]' <-- Adjust 72px to the exact height of your top nav!
     <div className="flex-1 w-full h-full animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] overflow-hidden flex flex-col">
       <FreestyleWrapper
-        userId={user?.id}
+        userId={user.id}
         defaultNative={defaultNative}
         defaultTarget={defaultTarget}
       />
