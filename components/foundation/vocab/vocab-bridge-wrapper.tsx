@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Video, BookOpen, BrainCircuit, Mic, Award } from "lucide-react";
+import { Check, Video, BookOpen, BrainCircuit, Mic, Award, Loader2 } from "lucide-react";
 import type { UserVocabBridge } from "@/app/actions/get-vocab-bridge";
+import { completeVocabBridge } from "@/app/actions/complete-vocab-bridge"; // 👈 Import action
 
 import { BridgeSceneStep } from "./bridge-scene-step";
 import { VocabMomentStep } from "./vocab-moment-step";
@@ -11,7 +12,6 @@ import { CooldownStep } from "./cooldown-step";
 import { BridgePronunciationStep } from "./bridge-pronunciation-step";
 import { BridgeOutroStep } from "./bridge-outro-step";
 
-// 5 Production Steps (Language Setup removed)
 const BRIDGE_STEPS = [
   { id: 1, title: "Scene Context", icon: Video },
   { id: 2, title: "New Vocabulary", icon: BookOpen },
@@ -26,8 +26,8 @@ interface VocabBridgeWrapperProps {
 
 export function VocabBridgeWrapper({ bridge }: VocabBridgeWrapperProps) {
   const router = useRouter();
-  // Starts directly on Step 1: Scene Context
   const [step, setStep] = useState(1);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   if (!bridge) {
     return (
@@ -39,6 +39,31 @@ export function VocabBridgeWrapper({ bridge }: VocabBridgeWrapperProps) {
       </div>
     );
   }
+
+  const handleFinishBridge = async (stats?: any) => {
+    if (isFinishing) return;
+    setIsFinishing(true);
+
+    try {
+      // 1. Mark the bridge as passed in Prisma
+      const res = await completeVocabBridge({
+        bridgeId: bridge.id,
+        score: typeof stats?.score === "number" ? stats.score : 1.0,
+        results: stats?.results || stats || null,
+      });
+
+      if (!res.ok) {
+        throw new Error(res.error);
+      }
+
+      // 2. Return to hub — Next Spoon will now be unlocked!
+      router.push("/home");
+      router.refresh();
+    } catch (err) {
+      console.error("Error finishing vocab bridge:", err);
+      setIsFinishing(false);
+    }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -74,11 +99,7 @@ export function VocabBridgeWrapper({ bridge }: VocabBridgeWrapperProps) {
         return (
           <BridgeOutroStep
             data={bridge as any}
-            onFinish={() => {
-              // Return user to hub after completing vocab review
-              router.push("/home");
-              router.refresh();
-            }}
+            onFinish={handleFinishBridge}
           />
         );
       default:
@@ -144,7 +165,15 @@ export function VocabBridgeWrapper({ bridge }: VocabBridgeWrapperProps) {
       </div>
 
       {/* RIGHT SIDE: MAIN CONTENT CARD */}
-      <div className="flex min-h-[600px] flex-1 flex-col overflow-hidden rounded-4xl border border-gray-100 bg-white shadow-xs">
+      <div className="relative flex min-h-[600px] flex-1 flex-col overflow-hidden rounded-4xl border border-gray-100 bg-white shadow-xs">
+        {isFinishing && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xs">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <p className="mt-3 text-sm font-bold text-slate-700">
+              Saving progress & unlocking next Spoon...
+            </p>
+          </div>
+        )}
         {renderStep()}
       </div>
     </div>
