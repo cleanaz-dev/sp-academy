@@ -155,7 +155,7 @@ export default function OnboardingShell({
 
       // 3. SUCCESS! Redirect the user to the app
       // CHANGE "/dashboard" TO WHATEVER YOUR ACTUAL POST-ONBOARDING URL IS
-      router.push("/dashboard");
+      router.push("/home");
       router.refresh(); // Forces the layout to re-fetch the fresh user data
       
     } catch (err) {

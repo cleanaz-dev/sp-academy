@@ -14,7 +14,7 @@ export default async function Page({
   const callbackURL =
     redirect && redirect.startsWith("/") && !redirect.startsWith("//")
       ? redirect
-      : "/dashboard";
+      : "/home";
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -56,7 +56,7 @@ export default async function Page({
         {/* Mobile Header (Only visible on small screens) */}
         <div className="flex items-center p-6 lg:hidden">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-zinc-900">
-            🥄 Spoon Academy
+            Spoon Academy
           </Link>
         </div>
 
