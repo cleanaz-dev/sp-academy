@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { FcGoogle } from "react-icons/fc";
+import { toast } from "sonner"; // <-- 1. Import toast from sonner
 
 const NO_SUBSCRIPTION_MESSAGE =
   "We couldn't find an active subscription for that account. Purchase one first, then sign in with the same email.";
@@ -14,7 +15,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   unable_to_create_session: NO_SUBSCRIPTION_MESSAGE,
   signup_disabled: NO_SUBSCRIPTION_MESSAGE,
   access_denied: "Google sign-in was cancelled.",
-  // paste the real code from your URL here once you see it
 };
 
 function SignInFormInner({ callbackURL }: { callbackURL: string }) {
@@ -22,21 +22,37 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
   const searchParams = useSearchParams();
 
   const urlErrorCode = searchParams.get("error");
-  const urlError = urlErrorCode
-    ? (ERROR_MESSAGES[urlErrorCode] ??
-      `Sign in failed (${urlErrorCode}). Please try again.`)
-    : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // 2. Trigger toast on load if there's an error in the URL
+  useEffect(() => {
+    if (urlErrorCode) {
+      const errorMessage =
+        ERROR_MESSAGES[urlErrorCode] ??
+        `Sign in failed (${urlErrorCode}). Please try again.`;
+
+      toast.error("Access Denied", {
+        description: errorMessage,
+        duration: 6000, // Show it slightly longer so they can read it
+      });
+
+      // Optional: Remove the error from the URL so it doesn't pop up again if they refresh the page
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete("error");
+      const newUrl = newSearchParams.toString() 
+        ? `${window.location.pathname}?${newSearchParams.toString()}` 
+        : window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [urlErrorCode, searchParams, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     const { error } = await authClient.signIn.email({
       email,
@@ -45,7 +61,10 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
     });
 
     if (error) {
-      setError(error.message ?? "Something went wrong");
+      // 3. Swap the inline error for a toast here too
+      toast.error("Sign in failed", {
+        description: error.message ?? "Something went wrong",
+      });
       setLoading(false);
       return;
     }
@@ -97,11 +116,7 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
           />
         </div>
 
-        {(error || urlError) && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-            {error || urlError}
-          </div>
-        )}
+        {/* Removed the inline red error div completely! */}
 
         <button
           type="submit"
