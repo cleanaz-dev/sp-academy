@@ -46,14 +46,17 @@ export default function OnboardingShell({
   const [level, setLevel] = useState("");
   const [goal, setGoal] = useState("");
 
-  // Prefill Google details
+  // Prefill Google details when session loads
   useEffect(() => {
     if (!session?.user) return;
+    
     const [first, ...rest] = (session.user.name ?? "").split(" ");
+    
+    // Use functional updates so we only overwrite if the fields are currently empty
     setFirstName((prev) => prev || first || "");
     setLastName((prev) => prev || rest.join(" "));
-    setEmailValue(session.user.email);
-  }, [session]);
+    setEmailValue((prev) => prev || session.user.email || "");
+  }, [session?.user]); // Track the specific user object, not the wrapper
 
   const accountValid =
     !isPending &&
@@ -73,11 +76,24 @@ export default function OnboardingShell({
             ? !!level
             : !!goal;
 
-  const signInWithGoogle = () => {
-    authClient.signIn.social({
-      provider: "google",
-      callbackURL: `/onboarding${sessionId ? `?session_id=${sessionId}` : ""}`,
-    });
+  // Added async, preventDefault, and error handling
+  const signInWithGoogle = async (e?: React.MouseEvent) => {
+    e?.preventDefault(); // Prevent accidental form submissions from reloading the page
+    setError(null);
+    
+    try {
+      const { error: signInError } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: `/onboarding${sessionId ? `?session_id=${sessionId}` : ""}`,
+      });
+      
+      if (signInError) {
+        setError(signInError.message || "Failed to connect to Google.");
+      }
+    } catch (err) {
+      console.error("Google OAuth error:", err);
+      setError("An unexpected error occurred connecting to Google.");
+    }
   };
 
   const handleCompleteOnboarding = async () => {
