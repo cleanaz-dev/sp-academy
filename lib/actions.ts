@@ -4,12 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Anthropic } from "@anthropic-ai/sdk";
-import { headers } from "next/headers";
-
 import { Prisma } from "@prisma/client";
 import { createBookReportSchema } from "./zod/books/create-book-report-schema";
 import { generateNovitaImage } from "@/lib/novita";
-import { auth } from "@clerk/nextjs/server";
 import { createCommand, lambda } from "./aws/lambda";
 import { requireUser } from "./auth-guard";
 

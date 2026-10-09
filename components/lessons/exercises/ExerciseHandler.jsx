@@ -10,14 +10,20 @@ import { NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-export default function ExerciseHandler({ exercises }) {
+// Added a default fallback {} to exercises
+export default function ExerciseHandler({ exercises = {} }) {
   const router = useRouter();
-  const { exercise: exerciseArray } = exercises;
+  
+  // FIXED: Provide a default empty array so it doesn't crash on .length
+  const { exercise: exerciseArray = [] } = exercises;
+  
   // Create refs for each exercise component
   const exerciseRefs = useRef([]);
   useEffect(() => {
+    // Now exerciseArray is guaranteed to be at least an empty array
     exerciseRefs.current = Array(exerciseArray.length).fill(null);
   }, [exerciseArray]);
+  
   // Track completed exercises and total correct
   const [completedExercises, setCompletedExercises] = useState(new Set());
   const [totalCorrect, setTotalCorrect] = useState(0);
@@ -46,7 +52,9 @@ export default function ExerciseHandler({ exercises }) {
 
     setCompletedExercises(newCompleted);
     setTotalCorrect(correctCount);
-    return correctCount === exercises.length;
+    
+    // FIXED: changed exercises.length to exerciseArray.length
+    return correctCount === exerciseArray.length;
   };
 
   // New submission handler
@@ -70,7 +78,6 @@ export default function ExerciseHandler({ exercises }) {
       }
 
       const data = await response.json();
-      console.log("API Response:", data);
 
       if (data.success) {
         console.log("Progress saved successfully");
@@ -81,20 +88,32 @@ export default function ExerciseHandler({ exercises }) {
       setSubmitError(error.message || "Failed to save progress");
     } finally {
       setIsSubmitting(false);
-      router.push(`/courses/${exercises.courseId}`);
+      // FIXED: Optional chaining on courseId
+      router.push(`/courses/${exercises?.courseId || ''}`);
     }
   };
+
+  // Prevent rendering if data isn't available yet (helpful for prerendering)
+  if (!exerciseArray || exerciseArray.length === 0) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-500">Loading exercises...</p>
+      </div>
+    );
+  }
 
   return (
     <main className="bg-gray-50">
       <header className="mb-8 animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-16 text-white">
         <div className="mx-auto max-w-7xl px-6">
           <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
-            {exercises.title}
+            {/* FIXED: Optional chaining ? added to safely access title */}
+            {exercises?.title}
             <NotebookPen strokeWidth={1.5} className="size-8 drop-shadow-xl" />
           </h1>
           <p className="font-bold"></p>
-          <p className="text-sm opacity-90">{exercises.description}</p>
+          {/* FIXED: Optional chaining ? added to safely access description */}
+          <p className="text-sm opacity-90">{exercises?.description}</p>
           <p className="text-sm font-semibold tracking-widest opacity-90">
             {exerciseArray.length} interactive exercises
           </p>
@@ -119,13 +138,15 @@ export default function ExerciseHandler({ exercises }) {
               </button>
             </div>
 
-            {totalCorrect < 5 && (
+            {/* FIXED: Replaced hardcoded '5' with dynamic exerciseArray.length */}
+            {totalCorrect < exerciseArray.length && (
               <div className="text-sm text-muted-foreground">
                 Please complete all exercises correctly to submit
               </div>
             )}
 
-            {totalCorrect === 5 && (
+            {/* FIXED: Replaced hardcoded '5' with dynamic exerciseArray.length */}
+            {totalCorrect === exerciseArray.length && (
               <Button
                 type="button"
                 onClick={handleSubmitProgress}
@@ -172,6 +193,9 @@ export default function ExerciseHandler({ exercises }) {
 
 // Helper function to transform DB exercise structure
 function mapExerciseData(dbExercise) {
+  // FIXED: added failsafe in case dbExercise is undefined
+  if (!dbExercise) return {};
+  
   const { additionalData, ...rest } = dbExercise;
   return {
     ...rest,
