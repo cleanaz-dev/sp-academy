@@ -1,8 +1,11 @@
-// app/dashboard/layout.tsx
+// app/(dashboard)/layout.tsx
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+// 1. Import your client layout that has the Sidebar & Provider
+import DashboardClientLayout from "@/components/dashboard/DashboardLayout";
 
 export default async function DashboardLayout({
   children,
@@ -26,5 +29,6 @@ export default async function DashboardLayout({
     }
   }
 
-  return <>{children}</>;
+  // 2. Wrap children with your client component!
+  return <DashboardClientLayout>{children}</DashboardClientLayout>;
 }

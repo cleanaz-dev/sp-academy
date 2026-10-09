@@ -1,3 +1,4 @@
+// @/components/dashboard/DashboardLayout.tsx
 "use client";
 
 import React, { useState } from "react";
