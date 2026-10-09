@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { navItems, settingItems } from "./NavLinks";
 import { Button } from "@/components/ui/button";
@@ -24,36 +23,16 @@ import {
 
 interface SidebarProps {
   pathname: string;
+  isAdmin?: boolean; // 👈 Received directly from layout
 }
 
-export const Sidebar = ({ pathname }: SidebarProps) => {
-  const [isUserAdmin, setIsUserAdmin] = useState<boolean>(false);
+export const Sidebar = ({ pathname, isAdmin = false }: SidebarProps) => {
   const { state, isMobile } = useSidebar();
   const sidebarOpen = state === "expanded" || isMobile;
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchIsAdmin = async () => {
-      try {
-        const response = await fetch("/api/users/is-admin");
-        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-        const data = await response.json();
-        if (!cancelled) setIsUserAdmin(Boolean(data.isAdmin));
-      } catch (error) {
-        console.error("Error fetching admin status:", error);
-      }
-    };
-
-    fetchIsAdmin();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <ShadcnSidebar>
-      <SidebarHeader className=" flex items-center justify-center">
+      <SidebarHeader className="flex items-center justify-center">
         <Image
           src="/logo1-up.png"
           width={1000}
@@ -161,7 +140,8 @@ export const Sidebar = ({ pathname }: SidebarProps) => {
         </SidebarGroup>
       </SidebarContent>
 
-      {isUserAdmin && sidebarOpen && (
+      {/* Renders instantly if isAdmin is true */}
+      {isAdmin && sidebarOpen && (
         <SidebarFooter className="p-4">
           <div className="animate-gradient overflow-hidden rounded-lg bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-1 shadow-lg">
             <Link href="/admin">

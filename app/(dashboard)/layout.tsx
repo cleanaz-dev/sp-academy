@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// 1. Import your client layout that has the Sidebar & Provider
 import DashboardClientLayout from "@/components/dashboard/DashboardLayout";
 
 export default async function DashboardLayout({
@@ -18,7 +17,9 @@ export default async function DashboardLayout({
     redirect("/verify?type=sign-in");
   }
 
-  if (session.user.role !== "ADMIN") {
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (!isAdmin) {
     const billing = await prisma.billingInformation.findUnique({
       where: { userId: session.user.id },
       select: { isActive: true },
@@ -29,6 +30,10 @@ export default async function DashboardLayout({
     }
   }
 
-  // 2. Wrap children with your client component!
-  return <DashboardClientLayout>{children}</DashboardClientLayout>;
+  // ✅ Pass isAdmin down directly
+  return (
+    <DashboardClientLayout isAdmin={isAdmin}>
+      {children}
+    </DashboardClientLayout>
+  );
 }
