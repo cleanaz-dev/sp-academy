@@ -6,12 +6,14 @@ import { authClient } from "@/lib/auth-client";
 import { FcGoogle } from "react-icons/fc";
 
 const NO_SUBSCRIPTION_MESSAGE =
-  "We couldn't find a subscription for that Google account. Purchase one first, then sign in with the same email.";
+  "We couldn't find an active subscription for that account. Purchase one first, then sign in with the same email.";
 
 const ERROR_MESSAGES: Record<string, string> = {
   subscription_required: NO_SUBSCRIPTION_MESSAGE,
   unable_to_create_user: NO_SUBSCRIPTION_MESSAGE,
+  unable_to_create_session: NO_SUBSCRIPTION_MESSAGE,
   access_denied: "Google sign-in was cancelled.",
+  // paste the real code from your URL here once you see it
 };
 
 function SignInFormInner({ callbackURL }: { callbackURL: string }) {
@@ -20,13 +22,15 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
 
   const urlErrorCode = searchParams.get("error");
   const urlError = urlErrorCode
-    ? (ERROR_MESSAGES[urlErrorCode] ?? "Sign in failed. Please try again.")
+    ? (ERROR_MESSAGES[urlErrorCode] ??
+      `Sign in failed (${urlErrorCode}). Please try again.`)
     : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +51,15 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
 
     router.push(callbackURL);
     router.refresh();
+  }
+
+  async function handleGoogle() {
+    setGoogleLoading(true);
+    await authClient.signIn.social({
+      provider: "google",
+      callbackURL,
+      errorCallbackURL: "/sign-in",
+    });
   }
 
   return (
@@ -91,7 +104,7 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || googleLoading}
           className="flex w-full items-center justify-center rounded-md bg-black px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
         >
           {loading ? "Signing in..." : "Sign in"}
@@ -109,17 +122,12 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
 
       <button
         type="button"
-        onClick={() =>
-          authClient.signIn.social({
-            provider: "google",
-            callbackURL,
-            errorCallbackURL: "/sign-in",
-          })
-        }
-        className="mb-2 flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1"
+        onClick={handleGoogle}
+        disabled={googleLoading || loading}
+        className="mb-2 flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1 disabled:opacity-50"
       >
         <FcGoogle className="h-5 w-5" />
-        Google
+        {googleLoading ? "Redirecting to Google..." : "Google"}
       </button>
     </form>
   );

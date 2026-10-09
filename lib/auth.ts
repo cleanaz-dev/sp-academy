@@ -21,22 +21,26 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        // Your purchase flow creates users. Anyone who gets here is unknown.
+        // Brand-new Google user = no account in your DB = block
         before: async () => {
           throw new APIError("FORBIDDEN", {
-            message: "We couldn't find a subscription for that account.",
-            code: "SUBSCRIPTION_REQUIRED",
+            message: "No subscription found for this account.",
           });
         },
       },
     },
     session: {
       create: {
+        // Existing user signing in = check billing row in DB
         before: async (session) => {
-          if (!(await hasActiveAccess(session.userId))) {
+          const billing = await prisma.billingInformation.findUnique({
+            where: { userId: session.userId },
+            select: { isActive: true },
+          });
+
+          if (!billing?.isActive) {
             throw new APIError("FORBIDDEN", {
-              message: "You need an active subscription to sign in.",
-              code: "SUBSCRIPTION_REQUIRED",
+              message: "No active subscription found for this account.",
             });
           }
           return { data: session };
