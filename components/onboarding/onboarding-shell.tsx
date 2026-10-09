@@ -19,6 +19,28 @@ import { SelectionCard } from "./selection-card";
 import { AccountStep } from "./steps/account-step";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 
+// 🛡️ Guarantees plain English names always convert to valid BCP-47 locale codes
+const LANGUAGE_LOCALE_MAP: Record<string, string> = {
+  English: "en-US",
+  French: "fr-FR",
+  Spanish: "es-ES",
+  German: "de-DE",
+  Italian: "it-IT",
+  Portuguese: "pt-BR",
+  Japanese: "ja-JP",
+  Korean: "ko-KR",
+  Chinese: "zh-CN",
+  Russian: "ru-RU",
+  Arabic: "ar-SA",
+};
+
+function getLanguageCode(item: any): string {
+  if (item?.code && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.code)) return item.code;
+  if (item?.value && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.value)) return item.value;
+  if (item?.name && LANGUAGE_LOCALE_MAP[item.name]) return LANGUAGE_LOCALE_MAP[item.name];
+  return item?.name ?? "";
+}
+
 export default function OnboardingShell({
   sessionId,
   email,
@@ -45,7 +67,7 @@ export default function OnboardingShell({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Preference State (stores locale codes like "en-US", "fr-FR")
+  // Preference State (Guaranteed to be "en-US", "fr-FR", etc.)
   const [nativeLanguage, setNativeLanguage] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
   const [level, setLevel] = useState("");
@@ -136,9 +158,15 @@ export default function OnboardingShell({
     setError(null);
 
     try {
-      // Passes the locale codes (e.g., "en-US", "fr-FR") and normalized level
+      console.log("Submitting Onboarding with languages:", {
+        nativeLanguage,
+        targetLanguage,
+      });
+
+      // Passes "en-US", "fr-FR", etc. directly
       await invokeEduBuilder({
         userId,
+        sessionId,
         firstName,
         gender: "unspecified",
         spoon: 1,
@@ -149,7 +177,6 @@ export default function OnboardingShell({
         scriptComfort: "unspecified",
         type: "lang",
         isOnboarding: true,
-        sessionId,
       });
 
       router.push("/home");
@@ -280,6 +307,7 @@ export default function OnboardingShell({
                 </Question>
               )}
 
+              {/* Step 2: Native Language */}
               {step === 2 && (
                 <Question
                   key="native"
@@ -290,8 +318,7 @@ export default function OnboardingShell({
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
                     {LANGUAGES.map((item) => {
-                      const langCode =
-                        (item as any).code ?? (item as any).value ?? item.name;
+                      const langCode = getLanguageCode(item);
 
                       return (
                         <SelectionCard
@@ -310,6 +337,7 @@ export default function OnboardingShell({
                 </Question>
               )}
 
+              {/* Step 3: Target Language */}
               {step === 3 && (
                 <Question
                   key="target"
@@ -319,13 +347,10 @@ export default function OnboardingShell({
                   description="Choose the language you want to start mastering."
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {LANGUAGES.filter((item) => {
-                      const langCode =
-                        (item as any).code ?? (item as any).value ?? item.name;
-                      return langCode !== nativeLanguage;
-                    }).map((item) => {
-                      const langCode =
-                        (item as any).code ?? (item as any).value ?? item.name;
+                    {LANGUAGES.filter(
+                      (item) => getLanguageCode(item) !== nativeLanguage,
+                    ).map((item) => {
+                      const langCode = getLanguageCode(item);
 
                       return (
                         <SelectionCard
@@ -344,6 +369,7 @@ export default function OnboardingShell({
                 </Question>
               )}
 
+              {/* Step 4: Level */}
               {step === 4 && (
                 <Question
                   key="level"
@@ -380,6 +406,7 @@ export default function OnboardingShell({
                 </Question>
               )}
 
+              {/* Step 5: Goal */}
               {step === 5 && (
                 <Question
                   key="goal"
