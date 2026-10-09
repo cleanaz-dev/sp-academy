@@ -76,7 +76,7 @@ export async function invokeEduBuilder(
     const response = await lambda.send(
       createCommand({
         functionName: "spoon-edu-builder",
-        payload: JSON.stringify(lambdaPayload),
+        payload: { body: JSON.stringify(lambdaPayload) },
         invocationType: "Event",
       }),
     );
