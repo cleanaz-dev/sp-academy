@@ -12,6 +12,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   subscription_required: NO_SUBSCRIPTION_MESSAGE,
   unable_to_create_user: NO_SUBSCRIPTION_MESSAGE,
   unable_to_create_session: NO_SUBSCRIPTION_MESSAGE,
+  signup_disabled: NO_SUBSCRIPTION_MESSAGE,
   access_denied: "Google sign-in was cancelled.",
   // paste the real code from your URL here once you see it
 };
