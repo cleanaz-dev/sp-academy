@@ -35,6 +35,7 @@ export async function POST(request: Request) {
         aiAvatarUrl: aiAvatarUrl || null,
         status: "IN_PROGRESS",
         duration: 0,
+        isFoundation: true,
       },
     });
 
