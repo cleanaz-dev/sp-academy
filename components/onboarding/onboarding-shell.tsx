@@ -45,7 +45,7 @@ export default function OnboardingShell({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Preference State
+  // Preference State (stores locale codes like "en-US", "fr-FR")
   const [nativeLanguage, setNativeLanguage] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
   const [level, setLevel] = useState("");
@@ -55,7 +55,9 @@ export default function OnboardingShell({
   useEffect(() => {
     if (urlErrorCode) {
       if (urlErrorCode === "account_not_linked") {
-        setError("This email is already registered. Please sign in with your password or enable account linking.");
+        setError(
+          "This email is already registered. Please sign in with your password or enable account linking.",
+        );
       } else {
         setError(`Google sign in failed (${urlErrorCode}).`);
       }
@@ -63,8 +65,8 @@ export default function OnboardingShell({
       // Clean the error from the URL
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete("error");
-      const newUrl = newSearchParams.toString() 
-        ? `${window.location.pathname}?${newSearchParams.toString()}` 
+      const newUrl = newSearchParams.toString()
+        ? `${window.location.pathname}?${newSearchParams.toString()}`
         : window.location.pathname;
       router.replace(newUrl, { scroll: false });
     }
@@ -73,14 +75,13 @@ export default function OnboardingShell({
   // Prefill Google details when session loads
   useEffect(() => {
     if (!session?.user) return;
-    
+
     const [first, ...rest] = (session.user.name ?? "").split(" ");
-    
-    // Use functional updates so we only overwrite if the fields are currently empty
+
     setFirstName((prev) => prev || first || "");
     setLastName((prev) => prev || rest.join(" "));
     setEmailValue((prev) => prev || session.user.email || "");
-  }, [session?.user]); // Track the specific user object, not the wrapper
+  }, [session?.user]);
 
   const accountValid =
     !isPending &&
@@ -100,20 +101,19 @@ export default function OnboardingShell({
             ? !!level
             : !!goal;
 
-  // Added async, preventDefault, and error handling
   const signInWithGoogle = async (e?: React.MouseEvent) => {
-    e?.preventDefault(); // Prevent accidental form submissions from reloading the page
+    e?.preventDefault();
     setError(null);
-    
+
     const currentUrl = `/onboarding${sessionId ? `?session_id=${sessionId}` : ""}`;
-    
+
     try {
       const { error: signInError } = await authClient.signIn.social({
         provider: "google",
         callbackURL: currentUrl,
-        errorCallbackURL: currentUrl, // <--- THIS KEEPS YOU ON THE ONBOARDING PAGE ON ERROR
+        errorCallbackURL: currentUrl,
       });
-      
+
       if (signInError) {
         setError(signInError.message || "Failed to connect to Google.");
       }
@@ -132,12 +132,11 @@ export default function OnboardingShell({
       return;
     }
 
-    // 1. Set the loading state so the button says "Saving..."
     setSubmitting(true);
     setError(null);
 
     try {
-      // 2. Call your backend action
+      // Passes the locale codes (e.g., "en-US", "fr-FR") and normalized level
       await invokeEduBuilder({
         userId,
         firstName,
@@ -145,23 +144,20 @@ export default function OnboardingShell({
         spoon: 1,
         nativeLanguage,
         targetLanguage,
-        levelBand: level,
-        goal,
+        levelBand: level.toLowerCase(),
+        goal: goal.toLowerCase(),
         scriptComfort: "unspecified",
         type: "lang",
         isOnboarding: true,
         sessionId,
       });
 
-      // 3. SUCCESS! Redirect the user to the app
-      // CHANGE "/dashboard" TO WHATEVER YOUR ACTUAL POST-ONBOARDING URL IS
       router.push("/home");
-      router.refresh(); // Forces the layout to re-fetch the fresh user data
-      
+      router.refresh();
     } catch (err) {
       console.error("Failed to save onboarding:", err);
       setError("Failed to save your preferences. Please try again.");
-      setSubmitting(false); // Only stop loading if there is an error
+      setSubmitting(false);
     }
   };
 
@@ -293,18 +289,23 @@ export default function OnboardingShell({
                   description="We'll use this to personalize translations and explanations."
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {LANGUAGES.map((item) => (
-                      <SelectionCard
-                        key={item.name}
-                        selected={nativeLanguage === item.name}
-                        onClick={() => setNativeLanguage(item.name)}
-                      >
-                        <span className="text-2xl">{item.flag}</span>
-                        <span className="flex-1 font-bold text-gray-900">
-                          {item.name}
-                        </span>
-                      </SelectionCard>
-                    ))}
+                    {LANGUAGES.map((item) => {
+                      const langCode =
+                        (item as any).code ?? (item as any).value ?? item.name;
+
+                      return (
+                        <SelectionCard
+                          key={item.name}
+                          selected={nativeLanguage === langCode}
+                          onClick={() => setNativeLanguage(langCode)}
+                        >
+                          <span className="text-2xl">{item.flag}</span>
+                          <span className="flex-1 font-bold text-gray-900">
+                            {item.name}
+                          </span>
+                        </SelectionCard>
+                      );
+                    })}
                   </div>
                 </Question>
               )}
@@ -318,20 +319,27 @@ export default function OnboardingShell({
                   description="Choose the language you want to start mastering."
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
-                    {LANGUAGES.filter(
-                      (item) => item.name !== nativeLanguage,
-                    ).map((item) => (
-                      <SelectionCard
-                        key={item.name}
-                        selected={targetLanguage === item.name}
-                        onClick={() => setTargetLanguage(item.name)}
-                      >
-                        <span className="text-2xl">{item.flag}</span>
-                        <span className="flex-1 font-bold text-gray-900">
-                          {item.name}
-                        </span>
-                      </SelectionCard>
-                    ))}
+                    {LANGUAGES.filter((item) => {
+                      const langCode =
+                        (item as any).code ?? (item as any).value ?? item.name;
+                      return langCode !== nativeLanguage;
+                    }).map((item) => {
+                      const langCode =
+                        (item as any).code ?? (item as any).value ?? item.name;
+
+                      return (
+                        <SelectionCard
+                          key={item.name}
+                          selected={targetLanguage === langCode}
+                          onClick={() => setTargetLanguage(langCode)}
+                        >
+                          <span className="text-2xl">{item.flag}</span>
+                          <span className="flex-1 font-bold text-gray-900">
+                            {item.name}
+                          </span>
+                        </SelectionCard>
+                      );
+                    })}
                   </div>
                 </Question>
               )}
@@ -345,20 +353,29 @@ export default function OnboardingShell({
                   description="Don't worry about getting this perfect. You can change it later."
                 >
                   <div className="grid gap-3">
-                    {LEVELS.map((item) => (
-                      <SelectionCard
-                        key={item.name}
-                        selected={level === item.name}
-                        onClick={() => setLevel(item.name)}
-                      >
-                        <div>
-                          <p className="font-bold text-gray-900">{item.name}</p>
-                          <p className="mt-1 text-sm font-medium text-gray-500">
-                            {item.description}
-                          </p>
-                        </div>
-                      </SelectionCard>
-                    ))}
+                    {LEVELS.map((item) => {
+                      const levelValue =
+                        (item as any).value ??
+                        (item as any).id ??
+                        item.name.toLowerCase();
+
+                      return (
+                        <SelectionCard
+                          key={item.name}
+                          selected={level === levelValue}
+                          onClick={() => setLevel(levelValue)}
+                        >
+                          <div>
+                            <p className="font-bold text-gray-900">
+                              {item.name}
+                            </p>
+                            <p className="mt-1 text-sm font-medium text-gray-500">
+                              {item.description}
+                            </p>
+                          </div>
+                        </SelectionCard>
+                      );
+                    })}
                   </div>
                 </Question>
               )}
