@@ -11,18 +11,16 @@ import {
   Trophy,
 } from "lucide-react";
 import SpoonLogo from "@/components/SpoonLogo";
-import { currentUser } from "@clerk/nextjs/server";
 import ActivityFeed from "@/components/home/ActivityFeed";
 import AchievementCard from "@/components/home/AchievementCard";
-import { getUserDataByUserId, updateAllBooksProgress } from "@/lib/actions";
-import Image from "next/image";
-import TestButton from "@/components/test/TestButton";
+import { getUserDataByUserId } from "@/lib/actions";
 import WeeklySchedule from "@/components/home/WeeklySchedule";
 import RecentLessons from "@/components/home/RecentLessons";
 import CurrentlyReading from "@/components/home/CurrentlyReading";
+import { requireUser } from "@/lib/auth-guard";
 
 export default async function DashboardHome() {
-  const user = await currentUser();
+  const user = await requireUser();
   const userData = await getUserDataByUserId(user.id);
   const books = userData.Book;
   const achievements = userData.UserProgress;
