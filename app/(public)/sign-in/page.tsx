@@ -22,7 +22,7 @@ export default async function Page({
       <div className="relative hidden w-1/2 flex-col justify-between bg-zinc-900 lg:flex">
         {/* Make sure to add an image to your public folder and update this src */}
         <Image
-          src="/logo1.png" // Replace with a nice high-res background image if you want
+          src="/sign-in-image.png" // Replace with a nice high-res background image if you want
           alt="Spoon Academy"
           fill
           className="object-cover opacity-50"
