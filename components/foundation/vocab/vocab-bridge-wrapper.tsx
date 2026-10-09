@@ -49,26 +49,24 @@ function VocabBridgeContent({ bridge }: { bridge: NonNullable<UserVocabBridge> }
     setStep(nextStepIndex);
   };
 
-  const handleFinishBridge = async (stats?: any) => {
+  const handleFinishBridge = async () => {
     if (isFinishing) return;
     setIsFinishing(true);
 
     try {
-      // 1. Sync any remaining Matrix cart updates
-      await syncCart(userId, targetLang);
+      // 1. Sync cart if available
+      if (syncCart && userId && targetLang) {
+        await syncCart(userId, targetLang);
+      }
 
-      // 2. Mark bridge passed in Prisma
-      const res = await completeVocabBridge({
-        bridgeId: bridge.id,
-        score: typeof stats?.score === "number" ? stats.score : 1.0,
-        results: stats?.results || stats || null,
-      });
+      // 2. Pass ONLY the plain string ID
+      const res = await completeVocabBridge(bridge.id);
 
       if (!res.ok) {
         throw new Error(res.error);
       }
 
-      // 3. Return to hub — Next Spoon is unlocked!
+      // 3. Return to learning hub — Spoon 2 is now unlocked!
       router.push("/learning-hub");
       router.refresh();
     } catch (err) {
@@ -107,11 +105,11 @@ function VocabBridgeContent({ bridge }: { bridge: NonNullable<UserVocabBridge> }
             onNext={() => handleNext(5)}
           />
         );
-      case 5:
+     case 5:
         return (
           <BridgeOutroStep
             data={bridge as any}
-            onFinish={handleFinishBridge}
+            onFinish={() => handleFinishBridge()}
           />
         );
       default:

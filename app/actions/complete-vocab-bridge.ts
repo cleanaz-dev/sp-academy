@@ -3,34 +3,24 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 
-interface CompleteVocabBridgeParams {
-  bridgeId: string;
-  score?: number;
-  results?: any;
-}
-
-export async function completeVocabBridge({
-  bridgeId,
-  score = 1.0,
-  results,
-}: CompleteVocabBridgeParams) {
+export async function completeVocabBridge(bridgeId: string) {
   try {
     const user = await requireUser();
 
-    // Update the bridge and unlock the next lesson
-    const updatedBridge = await prisma.foundationBridge.update({
+    if (!bridgeId || typeof bridgeId !== "string") {
+      throw new Error("Invalid bridgeId");
+    }
+
+    await prisma.foundationBridge.update({
       where: {
         id: bridgeId,
-        userId: user.id, // Security check
+        userId: user.id,
       },
       data: {
         passed: true,
         completedAt: new Date(),
-        attempts: {
-          increment: 1,
-        },
-        score: score ?? 1.0,
-        ...(results ? { results } : {}),
+        attempts: { increment: 1 },
+        score: 1.0,
       },
     });
 
