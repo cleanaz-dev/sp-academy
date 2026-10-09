@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { UserRole } from "@prisma/client";
 
 export async function getSession() {
   return auth.api.getSession({ headers: await headers() });
@@ -36,4 +37,24 @@ export async function requireAdmin() {
   }
 
   return { user: dbUser };
+}
+
+
+
+
+
+
+export async function hasActiveAccess(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      BillingInformation: { select: { isActive: true } },
+    },
+  });
+
+  if (!user) return false;
+  if (user.role === UserRole.ADMIN) return true; // remove if admins should also need billing
+
+  return user.BillingInformation?.isActive === true;
 }

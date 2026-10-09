@@ -3,11 +3,12 @@ import { dash } from "@better-auth/infra";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { admin as adminPlugin, username} from "better-auth/plugins";
+import { admin as adminPlugin, username } from "better-auth/plugins";
 import { ac, admin, customer } from "./permissions";
 import { PrismaClient, UserRole } from "@prisma/client";
-import { APIError } from "better-auth/api"; 
-import { stripe } from "@/lib/stripe"; 
+import { APIError } from "better-auth/api";
+import { stripe } from "@/lib/stripe";
+import { hasActiveAccess } from "./auth-guard";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -17,32 +18,31 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
-   databaseHooks: {
+  databaseHooks: {
     user: {
       create: {
-        before: async (user) => {
-          // This fires right after Google authenticates them, 
-          // but BEFORE Better Auth saves them to your database.
-          
-          // 1. Ask Stripe if this email belongs to a paying customer
-          const customers = await stripe.customers.search({
-            query: `email:'${user.email}'`,
+        // Your purchase flow creates users. Anyone who gets here is unknown.
+        before: async () => {
+          throw new APIError("FORBIDDEN", {
+            message: "We couldn't find a subscription for that account.",
+            code: "SUBSCRIPTION_REQUIRED",
           });
-          
-          const hasPaid = customers.data.length > 0;
-          
-          // 2. If they haven't paid, block the account creation!
-          if (!hasPaid) {
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          if (!(await hasActiveAccess(session.userId))) {
             throw new APIError("FORBIDDEN", {
-              message: "You must purchase a subscription before signing in."
+              message: "You need an active subscription to sign in.",
+              code: "SUBSCRIPTION_REQUIRED",
             });
           }
-
-          // 3. If they paid, proceed normally
-          return { data: user };
-        }
-      }
-    }
+          return { data: session };
+        },
+      },
+    },
   },
 
   baseURL: {
@@ -67,9 +67,7 @@ export const auth = betterAuth({
     crossSubDomainCookies: {
       enabled: true,
       domain:
-        process.env.NODE_ENV === "production"
-          ? ".spoonacademy.com"
-          : ".lvh.me",
+        process.env.NODE_ENV === "production" ? ".spoonacademy.com" : ".lvh.me",
     },
     useSecureCookies: process.env.NODE_ENV === "production",
   },
@@ -93,9 +91,9 @@ export const auth = betterAuth({
     },
   },
 
-   user: {
+  user: {
     fields: {
-      image: "avatarUrl", 
+      image: "avatarUrl",
     },
     additionalFields: {
       // ADD FIRST AND LAST NAME HERE TO MATCH CLIENT
