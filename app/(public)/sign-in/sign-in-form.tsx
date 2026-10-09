@@ -86,10 +86,14 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
       className="flex w-full flex-col gap-6"
     >
       <div className="flex flex-col gap-1 text-center lg:text-left">
+        <div className="flex-col">
         <img 
           src="/logo1-nobg.png"
           className="object-contain h-24 w-auto"
+          alt="logo"
         />
+        <p className="tracking-widest text-muted-foreground">Academy</p>
+        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
           Welcome back
         </h1>
