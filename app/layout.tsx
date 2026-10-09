@@ -1,6 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 
@@ -47,7 +46,6 @@ export default function RootLayout({
     <html lang="en" className={jakarta.variable}>
       {/* Apply the font class and smooth antialiasing */}
       <body className={`${jakarta.className} antialiased`}>
-        <ClerkProvider dynamic>
           {children}
           <Toaster
             position="bottom-right"
@@ -55,7 +53,6 @@ export default function RootLayout({
             theme="system"
             closeButton
           />
-        </ClerkProvider>
       </body>
     </html>
   );

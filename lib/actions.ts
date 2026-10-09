@@ -1738,8 +1738,8 @@ export async function saveGameScore({
   score,
 }: SaveScoreParams) {
   // 1. Ensure User is Authenticated
-  const { userId } = await auth();
-
+  const user = await requireUser()
+  const userId = user?.id
   if (!userId) {
     throw new Error("Unauthorized: You must be logged in to save scores.");
   }

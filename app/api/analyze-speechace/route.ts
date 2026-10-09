@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth-guard";
+import { redirect } from "next/navigation";
 
 export async function POST(req: Request) {
   try {
-    // 1. AUTH & INPUT PARSING
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const user = await requireUser()
 
+    if (!user) {
+      return redirect('/sign-in')
+    }
     const formData = await req.formData();
     const audioFile = formData.get("audio");
     const text = formData.get("transcript") as string;

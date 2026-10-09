@@ -6,6 +6,8 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { admin as adminPlugin, username} from "better-auth/plugins";
 import { ac, admin, customer } from "./permissions";
 import { PrismaClient, UserRole } from "@prisma/client";
+import { APIError } from "better-auth/api"; 
+import { stripe } from "@/lib/stripe"; 
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -14,6 +16,34 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
+   databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // This fires right after Google authenticates them, 
+          // but BEFORE Better Auth saves them to your database.
+          
+          // 1. Ask Stripe if this email belongs to a paying customer
+          const customers = await stripe.customers.search({
+            query: `email:'${user.email}'`,
+          });
+          
+          const hasPaid = customers.data.length > 0;
+          
+          // 2. If they haven't paid, block the account creation!
+          if (!hasPaid) {
+            throw new APIError("FORBIDDEN", {
+              message: "You must purchase a subscription before signing in."
+            });
+          }
+
+          // 3. If they paid, proceed normally
+          return { data: user };
+        }
+      }
+    }
+  },
 
   baseURL: {
     allowedHosts: [

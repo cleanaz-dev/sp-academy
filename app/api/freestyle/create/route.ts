@@ -1,6 +1,5 @@
 // app/api/freestyle/create/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server"; // Or your auth
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 

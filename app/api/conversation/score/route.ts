@@ -1,8 +1,8 @@
 // app/api/conversation/score/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireUser } from "@/lib/auth-guard";
 
 const NOVITA_API_URL = "https://api.novita.ai/openai/v1/chat/completions";
 const NOVITA_MODEL = "deepseek/deepseek-v4-flash-0731";
@@ -91,9 +91,9 @@ function isValidObjectId(id: unknown): id is string {
 export async function POST(req: Request) {
   try {
     // 1. VERIFY AUTHENTICATION VIA CLERK
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await requireUser();
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
     // 2. PARSE & VALIDATE REQUEST BODY
@@ -110,14 +110,14 @@ export async function POST(req: Request) {
     if (!message || typeof message !== "string") {
       return NextResponse.json(
         { error: "Message is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!conversationId || !isValidObjectId(conversationId)) {
       return NextResponse.json(
         { error: "A valid conversationId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -195,12 +195,16 @@ export async function POST(req: Request) {
     //   corrections: userScore?.corrections ?? [],
     // });
 
-    return NextResponse.json({ message: "Score API is currently disabled for testing." });
+    return NextResponse.json({
+      message: "Score API is currently disabled for testing.",
+    });
   } catch (error) {
     console.error("Score API Error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal Server Error" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      { status: 500 },
     );
   }
 }
