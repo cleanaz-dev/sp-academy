@@ -36,7 +36,6 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
 
-  // If you need `/foundation/[foundationLessonId]/[foundationCourseId]`
   const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
 
   // Poll when background vocab builder is running
@@ -56,7 +55,6 @@ export default function FoundationHubPage({ path, lang }: Props) {
     <div className="min-h-screen bg-[#F4F6FC] font-sans text-slate-900 selection:bg-indigo-100">
       {/* TOP HERO HEADER */}
       <header className="relative overflow-hidden bg-slate-900 pt-12 pb-24 text-white shadow-xl">
-        {/* Glow gradients */}
         <div className="pointer-events-none absolute -top-24 left-1/2 -z-0 h-96 w-[700px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-violet-600/30 via-fuchsia-600/20 to-blue-600/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 top-1/2 -z-0 h-72 w-72 rounded-full bg-indigo-500/10 blur-2xl" />
 
@@ -75,11 +73,11 @@ export default function FoundationHubPage({ path, lang }: Props) {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-300">
                 <Flame className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span>1 Day Streak</span>
+                <span>Streak: 1</span>
               </div>
               <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
                 <Trophy className="h-4 w-4 text-emerald-400" />
-                <span>{completedLessonsCount} Done</span>
+                <span>{completedLessonsCount} Completed</span>
               </div>
             </div>
           </div>
@@ -99,7 +97,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
       <main className="relative z-20 mx-auto -mt-14 max-w-5xl px-6 pb-24">
         {/* ACTION CARDS ROW */}
         <div className="grid gap-6 md:grid-cols-3">
-          {/* PRIMARY CURRENT LESSON CARD */}
+          {/* PRIMARY CURRENT SPOON CARD */}
           <div className="md:col-span-2">
             <PrimaryHeroCard
               path={path}
@@ -148,11 +146,11 @@ export default function FoundationHubPage({ path, lang }: Props) {
                 Your Learning Path
               </h2>
               <p className="text-sm font-medium text-slate-500">
-                Daily conversational lessons designed to build fluent reflexes.
+                Structured lessons designed to build fluent reflexes.
               </p>
             </div>
             <div className="text-xs font-bold text-slate-400">
-              {lessons.length} {lessons.length === 1 ? "Lesson" : "Lessons"} Scheduled
+              {lessons.length} {lessons.length === 1 ? "Spoon" : "Spoons"} Scheduled
             </div>
           </div>
 
@@ -222,13 +220,13 @@ function PrimaryHeroCard({
       <div className={`${cardStyle} border-amber-200 bg-gradient-to-br from-amber-50/50 via-white to-white`}>
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-800 uppercase">
-            <Lock className="h-3.5 w-3.5" /> Next Lesson Locked
+            <Lock className="h-3.5 w-3.5" /> Next Spoon Locked
           </div>
           <h3 className="mt-4 text-2xl font-black text-slate-900">
-            Review Vocabulary for Day {vocabDue.orderIndex}
+            Review Vocabulary for Spoon {vocabDue.orderIndex}
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Solidify the {vocabWordCount(vocabDue.bridge.vocabMoment)} new words you encountered to unlock the next chapter.
+            Solidify the {vocabWordCount(vocabDue.bridge.vocabMoment)} new words you encountered to unlock Spoon {vocabDue.orderIndex + 1}.
           </p>
         </div>
 
@@ -267,7 +265,7 @@ function PrimaryHeroCard({
     );
   }
 
-  // Next lesson ready to play!
+  // Next lesson ready to play
   if (nextLesson) {
     return (
       <div className={`${cardStyle} border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-white`}>
@@ -275,13 +273,13 @@ function PrimaryHeroCard({
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 uppercase">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              Day {nextLesson.orderIndex} Ready
+              Spoon {nextLesson.orderIndex} Ready
             </span>
             <span className="text-xs font-bold text-slate-400">5-7 min session</span>
           </div>
 
           <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Day {nextLesson.orderIndex}: Foundation Lesson
+            Spoon {nextLesson.orderIndex}: Foundation Lesson
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
             Target speaking exercises, sentence construction, and listening drills tailored to your level.
@@ -294,12 +292,11 @@ function PrimaryHeroCard({
             <span>Interactive Audio Lesson</span>
           </div>
 
-          {/* DYNAMIC ROUTE REDIRECT */}
           <Link
             href={getLessonHref(nextLesson.id)}
             className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-xl active:scale-95"
           >
-            Start Day {nextLesson.orderIndex} <ArrowRight className="h-4 w-4" />
+            Start Spoon {nextLesson.orderIndex} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
@@ -310,7 +307,7 @@ function PrimaryHeroCard({
     <div className={cardStyle}>
       <h3 className="text-2xl font-black text-slate-900">All caught up! 🎉</h3>
       <p className="mt-1 text-sm text-slate-500">
-        You've completed every available lesson on this track. Practice in free conversation while new content is baked.
+        You've completed every available spoon on this track. Practice in free conversation while new content is baked.
       </p>
     </div>
   );
@@ -366,7 +363,7 @@ function TimelineLessonCard({
 
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-extrabold text-slate-900">Day {lesson.orderIndex}</h3>
+            <h3 className="font-extrabold text-slate-900">Spoon {lesson.orderIndex}</h3>
             {isDone && (
               <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                 Completed
@@ -429,7 +426,7 @@ function TimelineLessonCard({
                 : "cursor-not-allowed bg-slate-200 text-slate-400"
             }`}
           >
-            {isNext ? "Start Lesson" : "Locked"}
+            {isNext ? "Start Spoon" : "Locked"}
           </Link>
         )}
       </div>
