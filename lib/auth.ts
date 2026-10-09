@@ -3,7 +3,7 @@ import { dash } from "@better-auth/infra";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { admin as adminPlugin } from "better-auth/plugins";
+import { admin as adminPlugin, username} from "better-auth/plugins";
 import { ac, admin, customer } from "./permissions";
 import { PrismaClient, UserRole } from "@prisma/client";
 
@@ -63,11 +63,20 @@ export const auth = betterAuth({
     },
   },
 
-  user: {
+   user: {
     fields: {
-      image: "avatarUrl", // Better Auth's "image" maps to your "avatarUrl" column
+      image: "avatarUrl", 
     },
     additionalFields: {
+      // ADD FIRST AND LAST NAME HERE TO MATCH CLIENT
+      firstName: {
+        type: "string",
+        required: false, // Optional because they might just use a social login initially
+      },
+      lastName: {
+        type: "string",
+        required: false,
+      },
       role: {
         type: "string",
         defaultValue: UserRole.CUSTOMER,
@@ -81,6 +90,7 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    username(), // <-- ADD USERNAME PLUGIN HERE
     dash(),
     adminPlugin({
       defaultRole: UserRole.CUSTOMER,
