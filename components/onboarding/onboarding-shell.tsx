@@ -128,23 +128,41 @@ export default function OnboardingShell({
 
     if (!userId) {
       console.error("No user ID found");
+      setError("User session not found. Please try refreshing the page.");
       return;
     }
 
-    await invokeEduBuilder({
-      userId,
-      firstName,
-      gender: "unspecified",
-      spoon: 1,
-      nativeLanguage,
-      targetLanguage,
-      levelBand: level,
-      goal,
-      scriptComfort: "unspecified",
-      type: "lang",
-      isOnboarding: true,
-      sessionId,
-    });
+    // 1. Set the loading state so the button says "Saving..."
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // 2. Call your backend action
+      await invokeEduBuilder({
+        userId,
+        firstName,
+        gender: "unspecified",
+        spoon: 1,
+        nativeLanguage,
+        targetLanguage,
+        levelBand: level,
+        goal,
+        scriptComfort: "unspecified",
+        type: "lang",
+        isOnboarding: true,
+        sessionId,
+      });
+
+      // 3. SUCCESS! Redirect the user to the app
+      // CHANGE "/dashboard" TO WHATEVER YOUR ACTUAL POST-ONBOARDING URL IS
+      router.push("/dashboard");
+      router.refresh(); // Forces the layout to re-fetch the fresh user data
+      
+    } catch (err) {
+      console.error("Failed to save onboarding:", err);
+      setError("Failed to save your preferences. Please try again.");
+      setSubmitting(false); // Only stop loading if there is an error
+    }
   };
 
   const nextStep = async () => {
