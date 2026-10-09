@@ -233,7 +233,7 @@ function PrimaryHeroCard({
         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-400">Estimated: 3 mins</span>
           <Link
-            href={`/learning-hub/vocab/${vocabDue.bridge.id}`}
+            href={`/foundation/vocab/${vocabDue.bridge.id}`}
             className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-bold text-white shadow-md shadow-amber-500/20 transition hover:bg-amber-600 active:scale-95"
           >
             <Zap className="h-4 w-4" /> Start Vocab Bridge <ArrowRight className="h-4 w-4" />
