@@ -6,48 +6,14 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { admin as adminPlugin, username } from "better-auth/plugins";
 import { ac, admin, customer } from "./permissions";
 import { PrismaClient, UserRole } from "@prisma/client";
-import { APIError } from "better-auth/api";
-import { stripe } from "@/lib/stripe";
-import { hasActiveAccess } from "./auth-guard";
 
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+export const prisma = new PrismaClient({ adapter });
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-
-  databaseHooks: {
-    user: {
-      create: {
-        // Brand-new Google user = no account in your DB = block
-        before: async () => {
-          throw new APIError("FORBIDDEN", {
-            message: "No subscription found for this account.",
-          });
-        },
-      },
-    },
-    session: {
-      create: {
-        // Existing user signing in = check billing row in DB
-        before: async (session) => {
-          const billing = await prisma.billingInformation.findUnique({
-            where: { userId: session.userId },
-            select: { isActive: true },
-          });
-
-          if (!billing?.isActive) {
-            throw new APIError("FORBIDDEN", {
-              message: "No active subscription found for this account.",
-            });
-          }
-          return { data: session };
-        },
-      },
-    },
-  },
 
   baseURL: {
     allowedHosts: [
@@ -83,7 +49,7 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      updateUserInfoOnLink: true, // fills the picture when Google links to the seeded user
+      updateUserInfoOnLink: true,
     },
   },
 
@@ -92,6 +58,7 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       overrideUserInfoOnSignIn: true,
+      disableSignUp: true,
     },
   },
 
@@ -100,29 +67,19 @@ export const auth = betterAuth({
       image: "avatarUrl",
     },
     additionalFields: {
-      // ADD FIRST AND LAST NAME HERE TO MATCH CLIENT
-      firstName: {
-        type: "string",
-        required: false, // Optional because they might just use a social login initially
-      },
-      lastName: {
-        type: "string",
-        required: false,
-      },
+      firstName: { type: "string", required: false },
+      lastName: { type: "string", required: false },
       role: {
         type: "string",
         defaultValue: UserRole.CUSTOMER,
         input: false,
       },
-      phone: {
-        type: "string",
-        required: false,
-      },
+      phone: { type: "string", required: false },
     },
   },
 
   plugins: [
-    username(), // <-- ADD USERNAME PLUGIN HERE
+    username(),
     dash(),
     adminPlugin({
       defaultRole: UserRole.CUSTOMER,
