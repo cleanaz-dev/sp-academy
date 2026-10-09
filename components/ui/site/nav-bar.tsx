@@ -45,9 +45,7 @@ export default function NavigationBar() {
             <Button variant="ghost" nativeButton={false} render={<Link href="/sign-in" />}>
               Sign In
             </Button>
-            <Button nativeButton={false} render={<Link href="/sign-up" />}>
-              Sign Up
-            </Button>
+          
           </div>
 
           {/* Mobile Menu */}

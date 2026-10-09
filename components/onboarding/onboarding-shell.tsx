@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -25,6 +26,10 @@ export default function OnboardingShell({
   sessionId?: string;
   email?: string;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlErrorCode = searchParams.get("error");
+
   const { data: session, isPending } = authClient.useSession();
   const hasAccount = !!session?.user;
 
@@ -45,6 +50,25 @@ export default function OnboardingShell({
   const [targetLanguage, setTargetLanguage] = useState("");
   const [level, setLevel] = useState("");
   const [goal, setGoal] = useState("");
+
+  // Check for URL errors (like account_not_linked) and display them in the UI
+  useEffect(() => {
+    if (urlErrorCode) {
+      if (urlErrorCode === "account_not_linked") {
+        setError("This email is already registered. Please sign in with your password or enable account linking.");
+      } else {
+        setError(`Google sign in failed (${urlErrorCode}).`);
+      }
+
+      // Clean the error from the URL
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete("error");
+      const newUrl = newSearchParams.toString() 
+        ? `${window.location.pathname}?${newSearchParams.toString()}` 
+        : window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [urlErrorCode, searchParams, router]);
 
   // Prefill Google details when session loads
   useEffect(() => {
@@ -81,10 +105,13 @@ export default function OnboardingShell({
     e?.preventDefault(); // Prevent accidental form submissions from reloading the page
     setError(null);
     
+    const currentUrl = `/onboarding${sessionId ? `?session_id=${sessionId}` : ""}`;
+    
     try {
       const { error: signInError } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: `/onboarding${sessionId ? `?session_id=${sessionId}` : ""}`,
+        callbackURL: currentUrl,
+        errorCallbackURL: currentUrl, // <--- THIS KEEPS YOU ON THE ONBOARDING PAGE ON ERROR
       });
       
       if (signInError) {
