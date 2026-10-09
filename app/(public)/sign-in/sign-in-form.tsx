@@ -86,7 +86,7 @@ function SignInFormInner({ callbackURL }: { callbackURL: string }) {
       className="flex w-full flex-col gap-6"
     >
       <div className="flex flex-col gap-1 text-center lg:text-left">
-        <div className="flex-col">
+        <div className="flex-col text-center -mt-2">
         <img 
           src="/logo1-nobg.png"
           className="object-contain h-24 w-auto"
