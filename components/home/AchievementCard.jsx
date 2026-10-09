@@ -5,11 +5,14 @@ import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
 export default function AchievementCard({ achievements }) {
-  const { user } = useUser();
+
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
   const [isChecking, setIsChecking] = useState(false);
 
   const checkAchievements = async () => {
@@ -22,7 +25,6 @@ export default function AchievementCard({ achievements }) {
         headers: {
           "Content-Type": "application/json",
         },
-        // You could pass user-specific data if needed
         body: JSON.stringify({
           userId: user.id,
         }),
@@ -31,10 +33,7 @@ export default function AchievementCard({ achievements }) {
       const data = await response.json();
 
       if (data.success) {
-        // Optionally refresh the achievements list
-        // You might want to pass a refresh function from the parent
-        // or use SWR/React Query for data management
-        window.location.reload(); // Simple refresh for now
+        window.location.reload();
       }
     } catch (error) {
       console.error("Failed to check achievements:", error);
@@ -42,6 +41,7 @@ export default function AchievementCard({ achievements }) {
       setIsChecking(false);
     }
   };
+
   return (
     <Card className="transition-shadow hover:shadow-lg">
       <CardHeader className="border-b bg-gray-50">
@@ -70,7 +70,7 @@ export default function AchievementCard({ achievements }) {
         <ScrollArea className="h-72">
           <div className="grid grid-cols-1 gap-4">
             {achievements
-              .sort((a, b) => {
+              ?.sort((a, b) => {
                 if (a.isUnlocked !== b.isUnlocked) {
                   return b.isUnlocked - a.isUnlocked; // Unlocked first
                 }
