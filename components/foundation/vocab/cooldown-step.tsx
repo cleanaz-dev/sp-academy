@@ -1,31 +1,19 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ArrowRight, AlertCircle } from "lucide-react";
-import { getSceneMediaUrls } from "@/app/actions/get-media";
+import { useS3Media } from "@/context/s3-context";
 
 export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [textInput, setTextInput] = useState(""); // Used for variable_shift
-  const [mediaUrls, setMediaUrls] = useState<Record<string, string>>({});
 
-  // Sign every video key for the whole cooldown once, up front
-  useEffect(() => {
-    const keys = data.map((d) => d.videoS3Key).filter(Boolean);
-    if (keys.length === 0) return;
-
-    let cancelled = false;
-    getSceneMediaUrls(keys)
-      .then((res) => !cancelled && setMediaUrls(res))
-      .catch((err) => console.error("Failed to load cooldown media:", err));
-    return () => {
-      cancelled = true;
-    };
-  }, [data]);
+  // Sign all drill videos once. videoUrls[i] lines up with data[i], "" when there's no video.
+  const { urls: videoUrls } = useS3Media(data.map((d) => d.videoS3Key));
 
   const item = data[currentIndex];
-  const videoUrl = item.videoS3Key ? mediaUrls[item.videoS3Key] : undefined;
+  const videoUrl = videoUrls[currentIndex] || undefined;
   const isMultipleChoice =
     item.mechanic === "word_coupling" ||
     item.mechanic === "context_clash" ||
