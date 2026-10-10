@@ -9,7 +9,8 @@ type DashboardHeaderProps = {
 export function DashboardHeader({ lang, completedCount, streak }: DashboardHeaderProps) {
   return (
     <header className="relative overflow-hidden bg-slate-950 pt-10 pb-20 text-white shadow-xl">
-
+      <div className="pointer-events-none absolute -top-20 left-1/2 -z-0 h-96 w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-violet-600/35 via-fuchsia-600/25 to-blue-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute -left-20 top-1/2 -z-0 h-72 w-72 rounded-full bg-indigo-500/15 blur-2xl" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
