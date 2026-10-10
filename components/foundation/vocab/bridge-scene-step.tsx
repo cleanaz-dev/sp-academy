@@ -14,9 +14,8 @@ export function BridgeSceneStep({ data, onNext }: { data: any; onNext: () => voi
     data.bridgeAssets?.npcAudioS3Key ||
     undefined;
 
-  const { urls } = useS3Media([data.imageS3Key || "", data.videoS3Key || ""]);
+  const { urls } = useS3Media([data.imageS3Key || ""]);
   const imageUrl = urls?.[0] || undefined;
-  const videoUrl = urls?.[1] || undefined;
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -93,13 +92,11 @@ export function BridgeSceneStep({ data, onNext }: { data: any; onNext: () => voi
     <div className="flex h-full flex-col p-8 md:p-12 animate-in fade-in duration-500">
       <div className="mb-8">
         <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">Scene Context</h2>
-        <p className="text-lg text-gray-500">Watch the scenario unfold before practicing.</p>
+        <p className="text-lg text-gray-500">Listen to the scenario before practicing.</p>
       </div>
 
       <div className="relative mb-12 flex h-72 w-full items-center justify-center overflow-hidden rounded-2xl bg-gray-900 shadow-inner md:h-96">
-        {videoUrl ? (
-          <video src={videoUrl} controls className="h-full w-full object-cover" poster={imageUrl} />
-        ) : imageUrl ? (
+        {imageUrl ? (
           <img src={imageUrl} alt={data.altText ?? ""} className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full animate-pulse bg-gray-800" />
