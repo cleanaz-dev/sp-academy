@@ -6,7 +6,7 @@ import { getWordAudioUrls } from "@/app/actions/word-audio";
 type WordAudioMap = Record<string, { m?: string; f?: string }>;
 
 interface WordAudioContextType {
-  playWord: (word: string, gender?: "m" | "f") => Promise<void>;
+  playWord: (phrase: string, gender?: "m" | "f") => Promise<void>;
   stopAudio: () => void;
   activeWord: string | null;
   isPlaying: boolean;
@@ -37,8 +37,8 @@ export function WordAudioProvider({
   const [isPlaying, setIsPlaying] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playTokenRef = useRef(0); // invalidates in-flight sequences
 
-  // 1. Preload audio whenever the lesson or language data changes
   useEffect(() => {
     if (!wordAudio) return;
 
@@ -55,9 +55,11 @@ export function WordAudioProvider({
     return () => {
       stopAudio();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordAudio]);
 
   const stopAudio = () => {
+    playTokenRef.current++;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -69,50 +71,23 @@ export function WordAudioProvider({
     setActiveWord(null);
   };
 
-  const playWord = async (word: string, gender: "m" | "f" = "m") => {
-    stopAudio();
-
-    const normalized = slug(word);
-    setActiveWord(word);
-    setIsPlaying(true);
-
-    const s3Key = `foundation/words/${targetLang}/${gender}/${normalized}.mp3`;
-    const url = urls[s3Key];
-
-    if (url) {
-      // S3 audio playback
+  // Resolves true if the clip played to the end, false on error
+  const playUrl = (url: string) =>
+    new Promise<boolean>((resolve) => {
       const audio = new Audio(url);
       audioRef.current = audio;
+      audio.onended = () => resolve(true);
+      audio.onerror = () => resolve(false);
+      audio.play().catch(() => resolve(false));
+    });
 
-      audio.onended = () => {
-        setIsPlaying(false);
-        setActiveWord(null);
-      };
-
-      audio.onerror = () => {
-        fallbackTTS(word);
-      };
-
-      try {
-        await audio.play();
-        return;
-      } catch {
-        fallbackTTS(word);
-      }
-    } else {
-      // Fallback to browser SpeechSynthesis
-      fallbackTTS(word);
-    }
-  };
-
-  const fallbackTTS = (word: string) => {
+  const fallbackTTS = (text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setIsPlaying(false);
       setActiveWord(null);
       return;
     }
-
-    const utterance = new SpeechSynthesisUtterance(word);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = targetLang;
     utterance.onend = () => {
       setIsPlaying(false);
@@ -125,15 +100,42 @@ export function WordAudioProvider({
     window.speechSynthesis.speak(utterance);
   };
 
+  const playWord = async (phrase: string, gender: "m" | "f" = "m") => {
+    stopAudio();
+    const token = playTokenRef.current;
+
+    setActiveWord(phrase);
+    setIsPlaying(true);
+
+    // "le voisin" -> ["le", "voisin"], "t'appelle" -> ["tappelle"]
+    const tokens = phrase.split(/\s+/).map(slug).filter(Boolean);
+    const keys = tokens.map(
+      (t) => `foundation/words/${targetLang}/${gender}/${t}.mp3`
+    );
+
+    // Only use recorded audio if EVERY token has a file
+    if (keys.length > 0 && keys.every((k) => urls[k])) {
+      for (const key of keys) {
+        if (token !== playTokenRef.current) return; // cancelled
+        const ok = await playUrl(urls[key]);
+        if (!ok) {
+          if (token === playTokenRef.current) fallbackTTS(phrase);
+          return;
+        }
+      }
+      if (token === playTokenRef.current) {
+        setIsPlaying(false);
+        setActiveWord(null);
+      }
+      return;
+    }
+
+    fallbackTTS(phrase);
+  };
+
   return (
     <WordAudioContext.Provider
-      value={{
-        playWord,
-        stopAudio,
-        activeWord,
-        isPlaying,
-        targetLang,
-      }}
+      value={{ playWord, stopAudio, activeWord, isPlaying, targetLang }}
     >
       {children}
     </WordAudioContext.Provider>
