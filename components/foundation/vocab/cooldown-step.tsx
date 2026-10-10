@@ -3,9 +3,17 @@ import React, { useState } from "react";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
 
-export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void }) {
+export function CooldownStep({
+  data,
+  onNext,
+}: {
+  data: any[];
+  onNext: () => void;
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
+  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">(
+    "idle",
+  );
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [textInput, setTextInput] = useState(""); // Used for variable_shift
 
@@ -47,7 +55,8 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
       setFeedbackMsg("✅ Great job! Spot on.");
     } else {
       setStatus("incorrect");
-      const specificHint = item.feedback?.[guess] || item.rejectFeedback?.[guess];
+      const specificHint =
+        item.feedback?.[guess] || item.rejectFeedback?.[guess];
       setFeedbackMsg(`❌ ${specificHint || "Not quite right. Try again!"}`);
     }
   };
@@ -56,7 +65,9 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
     const normalize = (s: string) => s.toLowerCase().trim();
     const guess = normalize(textInput);
 
-    const isCorrect = item.expectedFolds?.some((fold: string) => normalize(fold) === guess);
+    const isCorrect = item.expectedFolds?.some(
+      (fold: string) => normalize(fold) === guess,
+    );
 
     if (isCorrect) {
       setStatus("correct");
@@ -64,7 +75,7 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
     } else {
       setStatus("incorrect");
       const exactMatchKey = Object.keys(item.rejectFeedback || {}).find(
-        (k) => normalize(k) === guess
+        (k) => normalize(k) === guess,
       );
       const specificHint = exactMatchKey
         ? item.rejectFeedback[exactMatchKey]
@@ -93,8 +104,8 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
                 idx < currentIndex
                   ? "bg-green-500"
                   : idx === currentIndex
-                  ? "bg-indigo-500"
-                  : "bg-gray-200"
+                    ? "bg-indigo-500"
+                    : "bg-gray-200"
               }`}
             />
           ))}
@@ -126,7 +137,8 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
             {item.contextNative}
           </p>
           <p className="text-indigo-900 font-bold text-xl flex items-center gap-2">
-            <AlertCircle size={20} className="text-indigo-500" /> {item.instructionNative}
+            <AlertCircle size={20} className="text-indigo-500" />{" "}
+            {item.instructionNative}
           </p>
         </div>
 
@@ -136,22 +148,34 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
               Base Sentence
             </p>
-            <p className="text-2xl font-bold text-gray-900">"{item.baseSentence}"</p>
+            <p className="text-2xl font-bold text-gray-900">
+              "{item.baseSentence}"
+            </p>
           </div>
         )}
 
         {/* Multiple Choice */}
         {isMultipleChoice && (
-          <div className="flex flex-col gap-3">
+          <div
+            className={
+              item.mechanic === "video_spotlight"
+                ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
+                : "flex flex-col gap-3"
+            }
+          >
             {item.options?.map((opt: string, idx: number) => (
               <button
                 key={idx}
                 disabled={status === "correct"}
                 onClick={() => handleMultipleChoiceGuess(opt)}
-                className={`p-5 text-left text-lg font-bold rounded-2xl border-2 transition-all active:scale-95 ${
+                className={`rounded-2xl border-2 p-5 text-lg font-bold transition-all active:scale-95 ${
+                  item.mechanic === "video_spotlight"
+                    ? "text-center"
+                    : "text-left"
+                } ${
                   status === "correct"
-                    ? "bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 text-gray-800 shadow-xs"
+                    ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
+                    : "border-gray-200 bg-white text-gray-800 shadow-xs hover:border-indigo-400 hover:bg-indigo-50"
                 }`}
               >
                 {opt}
@@ -191,8 +215,8 @@ export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void
             status === "correct"
               ? "text-green-600"
               : status === "incorrect"
-              ? "text-red-500"
-              : "text-transparent"
+                ? "text-red-500"
+                : "text-transparent"
           }`}
         >
           {feedbackMsg || "placeholder"}
