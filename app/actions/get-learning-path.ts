@@ -39,6 +39,12 @@ export async function getLearningPath(userId: string) {
           createdAt: true,
         },
       },
+      user: {
+        select: {
+          firstName: true,
+          username: true
+        }
+      }
     },
   });
 
@@ -78,6 +84,7 @@ export async function getLearningPath(userId: string) {
     targetLanguage: course.targetLanguage,
     nativeLanguage: course.nativeLanguage,
     lessons,
+    user: course.user,
   };
 }
 

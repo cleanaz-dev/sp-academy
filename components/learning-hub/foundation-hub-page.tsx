@@ -20,6 +20,8 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const router = useRouter();
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
+  const user = path?.user
+
 
   const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
 
@@ -43,6 +45,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
   return (
     <div className="min-h-screen font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
+        name={user?.firstName}
         lang={lang}
         completedCount={completedLessonsCount}
         streak={1} // Replace with actual streak prop when ready

@@ -1,6 +1,7 @@
 import { Flame, Globe2, Trophy } from "lucide-react";
 
 type DashboardHeaderProps = {
+  name?: string | null
   lang: { nativeLanguage: string; targetLanguage: string | null | any };
   completedCount: number;
   streak: number;
@@ -36,7 +37,7 @@ export function DashboardHeader({ lang, completedCount, streak }: DashboardHeade
 
         <div className="max-w-3xl">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Ready to learn today?
+           Hi {} Ready to learn today?
           </h1>
           <p className="mt-2 text-base text-slate-300 sm:text-lg">
             Master essential speech patterns step-by-step through bite-sized interactive audio lessons.
