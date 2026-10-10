@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ArrowRight, AlertCircle } from "lucide-react";
-import { getSceneMediaUrls } from "@/app/actions/scene-media";
+import { getSceneMediaUrls } from "@/app/actions/get-media";
 
 export function CooldownStep({ data, onNext }: { data: any[]; onNext: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
