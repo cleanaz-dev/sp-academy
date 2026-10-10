@@ -9,7 +9,7 @@ interface GetUserFoundationParams {
   courseId: string;
 }
 
-// 1. Exact Prisma Payload Type (includes relations)
+// 1. Exact Prisma Payload Type (includes course, bridge, and user)
 export type UserFoundation = Prisma.FoundationLessonGetPayload<{
   include: {
     course: {
@@ -21,10 +21,16 @@ export type UserFoundation = Prisma.FoundationLessonGetPayload<{
       };
     };
     foundationBridge: true;
+    user: {
+      select: {
+        firstName: true;
+        name: true;
+      };
+    };
   };
 }>;
 
-// 2. The function return type (can be UserFoundation or null)
+// 2. Function return type
 export type GetUserFoundationResult = UserFoundation | null;
 
 export async function getUserFoundation({
@@ -48,6 +54,12 @@ export async function getUserFoundation({
         },
       },
       foundationBridge: true,
+      user: {
+        select: {
+          firstName: true,
+          name: true,
+        },
+      },
     },
   });
 

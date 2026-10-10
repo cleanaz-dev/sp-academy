@@ -69,10 +69,15 @@ function FoundationContent({ foundation }: FoundationContentProps) {
     (foundation.foundationBridge as any)?.wordAudio ||
     {};
 
+    const userFirstName =
+  (foundation as any).user?.firstName ||
+  (foundation as any).user?.name?.split(" ")[0] ||
+  "Learner";
+
   // Profile data payload for queuing the subsequent Spoon
   const profileData = {
     userId,
-    firstName: "Learner",
+    firstName: userFirstName,
     gender: "unspecified",
     nativeLanguage: nativeLang,
     targetLanguage: targetLang,
