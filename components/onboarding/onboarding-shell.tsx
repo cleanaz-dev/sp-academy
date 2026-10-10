@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
-import { LANGUAGES, LEVELS, GOALS, USERNAME_RE, EMAIL_RE } from "./constants";
+import { generateUsername } from "@/lib/username"; // NEW
+import { LANGUAGES, LEVELS, GOALS, EMAIL_RE } from "./constants";
+import { normalizeUsername, validateUsername } from "@/lib/username-validation";
 import { Question } from "./question";
 import { SelectionCard } from "./selection-card";
 import { AccountStep } from "./steps/account-step";
@@ -36,8 +38,10 @@ const LANGUAGE_LOCALE_MAP: Record<string, string> = {
 
 function getLanguageCode(item: any): string {
   if (item?.code && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.code)) return item.code;
-  if (item?.value && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.value)) return item.value;
-  if (item?.name && LANGUAGE_LOCALE_MAP[item.name]) return LANGUAGE_LOCALE_MAP[item.name];
+  if (item?.value && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.value))
+    return item.value;
+  if (item?.name && LANGUAGE_LOCALE_MAP[item.name])
+    return LANGUAGE_LOCALE_MAP[item.name];
   return item?.name ?? "";
 }
 
@@ -73,6 +77,21 @@ export default function OnboardingShell({
   const [level, setLevel] = useState("");
   const [goal, setGoal] = useState("");
 
+  // NEW: user typing goes through this so it's always lowercase
+  const handleUsernameChange = (value: string) => {
+    setUsername(normalizeUsername(value));
+  };
+
+  // NEW: shuffle button handler
+  const shuffleUsername = () => {
+    setUsername(generateUsername());
+  };
+
+  // NEW: suggest a username once on mount, never overwrite what the user typed
+  useEffect(() => {
+    setUsername((prev) => prev || generateUsername());
+  }, []);
+
   // Check for URL errors (like account_not_linked) and display them in the UI
   useEffect(() => {
     if (urlErrorCode) {
@@ -105,11 +124,13 @@ export default function OnboardingShell({
     setEmailValue((prev) => prev || session.user.email || "");
   }, [session?.user]);
 
+  const usernameError = username ? validateUsername(username) : null;
+
   const accountValid =
     !isPending &&
     firstName.trim().length > 0 &&
     lastName.trim().length > 0 &&
-    USERNAME_RE.test(username.trim()) &&
+    validateUsername(username) === null &&
     (hasAccount || (EMAIL_RE.test(emailValue.trim()) && password.length >= 8));
 
   const canContinue =
@@ -179,7 +200,7 @@ export default function OnboardingShell({
         isOnboarding: true,
       });
 
-      router.push("/home");
+      router.push("/learning-hub");
       router.refresh();
     } catch (err) {
       console.error("Failed to save onboarding:", err);
@@ -199,13 +220,14 @@ export default function OnboardingShell({
         const first = firstName.trim();
         const last = lastName.trim();
         const name = `${first} ${last}`;
+        const cleanUsername = normalizeUsername(username); // NEW
 
         if (hasAccount) {
           const { error } = await authClient.updateUser({
             name,
             firstName: first,
             lastName: last,
-            username: username.trim(),
+            username: cleanUsername, // CHANGED
           });
           if (error) throw error;
         } else {
@@ -215,7 +237,7 @@ export default function OnboardingShell({
             name,
             firstName: first,
             lastName: last,
-            username: username.trim(),
+            username: cleanUsername, // CHANGED
           });
           if (error) throw error;
         }
@@ -296,13 +318,15 @@ export default function OnboardingShell({
                     lastName={lastName}
                     setLastName={setLastName}
                     username={username}
-                    setUsername={setUsername}
+                    setUsername={handleUsernameChange} // CHANGED
+                    onShuffleUsername={shuffleUsername} // NEW
                     email={emailValue}
                     setEmail={setEmailValue}
                     password={password}
                     setPassword={setPassword}
                     error={error}
                     onGoogleSignIn={signInWithGoogle}
+                    usernameError={usernameError}
                   />
                 </Question>
               )}

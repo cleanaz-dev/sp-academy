@@ -262,7 +262,7 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center">
             {/* Logo and menu for small screens */}
             <div className="-ml-3 flex items-center gap-2 text-white lg:hidden">
-              <Link href="/home">
+              <Link href="/learning-hub">
                 <Image
                   src="/logo1.png"
                   height={100}

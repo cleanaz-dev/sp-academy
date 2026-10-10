@@ -1,5 +1,8 @@
 "use client";
 
+import { Dices } from "lucide-react";
+import { USERNAME_MAX } from "@/lib/username-validation"; // NEW
+
 interface AccountStepProps {
   hasAccount: boolean;
   isPending: boolean;
@@ -11,6 +14,8 @@ interface AccountStepProps {
   setLastName: (val: string) => void;
   username: string;
   setUsername: (val: string) => void;
+  onShuffleUsername: () => void;
+  usernameError?: string | null; // NEW
   email: string;
   setEmail: (val: string) => void;
   password: string;
@@ -29,6 +34,8 @@ export function AccountStep({
   setLastName,
   username,
   setUsername,
+  onShuffleUsername,
+  usernameError, // NEW
   email,
   setEmail,
   password,
@@ -73,13 +80,37 @@ export function AccountStep({
           />
         </div>
 
-        <Field
-          label="Username"
-          autoComplete="username"
-          placeholder="e.g. spoon_learner"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        {/* NEW: wrapper div so the error sits right under the field */}
+        <div>
+          <Field
+            label="Username"
+            autoComplete="username"
+            placeholder="e.g. spoon_learner"
+            value={username}
+            maxLength={USERNAME_MAX} // NEW
+            onChange={(e) => setUsername(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            trailing={
+              <button
+                type="button"
+                onClick={onShuffleUsername}
+                aria-label="Suggest another username"
+                title="Suggest another username"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition hover:bg-violet-50 hover:text-violet-600"
+              >
+                <Dices className="h-5 w-5" />
+              </button>
+            }
+          />
+          {/* NEW: inline validation message */}
+          {usernameError && (
+            <p className="mt-1.5 text-sm font-medium text-red-600">
+              {usernameError}
+            </p>
+          )}
+        </div>
 
         <Field
           label="Email"
@@ -113,15 +144,24 @@ export function AccountStep({
 
 function Field({
   label,
+  trailing,
   ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+}: {
+  label: string;
+  trailing?: React.ReactNode;
+} & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-bold text-gray-700">{label}</span>
-      <input
-        {...props}
-        className="w-full rounded-2xl border border-gray-100 bg-white px-4 py-3.5 font-medium text-gray-900 shadow-xs outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 read-only:bg-gray-50 read-only:text-gray-500"
-      />
+      <div className="relative">
+        <input
+          {...props}
+          className={`w-full rounded-2xl border border-gray-100 bg-white px-4 py-3.5 font-medium text-gray-900 shadow-xs outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 read-only:bg-gray-50 read-only:text-gray-500 ${
+            trailing ? "pr-12" : ""
+          }`}
+        />
+        {trailing}
+      </div>
     </label>
   );
 }

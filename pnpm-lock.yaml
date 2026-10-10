@@ -275,6 +275,9 @@ importers:
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
+      obscenity:
+        specifier: ^0.4.6
+        version: 0.4.6
       openai:
         specifier: ^6.9.0
         version: 6.9.0(ws@8.18.3)(zod@4.1.12)
@@ -368,6 +371,9 @@ importers:
       tailwind-merge:
         specifier: ^2.5.2
         version: 2.6.0
+      unique-names-generator:
+        specifier: ^4.7.1
+        version: 4.7.1
       unist-util-visit:
         specifier: ^5.0.0
         version: 5.0.0
@@ -5596,6 +5602,10 @@ packages:
     resolution: {integrity: sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==}
     engines: {node: '>= 10'}
 
+  obscenity@0.4.6:
+    resolution: {integrity: sha512-pHk7kNN7j3L3zGhhGnwxjvXIGsPpLrcZl2r58fqWh/V/rH6b/dafscj2sMmAY+A/9/wPsocLmimgGk2DKeKsFQ==}
+    engines: {node: '>=18.0.0'}
+
   ohash@2.0.12:
     resolution: {integrity: sha512-65S/5gk9YSsaRjcyf7Nfa6h/d3E8/1gslpXfI4W7Dxn/oap8IKRuNT5VXkLQ1YFKIEg4apRY4Pj6aiwFzrDdmw==}
 
@@ -6824,6 +6834,10 @@ packages:
 
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
+
+  unique-names-generator@4.7.1:
+    resolution: {integrity: sha512-lMx9dX+KRmG8sq6gulYYpKWZc9RlGsgBR6aoO8Qsm3qvkSJ+3rAymr+TnV8EDMrIrwuFJ4kruzMWM/OpYzPoow==}
+    engines: {node: '>=8'}
 
   unist-util-filter@5.0.1:
     resolution: {integrity: sha512-pHx7D4Zt6+TsfwylH9+lYhBhzyhEnCXs/lbq/Hstxno5z4gVdyc2WEW0asfjGKPyG4pEKrnBv5hdkO6+aRnQJw==}
@@ -13132,6 +13146,8 @@ snapshots:
 
   object-treeify@1.1.33: {}
 
+  obscenity@0.4.6: {}
+
   ohash@2.0.12: {}
 
   on-finished@2.4.1:
@@ -14541,6 +14557,8 @@ snapshots:
       is-plain-obj: 4.1.0
       trough: 2.2.0
       vfile: 6.0.3
+
+  unique-names-generator@4.7.1: {}
 
   unist-util-filter@5.0.1:
     dependencies:

@@ -170,7 +170,7 @@ function FoundationContent({ foundation }: FoundationContentProps) {
               }
 
               // 3. Return user to the hub
-              router.push("/home");
+              router.push("/learning-hub");
               router.refresh();
             }}
           />

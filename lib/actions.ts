@@ -84,7 +84,7 @@ export const recordJournal = async (formData: FormData) => {
     console.error("Failed to record journal:", error);
   }
 
-  redirect("/home");
+  redirect("/learning-hub");
 };
 
 export const recordConversation = async (formData: FormData) => {
@@ -121,7 +121,7 @@ export const recordConversation = async (formData: FormData) => {
     console.error("Failed to record conversation:", error);
   }
 
-  redirect("/home");
+  redirect("/learning-hub");
 };
 
 export const getJournalByUserId = async (userId: string) => {

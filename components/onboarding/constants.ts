@@ -19,5 +19,7 @@ export const GOALS = [
   "Everything",
 ];
 
-export const USERNAME_RE = /^[a-zA-Z0-9_.]{3,30}$/;
+
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export { USERNAME_RE } from "@/lib/username-validation";
