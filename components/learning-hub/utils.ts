@@ -1,4 +1,4 @@
-// components/learning-hub/utils.ts
+
 import { format, isValid } from "date-fns";
 
 export const formatDate = (value: Date | string | null | undefined): string => {
@@ -9,3 +9,7 @@ export const formatDate = (value: Date | string | null | undefined): string => {
 
   return format(date, "MMM d, yyyy"); // e.g. "Oct 8, 2026"
 };
+
+export function vocabWordCount(vocabMoment: unknown): number {
+  return Array.isArray(vocabMoment) ? vocabMoment.length : 0;
+}
