@@ -4,7 +4,7 @@ import { usePronunciation } from "@/context/pronunciation-context";
 import { useSpeak } from "@/hooks/use-speak";
 import { useWordAudio } from "@/context/word-audio-context";
 import { useMatrix } from "@/context/matrix-context";
-import { cleanWord } from "@/components/word-tap"; // adjust path
+import { cleanWord } from "@/components/foundation/word-tap"; 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Mic, Square, Volume2, ArrowRight, Activity, AlertCircle, CheckCircle2, Ear, Loader2 } from "lucide-react";
 
