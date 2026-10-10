@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   ArrowRight,
   BookOpen,
@@ -18,7 +17,6 @@ import {
   Trophy,
   Zap,
   Grid3X3,
-  Volume2,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 import { formatDate } from "./utils"; // Ensure you have this utility
@@ -30,19 +28,13 @@ type Props = {
   lang: { nativeLanguage: string; targetLanguage: string | null | any };
 };
 
-// --- HELPER FUNCTIONS ---
+// --- HELPER FUNCTION ---
 function vocabWordCount(vocabMoment: unknown): number {
   return Array.isArray(vocabMoment) ? vocabMoment.length : 0;
 }
 
-// ⚠️ CHANGE THIS TO YOUR ACTUAL S3 / CLOUDFRONT BASE URL ⚠️
-const getImageUrl = (s3Key?: string) => {
-  if (!s3Key) return "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=800&auto=format&fit=crop"; // Fallback image
-  return `https://your-cloudfront-domain.com/${s3Key}`; 
-};
-
 // ============================================================================
-// 1. MAIN PAGE COMPONENT
+// 1. MAIN PAGE COMPONENT (Now super clean and modular)
 // ============================================================================
 export default function FoundationHubPage({ path, lang }: Props) {
   const router = useRouter();
@@ -90,7 +82,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
               getLessonHref={getLessonHref}
             />
 
-            {/* 🔥 NEW RICH MINI CARDS 🔥 */}
+            {/* Replaced the scrolling list with the new Horizontal Mini Cards */}
             <LearningPathMiniCards 
               lessons={lessons}
               vocabDue={vocabDue}
@@ -157,7 +149,7 @@ function DashboardHeader({ lang, completedCount, streak }: { lang: any, complete
 
 
 // ============================================================================
-// 3. LEARNING PATH MINI CARDS (Rich Image Versions)
+// 3. LEARNING PATH MINI CARDS (Replaces the vertical scrolling list)
 // ============================================================================
 function LearningPathMiniCards({ 
   lessons, 
@@ -178,143 +170,50 @@ function LearningPathMiniCards({
   const lockedLessonIndex = focusLesson ? lessons.findIndex(l => l.id === focusLesson.id) + (isVocabFocus ? 0 : 1) : -1;
   const lockedLesson = lockedLessonIndex >= 0 && lockedLessonIndex < lessons.length ? lessons[lockedLessonIndex] : null;
 
-  // --- EXTRACT RICH DATA (Cast to 'any' internally to support the new JSON fields flexibly) ---
-  const fl = focusLesson as any;
-  const ll = lockedLesson as any;
-
-  // Active Card Data
-  const activeImage = isVocabFocus 
-    ? fl?.bridge?.bridgeScene?.imageS3Key 
-    : fl?.visualContent?.imageS3Key;
-    
-  const activeTheme = isVocabFocus
-    ? fl?.bridge?.handoffFragment?.bridgeLexicon?.join(" • ") || "Vocabulary Review"
-    : fl?.lessonHandoff?.theme || fl?.freestyle?.topic || "Foundation Lesson";
-
-  const activeTarget = isVocabFocus
-    ? `${fl?.bridge?.vocabMoment?.length || 0} words to master`
-    : fl?.grammarContent?.targetSentence || "Core speaking drills";
-
-  // Locked Card Data
-  const lockedIsVocab = ll && ll.completedAt && !ll.bridge?.passed;
-  
-  const lockedImage = lockedIsVocab
-    ? ll?.bridge?.bridgeScene?.imageS3Key
-    : ll?.visualContent?.imageS3Key;
-    
-  const lockedTheme = lockedIsVocab
-    ? "Vocabulary Review"
-    : ll?.lessonHandoff?.theme || ll?.freestyle?.topic || "Foundation Lesson";
-
-
   return (
-    <section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       
-      {/* ==========================================
-          LEFT CARD: CURRENT FOCUS (RICH & COLORFUL)
-          ========================================== */}
-      <div className="group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl shadow-lg ring-1 ring-indigo-500/20 transition-all hover:shadow-xl hover:ring-indigo-500/40">
-        
-        {/* Background Image with Gradient Overlay */}
-        <div className="absolute inset-0 z-0 bg-slate-900">
-          <Image 
-            src={getImageUrl(activeImage)} 
-            alt="Lesson Scene" 
-            fill
-            className="object-cover opacity-60 mix-blend-overlay transition-transform duration-700 group-hover:scale-105 group-hover:opacity-70"
-          />
-          {/* Gradients to ensure text is always readable over the image */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/40 to-transparent" />
-        </div>
-
-        {/* Content (Z-10 keeps it above the image) */}
-        <div className="relative z-10 p-6 flex h-full flex-col justify-between">
-          
-          {/* Top Badge */}
+      {/* LEFT CARD: Current Focus (What they are doing right now) */}
+      <div className="relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 border-indigo-500/20 bg-white p-6 shadow-sm ring-1 ring-indigo-500/10">
+        <div>
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/20 px-3 py-1 text-[10px] font-extrabold text-blue-200 uppercase tracking-wide backdrop-blur-md border border-blue-400/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.8)]" /> 
-              Current Focus
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-extrabold text-blue-700 uppercase tracking-wide">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" /> Current Focus
             </span>
           </div>
-
-          {/* Bottom Text Area */}
-          <div className="mt-4">
-            <h4 className="text-sm font-bold text-blue-300 mb-1 drop-shadow-sm">
-              {isVocabFocus ? `Vocab Bridge ${focusLesson?.orderIndex}` : `Spoon ${focusLesson?.orderIndex}`}
-            </h4>
-            <h3 className="text-xl font-black text-white leading-tight drop-shadow-md line-clamp-2">
-              {activeTheme}
-            </h3>
-            
-            {/* Sneak Peek Data */}
-            <div className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-300">
-              {isVocabFocus ? (
-                <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
-              ) : (
-                <Volume2 className="h-4 w-4 text-emerald-400 shrink-0" />
-              )}
-              <span className="truncate">{activeTarget}</span>
-            </div>
-          </div>
+          <h4 className="mt-4 text-lg font-black text-slate-900">
+            {isVocabFocus ? `Vocab Bridge ${focusLesson?.orderIndex}` : `Spoon ${focusLesson?.orderIndex}`}
+          </h4>
+          <p className="mt-1 text-xs text-slate-500">
+            {isVocabFocus 
+              ? "Master the new words to unlock the next step." 
+              : "Core audio lesson and speaking drills."}
+          </p>
         </div>
         
-        {/* Progress Bar */}
-        <div className="relative z-10 h-1.5 w-full bg-slate-800/50 backdrop-blur-sm">
-          <div className="h-full w-1/2 bg-gradient-to-r from-blue-500 to-indigo-400" />
+        {/* Visual Progress Indicator */}
+        <div className="mt-6 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="w-1/2 bg-blue-500 rounded-full" />
         </div>
       </div>
 
-
-      {/* ==========================================
-          RIGHT CARD: ON DECK (LOCKED & MUTED)
-          ========================================== */}
-      <div className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-        
-        {/* Blurred Greyscale Background Image */}
-        <div className="absolute inset-0 z-0">
-          {lockedLesson && (
-            <>
-              <Image 
-                src={getImageUrl(lockedImage)} 
-                alt="Locked Lesson" 
-                fill
-                className="object-cover opacity-20 grayscale filter blur-[2px]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-100 via-white/80 to-white/50" />
-            </>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 p-6 flex h-full flex-col justify-between">
-          
+      {/* RIGHT CARD: On Deck (What comes next) */}
+      <div className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-slate-50/50 p-6 opacity-90">
+        <div>
           <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/80 px-3 py-1 text-[10px] font-extrabold text-slate-500 uppercase tracking-wide backdrop-blur-sm border border-slate-300/50">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200/70 px-2.5 py-1 text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">
               <Lock className="h-3 w-3" /> Locked
             </span>
           </div>
-
-          <div className="mt-4">
-            <h4 className="text-sm font-bold text-slate-400 mb-1">
-              {lockedLesson 
-                ? (lockedIsVocab ? `Vocab Bridge ${lockedLesson.orderIndex}` : `Spoon ${lockedLesson.orderIndex}`)
-                : 'Next Steps'
-              }
-            </h4>
-            <h3 className="text-xl font-black text-slate-700 leading-tight line-clamp-2">
-              {lockedLesson ? lockedTheme : 'More content coming soon'}
-            </h3>
-            
-            <p className="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
-              <span>Complete current focus to unlock</span>
-            </p>
-          </div>
+          <h4 className="mt-4 text-lg font-black text-slate-400">
+            {isVocabFocus ? `Spoon ${lockedLesson?.orderIndex ?? 'Next'}` : `Vocab Bridge ${lockedLesson?.orderIndex ?? 'Next'}`}
+          </h4>
+          <p className="mt-1 text-xs text-slate-400">
+            Complete your current focus to unlock this content.
+          </p>
         </div>
 
-        {/* Empty Progress Bar */}
-        <div className="relative z-10 h-1.5 w-full bg-slate-200" />
+        <div className="mt-6 flex h-2 w-full overflow-hidden rounded-full bg-slate-200/70" />
       </div>
 
     </section>
