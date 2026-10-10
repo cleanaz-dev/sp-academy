@@ -1,10 +1,28 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { ArrowRight, Volume2 } from "lucide-react";
-import { useWordAudio } from "@/context/word-audio-context"; // adjust path
+import { useWordAudio } from "@/context/word-audio-context";
+import { useMatrix } from "@/context/matrix-context";
+import { useSpeakWord, cleanWord } from "@/components/foundation/word-tap"; // adjust path
 
 export function VocabMomentStep({ data, onNext }: { data: any[]; onNext: () => void }) {
-  const { playWord, activeWord, isPlaying } = useWordAudio();
+  const { activeWord, isPlaying, stopAudio } = useWordAudio();
+  const { trackInteraction } = useMatrix();
+  const speak = useSpeakWord();
+
+  // Matrix: every vocab word shown on this screen counts as "seen" once
+  useEffect(() => {
+    data.forEach((item) => {
+      const key = cleanWord(item.word);
+      if (key) trackInteraction(key, { seen: 1 });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleNext = () => {
+    stopAudio();
+    onNext();
+  };
 
   return (
     <div className="flex flex-col h-full p-8 md:p-12 animate-in fade-in duration-500">
@@ -19,7 +37,7 @@ export function VocabMomentStep({ data, onNext }: { data: any[]; onNext: () => v
           return (
             <button
               key={idx}
-              onClick={() => playWord(item.word)}
+              onClick={() => speak(item.word)}
               className={`group flex flex-col items-center justify-center p-8 border-2 rounded-3xl transition-all shadow-xs hover:shadow-md active:scale-95 text-center ${
                 active
                   ? "border-indigo-400 bg-indigo-50"
@@ -44,7 +62,7 @@ export function VocabMomentStep({ data, onNext }: { data: any[]; onNext: () => v
 
       <div className="mt-auto flex justify-center pt-6 border-t border-gray-100">
         <button
-          onClick={onNext}
+          onClick={handleNext}
           className="w-full sm:w-auto px-12 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-lg flex items-center justify-center gap-2 active:scale-95 shadow-md"
         >
           Begin Cooldown Drills <ArrowRight size={20} />

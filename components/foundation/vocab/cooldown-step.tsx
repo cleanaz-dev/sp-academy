@@ -1,7 +1,35 @@
 "use client";
-import React, { useState } from "react";
-import { ArrowRight, AlertCircle } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowRight, AlertCircle, Volume2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
+import { useWordAudio } from "@/context/word-audio-context";
+import { useMatrix } from "@/context/matrix-context";
+import { WordTap, useSpeakWord, cleanWord } from "@/components/foundation/word-tap"; // adjust path
+
+// Lowercase, strip accents and punctuation, collapse spaces.
+const normalize = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const tokenize = (s: string) =>
+  s
+    .split(/\s+/)
+    .map((t) => t.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+    .filter(Boolean)
+    .map((t, i) => (i === 0 ? t.toLowerCase() : t));
+
+const shuffle = (arr: string[], seed: number) =>
+  arr
+    .map((w, i) => ({ w, k: Math.sin(seed * 9301 + i * 49297 + w.length * 233) }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.w);
+
+const hasLetters = (s: string) => /[\p{L}\p{N}]/u.test(s);
 
 export function CooldownStep({
   data,
@@ -10,38 +38,76 @@ export function CooldownStep({
   data: any[];
   onNext: () => void;
 }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">(
-    "idle",
-  );
-  const [feedbackMsg, setFeedbackMsg] = useState("");
-  const [textInput, setTextInput] = useState(""); // Used for variable_shift
+  const { stopAudio, activeWord } = useWordAudio();
+  const { trackInteraction } = useMatrix();
+  const speak = useSpeakWord();
 
-  // Sign all drill videos once. videoUrls[i] lines up with data[i], "" when there's no video.
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+  const [selected, setSelected] = useState<number[]>([]);
+
   const { urls: videoUrls } = useS3Media(data.map((d) => d.videoS3Key));
 
   const item = data[currentIndex];
   const videoUrl = videoUrls[currentIndex] || undefined;
-  const isMultipleChoice =
-    item.mechanic === "word_coupling" ||
-    item.mechanic === "context_clash" ||
-    item.mechanic === "video_spotlight";
+  const isBuilder = item.mechanic === "variable_shift";
+  const isMultipleChoice = !isBuilder;
+
+  // Matrix: the words shown in this drill count as "seen"
+  useEffect(() => {
+    const words: string[] = [];
+    if (item.targetWord) words.push(cleanWord(item.targetWord));
+    if (item.mechanic === "variable_shift") {
+      tokenize(item.expected?.[0] ?? "").forEach((w) => words.push(cleanWord(w)));
+    }
+    words.filter(Boolean).forEach((w) => trackInteraction(w, { seen: 1 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
+
+  const bank = useMemo(() => {
+    if (!isBuilder) return [] as string[];
+    if (Array.isArray(item.wordBank) && item.wordBank.length > 0) {
+      return shuffle(item.wordBank, currentIndex + 1);
+    }
+
+    const answer = tokenize(item.expected?.[0] ?? "");
+    const seen = new Set(answer.map(normalize));
+    const extras: string[] = [];
+
+    const candidates = [
+      ...tokenize(item.baseSentence ?? ""),
+      ...Object.keys(item.rejectFeedback ?? {}).flatMap(tokenize),
+    ];
+    for (const word of candidates) {
+      const n = normalize(word);
+      if (n && !seen.has(n)) {
+        seen.add(n);
+        extras.push(word);
+      }
+    }
+    return shuffle([...answer, ...extras], currentIndex + 1);
+  }, [item, currentIndex, isBuilder]);
+
+  const placedWords = selected.map((i) => bank[i]);
 
   const handleNextQuestion = () => {
+    stopAudio();
     if (currentIndex < data.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setStatus("idle");
       setFeedbackMsg("");
-      setTextInput("");
+      setSelected([]);
     } else {
       onNext();
     }
   };
 
   const handleMultipleChoiceGuess = (guess: string) => {
-    let isCorrect = false;
+    // Long context_clash sentences are not vocab, so don't count them as "heard words"
+    speak(guess, { track: item.mechanic !== "context_clash" });
 
-    // Normalizing the 'correct' field mismatches from JSON
+    let isCorrect = false;
     if (item.mechanic === "video_spotlight") {
       isCorrect = guess === item.targetWord;
     } else if (Array.isArray(item.correct)) {
@@ -50,38 +116,69 @@ export function CooldownStep({
       isCorrect = item.correct === guess;
     }
 
+    // Matrix: score against the vocab word this drill is testing
+    if (item.targetWord) {
+      trackInteraction(
+        cleanWord(item.targetWord),
+        isCorrect ? { tappedCorrect: 1 } : { tappedWrong: 1 }
+      );
+    }
+
     if (isCorrect) {
       setStatus("correct");
       setFeedbackMsg("✅ Great job! Spot on.");
     } else {
       setStatus("incorrect");
-      const specificHint =
-        item.feedback?.[guess] || item.rejectFeedback?.[guess];
+      const specificHint = item.feedback?.[guess] || item.rejectFeedback?.[guess];
       setFeedbackMsg(`❌ ${specificHint || "Not quite right. Try again!"}`);
     }
   };
 
-  const handleTextInputSubmit = () => {
-    const normalize = (s: string) => s.toLowerCase().trim();
-    const guess = normalize(textInput);
+  const addWord = (bankIndex: number) => {
+    if (status === "correct" || selected.includes(bankIndex)) return;
+    speak(bank[bankIndex]);
+    setSelected((prev) => [...prev, bankIndex]);
+    if (status === "incorrect") {
+      setStatus("idle");
+      setFeedbackMsg("");
+    }
+  };
 
-    const isCorrect = item.expectedFolds?.some(
-      (fold: string) => normalize(fold) === guess,
-    );
+  const removeWord = (bankIndex: number) => {
+    if (status === "correct") return;
+    setSelected((prev) => prev.filter((i) => i !== bankIndex));
+    if (status === "incorrect") {
+      setStatus("idle");
+      setFeedbackMsg("");
+    }
+  };
 
-    if (isCorrect) {
+  const handleBuilderSubmit = () => {
+    const guess = normalize(placedWords.join(" "));
+    const accepted = [...(item.expected ?? []), ...(item.expectedFolds ?? [])].map(normalize);
+    const answerWords = new Set(tokenize(item.expected?.[0] ?? "").map(normalize));
+
+    if (accepted.includes(guess)) {
       setStatus("correct");
       setFeedbackMsg("✅ Perfect adaptation!");
-    } else {
-      setStatus("incorrect");
-      const exactMatchKey = Object.keys(item.rejectFeedback || {}).find(
-        (k) => normalize(k) === guess,
-      );
-      const specificHint = exactMatchKey
-        ? item.rejectFeedback[exactMatchKey]
-        : "Check your grammar or vocabulary and try again.";
-      setFeedbackMsg(`❌ ${specificHint}`);
+      placedWords.forEach((w) => trackInteraction(cleanWord(w), { tappedCorrect: 1 }));
+      speak(placedWords.join(" "), { each: true });
+      return;
     }
+
+    // Matrix: only the distractors they picked count as wrong
+    placedWords
+      .filter((w) => !answerWords.has(normalize(w)))
+      .forEach((w) => trackInteraction(cleanWord(w), { tappedWrong: 1 }));
+
+    setStatus("incorrect");
+    const rejectKey = Object.keys(item.rejectFeedback ?? {}).find(
+      (k) => normalize(k) === guess
+    );
+    const hint = rejectKey
+      ? item.rejectFeedback[rejectKey]
+      : "Not quite. Check the word order and which words you need.";
+    setFeedbackMsg(`❌ ${hint}`);
   };
 
   return (
@@ -112,7 +209,6 @@ export function CooldownStep({
         </div>
       </div>
 
-      {/* Main Question Content */}
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full mb-8">
         {/* Video Spotlight */}
         {item.mechanic === "video_spotlight" && item.videoS3Key && (
@@ -142,68 +238,138 @@ export function CooldownStep({
           </p>
         </div>
 
-        {/* Variable Shift Base Sentence */}
-        {item.mechanic === "variable_shift" && (
-          <div className="mb-8 p-6 bg-white border border-gray-200 rounded-2xl text-center shadow-xs">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-              Base Sentence
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
-              "{item.baseSentence}"
-            </p>
-          </div>
+        {/* Sentence Builder */}
+        {isBuilder && (
+          <>
+            <div className="mb-6 p-6 bg-white border border-gray-200 rounded-2xl text-center shadow-xs">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                Base Sentence
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                {(item.baseSentence ?? "")
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .map((token: string, i: number) =>
+                    hasLetters(token) ? (
+                      <WordTap
+                        key={i}
+                        word={token}
+                        className="px-1.5 py-0.5 text-2xl font-bold text-gray-900"
+                      />
+                    ) : (
+                      <span key={i} className="text-2xl font-bold text-gray-900">
+                        {token}
+                      </span>
+                    )
+                  )}
+                <button
+                  onClick={() => speak(item.baseSentence, { each: true, track: true })}
+                  aria-label="Play full sentence"
+                  className={`ml-2 flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+                    activeWord === item.baseSentence
+                      ? "bg-indigo-600 text-white"
+                      : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                  }`}
+                >
+                  <Volume2 size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Answer tray */}
+            <div
+              className={`mb-4 flex min-h-[76px] flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition-colors ${
+                status === "correct"
+                  ? "border-green-400 bg-green-50"
+                  : status === "incorrect"
+                    ? "border-red-300 bg-red-50/50"
+                    : "border-gray-300 bg-gray-50"
+              }`}
+            >
+              {placedWords.length === 0 && (
+                <span className="text-gray-400 font-medium">
+                  Tap the words below to build your sentence...
+                </span>
+              )}
+              {selected.map((bankIndex) => (
+                <button
+                  key={bankIndex}
+                  onClick={() => removeWord(bankIndex)}
+                  disabled={status === "correct"}
+                  className="rounded-xl border-2 border-indigo-300 bg-white px-4 py-2 text-lg font-bold text-indigo-900 shadow-xs transition-all hover:bg-indigo-50 active:scale-95 disabled:cursor-default"
+                >
+                  {bank[bankIndex]}
+                </button>
+              ))}
+            </div>
+
+            {/* Word bank */}
+            <div className="mb-6 flex flex-wrap justify-center gap-2">
+              {bank.map((word, bankIndex) => {
+                const used = selected.includes(bankIndex);
+                return (
+                  <button
+                    key={bankIndex}
+                    onClick={() => addWord(bankIndex)}
+                    disabled={used || status === "correct"}
+                    className={`rounded-xl border-2 px-4 py-2 text-lg font-bold transition-all active:scale-95 ${
+                      used
+                        ? "cursor-not-allowed border-gray-100 bg-gray-100 text-transparent"
+                        : activeWord === word
+                          ? "border-indigo-400 bg-indigo-50 text-indigo-800 shadow-xs"
+                          : "border-gray-200 bg-white text-gray-800 shadow-xs hover:border-indigo-400 hover:bg-indigo-50"
+                    }`}
+                  >
+                    {word}
+                  </button>
+                );
+              })}
+            </div>
+
+            {status !== "correct" && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSelected([]);
+                    setStatus("idle");
+                    setFeedbackMsg("");
+                  }}
+                  disabled={selected.length === 0}
+                  className="rounded-xl bg-gray-100 px-6 py-4 text-lg font-bold text-gray-600 hover:bg-gray-200 active:scale-95 disabled:opacity-50"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={handleBuilderSubmit}
+                  disabled={selected.length === 0}
+                  className="flex-1 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg shadow-md active:scale-95 disabled:opacity-50"
+                >
+                  Check Answer
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Multiple Choice */}
         {isMultipleChoice && (
-          <div
-            className={
-              item.mechanic === "video_spotlight"
-                ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
-                : "flex flex-col gap-3"
-            }
-          >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {item.options?.map((opt: string, idx: number) => (
               <button
                 key={idx}
                 disabled={status === "correct"}
                 onClick={() => handleMultipleChoiceGuess(opt)}
-                className={`rounded-2xl border-2 p-5 text-lg font-bold transition-all active:scale-95 ${
-                  item.mechanic === "video_spotlight"
-                    ? "text-center"
-                    : "text-left"
-                } ${
+                className={`flex min-h-[72px] items-center justify-center rounded-2xl border-2 p-4 text-center text-base font-bold leading-snug transition-all active:scale-95 sm:text-lg ${
                   status === "correct"
                     ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
-                    : "border-gray-200 bg-white text-gray-800 shadow-xs hover:border-indigo-400 hover:bg-indigo-50"
+                    : activeWord === opt
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-800 shadow-xs"
+                      : "border-gray-200 bg-white text-gray-800 shadow-xs hover:border-indigo-400 hover:bg-indigo-50"
                 }`}
               >
                 {opt}
               </button>
             ))}
-          </div>
-        )}
-
-        {/* Text Input (Variable Shift) */}
-        {!isMultipleChoice && (
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              disabled={status === "correct"}
-              placeholder="Type your adapted sentence here..."
-              className="w-full p-5 text-xl font-medium rounded-2xl border-2 border-gray-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-hidden transition-all bg-gray-50 focus:bg-white"
-            />
-            {status !== "correct" && (
-              <button
-                onClick={handleTextInputSubmit}
-                disabled={!textInput.trim()}
-                className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-lg shadow-md active:scale-95 disabled:opacity-50"
-              >
-                Submit Answer
-              </button>
-            )}
           </div>
         )}
       </div>
