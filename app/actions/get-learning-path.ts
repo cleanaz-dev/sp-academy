@@ -1,21 +1,22 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
 
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+type VisualContent = {
+  imageS3Key?: string;
+  altText?: string;
+} | null;
 
-type VisualContent = { imageS3Key?: string; altText?: string } | null;
-
-async function signImage(key?: string) {
+// Your helper throws on an empty key, so guard it here.
+// Also catch errors so one bad image doesn't break the whole learning path.
+async function safePresign(key?: string): Promise<string | null> {
   if (!key) return null;
-  // If you serve through CloudFront, replace this whole function with:
-  // return `${process.env.CDN_URL}/${key}`;
-  return getSignedUrl(
-    s3,
-    new GetObjectCommand({ Bucket: process.env.S3_BUCKET!, Key: key }),
-    { expiresIn: 60 * 60 }
-  );
+  try {
+    return await getPresignedImageUrl(key);
+  } catch (err) {
+    console.error("[getLearningPath] presign failed for", key, err);
+    return null;
+  }
 }
 
 export async function getLearningPath(userId: string) {
@@ -62,10 +63,10 @@ export async function getLearningPath(userId: string) {
 
   const lessons = await Promise.all(
     course.lessons.map(async ({ visualContent, ...lesson }) => {
-      const visual = visualContent as VisualContent;
+      const visual = visualContent as unknown as VisualContent;
       return {
         ...lesson,
-        imageUrl: await signImage(visual?.imageS3Key),
+        imageUrl: await safePresign(visual?.imageS3Key),
         imageAlt: visual?.altText ?? null,
         bridge: bridgeByIndex.get(lesson.orderIndex) ?? null,
       };
