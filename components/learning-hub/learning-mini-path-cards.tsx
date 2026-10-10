@@ -106,37 +106,28 @@ function CurrentSpoonCard({ lesson }: { lesson: Lesson }) {
 /* ---------- Up next spoon: lightly blurred, no overlay ---------- */
 function UpNextSpoonCard({ lesson }: { lesson: Lesson }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white">
-      {lesson.imageUrl && (
-        <div className="relative aspect-[16/8] w-full shrink-0 overflow-hidden bg-slate-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative aspect-[16/8] w-full shrink-0 bg-slate-100">
+        {lesson.imageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={lesson.imageUrl}
-            alt=""
-            aria-hidden
-            className="h-full w-full scale-105 object-cover blur-[3px]"
-            loading="lazy"
+            alt={lesson.imageAlt ?? ""}
+            className="h-full w-full object-cover"
           />
-          <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-600 uppercase shadow-sm backdrop-blur">
-            <Lock className="h-3 w-3" /> Up Next
-          </span>
-        </div>
-      )}
-      <div className="flex flex-1 flex-col justify-between p-6">
-        <div>
-          {!lesson.imageUrl && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">
-              <Lock className="h-3 w-3" /> Up Next
-            </span>
-          )}
-          <h4 className="mt-3 text-lg font-black text-slate-500">
-            Spoon {lesson.orderIndex}
-          </h4>
-          <p className="mt-1 text-sm font-bold text-slate-600">{lesson.title}</p>
-          <p className="mt-1 text-xs text-slate-400">
-            Complete your current focus to unlock this lesson.
-          </p>
-        </div>
+        )}
+        <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-600 uppercase shadow-sm">
+          <Lock className="h-3 w-3" /> Locked
+        </span>
+      </div>
+      <div className="p-6">
+        <h4 className="text-lg font-black text-slate-900">
+          Spoon {lesson.orderIndex}
+        </h4>
+        <p className="mt-1 text-sm font-bold text-slate-600">{lesson.title}</p>
+        <p className="mt-1 text-xs text-slate-500">
+          Finish your current focus to unlock this lesson.
+        </p>
       </div>
     </div>
   );
