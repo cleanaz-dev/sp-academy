@@ -10,11 +10,11 @@ import {
 } from "lucide-react";
 
 export const navItems = [
-  {
-    label: "Home",
-    href: "/home",
-    icon: <Home strokeWidth={1.5} />,
-  },
+  // {
+  //   label: "Home",
+  //   href: "/home",
+  //   icon: <Home strokeWidth={1.5} />,
+  // },
   {
     label: "Conversation",
     href: "/conversation",
