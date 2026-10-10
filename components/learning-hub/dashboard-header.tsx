@@ -8,7 +8,7 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({ lang, completedCount, streak }: DashboardHeaderProps) {
   return (
-    <header className="relative overflow-hidden  pt-10 pb-20 text-white shadow-xl">
+    <header className="relative overflow-hidden bg-slate-950 pt-10 pb-20 text-white shadow-xl">
 
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">

@@ -41,7 +41,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
   }, [waitingOnVocab, router]);
 
   return (
-    <div className="min-h-screen font-sans text-slate-900 animate-bg">
+    <div className="min-h-screen bg-[#F4F6FC] font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
         lang={lang}
         completedCount={completedLessonsCount}
