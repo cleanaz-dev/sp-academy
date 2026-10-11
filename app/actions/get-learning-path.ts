@@ -42,9 +42,9 @@ export async function getLearningPath(userId: string) {
       user: {
         select: {
           firstName: true,
-          username: true
-        }
-      }
+          username: true,
+        },
+      },
     },
   });
 
@@ -76,8 +76,14 @@ export async function getLearningPath(userId: string) {
         imageAlt: visual?.altText ?? null,
         bridge: bridgeByIndex.get(lesson.orderIndex) ?? null,
       };
-    })
+    }),
   );
+
+  const wordMartix = await prisma.languageProfile.findUnique({
+    where: {
+      userId_languageCode: { userId, languageCode: course.targetLanguage },
+    },
+  });
 
   return {
     courseId: course.id,

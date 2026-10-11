@@ -9,7 +9,7 @@ export async function getUserLanguage(userId: string) {
   return {
     lang: {
       nativeLanguage: user?.nativeLanguage ?? "en-US",
-      targetLanguage: user?.targetLanguage ?? null,
+      targetLanguage: user?.targetLanguage ?? "fr-FR",
     },
   };
 }

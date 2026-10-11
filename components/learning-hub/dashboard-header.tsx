@@ -1,13 +1,18 @@
 import { Flame, Globe2, Trophy } from "lucide-react";
 
 type DashboardHeaderProps = {
-  name?: string | null
+  name?: string | null;
   lang: { nativeLanguage: string; targetLanguage: string | null | any };
   completedCount: number;
   streak: number;
 };
 
-export function DashboardHeader({ lang, completedCount, streak }: DashboardHeaderProps) {
+export function DashboardHeader({
+  lang,
+  completedCount,
+  streak,
+  name,
+}: DashboardHeaderProps) {
   return (
     <header className="relative overflow-hidden bg-slate-950 pt-10 pb-20 text-white shadow-xl">
       <div className="pointer-events-none absolute -top-20 left-1/2 -z-0 h-96 w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-violet-600/35 via-fuchsia-600/25 to-blue-600/30 blur-3xl" />
@@ -18,8 +23,14 @@ export function DashboardHeader({ lang, completedCount, streak }: DashboardHeade
           <div className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold tracking-wide text-slate-200 backdrop-blur-md">
             <Globe2 className="h-4 w-4 text-violet-400" />
             <span>
-              Learning <strong className="text-white uppercase">{lang?.targetLanguage ?? "French"}</strong> from{" "}
-              <span className="text-slate-400">{lang?.nativeLanguage ?? "English"}</span>
+              Learning{" "}
+              <strong className="text-white uppercase">
+                {lang?.targetLanguage ?? "French"}
+              </strong>{" "}
+              from{" "}
+              <span className="text-slate-400">
+                {lang?.nativeLanguage ?? "English"}
+              </span>
             </span>
           </div>
 
@@ -37,10 +48,11 @@ export function DashboardHeader({ lang, completedCount, streak }: DashboardHeade
 
         <div className="max-w-3xl">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-           Hi {} Ready to learn today?
+            Hi {name ?? ""} Ready to learn today?
           </h1>
           <p className="mt-2 text-base text-slate-300 sm:text-lg">
-            Master essential speech patterns step-by-step through bite-sized interactive audio lessons.
+            Master essential speech patterns step-by-step through bite-sized
+            interactive audio lessons.
           </p>
         </div>
       </div>

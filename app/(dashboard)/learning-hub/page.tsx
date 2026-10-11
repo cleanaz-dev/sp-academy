@@ -13,6 +13,8 @@ export default async function Page() {
 
   console.log(`[learning-hub] path for ${user.id}:`, JSON.stringify(path, null, 2));
 
+  console.log(`[learning-hub] lang for ${user.id}:`, JSON.stringify(userLang, null, 2));
+
   // Access the inner `.lang` object and cast to any to bypass the Enum vs String type complaint
-  return <FoundationHubPage path={path} lang={userLang?.lang as any} />;
+  return <FoundationHubPage path={path} lang={userLang as any} />;
 }
