@@ -7,12 +7,32 @@ type DashboardHeaderProps = {
   streak: number;
 };
 
+// Helper function using Native JavaScript (No extra packages needed)
+const getGreeting = () => {
+  const hour = new Date().getHours(); // Returns 0-23 based on local time
+
+  if (hour >= 5 && hour < 12) {
+    return "Good morning";
+  } else if (hour >= 20 || hour < 5) {
+    // 8:00 PM to 4:59 AM
+    return "Up late"; 
+  } else {
+    // 12:00 PM to 7:59 PM
+    return "Hi";
+  }
+};
+
 export function DashboardHeader({
   lang,
   completedCount,
   streak,
   name,
 }: DashboardHeaderProps) {
+  
+  const greeting = getGreeting();
+  // If there's a name, say "Good morning, Name!", otherwise just "Good morning!"
+  const greetingText = name ? `${greeting}, ${name}!` : `${greeting}!`;
+
   return (
     <header className="relative overflow-hidden bg-slate-950 pt-10 pb-20 text-white shadow-xl">
       <div className="pointer-events-none absolute -top-20 left-1/2 -z-0 h-96 w-[900px] -translate-x-1/2 rounded-full bg-gradient-to-tr from-violet-600/35 via-fuchsia-600/25 to-blue-600/30 blur-3xl" />
@@ -48,7 +68,8 @@ export function DashboardHeader({
 
         <div className="max-w-3xl">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Hi {name ?? ""} Ready to learn today?
+            {/* Replaced the hardcoded "Hi" with our dynamic string */}
+            {greetingText} Ready to learn today?
           </h1>
           <p className="mt-2 text-base text-slate-300 sm:text-lg">
             Master essential speech patterns step-by-step through bite-sized

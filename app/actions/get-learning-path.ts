@@ -91,6 +91,7 @@ export async function getLearningPath(userId: string) {
     nativeLanguage: course.nativeLanguage,
     lessons,
     user: course.user,
+    matrix: wordMartix
   };
 }
 
