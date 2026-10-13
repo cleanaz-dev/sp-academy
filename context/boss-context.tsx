@@ -14,43 +14,53 @@ import { convertBlobToWav } from "@/lib/audio-utils";
 import { toast } from "sonner";
 
 // --- TYPES ---
-export type ExerciseType = "MULTIPLE_CHOICE" | "SENTENCE_BUILDER" | "PRONUNCIATION" | "IMAGE_MATCH";
+export type ExerciseType = "CONVERSATION" | "MULTIPLE_CHOICE" | "SENTENCE_BUILDER" | "PRONUNCIATION";
 
-export interface BossExercise {
+export interface PlaylistItem {
   id: string;
   type: ExerciseType;
-  instruction: string;
+  instruction: string; // e.g., "Translate this sentence"
   question?: string;
   options?: string[];
+  correctAnswer?: string | string[];
   scrambledWords?: string[];
   targetText?: string;
 }
 
 export interface BossMessage {
   id: number;
-  role: "assistant" | "user" | "exercise";
+  role: "assistant" | "user" | "exercise" | "system";
   text?: string;
   translation?: string;
-  exercise?: BossExercise; 
+  exercise?: PlaylistItem; 
   status?: "pending" | "correct" | "incorrect";
   isAnalyzingPronunciation?: boolean;
-  pronunciationScore?: any;
 }
 
+export type StageStatus = "PLAYING" | "PASSED" | "FAILED";
+
 interface BossFoundationContextType {
-  session: any; // Contains standard config + scenarioData (the Boss JSON)
+  session: any;
   messages: BossMessage[];
+  
+  // Game Mechanics
+  chances: number;
+  xp: number;
+  currentIndex: number;
+  stageStatus: StageStatus;
+  
+  // Audio & UI States
   isAiProcessing: boolean;
-  canRetry: boolean;
   isProcessing: boolean;
   isRecording: boolean;
   isPlaying: boolean;
   isSpeechLoading: boolean;
   transcript: string;
 
-  submitTurn: () => Promise<void>;
-  submitExerciseAnswer: (exerciseId: string, answer: any) => Promise<void>;
-  handleRetry: () => void;
+  // Actions
+  submitTurn: () => Promise<void>; // For CONVERSATION / voice input
+  submitExerciseAnswer: (answer: any) => Promise<void>; // For Tap-to-select
+  handleTimeOut: () => void; // Triggered when the UI timer hits 0
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
   handleReplay: (text: string) => Promise<void>;
@@ -58,7 +68,6 @@ interface BossFoundationContextType {
 
 const BossFoundationContext = createContext<BossFoundationContextType | undefined>(undefined);
 
-// Emojis show in the chat bubble but must not reach text-to-speech
 const forSpeech = (text: string) =>
   text
     .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, "")
@@ -70,14 +79,19 @@ export function BossFoundationProvider({
   onEnd,
   children,
 }: {
-  session: any;
+  session: any; // Must contain scenarioData.playlist
   onEnd: () => void;
   children: ReactNode;
 }) {
+  // Game State
   const [messages, setMessages] = useState<BossMessage[]>([]);
-  const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [accumulatedMistakes, setAccumulatedMistakes] = useState<any[]>([]);
+  const [chances, setChances] = useState(3);
+  const [xp, setXp] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [stageStatus, setStageStatus] = useState<StageStatus>("PLAYING");
 
+  // Processing State
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const sessionStartTime = useRef<number>(Date.now());
   const isSubmittingRef = useRef(false);
@@ -90,25 +104,168 @@ export function BossFoundationProvider({
     resetSpeechState,
   } = useSpeech();
 
-  const {
-    speak,
-    isPlaying,
-    isLoading: isSpeechLoading,
-    stop: stopAudio,
-  } = useSpeak();
-
+  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
 
-  // Retry is available while recording, or once there's a user turn
-  const canRetry = isRecording || messages.some((m) => m.role === "user");
+  // Derived properties from JSON
+  const playlist: PlaylistItem[] = session?.scenarioData?.playlist || [];
+  const introMessage = session?.scenarioData?.introMessage || "Let's begin your milestone challenge.";
 
-  // Initial greeting
+  // --- 1. INITIALIZATION ---
   useEffect(() => {
-    handleAiTurn(true);
+    startStage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleEndSession = async () => {
+  const startStage = async () => {
+    // Welcome message
+    const welcomeMsg: BossMessage = {
+      id: Date.now(),
+      role: "assistant",
+      text: introMessage,
+    };
+    setMessages([welcomeMsg]);
+    await speak(forSpeech(introMessage), session.targetLanguage, 1.0, session.voiceGender);
+    
+    // Trigger the first item on the playlist
+    setTimeout(() => {
+      presentNextPlaylistItem(0);
+    }, 500);
+  };
+
+  // --- 2. GAME LOOP LOGIC ---
+  const presentNextPlaylistItem = (index: number) => {
+    if (index >= playlist.length) {
+      setStageStatus("PASSED");
+      handleEndSession(true);
+      return;
+    }
+
+    const currentItem = playlist[index];
+    
+    const exerciseMsg: BossMessage = {
+      id: Date.now(),
+      role: "assistant",
+      text: currentItem.instruction,
+      exercise: currentItem,
+      status: "pending"
+    };
+
+    setMessages((prev) => [...prev, exerciseMsg]);
+    speak(forSpeech(currentItem.instruction), session.targetLanguage, 1.0, session.voiceGender);
+  };
+
+  // --- 3. EVALUATION (TAP-TO-SELECT) ---
+  const submitExerciseAnswer = async (userAnswer: any) => {
+    if (stageStatus !== "PLAYING") return;
+    setIsAiProcessing(true);
+    
+    const currentItem = playlist[currentIndex];
+    
+    try {
+      // 🚨 Call backend for AI flavor reaction & validation
+      const res = await fetch("/api/foundation/boss/evaluate-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exercise: currentItem,
+          userAnswer,
+          targetLanguage: session.targetLanguage
+        }),
+      });
+      
+      const data = await res.json();
+      // Expects: { isCorrect: boolean, text: string (e.g., "Good job!" or "Wrong!") }
+
+      processResult(data.isCorrect, data.text, currentItem.id);
+
+    } catch (err) {
+      console.error("Evaluation failed", err);
+      toast.error("Network error, please try again.");
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  // --- 4. EVALUATION (VOICE / CONVERSATION) ---
+  const submitTurn = async () => {
+    if (stageStatus !== "PLAYING") return;
+    
+    const audioBlob = await stopRecording();
+    const userText = transcript.trim();
+    if (!userText) return;
+
+    // Record user text visually
+    const newMsgId = Date.now();
+    setMessages((prev) => [...prev, { id: newMsgId, role: "user", text: userText, isAnalyzingPronunciation: !!audioBlob }]);
+    resetSpeechState();
+    setIsAiProcessing(true);
+
+    const currentItem = playlist[currentIndex];
+
+    try {
+      const res = await fetch("/api/foundation/boss/evaluate-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exercise: currentItem,
+          userText,
+          targetLanguage: session.targetLanguage,
+        }),
+      });
+
+      const data = await res.json();
+      processResult(data.isCorrect, data.text, currentItem.id);
+      
+    } catch (err) {
+      console.error("Failed to evaluate voice turn", err);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  // --- 5. TIME OUT MECHANIC ---
+  const handleTimeOut = () => {
+    if (stageStatus !== "PLAYING") return;
+    const currentItem = playlist[currentIndex];
+    
+    // Automatically fail this item
+    processResult(false, "Too slow! You ran out of time.", currentItem.id);
+  };
+
+  // --- 6. STATE MUTATION (Lives & XP) ---
+  const processResult = async (isCorrect: boolean, aiReactionText: string, exerciseId: string) => {
+    // 1. Mark the visual bubble as correct/incorrect
+    setMessages((prev) => prev.map((m) => 
+      m.exercise?.id === exerciseId ? { ...m, status: isCorrect ? "correct" : "incorrect" } : m
+    ));
+
+    // 2. Output the AI reaction
+    setMessages((prev) => [...prev, { id: Date.now(), role: "assistant", text: aiReactionText }]);
+    await speak(forSpeech(aiReactionText), session.targetLanguage, 1.0, session.voiceGender);
+
+    // 3. Update Game State
+    if (isCorrect) {
+      setXp((prev) => prev + 50);
+    } else {
+      const newChances = chances - 1;
+      setChances(newChances);
+      
+      if (newChances <= 0) {
+        setStageStatus("FAILED");
+        handleEndSession(false);
+        return;
+      }
+    }
+
+    // 4. Move to next exercise (if not dead)
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+    setTimeout(() => presentNextPlaylistItem(nextIndex), 1000);
+  };
+
+  // --- 7. SESSION ENDING ---
+  const handleEndSession = async (passed = false) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
@@ -116,208 +273,29 @@ export function BossFoundationProvider({
     stopAudio();
 
     const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
-    const toastId = toast.loading("Saving Boss Battle...", {
+    const toastId = toast.loading("Saving Milestone...", {
       description: "Calculating your final score.",
     });
 
     try {
-      // 🚨 NEW ROUTE: Boss specific review
-      const res = await fetch("/api/foundation/boss/review", {
+      await fetch("/api/foundation/boss/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...session,
           sessionId: session.id,
-          messages,
-          mistakes: accumulatedMistakes,
+          passed,
+          xp,
           duration,
+          chancesRemaining: chances
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to submit");
-
-      toast.success("Boss Defeated!", {
-        id: toastId,
-        description: "Your results have been saved.",
-      });
-
+      toast.success(passed ? "Milestone Passed!" : "Milestone Failed", { id: toastId });
       onEnd();
     } catch (err) {
       console.error("Failed to submit boss session:", err);
-      toast.error("Uh oh! Something went wrong.", {
-        id: toastId,
-        description: "We couldn't save your progress. Please try again.",
-      });
+      toast.error("Failed to save progress.", { id: toastId });
       isSubmittingRef.current = false;
-    }
-  };
-
-  const handleAiTurn = async (isOpening = false, chatHistory: BossMessage[] = []) => {
-    setIsAiProcessing(true);
-
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    abortControllerRef.current = new AbortController();
-
-    try {
-      // 🚨 NEW ROUTE: Boss specific chat
-      const res = await fetch("/api/foundation/boss/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          ...session, 
-          chatHistory, 
-          isOpening,
-          scenarioData: session.scenarioData // Pass the boss JSON to the AI
-        }),
-        signal: abortControllerRef.current.signal,
-      });
-
-      if (!res.ok) throw new Error("Network/API failure");
-
-      const data = await res.json();
-
-      if (!data || !data.text || data.text.trim() === "") {
-        throw new Error("AI returned empty text");
-      }
-
-      const newAiMessage: BossMessage = {
-        id: Date.now(),
-        role: "assistant",
-        text: data.text,
-        translation: data.translation,
-        exercise: data.exercise, // The AI might append an exercise to this turn!
-      };
-
-      setMessages((prev) => [...prev, newAiMessage]);
-      setIsAiProcessing(false);
-
-      await speak(forSpeech(data.text), session.targetLanguage, 1.0, session.voiceGender);
-    } catch (err: any) {
-      if (err.name === "AbortError") return;
-      console.error(`Boss AI Turn failed:`, err);
-      setIsAiProcessing(false);
-      toast.error("Connection failed", { description: "Please try speaking again." });
-    }
-  };
-
-  // 🚨 NEW METHOD: Submitting a mini-game answer
-  const submitExerciseAnswer = async (exerciseId: string, userAnswer: any) => {
-    setIsAiProcessing(true);
-    
-    try {
-      // 🚨 NEW ROUTE: Boss exercise evaluation
-      const res = await fetch("/api/foundation/boss/evaluate-exercise", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          exerciseId,
-          userAnswer,
-          scenarioData: session.scenarioData,
-          chatHistory: messages
-        }),
-      });
-      
-      const data = await res.json();
-      
-      // Expected Data: { isCorrect: boolean, text: string, nextExercise?: BossExercise }
-
-      // 1. Mark the exercise in the chat as visually correct/incorrect
-      setMessages((prev) => prev.map((m) => 
-        m.exercise?.id === exerciseId 
-          ? { ...m, status: data.isCorrect ? "correct" : "incorrect" } 
-          : m
-      ));
-
-      // 2. Append the AI's verbal reaction (and potentially the next exercise)
-      const newAiMessage: BossMessage = {
-        id: Date.now(),
-        role: "assistant",
-        text: data.text,
-        exercise: data.nextExercise // If present, the UI will render the next block
-      };
-      
-      setMessages((prev) => [...prev, newAiMessage]);
-      
-      // 3. Speak the reaction
-      await speak(forSpeech(data.text), session.targetLanguage, 1.0, session.voiceGender);
-
-    } catch (err) {
-      console.error("Failed to evaluate exercise", err);
-      toast.error("Evaluation failed", { description: "Could not check your answer." });
-    } finally {
-      setIsAiProcessing(false);
-    }
-  };
-
-  const submitTurn = async () => {
-    const audioBlob = await stopRecording();
-    const userText = transcript.trim();
-
-    if (!userText) return;
-
-    const newMsgId = Date.now();
-    const newMsg: BossMessage = {
-      id: newMsgId,
-      role: "user",
-      text: userText,
-      isAnalyzingPronunciation: !!audioBlob,
-    };
-
-    const updatedMessages = [...messages, newMsg];
-    setMessages(updatedMessages);
-    resetSpeechState();
-
-    handleAiTurn(false, updatedMessages);
-
-    // Run pronunciation assessment in background (Optional for boss)
-    if (audioBlob) {
-      analyzePronunciation(audioBlob, userText, newMsgId);
-    }
-  };
-
-  const analyzePronunciation = async (audioBlob: Blob, text: string, messageId: number) => {
-    try {
-      const wavBlob = await convertBlobToWav(audioBlob);
-      const formData = new FormData();
-      formData.append("audio", wavBlob, "recording.wav");
-      formData.append("transcript", text);
-      formData.append("language", session.targetLanguage);
-
-      const res = await fetch("/api/pronunciation-assessment", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Pronunciation assessment failed");
-
-      const scoreData = await res.json();
-
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId
-            ? { ...m, pronunciationScore: scoreData, isAnalyzingPronunciation: false }
-            : m
-        )
-      );
-    } catch (err) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, isAnalyzingPronunciation: false } : m))
-      );
-    }
-  };
-
-  const handleRetry = () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    stopAudio();
-    setIsAiProcessing(false);
-
-    if (isRecording) {
-      stopRecording();
-      resetSpeechState();
-    } else {
-      setMessages((prev) => {
-        const lastUserIndex = prev.map((m) => m.role).lastIndexOf("user");
-        return lastUserIndex !== -1 ? prev.slice(0, lastUserIndex) : prev;
-      });
     }
   };
 
@@ -326,17 +304,20 @@ export function BossFoundationProvider({
       value={{
         session,
         messages,
+        chances,
+        xp,
+        currentIndex,
+        stageStatus,
         isAiProcessing,
-        canRetry,
         isProcessing,
         isRecording,
         isPlaying,
         isSpeechLoading,
         transcript,
         submitTurn,
-        submitExerciseAnswer, // <-- New Function Exported
-        handleRetry,
-        handleEndSession,
+        submitExerciseAnswer,
+        handleTimeOut,
+        handleEndSession: () => handleEndSession(stageStatus === "PASSED"),
         startRecording: () => startSpeech(session.targetLanguage),
         handleReplay: (text: string) =>
           speak(forSpeech(text), session.targetLanguage, 1.0, session.voiceGender),
