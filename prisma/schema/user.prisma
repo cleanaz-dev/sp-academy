@@ -10,7 +10,6 @@ model User {
   firstName       String? // NEW
   lastName        String? // NEW
 
-
   avatarUrl  String?
   phone      String?
   banned     Boolean?  @default(false)
@@ -20,13 +19,13 @@ model User {
   sessions Session[] // NEW
   accounts Account[] // NEW
 
-  role                  UserRole                @default(CUSTOMER)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  role      UserRole @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  nativeLanguage        Languages?              @default(ENGLISH)
-  targetLanguage        Languages?              @default(FRENCH)
-  
+  nativeLanguage Languages? @default(ENGLISH)
+  targetLanguage Languages? @default(FRENCH)
+
   Journal               Journal[]
   StoryQuestions        StoryQuestions[]
   PronunciationSession  PronunciationSession[]
@@ -61,6 +60,7 @@ model User {
   FoundationFreestyleLog FoundationFreestyleLog[]
   languageProfiles       LanguageProfile[]
   foundationCourses      FoundationCourse[]
+  foundationBossStages   FoundationBossStage[]
 }
 
 model BillingInformation {

@@ -31,6 +31,7 @@ export async function getLearningPath(userId: string) {
 
   if (!course) return null;
 
+  // 1. Fetch Bridges
   const bridges = await prisma.foundationBridge.findMany({
     where: { foundationCourseId: course.id, userId },
     orderBy: { bridgeIndex: "asc" },
@@ -39,36 +40,59 @@ export async function getLearningPath(userId: string) {
       passed: true, score: true, attempts: true, completedAt: true, createdAt: true,
     },
   });
-
   const bridgeByIndex = new Map(bridges.map((b) => [b.bridgeIndex, b]));
 
+  // 2. Fetch Boss Stages
+  const bossStages = await prisma.foundationBossStage.findMany({
+    where: { foundationCourseId: course.id, userId },
+    select: {
+      id: true,
+      milestoneIndex: true,
+      status: true,
+      passed: true,
+      targetLessonIds: true,
+      targetBridgeIds: true,
+      scenarioData: true,
+      completedAt: true
+    }
+  });
+  const bossByMilestoneIndex = new Map(bossStages.map((b) => [b.milestoneIndex, b]));
+
+  // 3. Map everything into the Lessons array
   const lessons = await Promise.all(
     course.lessons.map(async ({ visualContent, ...lesson }) => {
       const visual = visualContent as unknown as VisualContent;
+      
+      // Calculate milestone index if it's a multiple of 3
+      const isMilestone = lesson.orderIndex % 3 === 0;
+      const milestoneIndex = isMilestone ? lesson.orderIndex / 3 : null;
+
       return {
         ...lesson,
         imageUrl: await safePresign(visual?.imageS3Key),
         imageAlt: visual?.altText ?? null,
         bridge: bridgeByIndex.get(lesson.orderIndex) ?? null,
+        // Attach the boss stage to the 3rd, 6th, 9th lesson
+        bossStage: milestoneIndex ? (bossByMilestoneIndex.get(milestoneIndex) ?? null) : null,
       };
     }),
   );
 
-  // --- CALCULATE CURRENT FOCUS & NEXT LOCKED ---
+  // --- 4. CALCULATE CURRENT FOCUS & NEXT LOCKED ---
   let currentFocus: { type: "SPOON" | "BRIDGE" | "BOSS", data: typeof lessons[0] } | null = null;
   let nextLocked: { type: "SPOON" | "BRIDGE" | "BOSS", data: typeof lessons[0] } | null = null;
 
   for (let i = 0; i < lessons.length; i++) {
     const lesson = lessons[i];
 
-    // 1. Is the Spoon incomplete?
+    // Check 1: Is the Spoon incomplete?
     if (!lesson.completedAt) {
       currentFocus = { type: "SPOON", data: lesson };
       nextLocked = { type: "BRIDGE", data: lesson };
       break;
     }
 
-    // 2. Is the Vocab Bridge pending OR currently generating?
+    // Check 2: Is the Vocab Bridge pending OR currently generating?
     if (!lesson.bridge || !lesson.bridge.passed) {
       currentFocus = { type: "BRIDGE", data: lesson };
       nextLocked = (lesson.orderIndex % 3 === 0)
@@ -77,12 +101,12 @@ export async function getLearningPath(userId: string) {
       break;
     }
 
-    // 3. Boss Stage Check (Every 3 Spoons)
+    // Check 3: Boss Stage Check (Every 3 Spoons)
     if (lesson.orderIndex % 3 === 0) {
-      // TODO: Replace with your actual DB check for Boss Stage completion later
-      const isBossPassed = false; 
-
-      if (!isBossPassed) {
+      const boss = lesson.bossStage;
+      
+      // If there's no DB record yet, OR it's building, OR it hasn't been passed: lock focus here
+      if (!boss || boss.status === "BUILDING" || !boss.passed) {
         currentFocus = { type: "BOSS", data: lesson };
         nextLocked = lessons[i + 1] ? { type: "SPOON", data: lessons[i + 1] } : null;
         break;
@@ -99,8 +123,8 @@ export async function getLearningPath(userId: string) {
     targetLanguage: course.targetLanguage,
     nativeLanguage: course.nativeLanguage,
     lessons,
-    currentFocus, // <-- Used by MiniCards
-    nextLocked,   // <-- Used by MiniCards
+    currentFocus, 
+    nextLocked,   
     user: course.user,
     matrix: wordMatrix
   };
