@@ -2,21 +2,12 @@
 import { prisma } from "@/lib/prisma";
 import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
 
-type VisualContent = {
-  imageS3Key?: string;
-  altText?: string;
-} | null;
+type VisualContent = { imageS3Key?: string; altText?: string; } | null;
 
-// Your helper throws on an empty key, so guard it here.
-// Also catch errors so one bad image doesn't break the whole learning path.
 async function safePresign(key?: string): Promise<string | null> {
   if (!key) return null;
-  try {
-    return await getPresignedImageUrl(key);
-  } catch (err) {
-    console.error("[getLearningPath] presign failed for", key, err);
-    return null;
-  }
+  try { return await getPresignedImageUrl(key); } 
+  catch (err) { return null; }
 }
 
 export async function getLearningPath(userId: string) {
@@ -30,21 +21,11 @@ export async function getLearningPath(userId: string) {
       lessons: {
         orderBy: { orderIndex: "asc" },
         select: {
-          visualContent: true,
-          title: true,
-          id: true,
-          orderIndex: true,
-          completedAt: true,
-          feedback: true,
-          createdAt: true,
+          visualContent: true, title: true, id: true,
+          orderIndex: true, completedAt: true, feedback: true, createdAt: true,
         },
       },
-      user: {
-        select: {
-          firstName: true,
-          username: true,
-        },
-      },
+      user: { select: { firstName: true, username: true } },
     },
   });
 
@@ -54,14 +35,8 @@ export async function getLearningPath(userId: string) {
     where: { foundationCourseId: course.id, userId },
     orderBy: { bridgeIndex: "asc" },
     select: {
-      id: true,
-      bridgeIndex: true,
-      vocabMoment: true,
-      passed: true,
-      score: true,
-      attempts: true,
-      completedAt: true,
-      createdAt: true,
+      id: true, bridgeIndex: true, vocabMoment: true,
+      passed: true, score: true, attempts: true, completedAt: true, createdAt: true,
     },
   });
 
@@ -79,10 +54,44 @@ export async function getLearningPath(userId: string) {
     }),
   );
 
-  const wordMartix = await prisma.languageProfile.findUnique({
-    where: {
-      userId_languageCode: { userId, languageCode: course.targetLanguage },
-    },
+  // --- CALCULATE CURRENT FOCUS & NEXT LOCKED ---
+  let currentFocus: { type: "SPOON" | "BRIDGE" | "BOSS", data: typeof lessons[0] } | null = null;
+  let nextLocked: { type: "SPOON" | "BRIDGE" | "BOSS", data: typeof lessons[0] } | null = null;
+
+  for (let i = 0; i < lessons.length; i++) {
+    const lesson = lessons[i];
+
+    // 1. Is the Spoon incomplete?
+    if (!lesson.completedAt) {
+      currentFocus = { type: "SPOON", data: lesson };
+      nextLocked = { type: "BRIDGE", data: lesson };
+      break;
+    }
+
+    // 2. Is the Vocab Bridge pending OR currently generating?
+    if (!lesson.bridge || !lesson.bridge.passed) {
+      currentFocus = { type: "BRIDGE", data: lesson };
+      nextLocked = (lesson.orderIndex % 3 === 0)
+        ? { type: "BOSS", data: lesson }
+        : (lessons[i + 1] ? { type: "SPOON", data: lessons[i + 1] } : null);
+      break;
+    }
+
+    // 3. Boss Stage Check (Every 3 Spoons)
+    if (lesson.orderIndex % 3 === 0) {
+      // TODO: Replace with your actual DB check for Boss Stage completion later
+      const isBossPassed = false; 
+
+      if (!isBossPassed) {
+        currentFocus = { type: "BOSS", data: lesson };
+        nextLocked = lessons[i + 1] ? { type: "SPOON", data: lessons[i + 1] } : null;
+        break;
+      }
+    }
+  }
+
+  const wordMatrix = await prisma.languageProfile.findUnique({
+    where: { userId_languageCode: { userId, languageCode: course.targetLanguage } },
   });
 
   return {
@@ -90,11 +99,11 @@ export async function getLearningPath(userId: string) {
     targetLanguage: course.targetLanguage,
     nativeLanguage: course.nativeLanguage,
     lessons,
+    currentFocus, // <-- Used by MiniCards
+    nextLocked,   // <-- Used by MiniCards
     user: course.user,
-    matrix: wordMartix
+    matrix: wordMatrix
   };
 }
 
-export type LearningPath = NonNullable<
-  Awaited<ReturnType<typeof getLearningPath>>
->;
+export type LearningPath = NonNullable<Awaited<ReturnType<typeof getLearningPath>>>;

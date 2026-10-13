@@ -20,20 +20,26 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const router = useRouter();
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
-  const user = path?.user
+  const user = path?.user;
 
 
-  const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
+  // --- NEW ENGINE STATE ---
+  const currentFocus = path?.currentFocus ?? null;
+  const nextLocked = path?.nextLocked ?? null;
 
-  // State calculations
+  // Backwards compatibility for PrimaryHeroCard (so you don't have to rewrite it yet)
+  const vocabDue = currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
+  const nextLesson = currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
+
+  // Keep your existing waiting/polling logic exactly as is!
   const waitingOnVocab = lessons.some((l) => l.completedAt && !l.bridge);
-  const vocabDue = lessons.find((l) => l.completedAt && l.bridge && !l.bridge.passed);
-  const nextLesson = lessons.find((l) => !l.completedAt);
   const completedLessonsCount = lessons.filter((l) => !!l.completedAt).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
     return acc + (l.completedAt && l.bridge ? vocabWordCount(l.bridge.vocabMoment) : 0);
   }, 0);
+
+  const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
 
   // Polling for vocab bridge generation
   useEffect(() => {
@@ -48,7 +54,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
         name={user?.firstName}
         lang={lang}
         completedCount={completedLessonsCount}
-        streak={1} // Replace with actual streak prop when ready
+        streak={1}
       />
 
       <main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-24 lg:px-8">
@@ -63,10 +69,10 @@ export default function FoundationHubPage({ path, lang }: Props) {
               getLessonHref={getLessonHref}
             />
 
+            {/* PASS THE NEW STATE TO MINI CARDS */}
             <LearningPathMiniCards
-              lessons={lessons}
-              vocabDue={vocabDue}
-              nextLesson={nextLesson}
+              currentFocus={currentFocus}
+              nextLocked={nextLocked}
             />
           </div>
 
