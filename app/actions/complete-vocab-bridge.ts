@@ -96,7 +96,7 @@ export async function completeVocabBridge(bridgeId: string) {
         const systemTask = await prisma.systemTask.create({
           data: {
             type: "SPOON_BOSS_GENERATION",
-            meta: {
+            metadata: {
               bossStageId: newBossStage.id,
               userId: user.id,
               courseId: bridge.foundationCourseId

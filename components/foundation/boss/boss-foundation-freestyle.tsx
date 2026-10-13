@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Mic, CheckCircle2, XCircle } from "lucide-react";
-import { useFoundation } from "@/context/foundation-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FoundationFreestyleControls } from "../foundation-freestyle-controls";
 import { FoundationFreestyleChatBubble } from "../foundation-freestye-chat-bubble";
+import { useBossFoundation } from "@/context/boss-context";
 
 // --- TYPES ---
 export type ExerciseType = "MULTIPLE_CHOICE" | "SENTENCE_BUILDER" | "PRONUNCIATION" | "IMAGE_MATCH";
@@ -49,7 +49,7 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
     isSpeechLoading,
     submitTurn,
     startRecording,
-  } = useFoundation();
+  } = useBossFoundation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const aiAvatarUrl = (session as any).aiAvatarUrl as string | undefined;
