@@ -1,6 +1,7 @@
 // api/webhooks/system-tasks/[taskId]/route.ts
 
 import { prisma } from "@/lib/prisma";
+import { handleBossGeneration } from "@/lib/system-tasks/handlers/handle-boss-generation";
 import { handleConversationImages } from "@/lib/system-tasks/handlers/handle-conversation-images";
 import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema";
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
@@ -70,6 +71,10 @@ export async function POST(req: Request, { params }: Params) {
       case SystemTaskType.VOCAB_BRIDGE_GENERATION: {
         // ALMOST DONE
         return await handleVocabBridgeGeneration(task, body);
+      }
+
+      case SystemTaskType.SPOON_BOSS_GENERATION: {
+        return await handleBossGeneration(task,body)
       }
 
       default:
