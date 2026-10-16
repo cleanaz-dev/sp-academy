@@ -55,7 +55,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
   } = useBossFoundation();
 
   // 1. Grab playWord from the context!
-  const { playWord } = useWordAudio();
+  const { playWord, stopAudio: stopWordAudio } = useWordAudio();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -193,7 +193,8 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   resetRecording={resetRecording}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
-                  playWord={playWord}
+                  playWord={playWord}          
+                  stopWordAudio={stopWordAudio}
                 />
               );
             })}
@@ -277,6 +278,7 @@ function ExerciseBlock({
   resolveAssetUrl,
   onSubmitVoice,
   playWord,
+  stopWordAudio,
   resetRecording
 }: any) {
   const exercise = message.exercise;
@@ -387,20 +389,22 @@ function ExerciseBlock({
 
         {(exercise.type === "SENTENCE_BUILDER" ||
           exercise.type === "LISTEN_SENTENCE_BUILDER") && (
-          <SentenceBuilder
+         <SentenceBuilder
             words={exercise.scrambledWords || []}
             expectedCount={exercise.correctAnswer?.length}
             onSubmit={onSubmit}
             playWord={playWord}
+            stopWordAudio={stopWordAudio}
           />
         )}
 
         {exercise.type === "LISTEN_PICTURE_SELECTOR" && (
-          <PictureSelector
+           <PictureSelector
             options={exercise.imageOptions || []}
             resolveAssetUrl={resolveAssetUrl}
             onSubmit={onSubmit}
             playWord={playWord}
+            stopWordAudio={stopWordAudio}
           />
         )}
 
@@ -423,15 +427,19 @@ function ExerciseBlock({
 // ----------------------------------------------------------------------------
 // 1. SENTENCE BUILDER
 // ----------------------------------------------------------------------------
-function SentenceBuilder({ words, expectedCount, onSubmit, playWord }: any) {
+function SentenceBuilder({ words, expectedCount, onSubmit, playWord , stopWordAudio }: any) {
   const [selected, setSelected] = useState<string[]>([]);
   const [available, setAvailable] = useState<string[]>(words);
 
-  const selectWord = (word: string, idx: number) => {
-    playWord(word); // <--- 3. PLAY AUDIO WHEN CLICKED!
+ const selectWord = (word: string, idx: number) => {
+    // Exact logic from ListeningStep
+    if (stopWordAudio) stopWordAudio();
+    if (playWord) playWord(word, "m"); 
+    
     setSelected((prev) => [...prev, word]);
     setAvailable((prev) => prev.filter((_, i) => i !== idx));
   };
+
 
   const removeWord = (word: string, idx: number) => {
     setAvailable((prev) => [...prev, word]);
@@ -492,12 +500,17 @@ function PictureSelector({
   resolveAssetUrl,
   onSubmit,
   playWord,
+  stopWordAudio 
 }: any) {
   
-  const handleClick = (label: string) => {
-    playWord(label); // Read the label out loud!
-    onSubmit(label); // Submit the answer
+const handleClick = (label: string) => {
+    // Exact logic from ListeningStep
+    if (stopWordAudio) stopWordAudio();
+    if (playWord) playWord(label, "m");
+    
+    onSubmit(label);
   };
+  
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4">
       {options.map((opt: ImageOption, idx: number) => (
