@@ -27,6 +27,8 @@ interface ExerciseBlockProps {
   stopWordAudio?: () => void;
 }
 
+
+
 export function ExerciseBlock({
   message,
   onSubmit,
@@ -42,6 +44,9 @@ export function ExerciseBlock({
   stopWordAudio,
   resetRecording,
 }: ExerciseBlockProps) {
+
+  console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
+  
   const exercise = message.exercise;
 
   const initialTime =
