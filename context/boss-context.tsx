@@ -187,12 +187,21 @@ export function BossFoundationProvider({
 
   // Support both new Lambda schema (exerciseBank + boss) and legacy fallback
   const scenarioData = session?.scenarioData || {};
-  const boss: BossPersona | null = scenarioData.boss || null;
+  // Check inside scenarioData FIRST, but fallback to checking the session object directly
+  const boss: BossPersona | null = 
+    scenarioData.boss || session?.boss || null;
+    
   const playlist: PlaylistItem[] =
-    scenarioData.exerciseBank || scenarioData.playlist || [];
+    scenarioData.exerciseBank || 
+    scenarioData.playlist || 
+    session?.exerciseBank || 
+    session?.playlist || 
+    [];
+    
   const introMessage =
     boss?.introMessage ||
     scenarioData.introMessage ||
+    session?.introMessage ||
     "Let's begin your milestone challenge.";
 
   // Play pre-generated S3 audioKey if available, otherwise fall back to TTS
