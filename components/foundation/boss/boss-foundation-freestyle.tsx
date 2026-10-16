@@ -46,7 +46,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     startExercises, // <-- MAKE SURE TO DESTRUCTURE THIS
     submitExerciseAnswer,
     handleTimeOut,
-    submitTurn,      
+    submitTurn,
     startRecording,
     playExerciseAudio,
     resolveAssetUrl,
@@ -70,8 +70,9 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
   }, [messages, transcript, isProcessing, isAiProcessing]);
 
   return (
-    // Flex column that fills the exact height of the container
-    <div className="flex flex-col w-full h-[calc(100vh-6rem)] min-h-[600px] max-w-5xl mx-auto animate-bg rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
+    // 1. THE OUTER WRAPPER: Lock the height so the page CANNOT scroll.
+    // 'h-[calc(100vh-2rem)]' ensures it fits on screen with a tiny bit of margin.
+    <div className="flex flex-col w-full h-[calc(100vh-2rem)] max-h-[900px] max-w-5xl mx-auto bg-slate-50 rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
       {/* 🛑 FAIL OVERLAY (Retry Screen) */}
       {stageStatus === "FAILED" && (
         <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-500">
@@ -101,10 +102,9 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
         </div>
       )}
 
-      {/* 🎮 TOP STATS BAR */}
+      {/* 🎮 TOP STATS BAR (Shrink-0 prevents it from squishing) */}
       <div className="shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col gap-3 z-10 shadow-sm">
         <div className="flex items-center justify-between">
-          {/* Avatar & Boss Name */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
               <img
@@ -118,7 +118,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
             </h4>
           </div>
 
-          {/* Lives (Hearts) */}
           <div className="flex items-center gap-1.5">
             {[1, 2, 3].map((heartIndex) => (
               <Heart
@@ -133,7 +132,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
             ))}
           </div>
 
-          {/* XP Counter */}
           <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
             <Zap size={18} className="text-amber-500 fill-amber-500" />
             <span className="text-amber-600 font-extrabold text-sm">
@@ -142,19 +140,20 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
           </div>
         </div>
 
-        {/* Smooth Progress Bar */}
         <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out"
+            className="h-full bg-amber-400 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
       {/* 💬 CHAT / GAME AREA */}
-      <div className="flex-1 overflow-hidden relative bg-[url('/noise.png')] bg-opacity-5">
-        <ScrollArea className="h-full w-full px-4 sm:px-8 py-6">
-          <div className="space-y-6 max-w-3xl mx-auto pb-4">
+      {/* flex-1 lets it fill remaining space. overflow-hidden stops it from breaking boundaries */}
+      <div className="flex-1 overflow-hidden relative bg-slate-50/50">
+        {/* We add py-10 to the ScrollArea contents so the chat doesn't touch the top/bottom bars */}
+        <ScrollArea className="h-full w-full">
+          <div className="space-y-6 max-w-3xl mx-auto px-4 sm:px-8 py-10">
             {messages.length === 0 && !isProcessing && !isRecording && (
               <div className="flex min-h-[200px] flex-col items-center justify-center text-center opacity-60">
                 <p className="text-sm font-medium text-slate-500">
@@ -180,12 +179,12 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   key={message.id}
                   message={message}
                   onSubmit={submitExerciseAnswer}
+                  onSubmitVoice={submitTurn}
                   onTimeOut={handleTimeOut}
                   isRecording={isRecording}
                   isAiProcessing={isAiProcessing}
                   transcript={transcript}
                   startRecording={startRecording}
-                  onSubmitVoice={submitTurn}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
                 />
@@ -212,9 +211,9 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
           </div>
         </ScrollArea>
       </div>
-      {/* 🛑 BOTTOM ACTION BAR */}
+
+      {/* 🛑 BOTTOM ACTION BAR (Shrink-0 to lock it to bottom) */}
       <div className="shrink-0 bg-white border-t border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 relative z-10">
-        {/* If the user hasn't clicked begin yet, ONLY show this big button */}
         {!hasStartedExercises ? (
           <button
             onClick={startExercises}
@@ -223,7 +222,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
             {isProcessing ? "Skip Intro & Begin" : "I'm Ready, Let's Begin"}
           </button>
         ) : stageStatus === "PLAYING" ? (
-          // If playing, show standard exercise controls
           hasPendingExercise ? (
             <div className="flex-1 flex items-center justify-center px-6 py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
               <span className="text-sm text-slate-500 font-bold uppercase tracking-wider">
@@ -236,7 +234,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
             </div>
           )
         ) : (
-          // If Stage is Failed
           <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-slate-200">
             <p className="text-slate-400 font-bold uppercase tracking-widest">
               Encounter {stageStatus}
@@ -244,7 +241,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
           </div>
         )}
 
-        {/* If Stage is Passed */}
         {stageStatus === "PASSED" && (
           <button
             onClick={onEnd}
@@ -397,13 +393,15 @@ function ExerciseBlock({
           />
         )}
 
-         {exercise.type === "PRONUNCIATION" && (
-          <PronunciationExercise 
-            target={exercise.targetText || ""} 
-            isRecording={isRecording} 
-            transcript={transcript} 
-            startRecording={startRecording} 
-            onPlayReference={() => playExerciseAudio(exercise.audioKey, exercise.targetText)} 
+        {exercise.type === "PRONUNCIATION" && (
+          <PronunciationExercise
+            target={exercise.targetText || ""}
+            isRecording={isRecording}
+            transcript={transcript}
+            startRecording={startRecording}
+            onPlayReference={() =>
+              playExerciseAudio(exercise.audioKey, exercise.targetText)
+            }
             onSubmit={onSubmitVoice} // <--- 4. CHANGE THIS FROM onSubmit TO onSubmitVoice
           />
         )}
@@ -553,10 +551,13 @@ function PronunciationExercise({
       {transcript && (
         <div className="mt-2 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 w-full">
           <p className="text-slate-500 text-sm font-medium">
-            You said: <span className="text-slate-800 font-extrabold">“{transcript}”</span>
+            You said:{" "}
+            <span className="text-slate-800 font-extrabold">
+              “{transcript}”
+            </span>
           </p>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => onSubmit()} // <--- 5. REMOVE THE `transcript` ARGUMENT HERE
             className="mt-4 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all"
           >
