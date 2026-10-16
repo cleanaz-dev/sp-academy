@@ -31,8 +31,8 @@ export default function BossFoundationClient({
 
   if (!hasStarted) {
     return (
-      <div className="flex min-h-[85vh] flex-col items-center justify-center p-6 animate-in fade-in duration-700 bg-animate">
-        
+      <div className="flex min-h-[85vh] flex-col items-center justify-center p-6 animate-in fade-in duration-700 animate-bg">
+
         <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl shadow-indigo-900/10 border border-slate-100 text-center relative overflow-hidden">
           {/* Decorative Background Blob */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-50 rounded-full blur-3xl" />
