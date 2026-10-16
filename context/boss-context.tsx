@@ -185,6 +185,8 @@ export function BossFoundationProvider({
   const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
 
+  console.log("Boss Data Shape:", session)
+
   // Support both new Lambda schema (exerciseBank + boss) and legacy fallback
   const scenarioData = session?.scenarioData || {};
   // Check inside scenarioData FIRST, but fallback to checking the session object directly
