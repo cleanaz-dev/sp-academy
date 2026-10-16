@@ -17,6 +17,7 @@ export function SentenceBuilder({
   playWord,
   stopWordAudio,
 }: SentenceBuilderProps) {
+  console.log("[SentenceBuilder] props playWord:", typeof playWord);
   const [selected, setSelected] = useState<string[]>([]);
   const [available, setAvailable] = useState<string[]>(words);
 
@@ -27,6 +28,7 @@ export function SentenceBuilder({
   }, [words]);
 
   const selectWord = (word: string, index: number) => {
+    console.log("[SentenceBuilder] tap:", word);
     stopWordAudio?.();
     playWord?.(word, "m");
 
