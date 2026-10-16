@@ -101,6 +101,7 @@ export function WordAudioProvider({
   };
 
   const playWord = async (phrase: string, gender: "m" | "f" = "m") => {
+    console.log("[wordAudio] playWord called:", phrase, gender);
     stopAudio();
     const token = playTokenRef.current;
 
@@ -129,6 +130,7 @@ export function WordAudioProvider({
       }
       return;
     }
+    console.log("[wordAudio] keys:", keys, "missing:", keys.filter((k) => !urls[k]), "loadedSample:", Object.keys(urls).slice(0, 3));
 
     fallbackTTS(phrase);
   };
