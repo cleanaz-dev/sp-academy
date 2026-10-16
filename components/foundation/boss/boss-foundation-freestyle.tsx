@@ -46,6 +46,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     startExercises, // <-- MAKE SURE TO DESTRUCTURE THIS
     submitExerciseAnswer,
     handleTimeOut,
+    submitTurn,      
     startRecording,
     playExerciseAudio,
     resolveAssetUrl,
@@ -184,6 +185,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   isAiProcessing={isAiProcessing}
                   transcript={transcript}
                   startRecording={startRecording}
+                  onSubmitVoice={submitTurn}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
                 />
@@ -270,6 +272,7 @@ function ExerciseBlock({
   startRecording,
   playExerciseAudio,
   resolveAssetUrl,
+  onSubmitVoice,
 }: any) {
   const exercise = message.exercise;
   const initialTime =
@@ -394,16 +397,14 @@ function ExerciseBlock({
           />
         )}
 
-        {exercise.type === "PRONUNCIATION" && (
-          <PronunciationExercise
-            target={exercise.targetText || ""}
-            isRecording={isRecording}
-            transcript={transcript}
-            startRecording={startRecording}
-            onPlayReference={() =>
-              playExerciseAudio(exercise.audioKey, exercise.targetText)
-            }
-            onSubmit={onSubmit}
+         {exercise.type === "PRONUNCIATION" && (
+          <PronunciationExercise 
+            target={exercise.targetText || ""} 
+            isRecording={isRecording} 
+            transcript={transcript} 
+            startRecording={startRecording} 
+            onPlayReference={() => playExerciseAudio(exercise.audioKey, exercise.targetText)} 
+            onSubmit={onSubmitVoice} // <--- 4. CHANGE THIS FROM onSubmit TO onSubmitVoice
           />
         )}
       </div>
@@ -552,14 +553,11 @@ function PronunciationExercise({
       {transcript && (
         <div className="mt-2 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 w-full">
           <p className="text-slate-500 text-sm font-medium">
-            You said:{" "}
-            <span className="text-slate-800 font-extrabold">
-              “{transcript}”
-            </span>
+            You said: <span className="text-slate-800 font-extrabold">“{transcript}”</span>
           </p>
-          <button
-            type="button"
-            onClick={() => onSubmit(transcript)}
+          <button 
+            type="button" 
+            onClick={() => onSubmit()} // <--- 5. REMOVE THE `transcript` ARGUMENT HERE
             className="mt-4 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all"
           >
             Submit Audio
