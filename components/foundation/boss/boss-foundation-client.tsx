@@ -8,8 +8,17 @@ import BossFoundationFreestyle from "./boss-foundation-freestyle";
 import { BossData } from "@/app/(dashboard)/foundation/actions/get-boss-data";
 import { BossScenarioData } from "@/lib/boss/schemas";
 import { ShieldAlert, Play, Target, Loader2 } from "lucide-react";
-import { useS3Media } from "@/context/s3-context"; // <--- Import your S3 Hook
+import { useS3Media } from "@/context/s3-context"; 
 import { WordAudioProvider } from "@/context/word-audio-context";
+
+// ADD THIS: Map the DB enums to browser TTS codes!
+const LANGUAGE_MAP: Record<string, string> = {
+  FRENCH: "fr-FR",
+  SPANISH: "es-ES",
+  GERMAN: "de-DE",
+  ITALIAN: "it-IT",
+  ENGLISH: "en-US"
+};
 
 export default function BossFoundationClient({
   session,
@@ -19,7 +28,7 @@ export default function BossFoundationClient({
   const router = useRouter();
   const [hasStarted, setHasStarted] = useState(false);
 
-  const handleEnd = () => router.push("/learning-hub"); // Change to your destination
+  const handleEnd = () => router.push("/learning-hub");
 
   const scenarioData =
     session.scenarioData as unknown as BossScenarioData | null;
@@ -27,29 +36,25 @@ export default function BossFoundationClient({
   const playlist = scenarioData?.exerciseBank || [];
   const totalExercises = playlist.length || 0;
 
-   const targetLang = session?.course?.targetLanguage || (session as any)?.targetLanguage || "fr-FR";
+  // Safely grab the target language and map it to fr-FR
+  const rawLang = session?.course?.targetLanguage || (session as any)?.targetLanguage || "fr-FR";
+  const bcp47Lang = LANGUAGE_MAP[rawLang] || rawLang;
 
-  // 1. Gather EVERY media key used in the entire boss encounter
   const allKeys = useMemo(() => {
-    // Add ?? undefined to convert nulls
     const keys: (string | undefined)[] = [boss?.avatarKey ?? undefined];
-
     playlist.forEach((item) => {
-      keys.push(item.audioKey ?? undefined); // Add ?? undefined
+      keys.push(item.audioKey ?? undefined); 
       if (item.imageOptions) {
         item.imageOptions.forEach((opt) =>
           keys.push(opt.imageKey ?? undefined),
-        ); // Add ?? undefined
+        ); 
       }
     });
-
     return keys;
   }, [boss, playlist]);
 
-  // 2. Pre-fetch them all!
   const { urls, isLoading } = useS3Media(allKeys);
 
-  // Avatar is the very first key we requested (at index 0)
   const resolvedAvatarUrl = urls[0];
   const bossAvatar =
     resolvedAvatarUrl ||
@@ -132,7 +137,8 @@ export default function BossFoundationClient({
           preloadedKeys={allKeys}
           preloadedUrls={urls}
         >
-          <WordAudioProvider targetLang={targetLang}>
+          {/* PASSED THE CORRECT LANGUAGE CODE HERE! */}
+          <WordAudioProvider targetLang={bcp47Lang}>
             <BossFoundationFreestyle onEnd={handleEnd} />
           </WordAudioProvider>
         </BossFoundationProvider>
