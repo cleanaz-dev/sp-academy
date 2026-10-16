@@ -74,7 +74,7 @@ export async function POST(req: Request, { params }: Params) {
       }
 
       case SystemTaskType.SPOON_BOSS_GENERATION: {
-        return await handleBossGeneration(task,body)
+        return await handleBossGeneration(task, body)
       }
 
       default:

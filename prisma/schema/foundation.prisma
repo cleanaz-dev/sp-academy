@@ -2,6 +2,8 @@ enum FoundationLessonStatus {
   BUILDING
   IN_PROGRESS
   COMPLETED
+  FAILED
+  READY
 }
 
 model FoundationCourse {

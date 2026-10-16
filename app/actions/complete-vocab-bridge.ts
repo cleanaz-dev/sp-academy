@@ -3,6 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
 import { createCommand, lambda } from "@/lib/aws/lambda";
+import { toLanguageCode } from "@/lib/languages";
+import { getWordMatrix } from "@/lib/boss/get-word-matrix";
+import { buildBossPayload } from "@/lib/boss/build-boss-payload";
+import { SpoonBossTaskMetadataSchema } from "@/lib/boss/schemas";
+
+const FUNCTION_NAME =
+  process.env.BOSS_BUILDER_LAMBDA_NAME ?? "spoon-boss-builder";
+const EVENT_PAYLOAD_LIMIT_BYTES = 256 * 1024;
 
 export async function completeVocabBridge(bridgeId: string) {
   try {
@@ -20,9 +28,9 @@ export async function completeVocabBridge(bridgeId: string) {
           select: {
             targetLanguage: true,
             nativeLanguage: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!bridge) throw new Error("Bridge not found");
@@ -43,93 +51,142 @@ export async function completeVocabBridge(bridgeId: string) {
     if (bridge.bridgeIndex % 3 === 0) {
       const milestoneIndex = bridge.bridgeIndex / 3;
 
-      // Check if a Boss Stage record already exists (idempotency check)
+      // Check if a Boss Stage record already exists
       const existingBossStage = await prisma.foundationBossStage.findUnique({
         where: {
           foundationCourseId_milestoneIndex: {
             foundationCourseId: bridge.foundationCourseId,
-            milestoneIndex: milestoneIndex,
+            milestoneIndex,
           },
         },
       });
 
-      // If it doesn't exist, we need to create it and invoke the Lambda!
-      if (!existingBossStage) {
-        
-        // A. Grab the last 3 Spoons (Fetch EVERYTHING so Lambda has full context)
-        const targetLessons = await prisma.foundationLesson.findMany({
+      // Trigger if it doesn't exist yet, or if a previous attempt FAILED
+      if (!existingBossStage || existingBossStage.status === "FAILED") {
+        const targetLanguage = toLanguageCode(bridge.course.targetLanguage);
+        const nativeLanguage = toLanguageCode(bridge.course.nativeLanguage);
+
+        const startIndex = bridge.bridgeIndex - 2;
+        const endIndex = bridge.bridgeIndex;
+
+        // A. Fetch only the required columns for the 3 lessons, 3 bridges, plus wordMatrix
+        const [targetLessons, targetBridges, wordMatrix] = await Promise.all([
+          prisma.foundationLesson.findMany({
+            where: {
+              foundationCourseId: bridge.foundationCourseId,
+              orderIndex: { gte: startIndex, lte: endIndex },
+            },
+            orderBy: { orderIndex: "asc" },
+            select: {
+              id: true,
+              title: true,
+              orderIndex: true,
+              lessonHandoff: true,
+              grammarContent: true,
+              freestyle: true,
+            },
+          }),
+
+          prisma.foundationBridge.findMany({
+            where: {
+              foundationCourseId: bridge.foundationCourseId,
+              bridgeIndex: { gte: startIndex, lte: endIndex },
+            },
+            orderBy: { bridgeIndex: "asc" },
+            select: {
+              id: true,
+              foundationLessonId: true,
+              bridgeIndex: true,
+              vocabMoment: true,
+              handoffFragment: true,
+            },
+          }),
+
+          getWordMatrix(user.id, targetLanguage),
+        ]);
+
+        if (targetLessons.length !== 3 || targetBridges.length !== 3) {
+          throw new Error(
+            `Expected 3 lessons and 3 bridges for milestone ${milestoneIndex} ` +
+              `(indices ${startIndex}-${endIndex}), found ${targetLessons.length} lessons and ${targetBridges.length} bridges.`
+          );
+        }
+
+        // B. Upsert the Boss Stage record (handles both brand-new and retrying FAILED stages)
+        const bossStage = await prisma.foundationBossStage.upsert({
           where: {
-            foundationCourseId: bridge.foundationCourseId,
-            orderIndex: {
-              gte: bridge.bridgeIndex - 2,
-              lte: bridge.bridgeIndex,
+            foundationCourseId_milestoneIndex: {
+              foundationCourseId: bridge.foundationCourseId,
+              milestoneIndex,
             },
           },
-          orderBy: { orderIndex: 'asc' }
-        });
-
-        // B. Grab the last 3 Bridges (Fetch EVERYTHING)
-        const targetBridges = await prisma.foundationBridge.findMany({
-          where: {
-            foundationCourseId: bridge.foundationCourseId,
-            bridgeIndex: {
-              gte: bridge.bridgeIndex - 2,
-              lte: bridge.bridgeIndex,
-            },
-          },
-          orderBy: { bridgeIndex: 'asc' }
-        });
-
-        // C. Create the pending Boss Stage record
-        const newBossStage = await prisma.foundationBossStage.create({
-          data: {
+          create: {
             userId: user.id,
             foundationCourseId: bridge.foundationCourseId,
-            milestoneIndex: milestoneIndex,
+            milestoneIndex,
             targetLessonIds: targetLessons.map((l) => l.id),
             targetBridgeIds: targetBridges.map((b) => b.id),
-            status: "BUILDING", // Let the UI know it's generating
+            status: "BUILDING",
+          },
+          update: {
+            targetLessonIds: targetLessons.map((l) => l.id),
+            targetBridgeIds: targetBridges.map((b) => b.id),
+            status: "BUILDING",
+            scenarioData: undefined,
           },
         });
 
-        // D. Create the System Task
+        // C. Validate metadata with Zod & create the System Task
+        const metadata = SpoonBossTaskMetadataSchema.parse({
+          bossStageId: bossStage.id,
+          userId: user.id,
+          courseId: bridge.foundationCourseId,
+          milestoneIndex,
+        });
+
         const systemTask = await prisma.systemTask.create({
           data: {
             type: "SPOON_BOSS_GENERATION",
-            metadata: {
-              bossStageId: newBossStage.id,
-              userId: user.id,
-              courseId: bridge.foundationCourseId
-            }
+            metadata,
           },
         });
 
-        // E. Assemble the complete payload for Lambda
-        const payload = {
+        const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/webhooks/system-tasks/${systemTask.id}`;
+
+        // D. Assemble the slimmed payload via buildBossPayload
+        const payload = buildBossPayload({
           taskId: systemTask.id,
-          bossStageId: newBossStage.id,
-          userId: user.id,
-          courseId: bridge.foundationCourseId,
-          targetLanguage: bridge.course.targetLanguage,
-          nativeLanguage: bridge.course.nativeLanguage,
-          milestoneIndex: milestoneIndex,
-          // We pass the full data so the Python Lambda doesn't need to query the DB
+          bossStageId: bossStage.id,
+          targetLanguage,
+          nativeLanguage,
+          milestoneIndex,
           lessons: targetLessons,
           bridges: targetBridges,
-          // The Lambda will POST back to this URL when it's done processing
-          webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL}/webhooks/system-tasks/${systemTask.id}`
-        };
-
-        // F. Send to Lambda
-        const command = createCommand({
-          functionName: "spoon-boss-builder", // Make sure this matches your deployed AWS Lambda name
-          invocationType: "Event", // "Event" means async (fire and forget)
-          payload: JSON.stringify(payload)
+          wordMatrix,
+          webhookUrl,
         });
-        
+
+        const body = JSON.stringify(payload);
+        const sizeBytes = Buffer.byteLength(body);
+
+        if (sizeBytes > EVENT_PAYLOAD_LIMIT_BYTES) {
+          throw new Error(
+            `Boss payload is ${(sizeBytes / 1024).toFixed(1)} KB, exceeding the 256 KB async Event limit.`
+          );
+        }
+
+        // E. Invoke Lambda asynchronously
+        const command = createCommand({
+          functionName: FUNCTION_NAME,
+          invocationType: "Event",
+          payload: body,
+        });
+
         await lambda.send(command);
 
-        console.log(`🚀 Triggered Boss Stage ${milestoneIndex} generation for task ${systemTask.id}!`);
+        console.log(
+          `🚀 Triggered Boss Stage ${milestoneIndex} (${(sizeBytes / 1024).toFixed(1)} KB) for task ${systemTask.id}!`
+        );
       }
     }
 
