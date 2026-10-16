@@ -49,7 +49,7 @@ export function WordAudioProvider({
     if (keys.length === 0) return;
 
     getWordAudioUrls(keys)
-      .then((newUrls) => setUrls(newUrls))
+      .then((newUrls) => setUrls((prev) => ({ ...prev, ...newUrls })))
       .catch((err) => console.warn("Failed to preload word audio:", err));
 
     return () => {
@@ -100,41 +100,52 @@ export function WordAudioProvider({
     window.speechSynthesis.speak(utterance);
   };
 
-  const playWord = async (phrase: string, gender: "m" | "f" = "m") => {
-    console.log("[wordAudio] playWord called:", phrase, gender);
-    stopAudio();
-    const token = playTokenRef.current;
+const playWord = async (phrase: string, gender: "m" | "f" = "m") => {
+  stopAudio();
+  const token = playTokenRef.current;
 
-    setActiveWord(phrase);
-    setIsPlaying(true);
+  setActiveWord(phrase);
+  setIsPlaying(true);
 
-    // "le voisin" -> ["le", "voisin"], "t'appelle" -> ["tappelle"]
-    const tokens = phrase.split(/\s+/).map(slug).filter(Boolean);
-    const keys = tokens.map(
-      (t) => `foundation/words/${targetLang}/${gender}/${t}.mp3`
-    );
+  const tokens = phrase.split(/\s+/).map(slug).filter(Boolean);
+  const keys = tokens.map(
+    (t) => `foundation/words/${targetLang}/${gender}/${t}.mp3`
+  );
 
-    // Only use recorded audio if EVERY token has a file
-    if (keys.length > 0 && keys.every((k) => urls[k])) {
-      for (const key of keys) {
-        if (token !== playTokenRef.current) return; // cancelled
-        const ok = await playUrl(urls[key]);
-        if (!ok) {
-          if (token === playTokenRef.current) fallbackTTS(phrase);
-          return;
-        }
-      }
-      if (token === playTokenRef.current) {
-        setIsPlaying(false);
-        setActiveWord(null);
-      }
-      return;
+  // Fetch any URLs we don't already have
+  let map = urls;
+  const missing = keys.filter((k) => !map[k]);
+  if (missing.length > 0) {
+    try {
+      const fetched = await getWordAudioUrls(missing);
+      console.log("[wordAudio] fetched on demand:", missing, "->", fetched);
+      map = { ...map, ...fetched };
+      setUrls((prev) => ({ ...prev, ...fetched }));
+    } catch (e) {
+      console.warn("[wordAudio] on-demand fetch failed", e);
     }
-    console.log("[wordAudio] keys:", keys, "missing:", keys.filter((k) => !urls[k]), "loadedSample:", Object.keys(urls).slice(0, 3));
+    if (token !== playTokenRef.current) return; // cancelled while fetching
+  }
 
-    fallbackTTS(phrase);
-  };
+  // Only use recorded audio if EVERY token has a file
+  if (keys.length > 0 && keys.every((k) => map[k])) {
+    for (const key of keys) {
+      if (token !== playTokenRef.current) return;
+      const ok = await playUrl(map[key]);
+      if (!ok) {
+        if (token === playTokenRef.current) fallbackTTS(phrase);
+        return;
+      }
+    }
+    if (token === playTokenRef.current) {
+      setIsPlaying(false);
+      setActiveWord(null);
+    }
+    return;
+  }
 
+  fallbackTTS(phrase);
+};
   return (
     <WordAudioContext.Provider
       value={{ playWord, stopAudio, activeWord, isPlaying, targetLang }}
