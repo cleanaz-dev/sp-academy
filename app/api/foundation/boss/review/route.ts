@@ -1,117 +1,93 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { lambda, createCommand } from "@/lib/aws/lambda";
+// import { lambda, createCommand } from "@/lib/aws/lambda"; // Uncomment when ready to trigger next milestone
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      sessionId,
-      messages,
-      mistakes = [],
+      sessionId, // This maps to FoundationBossStage.id
+      passed,
+      xp,
+      score,
       duration,
-      mode,
-      topic,
-      level,
-      nativeLanguage,
-      targetLanguage,
+      chancesRemaining,
     } = body;
 
-    console.log("sessionId:", sessionId, "duration:", duration);
+    console.log(`Boss Session ${sessionId} ended. Passed: ${passed}, Score: ${score}`);
 
-    if (!sessionId || !messages) {
+    if (!sessionId) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
+        { error: "Missing sessionId" },
+        { status: 400 }
       );
     }
 
-    // 1. Format the full transcript just for easy reading in the DB
-    const fullTranscript = messages
-      .map((m: any) => `[${m.role.toUpperCase()}]: ${m.text}`)
-      .join("\n");
-
-    // 2. Separate the mistakes into 3 distinct buckets for the Lambda (Added .toUpperCase())
-    const grammarAndGenderMistakes = mistakes.filter(
-      (m: any) => 
-        m.category?.toUpperCase() === "GRAMMAR" || 
-        m.category?.toUpperCase() === "GENDER"
-    );
-    const vocabMistakes = mistakes.filter(
-      (m: any) => m.category?.toUpperCase() === "VOCABULARY"
-    );
-    const pronunciationMistakes = mistakes.filter(
-      (m: any) => m.category?.toUpperCase() === "PRONUNCIATION"
-    );
-
-    // 3. Update the session in Prisma
-    const updatedSession = await prisma.freestyleSession.update({
+    // 1. Update the Boss Stage in the database
+    const updatedStage = await prisma.foundationBossStage.update({
       where: { id: sessionId },
       data: {
-        status: "REVIEW_PENDING",
-        duration: duration,
-        fullTranscript: fullTranscript,
-        messages: messages, // Saves the enriched data to the DB!
-      },
-    });
-
-    // 4. Create a SINGLE system task (Lambda will handle the 3 parallel LLM calls)
-    const task = await prisma.systemTask.create({
-      data: {
-        type: "FREESTYLE_REVIEW",
-        metadata: {
-          sessionId,
-          mode,
-          level,
-          nativeLanguage,
-          targetLanguage,
+        passed: passed,
+        score: score,
+        completedAt: passed ? new Date() : undefined, // Only mark completed if they won!
+        attempts: { increment: 1 },                   // Track how many tries it took
+        results: {                                    // Store stats in the JSON column
+          xpAwarded: xp,
+          chancesRemaining,
+          durationSeconds: duration,
         },
       },
     });
 
-    const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/system-tasks/${task.id}`;
+    // 2. (Optional) Award XP to the User Profile
+    // await prisma.user.update({
+    //   where: { id: updatedStage.userId },
+    //   data: { totalXp: { increment: xp } }
+    // });
 
-    // 5. The Payload for Lambda with the separated mistake buckets
-    const payload = {
-      taskId: task.id,
-      sessionId,
-      webhookUrl,
-      mode,
-      topic,
-      level,
-      nativeLanguage,
-      targetLanguage,
-      duration,
-      fullTranscript,
-      messages,
-      // We pass the separated buckets so Lambda can easily fire 3 concurrent calls
-      separatedMistakes: {
-        grammarAndGender: grammarAndGenderMistakes,
-        vocabulary: vocabMistakes,
-        pronunciation: pronunciationMistakes,
-      },
-      // Keep the raw array just in case
-      mistakes,
-    };
+    // 3. IF PASSED: Trigger Lambda to build the NEXT Milestone
+    if (passed) {
+      console.log(`Milestone ${updatedStage.milestoneIndex} defeated! Ready to build Milestone ${updatedStage.milestoneIndex + 1}...`);
+      
+      /*
+      // This is exactly how you'll queue up the next set of lessons autonomously!
+      const nextMilestoneTask = await prisma.systemTask.create({
+        data: {
+          type: "SPOON_BOSS_GENERATION",
+          metadata: {
+            userId: updatedStage.userId,
+            courseId: updatedStage.foundationCourseId,
+            milestoneIndex: updatedStage.milestoneIndex + 1,
+          },
+        },
+      });
 
-    const command = createCommand({
-      functionName: "spoon-freestyle-review",
-      payload,
-      invocationType: "Event",
-    });
+      const payload = {
+        taskId: nextMilestoneTask.id,
+        // ... build your payload for the next milestone ...
+      };
 
-    // 6. Trigger AWS Lambda function (Fire & Forget style)
-    await lambda.send(command);
+      const command = createCommand({
+        functionName: process.env.BOSS_BUILDER_LAMBDA_NAME || "spoon-boss-builder",
+        payload: JSON.stringify(payload),
+        invocationType: "Event", // Async Fire & Forget!
+      });
+
+      await lambda.send(command);
+      */
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Session saved and Lambda review triggered.",
+      message: passed ? "Boss Defeated!" : "Try Again.",
+      stage: updatedStage
     });
+
   } catch (error) {
-    console.error("Review Route Error:", error);
+    console.error("Boss Review Route Error:", error);
     return NextResponse.json(
-      { error: "Failed to process review" },
-      { status: 500 },
+      { error: "Failed to process boss results" },
+      { status: 500 }
     );
   }
 }
