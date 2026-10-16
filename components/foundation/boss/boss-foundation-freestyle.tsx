@@ -22,6 +22,7 @@ import {
 } from "@/context/boss-context";
 import { BossFoundationFreestyleControls } from "./boss-foundation-freestyle-controls";
 import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
+import { useWordAudio } from "@/context/word-audio-context";
 
 interface Props {
   onEnd: () => void;
@@ -51,6 +52,9 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     playExerciseAudio,
     resolveAssetUrl,
   } = useBossFoundation();
+
+  // 1. Grab playWord from the context!
+  const { playWord } = useWordAudio();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -382,6 +386,7 @@ function ExerciseBlock({
             words={exercise.scrambledWords || []}
             expectedCount={exercise.correctAnswer?.length}
             onSubmit={onSubmit}
+            playWord={playWord} // <--- 2. PASS IT DOWN HERE
           />
         )}
 
@@ -390,6 +395,7 @@ function ExerciseBlock({
             options={exercise.imageOptions || []}
             resolveAssetUrl={resolveAssetUrl}
             onSubmit={onSubmit}
+            playWord={playWord}
           />
         )}
 
@@ -413,11 +419,12 @@ function ExerciseBlock({
 // ----------------------------------------------------------------------------
 // 1. SENTENCE BUILDER
 // ----------------------------------------------------------------------------
-function SentenceBuilder({ words, expectedCount, onSubmit }: any) {
+function SentenceBuilder({ words, expectedCount, onSubmit, playWord }: any) {
   const [selected, setSelected] = useState<string[]>([]);
   const [available, setAvailable] = useState<string[]>(words);
 
   const selectWord = (word: string, idx: number) => {
+    playWord(word); // <--- 3. PLAY AUDIO WHEN CLICKED!
     setSelected((prev) => [...prev, word]);
     setAvailable((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -476,13 +483,23 @@ function SentenceBuilder({ words, expectedCount, onSubmit }: any) {
 // ----------------------------------------------------------------------------
 // 2. LISTEN PICTURE SELECTOR
 // ----------------------------------------------------------------------------
-function PictureSelector({ options, resolveAssetUrl, onSubmit }: any) {
+function PictureSelector({
+  options,
+  resolveAssetUrl,
+  onSubmit,
+  playWord,
+}: any) {
+  
+  const handleClick = (label: string) => {
+    playWord(label); // Read the label out loud!
+    onSubmit(label); // Submit the answer
+  };
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4">
       {options.map((opt: ImageOption, idx: number) => (
         <button
           key={idx}
-          onClick={() => onSubmit(opt.label)}
+          onClick={() => handleClick(opt.label)} // Use the new wrapper function
           className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-500 hover:shadow-md transition-all active:scale-95 text-left"
         >
           <div className="aspect-square w-full overflow-hidden bg-slate-100">

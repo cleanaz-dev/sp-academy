@@ -9,6 +9,7 @@ import { BossData } from "@/app/(dashboard)/foundation/actions/get-boss-data";
 import { BossScenarioData } from "@/lib/boss/schemas";
 import { ShieldAlert, Play, Target, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context"; // <--- Import your S3 Hook
+import { WordAudioProvider } from "@/context/word-audio-context";
 
 export default function BossFoundationClient({
   session,
@@ -25,6 +26,8 @@ export default function BossFoundationClient({
   const boss = scenarioData?.boss || null;
   const playlist = scenarioData?.exerciseBank || [];
   const totalExercises = playlist.length || 0;
+
+   const targetLang = session?.course?.targetLanguage || (session as any)?.targetLanguage || "fr-FR";
 
   // 1. Gather EVERY media key used in the entire boss encounter
   const allKeys = useMemo(() => {
@@ -129,7 +132,9 @@ export default function BossFoundationClient({
           preloadedKeys={allKeys}
           preloadedUrls={urls}
         >
-          <BossFoundationFreestyle onEnd={handleEnd} />
+          <WordAudioProvider targetLang={targetLang}>
+            <BossFoundationFreestyle onEnd={handleEnd} />
+          </WordAudioProvider>
         </BossFoundationProvider>
       )}
     </div>
