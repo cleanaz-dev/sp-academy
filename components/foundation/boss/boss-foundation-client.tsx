@@ -11,14 +11,7 @@ import { ShieldAlert, Play, Target, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context"; 
 import { WordAudioProvider } from "@/context/word-audio-context";
 
-// ADD THIS: Map the DB enums to browser TTS codes!
-const LANGUAGE_MAP: Record<string, string> = {
-  FRENCH: "fr-FR",
-  SPANISH: "es-ES",
-  GERMAN: "de-DE",
-  ITALIAN: "it-IT",
-  ENGLISH: "en-US"
-};
+
 
 export default function BossFoundationClient({
   session,
@@ -38,7 +31,9 @@ export default function BossFoundationClient({
 
   // Safely grab the target language and map it to fr-FR
   const rawLang = session?.course?.targetLanguage || (session as any)?.targetLanguage || "fr-FR";
-  const bcp47Lang = LANGUAGE_MAP[rawLang] || rawLang;
+  
+  console.log("Target Language:", session?.course?.targetLanguage)
+  console.log(" Raw Target Language:", rawLang)
 
   const allKeys = useMemo(() => {
     const keys: (string | undefined)[] = [boss?.avatarKey ?? undefined];
@@ -138,7 +133,7 @@ export default function BossFoundationClient({
           preloadedUrls={urls}
         >
           {/* PASSED THE CORRECT LANGUAGE CODE HERE! */}
-          <WordAudioProvider targetLang={bcp47Lang}>
+          <WordAudioProvider targetLang={rawLang}>
             <BossFoundationFreestyle onEnd={handleEnd} />
           </WordAudioProvider>
         </BossFoundationProvider>
