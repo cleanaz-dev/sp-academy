@@ -8,10 +8,9 @@ import BossFoundationFreestyle from "./boss-foundation-freestyle";
 import { BossData } from "@/app/(dashboard)/foundation/actions/get-boss-data";
 import { BossScenarioData } from "@/lib/boss/schemas";
 import { ShieldAlert, Play, Target, Loader2 } from "lucide-react";
-import { useS3Media } from "@/context/s3-context"; 
+import { useS3Media } from "@/context/s3-context";
 import { WordAudioProvider } from "@/context/word-audio-context";
-
-
+import { MatrixProvider } from "@/context/matrix-context";
 
 export default function BossFoundationClient({
   session,
@@ -30,19 +29,22 @@ export default function BossFoundationClient({
   const totalExercises = playlist.length || 0;
 
   // Safely grab the target language and map it to fr-FR
-  const rawLang = session?.course?.targetLanguage || (session as any)?.targetLanguage || "fr-FR";
-  
-  console.log("Target Language:", session?.course?.targetLanguage)
-  console.log(" Raw Target Language:", rawLang)
+  const rawLang =
+    session?.course?.targetLanguage ||
+    (session as any)?.targetLanguage ||
+    "fr-FR";
+
+  console.log("Target Language:", session?.course?.targetLanguage);
+  console.log(" Raw Target Language:", rawLang);
 
   const allKeys = useMemo(() => {
     const keys: (string | undefined)[] = [boss?.avatarKey ?? undefined];
     playlist.forEach((item) => {
-      keys.push(item.audioKey ?? undefined); 
+      keys.push(item.audioKey ?? undefined);
       if (item.imageOptions) {
         item.imageOptions.forEach((opt) =>
           keys.push(opt.imageKey ?? undefined),
-        ); 
+        );
       }
     });
     return keys;
@@ -133,9 +135,11 @@ export default function BossFoundationClient({
           preloadedUrls={urls}
         >
           {/* PASSED THE CORRECT LANGUAGE CODE HERE! */}
-          <WordAudioProvider targetLang={rawLang}>
-            <BossFoundationFreestyle onEnd={handleEnd} />
-          </WordAudioProvider>
+          <MatrixProvider>
+            <WordAudioProvider targetLang={rawLang}>
+              <BossFoundationFreestyle onEnd={handleEnd} />
+            </WordAudioProvider>
+          </MatrixProvider>
         </BossFoundationProvider>
       )}
     </div>
