@@ -90,11 +90,16 @@ interface BossFoundationContextType {
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
   handleReplay: (text: string) => Promise<void>;
-  playExerciseAudio: (audioKey?: string | null, fallbackText?: string | null) => Promise<void>;
+  playExerciseAudio: (
+    audioKey?: string | null,
+    fallbackText?: string | null,
+  ) => Promise<void>;
   resolveAssetUrl: (key?: string | null) => string;
 }
 
-const BossFoundationContext = createContext<BossFoundationContextType | undefined>(undefined);
+const BossFoundationContext = createContext<
+  BossFoundationContextType | undefined
+>(undefined);
 
 const LANGUAGE_CODES: Record<string, string> = {
   FRENCH: "fr-FR",
@@ -107,32 +112,68 @@ const forSpeech = (text: string) =>
   text
     .replace(/\*[^*]+\*/g, "")
     .replace(/[«»]/g, "")
-    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu, "")
+    .replace(
+      /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu,
+      "",
+    )
     .replace(/\s{2,}/g, " ")
     .trim();
 
 export const resolveAssetUrl = (key?: string | null): string => {
   if (!key) return "";
-  if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("/")) return key;
-  const baseUrl = (process.env.NEXT_PUBLIC_S3_CDN_URL || process.env.NEXT_PUBLIC_ASSET_URL || "").replace(/\/$/, "");
+  if (
+    key.startsWith("http://") ||
+    key.startsWith("https://") ||
+    key.startsWith("/")
+  )
+    return key;
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_S3_CDN_URL ||
+    process.env.NEXT_PUBLIC_ASSET_URL ||
+    ""
+  ).replace(/\/$/, "");
   return baseUrl ? `${baseUrl}/${key}` : `/${key}`;
 };
 
-function checkDeterministicAnswer(item: PlaylistItem, userAnswer: any): boolean {
-  if (item.type === "MULTIPLE_CHOICE" || item.type === "LISTEN_PICTURE_SELECTOR") {
+function checkDeterministicAnswer(
+  item: PlaylistItem,
+  userAnswer: any,
+): boolean {
+  if (
+    item.type === "MULTIPLE_CHOICE" ||
+    item.type === "LISTEN_PICTURE_SELECTOR"
+  ) {
     return String(userAnswer).trim() === String(item.correctAnswer).trim();
   }
-  if (item.type === "SENTENCE_BUILDER" || item.type === "LISTEN_SENTENCE_BUILDER") {
-    if (!Array.isArray(userAnswer) || !Array.isArray(item.correctAnswer)) return false;
+  if (
+    item.type === "SENTENCE_BUILDER" ||
+    item.type === "LISTEN_SENTENCE_BUILDER"
+  ) {
+    if (!Array.isArray(userAnswer) || !Array.isArray(item.correctAnswer))
+      return false;
     return (
       userAnswer.length === item.correctAnswer.length &&
-      userAnswer.every((word, idx) => word.trim() === item.correctAnswer![idx].trim())
+      userAnswer.every(
+        (word, idx) => word.trim() === item.correctAnswer![idx].trim(),
+      )
     );
   }
   return false;
 }
 
-export function BossFoundationProvider({ session, onEnd, children }: { session: any; onEnd: () => void; children: ReactNode; }) {
+export function BossFoundationProvider({
+  session,
+  onEnd,
+  preloadedKeys, // <--- ADD THIS
+  preloadedUrls, // <--- ADD THIS
+  children,
+}: {
+  session: any;
+  onEnd: () => void;
+  preloadedKeys: (string | undefined)[];
+  preloadedUrls: string[];
+  children: ReactNode;
+}) {
   const [messages, setMessages] = useState<BossMessage[]>([]);
   const [chances, setChances] = useState(3);
   const [xp, setXp] = useState(0);
@@ -151,46 +192,114 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
   const scoreRef = useRef(0);
   const stageStatusRef = useRef<StageStatus>("PLAYING");
 
-  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-  useEffect(() => { chancesRef.current = chances; }, [chances]);
-  useEffect(() => { scoreRef.current = score; }, [score]);
-  useEffect(() => { stageStatusRef.current = stageStatus; }, [stageStatus]);
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+  useEffect(() => {
+    chancesRef.current = chances;
+  }, [chances]);
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
+  useEffect(() => {
+    stageStatusRef.current = stageStatus;
+  }, [stageStatus]);
 
-  const { startRecording: startSpeech, stopRecording, isRecording, transcript, resetSpeechState } = useSpeech();
-  const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
+  const {
+    startRecording: startSpeech,
+    stopRecording,
+    isRecording,
+    transcript,
+    resetSpeechState,
+  } = useSpeech();
+  const {
+    speak,
+    isPlaying,
+    isLoading: isSpeechLoading,
+    stop: stopAudio,
+  } = useSpeak();
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
 
-  const bcp47Language = LANGUAGE_CODES[session?.targetLanguage] || session?.targetLanguage || "fr-FR";
+  const bcp47Language =
+    LANGUAGE_CODES[session?.targetLanguage] ||
+    session?.targetLanguage ||
+    "fr-FR";
   const scenarioData = (session?.scenarioData as any) || {};
   const boss: BossPersona | null = scenarioData.boss || session?.boss || null;
-  const playlist: PlaylistItem[] = scenarioData.exerciseBank || scenarioData.playlist || session?.exerciseBank || session?.playlist || [];
-  const introMessage = boss?.introMessage || scenarioData.introMessage || session?.introMessage || "Let's begin your milestone challenge.";
+  const playlist: PlaylistItem[] =
+    scenarioData.exerciseBank ||
+    scenarioData.playlist ||
+    session?.exerciseBank ||
+    session?.playlist ||
+    [];
+  const introMessage =
+    boss?.introMessage ||
+    scenarioData.introMessage ||
+    session?.introMessage ||
+    "Let's begin your milestone challenge.";
 
-  const playExerciseAudio = useCallback(async (audioKey?: string | null, fallbackText?: string | null) => {
-    if (audioKey) {
-      try {
-        if (audioRef.current) audioRef.current.pause();
-        const url = resolveAssetUrl(audioKey);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        await audio.play();
-        return;
-      } catch (err) {
-        console.warn("AudioKey playback failed, falling back to TTS:", err);
+  const resolveAssetUrl = useCallback((key?: string | null): string => {
+    if (!key) return "";
+    // If it's already a full URL, just return it
+    if (key.startsWith("http://") || key.startsWith("https://") || key.startsWith("blob:")) return key;
+
+    // Convert null to undefined so TypeScript allows the indexOf check
+    const index = preloadedKeys.indexOf(key ?? undefined);
+    
+    if (index !== -1 && preloadedUrls[index]) {
+      return preloadedUrls[index];
+    }
+
+    // Fallback just in case
+    const baseUrl = (process.env.NEXT_PUBLIC_S3_CDN_URL || process.env.NEXT_PUBLIC_ASSET_URL || "").replace(/\/$/, "");
+    return baseUrl ? `${baseUrl}/${key}` : `/${key}`;
+  }, [preloadedKeys, preloadedUrls]);
+
+  const playExerciseAudio = useCallback(
+    async (audioKey?: string | null, fallbackText?: string | null) => {
+      if (audioKey) {
+        try {
+          if (audioRef.current) audioRef.current.pause();
+
+          // 2. This will now use your preloaded S3 URL instantly!
+          const url = resolveAssetUrl(audioKey);
+
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          await audio.play();
+          return;
+        } catch (err) {
+          console.warn("AudioKey playback failed, falling back to TTS:", err);
+        }
       }
-    }
-    if (fallbackText) {
-      await speak(forSpeech(fallbackText), bcp47Language, 1.0, session?.voiceGender);
-    }
-  }, [bcp47Language, session?.voiceGender, speak]);
+      if (fallbackText) {
+        await speak(
+          forSpeech(fallbackText),
+          bcp47Language,
+          1.0,
+          session?.voiceGender,
+        );
+      }
+    },
+    [bcp47Language, session?.voiceGender, speak, resolveAssetUrl],
+  );
 
   // --- 1. INITIALIZATION ---
   useEffect(() => {
     let mounted = true;
     const startStage = async () => {
-      const welcomeMsg: BossMessage = { id: Date.now(), role: "assistant", text: introMessage };
+      const welcomeMsg: BossMessage = {
+        id: Date.now(),
+        role: "assistant",
+        text: introMessage,
+      };
       setMessages([welcomeMsg]);
-      await speak(forSpeech(introMessage), bcp47Language, 1.0, session?.voiceGender);
+      await speak(
+        forSpeech(introMessage),
+        bcp47Language,
+        1.0,
+        session?.voiceGender,
+      );
       // NOTE: We no longer auto-trigger presentNextPlaylistItem(0) here!
     };
     startStage();
@@ -201,26 +310,33 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
   }, []);
 
   // --- 2. GAME LOOP LOGIC ---
-  const presentNextPlaylistItem = useCallback((index: number) => {
-    if (index >= playlist.length) {
-      setStageStatus("PASSED");
-      handleEndSession(true);
-      return;
-    }
-    const currentItem = playlist[index];
-    const exerciseMsg: BossMessage = {
-      id: Date.now() + index,
-      role: "assistant",
-      text: currentItem.instruction,
-      exercise: currentItem,
-      status: "pending",
-    };
-    setMessages((prev) => [...prev, exerciseMsg]);
+  const presentNextPlaylistItem = useCallback(
+    (index: number) => {
+      if (index >= playlist.length) {
+        setStageStatus("PASSED");
+        handleEndSession(true);
+        return;
+      }
+      const currentItem = playlist[index];
+      const exerciseMsg: BossMessage = {
+        id: Date.now() + index,
+        role: "assistant",
+        text: currentItem.instruction,
+        exercise: currentItem,
+        status: "pending",
+      };
+      setMessages((prev) => [...prev, exerciseMsg]);
 
-    if (currentItem.type === "LISTEN_SENTENCE_BUILDER" || currentItem.type === "LISTEN_PICTURE_SELECTOR" || (currentItem.type === "PRONUNCIATION" && currentItem.targetText)) {
-      playExerciseAudio(currentItem.audioKey, currentItem.targetText);
-    }
-  }, [playlist, playExerciseAudio]);
+      if (
+        currentItem.type === "LISTEN_SENTENCE_BUILDER" ||
+        currentItem.type === "LISTEN_PICTURE_SELECTOR" ||
+        (currentItem.type === "PRONUNCIATION" && currentItem.targetText)
+      ) {
+        playExerciseAudio(currentItem.audioKey, currentItem.targetText);
+      }
+    },
+    [playlist, playExerciseAudio],
+  );
 
   // --- START BUTTON ACTION ---
   const startExercises = useCallback(() => {
@@ -244,12 +360,20 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
       const res = await fetch("/api/foundation/boss/evaluate-exercise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ exercise: currentItem, userAnswer, isCorrect: localIsCorrect, bossPersona: boss, targetLanguage: bcp47Language }),
+        body: JSON.stringify({
+          exercise: currentItem,
+          userAnswer,
+          isCorrect: localIsCorrect,
+          bossPersona: boss,
+          targetLanguage: bcp47Language,
+        }),
       });
       if (!res.ok) throw new Error("Evaluation endpoint failed");
       const data = await res.json();
-      const finalIsCorrect = typeof data.isCorrect === "boolean" ? data.isCorrect : !!localIsCorrect;
-      const reactionText = data.text || (finalIsCorrect ? "Bien." : "Non, ce n'est pas exact.");
+      const finalIsCorrect =
+        typeof data.isCorrect === "boolean" ? data.isCorrect : !!localIsCorrect;
+      const reactionText =
+        data.text || (finalIsCorrect ? "Bien." : "Non, ce n'est pas exact.");
       await processResult(finalIsCorrect, reactionText, currentItem.id);
     } catch (err) {
       console.error("Evaluation failed", err);
@@ -265,7 +389,15 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
     const userText = transcript.trim();
     if (!userText && !audioBlob) return;
     const newMsgId = Date.now();
-    setMessages((prev) => [...prev, { id: newMsgId, role: "user", text: userText, isAnalyzingPronunciation: !!audioBlob }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: newMsgId,
+        role: "user",
+        text: userText,
+        isAnalyzingPronunciation: !!audioBlob,
+      },
+    ]);
     resetSpeechState();
     setIsAiProcessing(true);
     const currentItem = playlist[currentIndexRef.current];
@@ -275,9 +407,15 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
       if (audioBlob) {
         const formData = new FormData();
         formData.append("audio", audioBlob);
-        formData.append("transcript", currentItem.targetText || userText || "bonjour");
+        formData.append(
+          "transcript",
+          currentItem.targetText || userText || "bonjour",
+        );
         formData.append("language", bcp47Language);
-        const azureRes = await fetch("/api/foundation/boss/pronunciation", { method: "POST", body: formData });
+        const azureRes = await fetch("/api/foundation/boss/pronunciation", {
+          method: "POST",
+          body: formData,
+        });
         if (azureRes.ok) {
           const azureData = await azureRes.json();
           finalIsCorrect = azureData.score >= 60;
@@ -290,7 +428,13 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
       const llmRes = await fetch("/api/foundation/boss/evaluate-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ exercise: currentItem, userText, isCorrect: finalIsCorrect, bossPersona: boss, targetLanguage: bcp47Language }),
+        body: JSON.stringify({
+          exercise: currentItem,
+          userText,
+          isCorrect: finalIsCorrect,
+          bossPersona: boss,
+          targetLanguage: bcp47Language,
+        }),
       });
       const data = await llmRes.json();
       await processResult(data.isCorrect, data.text, currentItem.id);
@@ -308,11 +452,29 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
     processResult(false, "Trop lent ! Time is up.", currentItem.id);
   }, [playlist]);
 
-  const processResult = async (isCorrect: boolean, aiReactionText: string, exerciseId: string) => {
-    setMessages((prev) => prev.map((m) => m.exercise?.id === exerciseId ? { ...m, status: isCorrect ? "correct" : "incorrect" } : m));
+  const processResult = async (
+    isCorrect: boolean,
+    aiReactionText: string,
+    exerciseId: string,
+  ) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.exercise?.id === exerciseId
+          ? { ...m, status: isCorrect ? "correct" : "incorrect" }
+          : m,
+      ),
+    );
     if (aiReactionText) {
-      setMessages((prev) => [...prev, { id: Date.now(), role: "assistant", text: aiReactionText }]);
-      await speak(forSpeech(aiReactionText), bcp47Language, 1.0, session?.voiceGender);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now(), role: "assistant", text: aiReactionText },
+      ]);
+      await speak(
+        forSpeech(aiReactionText),
+        bcp47Language,
+        1.0,
+        session?.voiceGender,
+      );
     }
     if (isCorrect) {
       setXp((prev) => prev + 50);
@@ -340,14 +502,25 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
     stopAudio();
     audioRef.current?.pause();
     const duration = Math.round((Date.now() - sessionStartTime.current) / 1000);
-    const toastId = toast.loading("Saving Milestone...", { description: "Calculating your final score." });
+    const toastId = toast.loading("Saving Milestone...", {
+      description: "Calculating your final score.",
+    });
     try {
       await fetch("/api/foundation/boss/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: session.id, passed, xp, score: scoreRef.current, duration, chancesRemaining: chancesRef.current }),
+        body: JSON.stringify({
+          sessionId: session.id,
+          passed,
+          xp,
+          score: scoreRef.current,
+          duration,
+          chancesRemaining: chancesRef.current,
+        }),
       });
-      toast.success(passed ? "Milestone Passed!" : "Milestone Failed", { id: toastId });
+      toast.success(passed ? "Milestone Passed!" : "Milestone Failed", {
+        id: toastId,
+      });
       onEnd();
     } catch (err) {
       console.error("Failed to submit boss session:", err);
@@ -359,11 +532,33 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
   return (
     <BossFoundationContext.Provider
       value={{
-        session, boss, messages, chances, xp, score, currentIndex, totalExercises: playlist.length, stageStatus, hasStartedExercises,
-        isAiProcessing, isProcessing, isRecording, isPlaying, isSpeechLoading, transcript,
-        startExercises, submitTurn, submitExerciseAnswer, handleTimeOut, handleEndSession: () => handleEndSession(stageStatusRef.current === "PASSED"),
-        startRecording: () => startSpeech(bcp47Language), handleReplay: (text: string) => speak(forSpeech(text), bcp47Language, 1.0, session?.voiceGender),
-        playExerciseAudio, resolveAssetUrl,
+        session,
+        boss,
+        messages,
+        chances,
+        xp,
+        score,
+        currentIndex,
+        totalExercises: playlist.length,
+        stageStatus,
+        hasStartedExercises,
+        isAiProcessing,
+        isProcessing,
+        isRecording,
+        isPlaying,
+        isSpeechLoading,
+        transcript,
+        startExercises,
+        submitTurn,
+        submitExerciseAnswer,
+        handleTimeOut,
+        handleEndSession: () =>
+          handleEndSession(stageStatusRef.current === "PASSED"),
+        startRecording: () => startSpeech(bcp47Language),
+        handleReplay: (text: string) =>
+          speak(forSpeech(text), bcp47Language, 1.0, session?.voiceGender),
+        playExerciseAudio,
+        resolveAssetUrl,
       }}
     >
       {children}
@@ -373,6 +568,9 @@ export function BossFoundationProvider({ session, onEnd, children }: { session: 
 
 export function useBossFoundation() {
   const context = useContext(BossFoundationContext);
-  if (context === undefined) throw new Error("useBossFoundation must be used within a BossFoundationProvider");
+  if (context === undefined)
+    throw new Error(
+      "useBossFoundation must be used within a BossFoundationProvider",
+    );
   return context;
 }
