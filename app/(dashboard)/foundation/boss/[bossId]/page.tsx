@@ -14,6 +14,8 @@ export default async function BossIdPage({ params }: Params) {
 
   const bossData = await getBossData(bossId, user.id);
   if (!bossData) notFound();
-
+  
+  console.log("Target Lang:", bossData.course.targetLanguage)
+  console.log("Native Lang:", bossData.course.nativeLanguage)
   return <BossFoundationClient session={bossData} />;
 }
