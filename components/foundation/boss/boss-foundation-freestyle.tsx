@@ -191,6 +191,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   startRecording={startRecording}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
+                  playWord={playWord}
                 />
               );
             })}
@@ -273,6 +274,7 @@ function ExerciseBlock({
   playExerciseAudio,
   resolveAssetUrl,
   onSubmitVoice,
+  playWord
 }: any) {
   const exercise = message.exercise;
   const initialTime =
@@ -386,7 +388,7 @@ function ExerciseBlock({
             words={exercise.scrambledWords || []}
             expectedCount={exercise.correctAnswer?.length}
             onSubmit={onSubmit}
-            playWord={playWord} // <--- 2. PASS IT DOWN HERE
+            playWord={playWord}
           />
         )}
 
