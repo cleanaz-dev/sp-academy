@@ -71,7 +71,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
   return (
     // Flex column that fills the exact height of the container
-    <div className="flex flex-col w-full h-[calc(100vh-6rem)] min-h-[600px] max-w-5xl mx-auto bg-slate-50 rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
+    <div className="flex flex-col w-full h-[calc(100vh-6rem)] min-h-[600px] max-w-5xl mx-auto animate-bg rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
       {/* 🛑 FAIL OVERLAY (Retry Screen) */}
       {stageStatus === "FAILED" && (
         <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-500">
