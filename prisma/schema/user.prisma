@@ -9,6 +9,7 @@ model User {
   displayUsername String? // NEW
   firstName       String? // NEW
   lastName        String? // NEW
+  gender          String?
 
   avatarUrl  String?
   phone      String?

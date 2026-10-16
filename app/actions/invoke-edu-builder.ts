@@ -27,6 +27,9 @@ export interface InvokeEduBuilderPayload {
   isOnboarding: boolean;
   previous_lessons?: JsonValue[];
   sessionId?: string;
+
+  yesterdayAttempted?: string[];
+  yesterdayLanded?: string[];
 }
 
 export type InvokeEduBuilderResult =
@@ -158,6 +161,36 @@ export async function invokeEduBuilder(
     };
   }
 
+  // =========================================================================
+  // NEW: AUTOMATICALLY FETCH HISTORICAL CONTEXT FOR THE LAMBDA!
+  // =========================================================================
+  let previous_lessons: string[] = [];
+  let yesterdayLanded: string[] = [];
+
+  // If they are NOT onboarding, it means they have past lessons we should look at
+  if (!payload.isOnboarding && dbContext.courseId) {
+    const pastLessons = await prisma.foundationLesson.findMany({
+      where: { foundationCourseId: dbContext.courseId },
+      orderBy: { orderIndex: "asc" },
+      select: { title: true, lessonHandoff: true },
+    });
+
+    // 1. Extract past lesson titles so the AI router doesn't repeat topics
+    previous_lessons = pastLessons
+      .map(l => l.title)
+      .filter(Boolean) as string[];
+
+    // 2. Extract the exact words they learned in the very last lesson
+    if (pastLessons.length > 0) {
+      const lastHandoff = pastLessons[pastLessons.length - 1].lessonHandoff as any;
+      if (lastHandoff) {
+         // Map to whatever key your handoff uses for the vocabulary
+         yesterdayLanded = lastHandoff.targetPhrases || lastHandoff.words || [];
+      }
+    }
+  }
+  // =========================================================================
+
   // 2. Lambda payload wrapped in { body }
   const lambdaPayload = {
     ...payload,
@@ -167,6 +200,11 @@ export async function invokeEduBuilder(
     foundationLessonId: dbContext.lessonId,
     webhookUrl: dbContext.webhookUrl,
     vocabWebhookUrl: dbContext.vocabWebhookUrl,
+
+    // Inject the historical data directly overriding anything empty
+    previous_lessons: previous_lessons.length > 0 ? previous_lessons : payload.previous_lessons,
+    yesterdayAttempted: yesterdayLanded.length > 0 ? yesterdayLanded : payload.yesterdayAttempted,
+    yesterdayLanded: yesterdayLanded.length > 0 ? yesterdayLanded : payload.yesterdayLanded,
   };
 
   try {
