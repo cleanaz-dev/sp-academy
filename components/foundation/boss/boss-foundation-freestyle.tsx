@@ -1,3 +1,4 @@
+// components/foundation/boss/boss-foundation-freestyle.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -10,16 +11,11 @@ import {
   Zap,
   Clock,
   Volume2,
+  RotateCcw,
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-
-import {
-  useBossFoundation,
-  BossMessage,
-  ImageOption,
-} from "@/context/boss-context";
+import { useBossFoundation, BossMessage, ImageOption } from "@/context/boss-context";
 import { BossFoundationFreestyleControls } from "./boss-foundation-freestyle-controls";
 import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
 
@@ -28,7 +24,7 @@ interface Props {
   scenarioData?: any;
 }
 
-export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) {
+export default function BossFoundationFreestyle({ onEnd }: Props) {
   const {
     session,
     boss,
@@ -50,79 +46,107 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
   } = useBossFoundation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const aiAvatarUrl =
-    (session as any)?.aiAvatarUrl ||
-    (boss?.avatarKey ? resolveAssetUrl(boss.avatarKey) : undefined);
+  
+  const aiAvatarUrl = boss?.avatarKey 
+    ? resolveAssetUrl(boss.avatarKey) 
+    : "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
+    
   const showThinking = isAiProcessing && !isRecording;
+  const hasPendingExercise = messages.some((m) => m.exercise && m.status === "pending");
+  const progressPercent = Math.min((currentIndex / totalExercises) * 100, 100);
 
-  // Check if the current active item is an inline exercise
-  const hasPendingExercise = messages.some(
-    (m) => m.exercise && m.status === "pending"
-  );
-
-  // Auto scroll to bottom
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, transcript, isProcessing, isAiProcessing]);
 
-  const handleExerciseSubmit = (answer: any) => {
-    submitExerciseAnswer(answer);
-  };
-
   return (
-    <div className="flex flex-col gap-4">
-      {/* 🎮 TOP STATS BAR (Lives, Boss Name & Progress, XP) */}
-      <div className="shrink-0 flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
-        {/* Lives (Chances) */}
-        <div className="flex items-center gap-1">
-          {[1, 2, 3].map((heartIndex) => (
-            <Heart
-              key={heartIndex}
-              size={24}
-              className={`transition-all ${
-                heartIndex <= chances
-                  ? "fill-rose-500 text-rose-500 scale-100"
-                  : "fill-transparent text-slate-700 scale-90 opacity-50"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Boss Persona & Progress */}
-        <div className="text-center hidden sm:block">
-          <h4 className="text-[11px] font-bold text-rose-400 uppercase tracking-widest mb-0.5">
-            {boss?.name || "Milestone Challenge"}
-          </h4>
-          <p className="text-slate-300 font-medium text-sm">
-            {stageStatus === "PLAYING"
-              ? `Challenge ${Math.min(currentIndex + 1, totalExercises)} of ${totalExercises}`
-              : stageStatus === "PASSED"
-              ? "Victory!"
-              : "Failed"}
+    // Flex column that fills the exact height of the container
+    <div className="flex flex-col w-full h-[calc(100vh-6rem)] min-h-[600px] max-w-5xl mx-auto bg-slate-50 rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
+      
+      {/* 🛑 FAIL OVERLAY (Retry Screen) */}
+      {stageStatus === "FAILED" && (
+        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-500">
+          <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mb-6">
+            <XCircle className="text-rose-500" size={48} />
+          </div>
+          <h2 className="text-3xl font-extrabold text-slate-900 mb-3">Out of Hearts!</h2>
+          <p className="text-slate-500 font-medium mb-8 max-w-sm">
+            {boss?.name} was not impressed. Take a deep breath and try the encounter again.
           </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full max-w-sm py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-lg transition-all active:translate-y-1 active:border-b-0 border-b-4 border-indigo-800 shadow-sm flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={20} />
+            Retry Encounter
+          </button>
+          <button
+            onClick={onEnd}
+            className="mt-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+          >
+            Flee Battle
+          </button>
+        </div>
+      )}
+
+      {/* 🎮 TOP STATS BAR */}
+      <div className="shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col gap-3 z-10 shadow-sm">
+        <div className="flex items-center justify-between">
+          {/* Avatar & Boss Name */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
+              <img src={aiAvatarUrl} alt="Boss" className="w-full h-full object-cover" />
+            </div>
+            <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide hidden sm:block">
+              {boss?.name || "Milestone Boss"}
+            </h4>
+          </div>
+
+          {/* Lives (Hearts) */}
+          <div className="flex items-center gap-1.5">
+            {[1, 2, 3].map((heartIndex) => (
+              <Heart
+                key={heartIndex}
+                size={22}
+                className={`transition-all duration-300 ${
+                  heartIndex <= chances
+                    ? "fill-rose-500 text-rose-500 scale-100 drop-shadow-sm"
+                    : "fill-slate-200 text-slate-200 scale-90"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* XP Counter */}
+          <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+            <Zap size={18} className="text-amber-500 fill-amber-500" />
+            <span className="text-amber-600 font-extrabold text-sm">{xp} XP</span>
+          </div>
         </div>
 
-        {/* XP Counter */}
-        <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
-          <Zap size={18} className="text-amber-400 fill-amber-400" />
-          <span className="text-amber-400 font-bold tracking-wide">{xp} XP</span>
+        {/* Smooth Progress Bar */}
+        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
 
-      {/* CHAT / GAME AREA */}
-      <div className="relative h-[550px] overflow-hidden rounded-3xl bg-slate-900/50 border border-slate-800 shadow-inner">
-        <ScrollArea className="h-full">
-          <div className="space-y-6 p-6 sm:p-8">
+      {/* 💬 CHAT / GAME AREA */}
+      <div className="flex-1 overflow-hidden relative bg-[url('/noise.png')] bg-opacity-5">
+        <ScrollArea className="h-full w-full px-4 sm:px-8 py-6">
+          <div className="space-y-6 max-w-3xl mx-auto pb-4">
             {messages.length === 0 && !isProcessing && !isRecording && (
               <div className="flex min-h-[200px] flex-col items-center justify-center text-center opacity-60">
-                <p className="text-sm font-medium text-slate-400">
+                <p className="text-sm font-medium text-slate-500">
                   Initializing challenge...
                 </p>
               </div>
             )}
 
             {messages.map((message: BossMessage) => {
-              // 1. Render Normal AI/User Chat Bubbles
               if (!message.exercise) {
                 return (
                   <BossFoundationFreestyleChatBubble
@@ -134,12 +158,11 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
                 );
               }
 
-              // 2. Render Interactive Exercise Blocks
               return (
                 <ExerciseBlock
                   key={message.id}
                   message={message}
-                  onSubmit={handleExerciseSubmit}
+                  onSubmit={submitExerciseAnswer}
                   onTimeOut={handleTimeOut}
                   isRecording={isRecording}
                   isAiProcessing={isAiProcessing}
@@ -151,7 +174,6 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
               );
             })}
 
-            {/* Live Transcript Bubble (Only show for open conversation turns, not inside Pronunciation exercise) */}
             {isRecording && transcript && !hasPendingExercise && (
               <div className="flex flex-col items-end animate-in slide-in-from-bottom-2">
                 <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600 px-5 py-3.5 text-[15px] leading-relaxed text-white shadow-md">
@@ -161,7 +183,6 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
               </div>
             )}
 
-            {/* AI "Thinking..." placeholder */}
             {showThinking && (
               <BossFoundationFreestyleChatBubble
                 message={{ id: "thinking", role: "assistant", text: "" }}
@@ -169,22 +190,18 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
                 ttsStatus="thinking"
               />
             )}
-
             <div ref={messagesEndRef} className="h-4" />
           </div>
         </ScrollArea>
       </div>
 
-      {/* BOTTOM ACTION BAR */}
-      <div className="shrink-0 flex flex-col md:flex-row gap-4 h-auto md:h-[72px]">
+      {/* 🛑 BOTTOM ACTION BAR */}
+      <div className="shrink-0 bg-white border-t border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 relative z-10">
         {stageStatus === "PLAYING" ? (
           hasPendingExercise ? (
-            <div className="flex-1 flex items-center justify-between px-6 py-4 bg-slate-900 rounded-3xl border border-slate-800">
-              <span className="text-sm text-slate-400 font-medium">
-                Complete the exercise card above to continue
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-                {Math.min(currentIndex + 1, totalExercises)} / {totalExercises}
+            <div className="flex-1 flex items-center justify-center px-6 py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+              <span className="text-sm text-slate-500 font-bold uppercase tracking-wider">
+                Complete the exercise above to continue
               </span>
             </div>
           ) : (
@@ -193,33 +210,26 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
             </div>
           )
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-slate-900 rounded-3xl border border-slate-800">
-            <p className="text-slate-400 font-medium">Stage {stageStatus}</p>
+          <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-slate-200">
+            <p className="text-slate-400 font-bold uppercase tracking-widest">Encounter {stageStatus}</p>
           </div>
         )}
 
-        <button
-          onClick={onEnd}
-          className={`w-full md:w-auto h-[72px] px-8 text-white font-extrabold rounded-2xl md:rounded-3xl text-lg shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 shrink-0 ${
-            stageStatus === "PASSED"
-              ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/50"
-              : "bg-rose-600 hover:bg-rose-500 shadow-rose-900/50"
-          }`}
-        >
-          {stageStatus === "PASSED"
-            ? "Claim Victory"
-            : stageStatus === "FAILED"
-            ? "Exit Stage"
-            : "Flee Battle"}
-          <ArrowRight size={20} />
-        </button>
+        {stageStatus === "PASSED" && (
+          <button
+            onClick={onEnd}
+            className="w-full md:w-auto py-4 px-8 text-white font-extrabold rounded-2xl text-lg transition-all active:translate-y-1 active:border-b-0 border-b-4 flex items-center justify-center gap-2 shrink-0 bg-emerald-500 hover:bg-emerald-400 border-emerald-700 shadow-sm"
+          >
+            Claim Victory <ArrowRight size={20} />
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 // ============================================================================
-// EXERCISE RENDERER COMPONENT
+// EXERCISE RENDERER COMPONENT (LIGHT MODE PREMIUM)
 // ============================================================================
 
 function ExerciseBlock({
@@ -232,141 +242,87 @@ function ExerciseBlock({
   startRecording,
   playExerciseAudio,
   resolveAssetUrl,
-}: {
-  message: BossMessage;
-  onSubmit: (answer: any) => void;
-  onTimeOut: () => void;
-  isRecording: boolean;
-  isAiProcessing: boolean;
-  transcript: string;
-  startRecording: () => void;
-  playExerciseAudio: (audioKey?: string | null, fallbackText?: string | null) => Promise<void>;
-  resolveAssetUrl: (key?: string | null) => string;
-}) {
+}: any) {
   const exercise = message.exercise;
-
-  // Give 20 seconds for sentence builders / pronunciation, 15s for quick selectors
-  const initialTime =
-    exercise?.type === "SENTENCE_BUILDER" ||
-    exercise?.type === "LISTEN_SENTENCE_BUILDER" ||
-    exercise?.type === "PRONUNCIATION"
-      ? 25
-      : 15;
-
+  const initialTime = exercise?.type === "PRONUNCIATION" || exercise?.type.includes("BUILDER") ? 25 : 15;
   const [timeLeft, setTimeLeft] = useState(initialTime);
-  const isCompleted =
-    message.status === "correct" || message.status === "incorrect";
-
-  // Pause countdown when completed, actively recording voice, or waiting on AI evaluation
+  const isCompleted = message.status === "correct" || message.status === "incorrect";
   const isTimerPaused = isCompleted || isRecording || isAiProcessing;
 
   useEffect(() => {
-    if (isTimerPaused) return;
-
-    if (timeLeft <= 0) {
-      onTimeOut();
+    if (isTimerPaused || timeLeft <= 0) {
+      if (timeLeft <= 0 && !isTimerPaused) onTimeOut();
       return;
     }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
+    const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, isTimerPaused, onTimeOut]);
 
   if (!exercise) return null;
 
-  const expectedWordCount = Array.isArray(exercise.correctAnswer)
-    ? exercise.correctAnswer.length
-    : undefined;
-
   return (
     <div
-      className={`w-full max-w-[95%] md:max-w-[85%] rounded-2xl p-5 border shadow-lg transition-colors duration-500 ${
+      className={`w-full max-w-[90%] md:max-w-[85%] rounded-3xl p-5 sm:p-6 border-2 transition-all duration-300 shadow-sm ${
         message.status === "correct"
-          ? "bg-emerald-900/20 border-emerald-500/30"
+          ? "bg-emerald-50 border-emerald-200 shadow-emerald-100"
           : message.status === "incorrect"
-          ? "bg-rose-900/20 border-rose-500/30"
-          : "bg-slate-800 border-slate-700"
+          ? "bg-rose-50 border-rose-200 shadow-rose-100"
+          : "bg-white border-slate-200"
       }`}
     >
       {/* Header & Timer */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-extrabold uppercase tracking-widest text-slate-400">
           {exercise.type.replace(/_/g, " ")}
         </span>
 
-        {message.status === "correct" && (
-          <CheckCircle2 className="text-emerald-400 animate-in zoom-in" size={24} />
-        )}
-        {message.status === "incorrect" && (
-          <XCircle className="text-rose-400 animate-in zoom-in" size={24} />
-        )}
+        {message.status === "correct" && <CheckCircle2 className="text-emerald-500 animate-in zoom-in" size={28} />}
+        {message.status === "incorrect" && <XCircle className="text-rose-500 animate-in zoom-in" size={28} />}
         {message.status === "pending" && (
-          <div
-            className={`flex items-center gap-1.5 font-bold ${
-              timeLeft <= 5 ? "text-rose-400 animate-pulse" : "text-amber-400"
-            }`}
-          >
-            <Clock size={16} />
-            {timeLeft}s
+          <div className={`flex items-center gap-1.5 font-bold ${timeLeft <= 5 ? "text-rose-500 animate-pulse" : "text-amber-500"}`}>
+            <Clock size={18} /> {timeLeft}s
           </div>
         )}
       </div>
 
-      {/* Instruction */}
-      <p className="text-slate-200 text-sm font-medium mb-3">
-        {exercise.instruction}
-      </p>
+      <p className="text-slate-700 text-[15px] font-bold mb-4">{exercise.instruction}</p>
 
-      {/* Question Prompt (Used in MULTIPLE_CHOICE) */}
       {exercise.question && (
-        <div className="mb-4 rounded-xl bg-slate-900/70 border border-slate-700/80 px-4 py-3 text-lg font-bold text-white">
+        <div className="mb-5 rounded-2xl bg-slate-50 border border-slate-200 px-5 py-4 text-lg font-extrabold text-slate-800 text-center">
           “{exercise.question}”
         </div>
       )}
 
-      {/* Audio Replay Button (Used in LISTEN_* or whenever audioKey exists) */}
-      {(exercise.audioKey ||
-        exercise.type === "LISTEN_SENTENCE_BUILDER" ||
-        exercise.type === "LISTEN_PICTURE_SELECTOR") && (
+      {(exercise.audioKey || exercise.type.includes("LISTEN")) && (
         <button
           type="button"
-          onClick={() =>
-            playExerciseAudio(exercise.audioKey, exercise.targetText)
-          }
-          className="mb-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 px-4 py-2.5 text-sm font-semibold text-indigo-300 transition-colors active:scale-95"
+          onClick={() => playExerciseAudio(exercise.audioKey, exercise.targetText)}
+          className="mb-5 flex items-center justify-center w-full gap-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-4 py-3 text-sm font-extrabold text-indigo-600 transition-colors active:scale-95"
         >
-          <Volume2 size={18} className="text-indigo-400" />
-          Listen to Audio
+          <Volume2 size={20} /> Listen to Audio
         </button>
       )}
 
       {/* Visual Timer Bar */}
       {message.status === "pending" && (
-        <div className="w-full h-1.5 bg-slate-900 rounded-full mb-5 overflow-hidden">
+        <div className="w-full h-2 bg-slate-100 rounded-full mb-6 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-1000 linear ${
-              timeLeft <= 5 ? "bg-rose-500" : "bg-amber-400"
-            }`}
+            className={`h-full rounded-full transition-all duration-1000 linear ${timeLeft <= 5 ? "bg-rose-500" : "bg-amber-400"}`}
             style={{ width: `${(timeLeft / initialTime) * 100}%` }}
           />
         </div>
       )}
 
-      {/* Mini-Games Container */}
       <div className="relative">
         {isCompleted && <div className="absolute inset-0 z-10 bg-transparent" />}
 
-        {/* 1. MULTIPLE CHOICE */}
         {exercise.type === "MULTIPLE_CHOICE" && (
-          <div className="flex flex-col gap-2">
-            {exercise.options?.map((opt, i) => (
+          <div className="flex flex-col gap-3">
+            {exercise.options?.map((opt: string, i: number) => (
               <button
                 key={i}
                 onClick={() => onSubmit(opt)}
-                className="w-full text-left px-4 py-3 rounded-xl bg-slate-700/50 hover:bg-indigo-600 hover:text-white text-slate-200 transition-colors border border-slate-600 hover:border-indigo-500"
+                className="w-full text-left px-5 py-4 rounded-2xl bg-white hover:bg-indigo-50 text-slate-700 font-bold transition-all border-2 border-slate-200 hover:border-indigo-400 active:translate-y-1 active:border-b-2 border-b-4"
               >
                 {opt}
               </button>
@@ -374,37 +330,16 @@ function ExerciseBlock({
           </div>
         )}
 
-        {/* 2. SENTENCE BUILDER & LISTEN_SENTENCE_BUILDER */}
-        {(exercise.type === "SENTENCE_BUILDER" ||
-          exercise.type === "LISTEN_SENTENCE_BUILDER") && (
-          <SentenceBuilder
-            words={exercise.scrambledWords || []}
-            expectedCount={expectedWordCount}
-            onSubmit={(ans) => onSubmit(ans)}
-          />
+        {(exercise.type === "SENTENCE_BUILDER" || exercise.type === "LISTEN_SENTENCE_BUILDER") && (
+          <SentenceBuilder words={exercise.scrambledWords || []} expectedCount={exercise.correctAnswer?.length} onSubmit={onSubmit} />
         )}
 
-        {/* 3. LISTEN PICTURE SELECTOR (Imagen 2x2 Grid) */}
         {exercise.type === "LISTEN_PICTURE_SELECTOR" && (
-          <PictureSelector
-            options={exercise.imageOptions || []}
-            resolveAssetUrl={resolveAssetUrl}
-            onSubmit={(label) => onSubmit(label)}
-          />
+          <PictureSelector options={exercise.imageOptions || []} resolveAssetUrl={resolveAssetUrl} onSubmit={onSubmit} />
         )}
 
-        {/* 4. PRONUNCIATION */}
         {exercise.type === "PRONUNCIATION" && (
-          <PronunciationExercise
-            target={exercise.targetText || ""}
-            isRecording={isRecording}
-            transcript={transcript}
-            startRecording={startRecording}
-            onPlayReference={() =>
-              playExerciseAudio(exercise.audioKey, exercise.targetText)
-            }
-            onSubmit={(ans) => onSubmit(ans)}
-          />
+          <PronunciationExercise target={exercise.targetText || ""} isRecording={isRecording} transcript={transcript} startRecording={startRecording} onPlayReference={() => playExerciseAudio(exercise.audioKey, exercise.targetText)} onSubmit={onSubmit} />
         )}
       </div>
     </div>
@@ -412,17 +347,9 @@ function ExerciseBlock({
 }
 
 // ----------------------------------------------------------------------------
-// 1. SENTENCE BUILDER (Supports distractor words via expectedCount)
+// 1. SENTENCE BUILDER
 // ----------------------------------------------------------------------------
-function SentenceBuilder({
-  words,
-  expectedCount,
-  onSubmit,
-}: {
-  words: string[];
-  expectedCount?: number;
-  onSubmit: (ans: string[]) => void;
-}) {
+function SentenceBuilder({ words, expectedCount, onSubmit }: any) {
   const [selected, setSelected] = useState<string[]>([]);
   const [available, setAvailable] = useState<string[]>(words);
 
@@ -440,44 +367,26 @@ function SentenceBuilder({
   const canSubmit = selected.length >= requiredLength;
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Drop Zone (Selected Words) */}
-      <div className="min-h-[60px] p-3 rounded-xl border-2 border-dashed border-slate-600 bg-slate-900/50 flex flex-wrap gap-2 items-center">
-        {selected.length === 0 && (
-          <span className="text-slate-500 text-sm ml-2">
-            Tap words below ({requiredLength} words needed)...
-          </span>
-        )}
+    <div className="flex flex-col gap-5">
+      <div className="min-h-[70px] p-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-wrap gap-2 items-center">
+        {selected.length === 0 && <span className="text-slate-400 font-medium text-sm ml-2">Tap words below...</span>}
         {selected.map((w, i) => (
-          <button
-            key={`sel-${i}`}
-            onClick={() => removeWord(w, i)}
-            className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg shadow-sm active:scale-95 transition-transform font-medium"
-          >
+          <button key={i} onClick={() => removeWord(w, i)} className="px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-sm font-extrabold active:scale-95 transition-transform">
             {w}
           </button>
         ))}
       </div>
 
-      {/* Word Bank (Available Words - includes distractors) */}
       <div className="flex flex-wrap gap-2">
         {available.map((w, i) => (
-          <button
-            key={`avail-${i}`}
-            onClick={() => selectWord(w, i)}
-            className="px-3 py-1.5 bg-slate-700 text-slate-200 rounded-lg shadow-sm border border-slate-600 hover:bg-slate-600 active:scale-95 transition-transform"
-          >
+          <button key={i} onClick={() => selectWord(w, i)} className="px-4 py-2 bg-white text-slate-700 rounded-xl font-extrabold border-2 border-slate-200 border-b-4 hover:border-indigo-300 hover:bg-indigo-50 active:translate-y-1 active:border-b-2 transition-all">
             {w}
           </button>
         ))}
       </div>
 
-      {/* Submit Button */}
       {canSubmit && (
-        <button
-          onClick={() => onSubmit(selected)}
-          className="mt-2 w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors animate-in slide-in-from-bottom-2"
-        >
+        <button onClick={() => onSubmit(selected)} className="mt-2 w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all animate-in slide-in-from-bottom-2">
           Check Answer
         </button>
       )}
@@ -486,35 +395,22 @@ function SentenceBuilder({
 }
 
 // ----------------------------------------------------------------------------
-// 2. LISTEN PICTURE SELECTOR (Imagen 2x2 Grid)
+// 2. LISTEN PICTURE SELECTOR
 // ----------------------------------------------------------------------------
-function PictureSelector({
-  options,
-  resolveAssetUrl,
-  onSubmit,
-}: {
-  options: ImageOption[];
-  resolveAssetUrl: (key?: string | null) => string;
-  onSubmit: (label: string) => void;
-}) {
+function PictureSelector({ options, resolveAssetUrl, onSubmit }: any) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4">
-      {options.map((opt, idx) => (
+      {options.map((opt: ImageOption, idx: number) => (
         <button
           key={idx}
-          type="button"
           onClick={() => onSubmit(opt.label)}
-          className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-600 bg-slate-900/60 hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/40 transition-all active:scale-98 text-left"
+          className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-500 hover:shadow-md transition-all active:scale-95 text-left"
         >
-          <div className="aspect-square w-full overflow-hidden bg-slate-800">
-            <img
-              src={resolveAssetUrl(opt.imageKey)}
-              alt={opt.label}
-              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+          <div className="aspect-square w-full overflow-hidden bg-slate-100">
+            <img src={resolveAssetUrl(opt.imageKey)} alt={opt.label} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
           </div>
-          <div className="p-2.5 text-center bg-slate-800/90 border-t border-slate-700">
-            <span className="text-sm font-semibold text-slate-200 group-hover:text-white">
+          <div className="p-3 text-center border-t-2 border-slate-100">
+            <span className="text-[15px] font-extrabold text-slate-700 group-hover:text-indigo-600 transition-colors">
               {opt.label}
             </span>
           </div>
@@ -525,66 +421,37 @@ function PictureSelector({
 }
 
 // ----------------------------------------------------------------------------
-// 3. PRONUNCIATION EXERCISE
+// 3. PRONUNCIATION
 // ----------------------------------------------------------------------------
-function PronunciationExercise({
-  target,
-  onSubmit,
-  onPlayReference,
-  isRecording,
-  transcript,
-  startRecording,
-}: {
-  target: string;
-  onSubmit: (text: string) => void;
-  onPlayReference: () => void;
-  isRecording: boolean;
-  transcript: string;
-  startRecording: () => void;
-}) {
+function PronunciationExercise({ target, onSubmit, onPlayReference, isRecording, transcript, startRecording }: any) {
   return (
-    <div className="flex flex-col items-center gap-4 text-center">
-      <div className="flex items-center gap-2">
-        <div className="text-xl sm:text-2xl font-bold text-white">
-          “{target}”
-        </div>
-        <button
-          type="button"
-          onClick={onPlayReference}
-          className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-indigo-300 transition-colors"
-          title="Listen to pronunciation"
-        >
-          <Volume2 size={18} />
+    <div className="flex flex-col items-center gap-5 text-center">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="text-xl sm:text-2xl font-extrabold text-slate-800">“{target}”</div>
+        <button type="button" onClick={onPlayReference} className="p-2 rounded-full bg-slate-100 hover:bg-indigo-100 text-indigo-500 transition-colors">
+          <Volume2 size={20} />
         </button>
       </div>
 
       {!isRecording ? (
-        <button
-          type="button"
-          onClick={startRecording}
-          className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-900/50 hover:scale-105 active:scale-95 transition-all"
-        >
-          <Mic className="text-white" size={28} />
+        <button type="button" onClick={startRecording} className="w-20 h-20 rounded-full bg-indigo-500 flex items-center justify-center border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all shadow-md">
+          <Mic className="text-white" size={32} />
         </button>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-full bg-rose-600 animate-pulse flex items-center justify-center shadow-lg shadow-rose-900/50">
-            <Mic className="text-white" size={28} />
+          <div className="w-20 h-20 rounded-full bg-rose-500 animate-pulse flex items-center justify-center shadow-lg shadow-rose-200">
+            <Mic className="text-white" size={32} />
           </div>
-          <p className="text-indigo-300 font-medium text-sm">Listening...</p>
+          <p className="text-indigo-500 font-extrabold text-sm uppercase tracking-widest">Listening...</p>
         </div>
       )}
 
       {transcript && (
-        <div className="mt-2 p-3 bg-slate-900/80 rounded-xl border border-slate-700 w-full">
-          <p className="text-slate-300 text-sm">
-            You said: <span className="text-white font-semibold">“{transcript}”</span>
+        <div className="mt-2 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 w-full">
+          <p className="text-slate-500 text-sm font-medium">
+            You said: <span className="text-slate-800 font-extrabold">“{transcript}”</span>
           </p>
-          <button
-            type="button"
-            onClick={() => onSubmit(transcript)}
-            className="mt-3 w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition-colors"
-          >
+          <button type="button" onClick={() => onSubmit(transcript)} className="mt-4 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all">
             Submit Audio
           </button>
         </div>
