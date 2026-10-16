@@ -45,7 +45,7 @@ export function ExerciseBlock({
   resetRecording,
 }: ExerciseBlockProps) {
 
-  console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
+  // console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
   
   const exercise = message.exercise;
 
