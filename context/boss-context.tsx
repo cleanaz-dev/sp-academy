@@ -1,4 +1,3 @@
-// context/boss-context.tsx
 "use client";
 
 import React, {
@@ -95,6 +94,14 @@ interface BossFoundationContextType {
 
 const BossFoundationContext = createContext<BossFoundationContextType | undefined>(undefined);
 
+// Map database Enums to browser BCP-47 tags
+const LANGUAGE_CODES: Record<string, string> = {
+  FRENCH: "fr-FR",
+  SPANISH: "es-ES",
+  GERMAN: "de-DE",
+  ITALIAN: "it-IT",
+};
+
 // Strip emojis and markdown "*stage directions*" before sending to TTS
 const forSpeech = (text: string) =>
   text
@@ -158,21 +165,10 @@ export function BossFoundationProvider({
   const scoreRef = useRef(0);
   const stageStatusRef = useRef<StageStatus>("PLAYING");
 
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    chancesRef.current = chances;
-  }, [chances]);
-
-  useEffect(() => {
-    scoreRef.current = score;
-  }, [score]);
-
-  useEffect(() => {
-    stageStatusRef.current = stageStatus;
-  }, [stageStatus]);
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { chancesRef.current = chances; }, [chances]);
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { stageStatusRef.current = stageStatus; }, [stageStatus]);
 
   const {
     startRecording: startSpeech,
@@ -185,21 +181,14 @@ export function BossFoundationProvider({
   const { speak, isPlaying, isLoading: isSpeechLoading, stop: stopAudio } = useSpeak();
   const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
 
-  console.log("Boss Data Shape:", session)
+  // Ensure language code is formatted properly for browser mic and Azure (fr-FR)
+  const bcp47Language = LANGUAGE_CODES[session?.targetLanguage] || session?.targetLanguage || "fr-FR";
 
-  // Support both new Lambda schema (exerciseBank + boss) and legacy fallback
+  // Safely extract data, whether it's nested in scenarioData or top-level
   const scenarioData = session?.scenarioData || {};
-  // Check inside scenarioData FIRST, but fallback to checking the session object directly
-  const boss: BossPersona | null = 
-    scenarioData.boss || session?.boss || null;
-    
+  const boss: BossPersona | null = scenarioData.boss || session?.boss || null;
   const playlist: PlaylistItem[] =
-    scenarioData.exerciseBank || 
-    scenarioData.playlist || 
-    session?.exerciseBank || 
-    session?.playlist || 
-    [];
-    
+    scenarioData.exerciseBank || scenarioData.playlist || session?.exerciseBank || session?.playlist || [];
   const introMessage =
     boss?.introMessage ||
     scenarioData.introMessage ||
@@ -227,13 +216,13 @@ export function BossFoundationProvider({
       if (fallbackText) {
         await speak(
           forSpeech(fallbackText),
-          session.targetLanguage,
+          bcp47Language, // Use formatted code!
           1.0,
-          session.voiceGender
+          session?.voiceGender
         );
       }
     },
-    [session.targetLanguage, session.voiceGender, speak]
+    [bcp47Language, session?.voiceGender, speak]
   );
 
   // --- 1. INITIALIZATION ---
@@ -250,9 +239,9 @@ export function BossFoundationProvider({
 
       await speak(
         forSpeech(introMessage),
-        session.targetLanguage,
+        bcp47Language, // Use formatted code!
         1.0,
-        session.voiceGender
+        session?.voiceGender
       );
 
       if (mounted) {
@@ -292,25 +281,21 @@ export function BossFoundationProvider({
 
       setMessages((prev) => [...prev, exerciseMsg]);
 
-      // If it's a listening exercise, play its target audio right away
       if (
         currentItem.type === "LISTEN_SENTENCE_BUILDER" ||
-        currentItem.type === "LISTEN_PICTURE_SELECTOR"
+        currentItem.type === "LISTEN_PICTURE_SELECTOR" ||
+        (currentItem.type === "PRONUNCIATION" && currentItem.targetText)
       ) {
-        playExerciseAudio(currentItem.audioKey, currentItem.targetText);
-      } else if (currentItem.type === "PRONUNCIATION" && currentItem.targetText) {
         playExerciseAudio(currentItem.audioKey, currentItem.targetText);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [playlist, playExerciseAudio]
   );
 
-  // --- 3. EVALUATION (TAP-TO-SELECT & PRONUNCIATION) ---
+  // --- 3. EVALUATION (TAP-TO-SELECT) ---
   const submitExerciseAnswer = async (userAnswer: any) => {
     if (stageStatusRef.current !== "PLAYING" || isAiProcessing) return;
 
-    // If user was recording for Pronunciation, stop the mic cleanly
     if (isRecording) {
       await stopRecording();
       resetSpeechState();
@@ -321,12 +306,9 @@ export function BossFoundationProvider({
     const currentItem = playlist[idx];
 
     try {
-      // Pre-compute deterministic result for non-voice exercises
-      const localIsCorrect =
-        currentItem.type !== "PRONUNCIATION"
-          ? checkDeterministicAnswer(currentItem, userAnswer)
-          : undefined;
+      const localIsCorrect = checkDeterministicAnswer(currentItem, userAnswer);
 
+      // Hit our new OpenAI-powered evaluation route
       const res = await fetch("/api/foundation/boss/evaluate-exercise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -335,17 +317,15 @@ export function BossFoundationProvider({
           userAnswer,
           isCorrect: localIsCorrect,
           bossPersona: boss,
-          targetLanguage: session.targetLanguage,
+          targetLanguage: bcp47Language,
         }),
       });
 
       if (!res.ok) throw new Error("Evaluation endpoint failed");
       const data = await res.json();
 
-      const finalIsCorrect =
-        typeof data.isCorrect === "boolean" ? data.isCorrect : !!localIsCorrect;
-      const reactionText =
-        data.text || (finalIsCorrect ? "Bien." : "Non, ce n'est pas exact.");
+      const finalIsCorrect = typeof data.isCorrect === "boolean" ? data.isCorrect : !!localIsCorrect;
+      const reactionText = data.text || (finalIsCorrect ? "Bien." : "Non, ce n'est pas exact.");
 
       await processResult(finalIsCorrect, reactionText, currentItem.id);
     } catch (err) {
@@ -356,13 +336,14 @@ export function BossFoundationProvider({
     }
   };
 
-  // --- 4. EVALUATION (VOICE / CONVERSATION) ---
+  // --- 4. EVALUATION (AZURE PRONUNCIATION + OPENAI VOICE) ---
   const submitTurn = async () => {
     if (stageStatusRef.current !== "PLAYING" || isAiProcessing) return;
 
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
-    if (!userText) return;
+    
+    if (!userText && !audioBlob) return;
 
     const newMsgId = Date.now();
     setMessages((prev) => [
@@ -374,24 +355,55 @@ export function BossFoundationProvider({
         isAnalyzingPronunciation: !!audioBlob,
       },
     ]);
+    
     resetSpeechState();
     setIsAiProcessing(true);
 
     const currentItem = playlist[currentIndexRef.current];
 
     try {
-      const res = await fetch("/api/foundation/boss/evaluate-voice", {
+      let finalIsCorrect = false;
+
+      // 1. Send Audio to Azure to get a pronunciation score!
+      if (audioBlob) {
+        const formData = new FormData();
+        formData.append("audio", audioBlob);
+        formData.append("transcript", currentItem.targetText || userText || "bonjour"); 
+        formData.append("language", bcp47Language);
+
+        const azureRes = await fetch("/api/foundation/boss/pronunciation", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (azureRes.ok) {
+          const azureData = await azureRes.json();
+          console.log("Azure Assessment Score:", azureData.score);
+          
+          // Require a score of 60+ out of 100 to pass
+          finalIsCorrect = azureData.score >= 60;
+        } else {
+          console.warn("Azure failed, falling back to generous mode");
+          finalIsCorrect = true; 
+        }
+      } else {
+        finalIsCorrect = true;
+      }
+
+      // 2. Send Azure's grade to OpenAI to get Madame Dubois's reaction!
+      const llmRes = await fetch("/api/foundation/boss/evaluate-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           exercise: currentItem,
           userText,
+          isCorrect: finalIsCorrect, // Passing Azure's verdict
           bossPersona: boss,
-          targetLanguage: session.targetLanguage,
+          targetLanguage: bcp47Language,
         }),
       });
 
-      const data = await res.json();
+      const data = await llmRes.json();
       await processResult(data.isCorrect, data.text, currentItem.id);
     } catch (err) {
       console.error("Failed to evaluate voice turn", err);
@@ -400,7 +412,7 @@ export function BossFoundationProvider({
     }
   };
 
-  // --- 5. TIME OUT MECHANIC (Memoized so ExerciseBlock timer never resets early) ---
+  // --- 5. TIME OUT MECHANIC ---
   const handleTimeOut = useCallback(() => {
     if (stageStatusRef.current !== "PLAYING") return;
     const currentItem = playlist[currentIndexRef.current];
@@ -416,7 +428,6 @@ export function BossFoundationProvider({
     aiReactionText: string,
     exerciseId: string
   ) => {
-    // 1. Mark the visual exercise card as correct/incorrect
     setMessages((prev) =>
       prev.map((m) =>
         m.exercise?.id === exerciseId
@@ -425,7 +436,6 @@ export function BossFoundationProvider({
       )
     );
 
-    // 2. Output Madame Verne's / Boss reaction
     if (aiReactionText) {
       setMessages((prev) => [
         ...prev,
@@ -433,13 +443,12 @@ export function BossFoundationProvider({
       ]);
       await speak(
         forSpeech(aiReactionText),
-        session.targetLanguage,
+        bcp47Language, // Format required for TTS!
         1.0,
-        session.voiceGender
+        session?.voiceGender
       );
     }
 
-    // 3. Update Game State
     if (isCorrect) {
       setXp((prev) => prev + 50);
       setScore((prev) => prev + 1);
@@ -455,7 +464,6 @@ export function BossFoundationProvider({
       }
     }
 
-    // 4. Advance to next exercise
     const nextIndex = currentIndexRef.current + 1;
     currentIndexRef.current = nextIndex;
     setCurrentIndex(nextIndex);
@@ -523,9 +531,9 @@ export function BossFoundationProvider({
         submitExerciseAnswer,
         handleTimeOut,
         handleEndSession: () => handleEndSession(stageStatusRef.current === "PASSED"),
-        startRecording: () => startSpeech(session.targetLanguage),
+        startRecording: () => startSpeech(bcp47Language), // Send properly formatted lang code!
         handleReplay: (text: string) =>
-          speak(forSpeech(text), session.targetLanguage, 1.0, session.voiceGender),
+          speak(forSpeech(text), bcp47Language, 1.0, session?.voiceGender),
         playExerciseAudio,
         resolveAssetUrl,
       }}
