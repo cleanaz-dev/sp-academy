@@ -13,13 +13,15 @@ import {
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FoundationFreestyleControls } from "../foundation-freestyle-controls";
-import { FoundationFreestyleChatBubble } from "../foundation-freestye-chat-bubble";
+
+
 import {
   useBossFoundation,
   BossMessage,
   ImageOption,
 } from "@/context/boss-context";
+import { BossFoundationFreestyleControls } from "./boss-foundation-freestyle-controls";
+import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
 
 interface Props {
   onEnd: () => void;
@@ -123,7 +125,7 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
               // 1. Render Normal AI/User Chat Bubbles
               if (!message.exercise) {
                 return (
-                  <FoundationFreestyleChatBubble
+                  <BossFoundationFreestyleChatBubble
                     key={message.id}
                     message={message}
                     aiAvatarUrl={aiAvatarUrl}
@@ -161,7 +163,7 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
 
             {/* AI "Thinking..." placeholder */}
             {showThinking && (
-              <FoundationFreestyleChatBubble
+              <BossFoundationFreestyleChatBubble
                 message={{ id: "thinking", role: "assistant", text: "" }}
                 aiAvatarUrl={aiAvatarUrl}
                 ttsStatus="thinking"
@@ -187,7 +189,7 @@ export default function BossFoundationFreestyle({ onEnd, scenarioData }: Props) 
             </div>
           ) : (
             <div className="flex min-w-0 flex-1">
-              <FoundationFreestyleControls />
+              <BossFoundationFreestyleControls />
             </div>
           )
         ) : (
