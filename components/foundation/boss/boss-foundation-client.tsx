@@ -12,7 +12,7 @@ export default function BossFoundationClient({
   session: NonNullable<BossData>
 }) {
   const router = useRouter()
-  const handleEnd = () => router.push("/learnig-hub") // change to your destination
+  const handleEnd = () => router.push("/learning-hub") // change to your destination
 
   return (
     <BossFoundationProvider session={session} onEnd={handleEnd}>
