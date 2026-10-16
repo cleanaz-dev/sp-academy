@@ -51,6 +51,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     startRecording,
     playExerciseAudio,
     resolveAssetUrl,
+    resetRecording,
   } = useBossFoundation();
 
   // 1. Grab playWord from the context!
@@ -189,6 +190,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   isAiProcessing={isAiProcessing}
                   transcript={transcript}
                   startRecording={startRecording}
+                  resetRecording={resetRecording}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
                   playWord={playWord}
@@ -274,7 +276,8 @@ function ExerciseBlock({
   playExerciseAudio,
   resolveAssetUrl,
   onSubmitVoice,
-  playWord
+  playWord,
+  resetRecording
 }: any) {
   const exercise = message.exercise;
   const initialTime =
@@ -402,15 +405,14 @@ function ExerciseBlock({
         )}
 
         {exercise.type === "PRONUNCIATION" && (
-          <PronunciationExercise
-            target={exercise.targetText || ""}
-            isRecording={isRecording}
-            transcript={transcript}
-            startRecording={startRecording}
-            onPlayReference={() =>
-              playExerciseAudio(exercise.audioKey, exercise.targetText)
-            }
-            onSubmit={onSubmitVoice} // <--- 4. CHANGE THIS FROM onSubmit TO onSubmitVoice
+          <PronunciationExercise 
+            target={exercise.targetText || ""} 
+            isRecording={isRecording} 
+            transcript={transcript} 
+            startRecording={startRecording} 
+            onReset={resetRecording} // <--- Pass it down here!
+            onPlayReference={() => playExerciseAudio(exercise.audioKey, exercise.targetText)} 
+            onSubmit={onSubmitVoice} 
           />
         )}
       </div>
@@ -525,63 +527,51 @@ function PictureSelector({
 // ----------------------------------------------------------------------------
 // 3. PRONUNCIATION
 // ----------------------------------------------------------------------------
-function PronunciationExercise({
-  target,
-  onSubmit,
-  onPlayReference,
-  isRecording,
-  transcript,
-  startRecording,
-}: any) {
+function PronunciationExercise({ target, onSubmit, onPlayReference, isRecording, transcript, startRecording, onReset }: any) {
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <div className="text-xl sm:text-2xl font-extrabold text-slate-800">
-          “{target}”
-        </div>
-        <button
-          type="button"
-          onClick={onPlayReference}
-          className="p-2 rounded-full bg-slate-100 hover:bg-indigo-100 text-indigo-500 transition-colors"
-        >
+        <div className="text-xl sm:text-2xl font-extrabold text-slate-800">“{target}”</div>
+        <button type="button" onClick={onPlayReference} className="p-2 rounded-full bg-slate-100 hover:bg-indigo-100 text-indigo-500 transition-colors">
           <Volume2 size={20} />
         </button>
       </div>
 
-      {!isRecording ? (
-        <button
-          type="button"
-          onClick={startRecording}
-          className="w-20 h-20 rounded-full bg-indigo-500 flex items-center justify-center border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all shadow-md"
-        >
+      {!isRecording && !transcript ? (
+        <button type="button" onClick={startRecording} className="w-20 h-20 rounded-full bg-indigo-500 flex items-center justify-center border-b-4 border-indigo-700 hover:bg-indigo-400 active:translate-y-1 active:border-b-0 transition-all shadow-md">
           <Mic className="text-white" size={32} />
         </button>
-      ) : (
+      ) : isRecording ? (
         <div className="flex flex-col items-center gap-3">
           <div className="w-20 h-20 rounded-full bg-rose-500 animate-pulse flex items-center justify-center shadow-lg shadow-rose-200">
             <Mic className="text-white" size={32} />
           </div>
-          <p className="text-indigo-500 font-extrabold text-sm uppercase tracking-widest">
-            Listening...
-          </p>
+          <p className="text-indigo-500 font-extrabold text-sm uppercase tracking-widest">Listening...</p>
         </div>
-      )}
+      ) : null}
 
-      {transcript && (
-        <div className="mt-2 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 w-full">
-          <p className="text-slate-500 text-sm font-medium">
-            You said:{" "}
-            <span className="text-slate-800 font-extrabold">
-              “{transcript}”
-            </span>
+      {/* NEW: Show the transcript with Retry and Submit side-by-side */}
+      {transcript && !isRecording && (
+        <div className="mt-2 p-4 bg-slate-50 rounded-2xl border-2 border-slate-200 w-full animate-in zoom-in-95 duration-300">
+          <p className="text-slate-500 text-sm font-medium mb-4">
+            Heard: <span className="text-slate-800 font-extrabold text-[15px]">“{transcript}”</span>
           </p>
-          <button
-            type="button"
-            onClick={() => onSubmit()} // <--- 5. REMOVE THE `transcript` ARGUMENT HERE
-            className="mt-4 w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-2xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all"
-          >
-            Submit Audio
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              type="button" 
+              onClick={onReset} // <--- Clears the transcript so they can try again!
+              className="flex-1 py-3.5 bg-white text-slate-500 hover:text-slate-700 font-bold rounded-xl border-2 border-slate-200 hover:bg-slate-100 active:translate-y-1 transition-all"
+            >
+              Retry Mic
+            </button>
+            <button 
+              type="button" 
+              onClick={() => onSubmit()} 
+              className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold rounded-xl border-b-4 border-emerald-700 active:translate-y-1 active:border-b-0 transition-all"
+            >
+              Submit
+            </button>
+          </div>
         </div>
       )}
     </div>

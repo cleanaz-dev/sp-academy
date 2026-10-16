@@ -89,6 +89,7 @@ interface BossFoundationContextType {
   handleTimeOut: () => void;
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
+  resetRecording: () => void;
   handleReplay: (text: string) => Promise<void>;
   playExerciseAudio: (
     audioKey?: string | null,
@@ -576,6 +577,7 @@ export function BossFoundationProvider({
         handleEndSession: () =>
           handleEndSession(stageStatusRef.current === "PASSED"),
         startRecording: () => startSpeech(bcp47Language),
+        resetRecording: resetSpeechState,
         handleReplay: (text: string) =>
           speak(forSpeech(text), bcp47Language, 1.0, session?.voiceGender),
         playExerciseAudio,
