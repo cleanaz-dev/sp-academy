@@ -383,11 +383,15 @@ export function BossFoundationProvider({
     }
   };
 
+// --- 4. EVALUATION (AZURE PRONUNCIATION + OPENAI VOICE) ---
   const submitTurn = async () => {
     if (stageStatusRef.current !== "PLAYING" || isAiProcessing) return;
+
     const audioBlob = await stopRecording();
     const userText = transcript.trim();
+    
     if (!userText && !audioBlob) return;
+
     const newMsgId = Date.now();
     setMessages((prev) => [
       ...prev,
@@ -398,44 +402,61 @@ export function BossFoundationProvider({
         isAnalyzingPronunciation: !!audioBlob,
       },
     ]);
+    
     resetSpeechState();
     setIsAiProcessing(true);
+
     const currentItem = playlist[currentIndexRef.current];
 
     try {
       let finalIsCorrect = false;
+
+      // 1. Send Audio to Azure to get a pronunciation score!
       if (audioBlob) {
         const formData = new FormData();
         formData.append("audio", audioBlob);
-        formData.append(
-          "transcript",
-          currentItem.targetText || userText || "bonjour",
-        );
+        formData.append("transcript", currentItem.targetText || userText || "bonjour"); 
         formData.append("language", bcp47Language);
+
         const azureRes = await fetch("/api/foundation/boss/pronunciation", {
           method: "POST",
           body: formData,
         });
+
         if (azureRes.ok) {
           const azureData = await azureRes.json();
-          finalIsCorrect = azureData.score >= 60;
+          console.log("Azure Assessment Score:", azureData.score);
+          
+          // Lowered to 50 for non-native speakers
+          const azurePassed = azureData.score >= 50;
+          
+          // STT Forgiveness: Strip punctuation/accents and check if they basically nailed it
+          const cleanTarget = (currentItem.targetText || "").toLowerCase().replace(/[^\w\s]/gi, '');
+          const cleanUser = userText.toLowerCase().replace(/[^\w\s]/gi, '');
+          const textPassed = cleanUser.length > 2 && (cleanUser.includes(cleanTarget) || cleanTarget.includes(cleanUser));
+
+          // Pass them if EITHER Azure liked the phonemes OR the text is a dead match
+          finalIsCorrect = azurePassed || textPassed;
         } else {
-          finalIsCorrect = true;
+          console.warn("Azure failed, falling back to generous mode");
+          finalIsCorrect = true; 
         }
       } else {
         finalIsCorrect = true;
       }
+
+      // 2. Send Azure's grade to OpenAI to get Madame Dubois's reaction!
       const llmRes = await fetch("/api/foundation/boss/evaluate-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           exercise: currentItem,
           userText,
-          isCorrect: finalIsCorrect,
+          isCorrect: finalIsCorrect, // Passing the forgiving verdict
           bossPersona: boss,
-          targetLanguage: bcp47Language,
         }),
       });
+
       const data = await llmRes.json();
       await processResult(data.isCorrect, data.text, currentItem.id);
     } catch (err) {
