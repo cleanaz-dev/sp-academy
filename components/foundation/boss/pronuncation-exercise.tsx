@@ -21,16 +21,9 @@ export function PronunciationExercise({
   startRecording,
   onReset,
 }: PronunciationExerciseProps) {
-
-  // --- ADD THIS LOG ---
-  console.log("[PronunciationExercise] State:", {
-    isRecording,
-    transcript,
-    transcriptType: typeof transcript,
-    hasTranscript: Boolean(transcript),
-  });
   return (
     <div className="flex flex-col items-center gap-5 text-center">
+      {/* Target Word / Phrase */}
       <div className="flex flex-wrap items-center justify-center gap-2">
         <div className="text-xl font-extrabold text-slate-800 sm:text-2xl">
           “{target}”
@@ -46,7 +39,8 @@ export function PronunciationExercise({
         </button>
       </div>
 
-      {!isRecording && !transcript ? (
+      {/* Initial Idle Mic Button */}
+      {!isRecording && !transcript && (
         <button
           type="button"
           onClick={startRecording}
@@ -55,7 +49,10 @@ export function PronunciationExercise({
         >
           <Mic className="text-white" size={32} />
         </button>
-      ) : isRecording ? (
+      )}
+
+      {/* Active Recording State: Listening Indicator & Live Real-Time Transcript */}
+      {isRecording && (
         <div className="flex flex-col items-center gap-3">
           <div className="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 shadow-lg shadow-rose-200">
             <Mic className="text-white" size={32} />
@@ -64,9 +61,18 @@ export function PronunciationExercise({
           <p className="text-sm font-extrabold uppercase tracking-widest text-indigo-500">
             Listening...
           </p>
-        </div>
-      ) : null}
 
+          {transcript ? (
+            <div className="mt-1 max-w-sm rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-2 text-base font-semibold text-indigo-900 transition-all">
+              “{transcript}”
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400">Speak now...</p>
+          )}
+        </div>
+      )}
+
+      {/* Finished Recording State: Final Transcript Review & Actions */}
       {transcript && !isRecording && (
         <div className="mt-2 w-full animate-in rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 duration-300 zoom-in-95">
           <p className="mb-4 text-sm font-medium text-slate-500">
