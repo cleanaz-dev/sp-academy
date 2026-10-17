@@ -28,7 +28,6 @@ export function SentenceBuilder({
   }, [words]);
 
   const selectWord = (word: string, index: number) => {
-    
     stopWordAudio?.();
     playWord?.(word, "m");
 
