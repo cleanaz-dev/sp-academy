@@ -10,7 +10,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useSpeech } from "@/context/speech-context";
-import { useSpeakBoss } from "@/hooks/use-speak-boss";
+import { useSpeak } from "@/hooks/use-speak";
 import { toast } from "sonner";
 
 export type ExerciseType =
@@ -262,7 +262,7 @@ export function BossFoundationProvider({
     isPlaying,
     isLoading: isSpeechLoading,
     stop: stopAudio,
-  } = useSpeakBoss();
+  } = useSpeak();
 
   const isProcessing =
     isPlaying || isAiProcessing || isSpeechLoading;
