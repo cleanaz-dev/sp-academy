@@ -25,6 +25,7 @@ interface ExerciseBlockProps {
   resolveAssetUrl: (key: string) => string;
   playWord?: (phrase: string, gender?: "m" | "f") => Promise<void>;
   stopWordAudio?: () => void;
+  stopRecording?: () => void;
 }
 
 export function ExerciseBlock({
@@ -41,6 +42,7 @@ export function ExerciseBlock({
   playWord,
   stopWordAudio,
   resetRecording,
+  stopRecording
 }: ExerciseBlockProps) {
   // console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
 
@@ -218,6 +220,7 @@ export function ExerciseBlock({
                 isRecording={isRecording}
                 transcript={transcript}
                 startRecording={startRecording}
+                stopRecording={stopRecording}
                 onReset={resetRecording}
                 onPlayReference={() =>
                   playExerciseAudio(

@@ -24,6 +24,7 @@ import { BossFoundationFreestyleControls } from "./boss-foundation-freestyle-con
 import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
 import { useWordAudio } from "@/context/word-audio-context";
 import { ExerciseBlock } from "./exercise-block";
+import { usePronunciation } from "@/context/pronunciation-context";
 
 interface Props {
   onEnd: () => void;
@@ -57,6 +58,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
   // 1. Grab playWord from the context!
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
+  const { stopRecording } = usePronunciation()
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -196,6 +198,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   resolveAssetUrl={resolveAssetUrl}
                   playWord={playWord}          
                   stopWordAudio={stopWordAudio}
+                  stopRecording={stopRecording}
                 />
               );
             })}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, Volume2 } from "lucide-react";
+import { Check, Mic, Square, Volume2 } from "lucide-react";
 
 interface PronunciationExerciseProps {
   target: string;
@@ -9,6 +9,7 @@ interface PronunciationExerciseProps {
   isRecording: boolean;
   transcript?: string;
   startRecording: () => void;
+  stopRecording?: () => void;
   onReset: () => void;
 }
 
@@ -19,8 +20,17 @@ export function PronunciationExercise({
   isRecording,
   transcript,
   startRecording,
+  stopRecording,
   onReset,
 }: PronunciationExerciseProps) {
+  const handleDoneSpeaking = () => {
+    if (stopRecording) {
+      stopRecording();
+    }
+    // If the transcript matches or is ready, submit directly:
+    onSubmit();
+  };
+
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       {/* Target Word / Phrase */}
@@ -39,7 +49,7 @@ export function PronunciationExercise({
         </button>
       </div>
 
-      {/* Initial Idle Mic Button */}
+      {/* 1. Initial State: Start Recording */}
       {!isRecording && !transcript && (
         <button
           type="button"
@@ -51,28 +61,40 @@ export function PronunciationExercise({
         </button>
       )}
 
-      {/* Active Recording State: Listening Indicator & Live Real-Time Transcript */}
+      {/* 2. Recording State: Pulse Mic, Live Text, and "Done / Send" Button */}
       {isRecording && (
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex w-full flex-col items-center gap-3">
           <div className="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 shadow-lg shadow-rose-200">
             <Mic className="text-white" size={32} />
           </div>
 
-          <p className="text-sm font-extrabold uppercase tracking-widest text-indigo-500">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-indigo-500">
             Listening...
           </p>
 
           {transcript ? (
-            <div className="mt-1 max-w-sm rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-2 text-base font-semibold text-indigo-900 transition-all">
+            <div className="w-full max-w-sm rounded-xl border border-indigo-100 bg-indigo-50/80 px-4 py-2.5 text-base font-semibold text-indigo-900 transition-all">
               “{transcript}”
             </div>
           ) : (
             <p className="text-xs text-slate-400">Speak now...</p>
           )}
+
+          {/* Manual Send / Finish Button once speech is detected */}
+          {transcript && (
+            <button
+              type="button"
+              onClick={handleDoneSpeaking}
+              className="mt-2 flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3 font-extrabold text-white shadow-md transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
+            >
+              <Check size={20} />
+              Done / Send Answer
+            </button>
+          )}
         </div>
       )}
 
-      {/* Finished Recording State: Final Transcript Review & Actions */}
+      {/* 3. Review State: If recording stopped without direct submit */}
       {transcript && !isRecording && (
         <div className="mt-2 w-full animate-in rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 duration-300 zoom-in-95">
           <p className="mb-4 text-sm font-medium text-slate-500">

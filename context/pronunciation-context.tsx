@@ -16,6 +16,7 @@ interface PronunciationContextProps {
   assessSpeech: (text: string, targetLanguage: string) => Promise<void>;
   cancelAssessment: () => void;
   reset: () => void;
+  stopRecording: () => void;
 }
 
 const PronunciationContext = createContext<PronunciationContextProps | undefined>(undefined);
@@ -68,6 +69,22 @@ export const PronunciationProvider = ({ children }: { children: ReactNode }) => 
     setStatus("idle");
   }, []);
 
+  const stopRecording = useCallback(() => {
+  if (recognizerRef.current) {
+    recognizerRef.current.stopContinuousRecognitionAsync(
+      () => {
+        setStatus("idle");
+      },
+      (err) => {
+        console.error("Failed to stop recognition:", err);
+        setStatus("idle");
+      }
+    );
+  } else {
+    setStatus("idle");
+  }
+}, []);
+
   return (
     <PronunciationContext.Provider
       value={{
@@ -77,6 +94,7 @@ export const PronunciationProvider = ({ children }: { children: ReactNode }) => 
         error,
         assessSpeech,
         cancelAssessment,
+        stopRecording,
         reset,
       }}
     >
