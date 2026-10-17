@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     } = body;
 
     console.log(`Boss Session ${sessionId} ended. Passed: ${passed}`);
+    console.log(`Boss Payload:` body)
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
