@@ -27,8 +27,6 @@ interface ExerciseBlockProps {
   stopWordAudio?: () => void;
 }
 
-
-
 export function ExerciseBlock({
   message,
   onSubmit,
@@ -44,9 +42,8 @@ export function ExerciseBlock({
   stopWordAudio,
   resetRecording,
 }: ExerciseBlockProps) {
-
   // console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
-  
+
   const exercise = message.exercise;
 
   const initialTime =
@@ -206,22 +203,32 @@ export function ExerciseBlock({
           />
         )}
 
-        {exercise.type === "PRONUNCIATION" && (
-          <PronunciationExercise
-            target={exercise.targetText ?? ""}
-            isRecording={isRecording}
-            transcript={transcript}
-            startRecording={startRecording}
-            onReset={resetRecording}
-            onPlayReference={() =>
-              playExerciseAudio(
-                exercise.audioKey ?? undefined,
-                exercise.targetText ?? undefined,
-              )
-            }
-            onSubmit={onSubmitVoice}
-          />
-        )}
+        {exercise.type === "PRONUNCIATION" &&
+          (() => {
+            // --- ADD THIS LOG ---
+            console.log("[ExerciseBlock -> Pronunciation] Props:", {
+              isRecording,
+              transcript,
+              targetText: exercise.targetText,
+            });
+
+            return (
+              <PronunciationExercise
+                target={exercise.targetText ?? ""}
+                isRecording={isRecording}
+                transcript={transcript}
+                startRecording={startRecording}
+                onReset={resetRecording}
+                onPlayReference={() =>
+                  playExerciseAudio(
+                    exercise.audioKey ?? undefined,
+                    exercise.targetText ?? undefined,
+                  )
+                }
+                onSubmit={onSubmitVoice}
+              />
+            );
+          })()}
       </div>
     </div>
   );

@@ -22,7 +22,13 @@ export function PronunciationExercise({
   onReset,
 }: PronunciationExerciseProps) {
 
-  console.log("Transcript:", transcript)
+  // --- ADD THIS LOG ---
+  console.log("[PronunciationExercise] State:", {
+    isRecording,
+    transcript,
+    transcriptType: typeof transcript,
+    hasTranscript: Boolean(transcript),
+  });
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2">
