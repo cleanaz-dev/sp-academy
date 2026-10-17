@@ -21,6 +21,8 @@ export function PronunciationExercise({
   startRecording,
   onReset,
 }: PronunciationExerciseProps) {
+
+  console.log("Transcript:", transcript)
   return (
     <div className="flex flex-col items-center gap-5 text-center">
       <div className="flex flex-wrap items-center justify-center gap-2">
