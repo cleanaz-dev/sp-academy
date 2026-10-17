@@ -1,26 +1,20 @@
 // components/foundation/boss/boss-foundation-freestyle.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   ArrowRight,
-  Mic,
-  CheckCircle2,
-  XCircle,
   Heart,
-  Zap,
-  Clock,
-  Volume2,
   RotateCcw,
+  XCircle,
+  Zap,
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  useBossFoundation,
   BossMessage,
-  ImageOption,
+  useBossFoundation,
 } from "@/context/boss-context";
-import { BossFoundationFreestyleControls } from "./boss-foundation-freestyle-controls";
 import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
 import { useWordAudio } from "@/context/word-audio-context";
 import { ExerciseBlock } from "./exercise-block";
@@ -28,12 +22,11 @@ import { usePronunciation } from "@/context/pronunciation-context";
 
 interface Props {
   onEnd: () => void;
-  scenarioData?: any;
+  scenarioData?: unknown;
 }
 
 export default function BossFoundationFreestyle({ onEnd }: Props) {
   const {
-    session,
     boss,
     messages,
     chances,
@@ -41,12 +34,12 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     currentIndex,
     totalExercises,
     stageStatus,
-    hasStartedExercises, // <-- MAKE SURE TO DESTRUCTURE THIS
+    hasStartedExercises,
     isRecording,
     transcript,
     isProcessing,
     isAiProcessing,
-    startExercises, // <-- MAKE SURE TO DESTRUCTURE THIS
+    startExercises,
     submitExerciseAnswer,
     handleTimeOut,
     submitTurn,
@@ -56,9 +49,8 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     resetRecording,
   } = useBossFoundation();
 
-  // 1. Grab playWord from the context!
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
-  const { stopRecording } = usePronunciation()
+  const { stopRecording } = usePronunciation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -67,61 +59,70 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
     : "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
 
   const showThinking = isAiProcessing && !isRecording;
-  const hasPendingExercise = messages.some(
-    (m) => m.exercise && m.status === "pending",
-  );
-  const progressPercent = Math.min((currentIndex / totalExercises) * 100, 100);
 
-  // Auto scroll
+  const hasPendingExercise = messages.some(
+    (message) => message.exercise && message.status === "pending",
+  );
+
+  const progressPercent =
+    totalExercises > 0
+      ? Math.min((currentIndex / totalExercises) * 100, 100)
+      : 0;
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, transcript, isProcessing, isAiProcessing]);
 
   return (
-    // 1. THE OUTER WRAPPER: Lock the height so the page CANNOT scroll.
-    // 'h-[calc(100vh-2rem)]' ensures it fits on screen with a tiny bit of margin.
-    <div className="flex flex-col w-full h-[calc(100vh-2rem)] max-h-[900px] max-w-5xl mx-auto bg-slate-50 rounded-3xl overflow-hidden shadow-xl border border-slate-200 relative">
-      {/* 🛑 FAIL OVERLAY (Retry Screen) */}
+    <div className="relative mx-auto flex h-[calc(100vh-2rem)] max-h-[900px] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-xl">
+      {/* Failed state */}
       {stageStatus === "FAILED" && (
-        <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-500">
-          <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mb-6">
+        <div className="absolute inset-0 z-50 flex animate-in flex-col items-center justify-center bg-white/95 p-8 text-center backdrop-blur-sm duration-500 zoom-in-95">
+          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-rose-100">
             <XCircle className="text-rose-500" size={48} />
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-3">
+
+          <h2 className="mb-3 text-3xl font-extrabold text-slate-900">
             Out of Hearts!
           </h2>
-          <p className="text-slate-500 font-medium mb-8 max-w-sm">
+
+          <p className="mb-8 max-w-sm font-medium text-slate-500">
             {boss?.name} was not impressed. Take a deep breath and try the
             encounter again.
           </p>
+
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="w-full max-w-sm py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-lg transition-all active:translate-y-1 active:border-b-0 border-b-4 border-indigo-800 shadow-sm flex items-center justify-center gap-2"
+            className="flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-4 text-lg font-extrabold text-white shadow-sm transition-all hover:bg-indigo-500 active:translate-y-1 active:border-b-0"
           >
             <RotateCcw size={20} />
             Retry Encounter
           </button>
+
           <button
+            type="button"
             onClick={onEnd}
-            className="mt-4 text-slate-400 font-bold hover:text-slate-600 transition-colors"
+            className="mt-4 font-bold text-slate-400 transition-colors hover:text-slate-600"
           >
             Flee Battle
           </button>
         </div>
       )}
 
-      {/* 🎮 TOP STATS BAR (Shrink-0 prevents it from squishing) */}
-      <div className="shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-4 flex flex-col gap-3 z-10 shadow-sm">
+      {/* Stats header */}
+      <div className="z-10 flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
+            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100">
               <img
                 src={aiAvatarUrl}
-                alt="Boss"
-                className="w-full h-full object-cover"
+                alt={boss?.name ? `${boss.name} avatar` : "Boss avatar"}
+                className="h-full w-full object-cover"
               />
             </div>
-            <h4 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide hidden sm:block">
+
+            <h4 className="hidden text-sm font-extrabold uppercase tracking-wide text-slate-900 sm:block">
               {boss?.name || "Milestone Boss"}
             </h4>
           </div>
@@ -133,35 +134,33 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                 size={22}
                 className={`transition-all duration-300 ${
                   heartIndex <= chances
-                    ? "fill-rose-500 text-rose-500 scale-100 drop-shadow-sm"
-                    : "fill-slate-200 text-slate-200 scale-90"
+                    ? "scale-100 fill-rose-500 text-rose-500 drop-shadow-sm"
+                    : "scale-90 fill-slate-200 text-slate-200"
                 }`}
               />
             ))}
           </div>
 
-          <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
-            <Zap size={18} className="text-amber-500 fill-amber-500" />
-            <span className="text-amber-600 font-extrabold text-sm">
+          <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5">
+            <Zap size={18} className="fill-amber-500 text-amber-500" />
+            <span className="text-sm font-extrabold text-amber-600">
               {xp} XP
             </span>
           </div>
         </div>
 
-        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full bg-amber-400 rounded-full transition-all duration-700 ease-out"
+            className="h-full rounded-full bg-amber-400 transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </div>
 
-      {/* 💬 CHAT / GAME AREA */}
-      {/* flex-1 lets it fill remaining space. overflow-hidden stops it from breaking boundaries */}
-      <div className="flex-1 overflow-hidden relative bg-slate-50/50">
-        {/* We add py-10 to the ScrollArea contents so the chat doesn't touch the top/bottom bars */}
+      {/* Chat and exercise area */}
+      <div className="relative flex-1 overflow-hidden bg-slate-50/50">
         <ScrollArea className="h-full w-full">
-          <div className="space-y-6 max-w-3xl mx-auto px-4 sm:px-8 py-10">
+          <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-8">
             {messages.length === 0 && !isProcessing && !isRecording && (
               <div className="flex min-h-[200px] flex-col items-center justify-center text-center opacity-60">
                 <p className="text-sm font-medium text-slate-500">
@@ -196,7 +195,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
                   resetRecording={resetRecording}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
-                  playWord={playWord}          
+                  playWord={playWord}
                   stopWordAudio={stopWordAudio}
                   stopRecording={stopRecording}
                 />
@@ -205,40 +204,44 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
             {showThinking && (
               <BossFoundationFreestyleChatBubble
-                message={{ id: "thinking", role: "assistant", text: "" }}
+                message={{
+                  id: "thinking",
+                  role: "assistant",
+                  text: "",
+                }}
                 aiAvatarUrl={aiAvatarUrl}
                 ttsStatus="thinking"
               />
             )}
+
             <div ref={messagesEndRef} className="h-4" />
           </div>
         </ScrollArea>
       </div>
 
-      {/* 🛑 BOTTOM ACTION BAR (Shrink-0 to lock it to bottom) */}
-      <div className="shrink-0 bg-white border-t border-slate-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 relative z-10">
+      {/* Bottom action bar */}
+      <div className="relative z-10 flex shrink-0 flex-col gap-4 border-t border-slate-200 bg-white p-4 sm:p-6 md:flex-row">
         {!hasStartedExercises ? (
           <button
+            type="button"
             onClick={startExercises}
-            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-lg transition-all active:translate-y-1 active:border-b-0 border-b-4 border-indigo-800 shadow-sm animate-in slide-in-from-bottom-2 flex items-center justify-center"
+            className="flex w-full animate-in items-center justify-center rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-4 text-lg font-extrabold text-white shadow-sm transition-all slide-in-from-bottom-2 hover:bg-indigo-500 active:translate-y-1 active:border-b-0"
           >
             {isProcessing ? "Skip Intro & Begin" : "I'm Ready, Let's Begin"}
           </button>
         ) : stageStatus === "PLAYING" ? (
-          hasPendingExercise ? (
-            <div className="flex-1 flex items-center justify-center px-6 py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-              <span className="text-sm text-slate-500 font-bold uppercase tracking-wider">
-                Complete the exercise above to continue
-              </span>
-            </div>
-          ) : (
-            <div className="flex min-w-0 flex-1">
-              <BossFoundationFreestyleControls />
-            </div>
-          )
+          <div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-4 text-center">
+            <span className="text-sm font-bold uppercase tracking-wider text-slate-500">
+              {hasPendingExercise
+                ? "Complete the exercise above to continue"
+                : isAiProcessing
+                  ? "Preparing the next exercise..."
+                  : "Waiting for the next exercise..."}
+            </span>
+          </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-slate-200">
-            <p className="text-slate-400 font-bold uppercase tracking-widest">
+          <div className="flex flex-1 items-center justify-center rounded-2xl border-2 border-slate-200 bg-slate-50 px-6 py-4">
+            <p className="font-bold uppercase tracking-widest text-slate-400">
               Encounter {stageStatus}
             </p>
           </div>
@@ -246,14 +249,15 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
         {stageStatus === "PASSED" && (
           <button
+            type="button"
             onClick={onEnd}
-            className="w-full md:w-auto py-4 px-8 text-white font-extrabold rounded-2xl text-lg transition-all active:translate-y-1 active:border-b-0 border-b-4 flex items-center justify-center gap-2 shrink-0 bg-emerald-500 hover:bg-emerald-400 border-emerald-700 shadow-sm"
+            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-2xl border-b-4 border-emerald-700 bg-emerald-500 px-8 py-4 text-lg font-extrabold text-white shadow-sm transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0 md:w-auto"
           >
-            Claim Victory <ArrowRight size={20} />
+            Claim Victory
+            <ArrowRight size={20} />
           </button>
         )}
       </div>
     </div>
   );
 }
-
