@@ -30,49 +30,9 @@ export function BossFoundationFreestyleChatBubble({
   // USER MESSAGE
   // ---------------------------------------------------------------------------
   if (message.role === "user") {
-    const initial =
-      user?.name?.[0] ??
-      (user as any)?.firstName?.[0] ??
-      (user as any)?.username?.[0] ??
-      "U";
-
-    // Better-Auth stores avatar in `user.image` (with fallback to `imageUrl`)
-    const avatarUrl = user?.image ?? (user as any)?.imageUrl;
-
-    return (
-      <div className="flex items-end justify-end gap-3 animate-in slide-in-from-bottom-1">
-        <div className="flex max-w-[80%] flex-col items-end">
-          <div className="rounded-3xl rounded-br-sm bg-blue-500 p-4 text-[15px] leading-relaxed text-white shadow-xs">
-            {message.text}
-          </div>
-
-          {message.isAnalyzingPronunciation && (
-            <span className="mt-1.5 animate-pulse text-xs text-gray-400">
-              Scoring pronunciation...
-            </span>
-          )}
-
-          {message.pronunciationScore && (
-            <div className="mt-1.5 flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
-              <span>Accuracy: {message.pronunciationScore.accuracyScore}</span>
-              <span className="text-gray-300">|</span>
-              <span>Fluency: {message.pronunciationScore.fluencyScore}</span>
-              <span className="text-gray-300">|</span>
-              <span className="text-indigo-600">
-                Overall: {message.pronunciationScore.score}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <Avatar className="h-9 w-9 shrink-0 border border-slate-700">
-          <AvatarImage src={avatarUrl} alt="You" />
-          <AvatarFallback className="bg-blue-500 text-sm font-bold uppercase text-white">
-            {initial}
-          </AvatarFallback>
-        </Avatar>
-      </div>
-    );
+    if (!message.isAnalyzingPronunciation && !message.pronunciationScore) {
+      return null;
+    }
   }
 
   // ---------------------------------------------------------------------------

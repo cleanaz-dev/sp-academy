@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Mic, Square, Volume2 } from "lucide-react";
+import { Check, Mic, Volume2 } from "lucide-react";
 
 interface PronunciationExerciseProps {
   target: string;
@@ -11,6 +11,7 @@ interface PronunciationExerciseProps {
   startRecording: () => void;
   stopRecording?: () => void;
   onReset: () => void;
+  isCompleted?: boolean; // <-- Added prop
 }
 
 export function PronunciationExercise({
@@ -22,12 +23,12 @@ export function PronunciationExercise({
   startRecording,
   stopRecording,
   onReset,
+  isCompleted = false,
 }: PronunciationExerciseProps) {
   const handleDoneSpeaking = () => {
     if (stopRecording) {
       stopRecording();
     }
-    // If the transcript matches or is ready, submit directly:
     onSubmit();
   };
 
@@ -50,7 +51,7 @@ export function PronunciationExercise({
       </div>
 
       {/* 1. Initial State: Start Recording */}
-      {!isRecording && !transcript && (
+      {!isRecording && !transcript && !isCompleted && (
         <button
           type="button"
           onClick={startRecording}
@@ -61,7 +62,7 @@ export function PronunciationExercise({
         </button>
       )}
 
-      {/* 2. Recording State: Pulse Mic, Live Text, and "Done / Send" Button */}
+      {/* 2. Recording State: Pulse Mic, Live Text, and Done Button */}
       {isRecording && (
         <div className="flex w-full flex-col items-center gap-3">
           <div className="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 shadow-lg shadow-rose-200">
@@ -80,7 +81,6 @@ export function PronunciationExercise({
             <p className="text-xs text-slate-400">Speak now...</p>
           )}
 
-          {/* Manual Send / Finish Button once speech is detected */}
           {transcript && (
             <button
               type="button"
@@ -94,33 +94,40 @@ export function PronunciationExercise({
         </div>
       )}
 
-      {/* 3. Review State: If recording stopped without direct submit */}
+      {/* 3. Review & Completed State */}
       {transcript && !isRecording && (
         <div className="mt-2 w-full animate-in rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 duration-300 zoom-in-95">
-          <p className="mb-4 text-sm font-medium text-slate-500">
+          <p
+            className={`text-sm font-medium text-slate-500 ${
+              isCompleted ? "mb-0" : "mb-4"
+            }`}
+          >
             Heard:{" "}
             <span className="text-[15px] font-extrabold text-slate-800">
               “{transcript}”
             </span>
           </p>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex-1 rounded-xl border-2 border-slate-200 bg-white py-3.5 font-bold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:translate-y-1"
-            >
-              Retry Mic
-            </button>
+          {/* Hide Retry Mic and Submit buttons once the exercise has been answered */}
+          {!isCompleted && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onReset}
+                className="flex-1 rounded-xl border-2 border-slate-200 bg-white py-3.5 font-bold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:translate-y-1"
+              >
+                Retry Mic
+              </button>
 
-            <button
-              type="button"
-              onClick={onSubmit}
-              className="flex-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3.5 font-extrabold text-white transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
-            >
-              Submit
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={onSubmit}
+                className="flex-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3.5 font-extrabold text-white transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
+              >
+                Submit
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

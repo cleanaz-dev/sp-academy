@@ -203,15 +203,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
               );
             })}
 
-            {isRecording && transcript && !hasPendingExercise && (
-              <div className="flex flex-col items-end animate-in slide-in-from-bottom-2">
-                <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600 px-5 py-3.5 text-[15px] leading-relaxed text-white shadow-md">
-                  {transcript}
-                  <span className="animate-pulse ml-1">...</span>
-                </div>
-              </div>
-            )}
-
             {showThinking && (
               <BossFoundationFreestyleChatBubble
                 message={{ id: "thinking", role: "assistant", text: "" }}
