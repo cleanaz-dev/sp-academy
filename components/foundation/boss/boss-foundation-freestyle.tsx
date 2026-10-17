@@ -1,4 +1,3 @@
-// components/foundation/boss/boss-foundation-freestyle.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -235,7 +234,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
               {hasPendingExercise
                 ? "Complete the exercise above to continue"
                 : isAiProcessing
-                  ? "Preparing the next exercise..."
+                  ? "Waiting for the boss to finish speaking..."
                   : "Waiting for the next exercise..."}
             </span>
           </div>
