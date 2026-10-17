@@ -1,8 +1,6 @@
 "use client";
 
 import { Volume2, Loader2 } from "lucide-react";
-
-import { authClient } from "@/lib/auth-client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export type TtsStatus = "idle" | "thinking" | "loading" | "playing";
@@ -22,17 +20,10 @@ export function BossFoundationFreestyleChatBubble({
   ttsStatus = "idle",
   isBusy = false,
 }: BossFoundationFreestyleChatBubbleProps) {
-  // Get the user from Better-Auth
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
 
-  // ---------------------------------------------------------------------------
-  // USER MESSAGE
-  // ---------------------------------------------------------------------------
-  if (message.role === "user") {
-    if (!message.isAnalyzingPronunciation && !message.pronunciationScore) {
-      return null;
-    }
+// If it's a user message, never render anything in the boss stage
+  if (message.role === "user" || message.sender === "user") {
+    return null;
   }
 
   // ---------------------------------------------------------------------------
