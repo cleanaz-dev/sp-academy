@@ -47,7 +47,7 @@ export function LearningPathMiniCards({
   const resolveBossHref = (bossId: string, lessonId: string) =>
     getBossHref
       ? getBossHref(bossId, lessonId)
-      : `/foundation/${lessonId}/${courseId}/boss?bossId=${bossId}`;
+      : `/foundation/boss/${bossId}`;
 
   return (
     <div className="space-y-3">
