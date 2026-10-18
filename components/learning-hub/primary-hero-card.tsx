@@ -215,7 +215,7 @@ export function PrimaryHeroCard({
             href={bossHref}
             className="inline-flex items-center gap-2 rounded-2xl bg-fuchsia-600 px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-fuchsia-500/25 transition-all hover:bg-fuchsia-700 hover:shadow-xl active:scale-95"
           >
-            Start Conversation <ArrowRight className="h-4 w-4" />
+            Begin <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
