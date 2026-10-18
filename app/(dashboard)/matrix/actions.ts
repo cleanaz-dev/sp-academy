@@ -4,7 +4,13 @@ export async function getUserMatrix(userId: string) {
   const matrix = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-        languageProfiles: true
+        languageProfiles: {
+            select: {
+                languageCode: true,
+                wordStats: true,
+            }
+        },
+        
     }
   });
   return matrix
