@@ -54,10 +54,9 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const getLessonHref = (lessonId: string) =>
     `/foundation/${lessonId}/${courseId}`;
 
-  const getBossHref = (bossId: string, lessonId?: string) =>
-    lessonId
-      ? `/foundation/${lessonId}/${courseId}/boss?bossId=${bossId}`
-      : `/foundation/boss/${bossId}`;
+  const getBossHref = (bossId: string) =>
+    `/foundation/boss/${bossId}`;
+     
 
   useEffect(() => {
     if (!isGenerating) return;
