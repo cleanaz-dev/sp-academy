@@ -21,6 +21,9 @@ export default function BossFoundationClient({
   const [hasStarted, setHasStarted] = useState(false);
 
   const handleEnd = () => router.push("/learning-hub");
+  
+  // Create a retry handler that simply sets the state back to the pre-boss screen
+  const handleRetry = () => setHasStarted(false);
 
   const scenarioData =
     session.scenarioData as unknown as BossScenarioData | null;
@@ -28,14 +31,10 @@ export default function BossFoundationClient({
   const playlist = scenarioData?.exerciseBank || [];
   const totalExercises = playlist.length || 0;
 
-  // Safely grab the target language and map it to fr-FR
   const rawLang =
     session?.course?.targetLanguage ||
     (session as any)?.targetLanguage ||
     "fr-FR";
-
-  console.log("Target Language:", session?.course?.targetLanguage);
-  console.log(" Raw Target Language:", rawLang);
 
   const allKeys = useMemo(() => {
     const keys: (string | undefined)[] = [boss?.avatarKey ?? undefined];
@@ -61,10 +60,9 @@ export default function BossFoundationClient({
     <div className="min-h-screen w-full animate-bg p-4 flex flex-col justify-center">
       {!hasStarted ? (
         <div className="flex w-full flex-col items-center justify-center py-12">
-          {/* Main Card (Wider and allows avatar to pop out) */}
+          {/* Main Card */}
           <div className="relative mt-16 w-full max-w-lg rounded-[2.5rem] border border-slate-100 bg-white px-8 pb-8 pt-20 text-center shadow-2xl shadow-indigo-900/10">
             
-            {/* Floating Boss Avatar */}
             <div className="absolute -top-16 left-1/2 flex h-32 w-32 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border-[6px] border-white bg-slate-100 shadow-xl">
               {isLoading && !resolvedAvatarUrl ? (
                 <Loader2 className="animate-spin text-indigo-300" size={32} />
@@ -77,12 +75,10 @@ export default function BossFoundationClient({
               )}
             </div>
 
-            {/* Boss Name */}
             <h1 className="mb-4 text-3xl font-black text-slate-800">
               {boss?.name || "Milestone Boss"}
             </h1>
 
-            {/* Boss Description / Persona (Stylized Box with Scroll) */}
             <div className="mb-8 max-h-40 overflow-y-auto rounded-2xl bg-slate-50 p-5 shadow-inner scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200">
               <p className="text-[15px] font-medium leading-relaxed text-slate-600">
                 {boss?.persona ||
@@ -90,9 +86,7 @@ export default function BossFoundationClient({
               </p>
             </div>
 
-            {/* Stats Area */}
             <div className="mb-8 flex w-full gap-4">
-              {/* Challenges Badge */}
               <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-indigo-50 bg-indigo-50/40 py-4 transition-colors hover:bg-indigo-50/80">
                 <div className="mb-1 rounded-full bg-indigo-100 p-2 text-indigo-600">
                   <Target size={22} strokeWidth={2.5} />
@@ -105,7 +99,6 @@ export default function BossFoundationClient({
                 </span>
               </div>
 
-              {/* Lives Badge */}
               <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-rose-50 bg-rose-50/40 py-4 transition-colors hover:bg-rose-50/80">
                 <div className="mb-1 rounded-full bg-rose-100 p-2 text-rose-600">
                   <ShieldAlert size={22} strokeWidth={2.5} />
@@ -119,7 +112,6 @@ export default function BossFoundationClient({
               </div>
             </div>
 
-            {/* Start Button */}
             <button
               onClick={() => setHasStarted(true)}
               disabled={isLoading}
@@ -151,7 +143,8 @@ export default function BossFoundationClient({
         >
           <MatrixProvider>
             <WordAudioProvider targetLang={rawLang}>
-              <BossFoundationFreestyle onEnd={handleEnd} />
+              {/* Pass the onRetry handler down */}
+              <BossFoundationFreestyle onEnd={handleEnd} onRetry={handleRetry} />
             </WordAudioProvider>
           </MatrixProvider>
         </BossFoundationProvider>

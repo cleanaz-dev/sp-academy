@@ -7,11 +7,10 @@ import {
   RotateCcw,
   XCircle,
   Zap,
-  Loader2, // <-- Added Loader2 for the thinking spinner
+  Loader2,
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-// <-- Added Marker imports
 import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"; 
 import {
   BossMessage,
@@ -24,10 +23,11 @@ import { usePronunciation } from "@/context/pronunciation-context";
 
 interface Props {
   onEnd: () => void;
+  onRetry: () => void; // <-- Add onRetry prop
   scenarioData?: unknown;
 }
 
-export default function BossFoundationFreestyle({ onEnd }: Props) {
+export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
   const {
     boss,
     messages,
@@ -95,7 +95,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={onRetry} // <-- Replaced window.location.reload() with onRetry()
             className="flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-4 text-lg font-extrabold text-white shadow-sm transition-all hover:bg-indigo-500 active:translate-y-1 active:border-b-0"
           >
             <RotateCcw size={20} />
@@ -114,6 +114,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
       {/* Stats header */}
       <div className="z-10 flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6">
+        {/* ... existing header logic ... */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100">
@@ -204,7 +205,6 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
               );
             })}
 
-            {/* Replaced standard Chat Bubble with shadcn Marker! */}
             {showThinking && (
               <div className="flex w-full justify-center py-4 animate-in fade-in duration-300">
                 <Marker role="status">
@@ -225,6 +225,7 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
 
       {/* Bottom action bar */}
       <div className="relative z-10 flex shrink-0 flex-col gap-4 border-t border-slate-200 bg-white p-4 sm:p-6 md:flex-row">
+        {/* ... remaining code ... */}
         {!hasStartedExercises ? (
           <button
             type="button"
