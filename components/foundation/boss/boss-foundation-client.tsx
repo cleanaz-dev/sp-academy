@@ -58,73 +58,88 @@ export default function BossFoundationClient({
     "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
 
   return (
-    <div className="min-h-screen w-full animate-bg p-4">
+    <div className="min-h-screen w-full animate-bg p-4 flex flex-col justify-center">
       {!hasStarted ? (
-        <div className="flex min-h-[calc(100vh-2rem)] flex-col items-center justify-center p-2">
-          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-2xl shadow-indigo-900/10">
-            <div className="absolute -right-24 -top-24 h-48 w-48 rounded-full bg-indigo-50 blur-3xl" />
+        <div className="flex w-full flex-col items-center justify-center py-12">
+          {/* Main Card (Wider and allows avatar to pop out) */}
+          <div className="relative mt-16 w-full max-w-lg rounded-[2.5rem] border border-slate-100 bg-white px-8 pb-8 pt-20 text-center shadow-2xl shadow-indigo-900/10">
+            
+            {/* Floating Boss Avatar */}
+            <div className="absolute -top-16 left-1/2 flex h-32 w-32 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border-[6px] border-white bg-slate-100 shadow-xl">
+              {isLoading && !resolvedAvatarUrl ? (
+                <Loader2 className="animate-spin text-indigo-300" size={32} />
+              ) : (
+                <img
+                  src={bossAvatar}
+                  alt={boss?.name || "Boss"}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
 
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="mb-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-xl">
-                {isLoading && !resolvedAvatarUrl ? (
-                  <Loader2 className="animate-spin text-indigo-300" size={32} />
-                ) : (
-                  <img
-                    src={bossAvatar}
-                    alt={boss?.name || "Boss"}
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
+            {/* Boss Name */}
+            <h1 className="mb-4 text-3xl font-black text-slate-800">
+              {boss?.name || "Milestone Boss"}
+            </h1>
 
-              <h1 className="mb-2 text-3xl font-extrabold text-slate-900">
-                {boss?.name || "Milestone Boss"}
-              </h1>
-
-              <p className="mb-6 px-4 text-sm font-medium leading-relaxed text-slate-500">
+            {/* Boss Description / Persona (Stylized Box with Scroll) */}
+            <div className="mb-8 max-h-40 overflow-y-auto rounded-2xl bg-slate-50 p-5 shadow-inner scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200">
+              <p className="text-[15px] font-medium leading-relaxed text-slate-600">
                 {boss?.persona ||
                   "Prove your language skills in this final test."}
               </p>
+            </div>
 
-              <div className="mb-8 flex w-full items-center justify-center gap-6">
-                <div className="flex w-1/2 flex-col items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <Target className="text-indigo-500" size={24} />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Challenges
-                  </span>
-                  <span className="text-lg font-bold text-slate-800">
-                    {totalExercises}
-                  </span>
+            {/* Stats Area */}
+            <div className="mb-8 flex w-full gap-4">
+              {/* Challenges Badge */}
+              <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-indigo-50 bg-indigo-50/40 py-4 transition-colors hover:bg-indigo-50/80">
+                <div className="mb-1 rounded-full bg-indigo-100 p-2 text-indigo-600">
+                  <Target size={22} strokeWidth={2.5} />
                 </div>
-
-                <div className="flex w-1/2 flex-col items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <ShieldAlert className="text-rose-500" size={24} />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Lives
-                  </span>
-                  <span className="text-lg font-bold text-slate-800">
-                    3 Hearts
-                  </span>
-                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                  Challenges
+                </span>
+                <span className="text-2xl font-black text-indigo-900">
+                  {totalExercises}
+                </span>
               </div>
 
-              <button
-                onClick={() => setHasStarted(true)}
-                disabled={isLoading}
-                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-lg font-extrabold text-white shadow-sm transition-all ${
-                  isLoading
-                    ? "cursor-not-allowed border-indigo-500 bg-indigo-400 opacity-80"
-                    : "border-b-4 border-indigo-800 bg-indigo-600 hover:bg-indigo-500 active:translate-y-1 active:border-b-0"
-                }`}
-              >
-                {isLoading ? (
-                  <Loader2 className="animate-spin" size={20} />
-                ) : (
-                  <Play fill="currentColor" size={20} />
-                )}
-                {isLoading ? "Loading Media..." : "Start Encounter"}
-              </button>
+              {/* Lives Badge */}
+              <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-rose-50 bg-rose-50/40 py-4 transition-colors hover:bg-rose-50/80">
+                <div className="mb-1 rounded-full bg-rose-100 p-2 text-rose-600">
+                  <ShieldAlert size={22} strokeWidth={2.5} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-rose-400">
+                  Lives
+                </span>
+                <span className="text-2xl font-black text-rose-900">
+                  3
+                </span>
+              </div>
             </div>
+
+            {/* Start Button */}
+            <button
+              onClick={() => setHasStarted(true)}
+              disabled={isLoading}
+              className={`group relative flex w-full items-center justify-center gap-3 rounded-2xl py-4 text-lg font-extrabold text-white transition-all ${
+                isLoading
+                  ? "cursor-not-allowed bg-indigo-300"
+                  : "border-b-4 border-indigo-700 bg-indigo-500 shadow-lg shadow-indigo-200 hover:bg-indigo-400 hover:shadow-indigo-300 active:translate-y-1 active:border-b-0"
+              }`}
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin" size={24} />
+              ) : (
+                <Play
+                  className="transition-transform group-hover:scale-110"
+                  fill="currentColor"
+                  size={22}
+                />
+              )}
+              <span>{isLoading ? "Loading Media..." : "Start Encounter"}</span>
+            </button>
           </div>
         </div>
       ) : (
@@ -134,7 +149,6 @@ export default function BossFoundationClient({
           preloadedKeys={allKeys}
           preloadedUrls={urls}
         >
-          {/* PASSED THE CORRECT LANGUAGE CODE HERE! */}
           <MatrixProvider>
             <WordAudioProvider targetLang={rawLang}>
               <BossFoundationFreestyle onEnd={handleEnd} />
