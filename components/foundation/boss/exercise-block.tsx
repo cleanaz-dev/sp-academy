@@ -44,7 +44,6 @@ export function ExerciseBlock({
   resetRecording,
   stopRecording,
 }: ExerciseBlockProps) {
-  // console.log("[ExerciseBlock] playWord prop:", typeof playWord, "type:", message.exercise?.type);
 
   const exercise = message.exercise;
 

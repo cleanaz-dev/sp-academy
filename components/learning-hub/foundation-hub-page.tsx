@@ -22,31 +22,44 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
   const user = path?.user;
 
-
-  // --- NEW ENGINE STATE ---
+  // --- ENGINE STATE ---
   const currentFocus = path?.currentFocus ?? null;
   const nextLocked = path?.nextLocked ?? null;
 
-  // Backwards compatibility for PrimaryHeroCard (so you don't have to rewrite it yet)
+  // Derive target items based on currentFocus type
   const vocabDue = currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson = currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
+  const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
-  // Keep your existing waiting/polling logic exactly as is!
-  const waitingOnVocab = lessons.some((l) => l.completedAt && !l.bridge);
-  const completedLessonsCount = lessons.filter((l) => !!l.completedAt).length;
+  // Waiting/generation checks
+  const waitingOnVocab =
+    currentFocus?.type === "BRIDGE" ? !currentFocus.data.bridge : lessons.some((l) => l.completedAt && !l.bridge);
+  
+  const waitingOnBoss =
+    currentFocus?.type === "BOSS" &&
+    (!currentFocus.data.bossStage || currentFocus.data.bossStage.status === "BUILDING");
+
+  const isGenerating = waitingOnVocab || waitingOnBoss;
+
+  const completedLessonsCount = lessons.filter((l) => Boolean(l.completedAt)).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
     return acc + (l.completedAt && l.bridge ? vocabWordCount(l.bridge.vocabMoment) : 0);
   }, 0);
 
+  // Unified route builders
   const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
+  const getBossHref = (bossId: string, lessonId?: string) =>
+    lessonId
+      ? `/foundation/${lessonId}/${courseId}/boss?bossId=${bossId}`
+      : `/foundation/boss/${bossId}`;
 
-  // Polling for vocab bridge generation
+  // Poll server state every 5s while bridge or boss stage is compiling
   useEffect(() => {
-    if (!waitingOnVocab) return;
+    if (!isGenerating) return;
     const interval = setInterval(() => router.refresh(), 5000);
     return () => clearInterval(interval);
-  }, [waitingOnVocab, router]);
+  }, [isGenerating, router]);
 
   return (
     <div className="min-h-screen font-sans text-slate-900 selection:bg-indigo-100">
@@ -65,14 +78,19 @@ export default function FoundationHubPage({ path, lang }: Props) {
               path={path}
               vocabDue={vocabDue}
               nextLesson={nextLesson}
+              bossDue={bossDue}
               waitingOnVocab={waitingOnVocab}
+              waitingOnBoss={waitingOnBoss}
               getLessonHref={getLessonHref}
+              getBossHref={getBossHref}
             />
 
-            {/* PASS THE NEW STATE TO MINI CARDS */}
             <LearningPathMiniCards
+              courseId={courseId}
               currentFocus={currentFocus}
               nextLocked={nextLocked}
+              getLessonHref={getLessonHref}
+              getBossHref={getBossHref}
             />
           </div>
 
