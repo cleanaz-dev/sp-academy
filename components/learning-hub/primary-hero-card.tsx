@@ -44,7 +44,7 @@ export function PrimaryHeroCard({
   getBossHref,
 }: PrimaryHeroCardProps) {
   const cardStyle =
-    "relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-7 shadow-xs flex flex-col justify-between min-h-[230px]";
+    "relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-7 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between min-h-[230px]";
 
   if (!path) {
     return (
@@ -73,7 +73,7 @@ export function PrimaryHeroCard({
 
     return (
       <div
-        className={`${cardStyle} border-amber-200 bg-gradient-to-br from-amber-50/50 via-white to-white`}
+        className={`${cardStyle} border-amber-200/90 bg-gradient-to-br from-amber-50/60 via-white to-white`}
       >
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-800 uppercase">
@@ -132,7 +132,7 @@ export function PrimaryHeroCard({
     const startSpoon = Math.max(1, bossDue.orderIndex - 2);
     return (
       <div
-        className={`${cardStyle} border-fuchsia-200/80 bg-gradient-to-br from-fuchsia-50/40 via-white to-white`}
+        className={`${cardStyle} border-fuchsia-200/80 bg-gradient-to-br from-fuchsia-50/50 via-white to-white`}
       >
         <div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-extrabold text-fuchsia-800 uppercase">
@@ -143,8 +143,8 @@ export function PrimaryHeroCard({
             Designing Your Boss Stage Scenario...
           </h3>
           <p className="mt-1 text-sm text-slate-500">
-            We are crafting a live interactive roleplay combining your patterns
-            and vocabulary from Spoons {startSpoon}–{bossDue.orderIndex}.
+            Crafting a live interactive roleplay combining your patterns and
+            vocabulary from Spoons {startSpoon}–{bossDue.orderIndex}.
           </p>
         </div>
         <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-fuchsia-600">
@@ -158,7 +158,8 @@ export function PrimaryHeroCard({
   // 4. BOSS STAGE READY
   if (bossDue?.bossStage) {
     const boss = bossDue.bossStage;
-    const milestoneNum = boss.milestoneIndex ?? Math.ceil(bossDue.orderIndex / 3);
+    const milestoneNum =
+      boss.milestoneIndex ?? Math.ceil(bossDue.orderIndex / 3);
     const startSpoon = Math.max(1, bossDue.orderIndex - 2);
     const scenario = (boss.scenarioData ?? null) as ScenarioPreview | null;
 
@@ -176,9 +177,9 @@ export function PrimaryHeroCard({
 
     return (
       <div
-        className={`${cardStyle} border-fuchsia-300/80 bg-gradient-to-br from-fuchsia-50/70 via-white to-fuchsia-50/20 ring-1 ring-fuchsia-500/10`}
+        className={`${cardStyle} border-fuchsia-200/90 bg-gradient-to-br from-fuchsia-50/60 via-white to-white ring-1 ring-fuchsia-500/10`}
       >
-        <Swords className="pointer-events-none absolute -right-6 -bottom-6 h-36 w-36 rotate-12 text-fuchsia-500/5" />
+        <Swords className="pointer-events-none absolute -right-6 -bottom-6 h-36 w-36 rotate-12 text-fuchsia-500/[0.04]" />
 
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -186,7 +187,7 @@ export function PrimaryHeroCard({
               <Sparkles className="h-3.5 w-3.5 text-fuchsia-600" /> Milestone{" "}
               {milestoneNum} Boss Stage
             </span>
-            <span className="text-xs font-bold text-fuchsia-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-50 px-3 py-1 text-xs font-bold text-fuchsia-700">
               🎯 Covers Spoons {startSpoon}–{bossDue.orderIndex}
             </span>
           </div>
@@ -195,12 +196,12 @@ export function PrimaryHeroCard({
             {title}
           </h3>
 
-          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-600">
             {description}
           </p>
         </div>
 
-        <div className="relative z-10 mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-fuchsia-100/80 pt-4">
+        <div className="relative z-10 mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <Mic className="h-4 w-4 text-fuchsia-600" />
             <span>
@@ -238,7 +239,8 @@ export function PrimaryHeroCard({
             </span>
           </div>
           <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Spoon {nextLesson.orderIndex}: {nextLesson.title || "Foundation Lesson"}
+            Spoon {nextLesson.orderIndex}:{" "}
+            {nextLesson.title || "Foundation Lesson"}
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-slate-500">
             Target speaking exercises, sentence construction, and listening

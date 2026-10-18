@@ -26,35 +26,39 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const currentFocus = path?.currentFocus ?? null;
   const nextLocked = path?.nextLocked ?? null;
 
-  // Derive target items based on currentFocus type
   const vocabDue = currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson = currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
   const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
-  // Waiting/generation checks
   const waitingOnVocab =
-    currentFocus?.type === "BRIDGE" ? !currentFocus.data.bridge : lessons.some((l) => l.completedAt && !l.bridge);
-  
+    currentFocus?.type === "BRIDGE"
+      ? !currentFocus.data.bridge
+      : lessons.some((l) => l.completedAt && !l.bridge);
+
   const waitingOnBoss =
     currentFocus?.type === "BOSS" &&
-    (!currentFocus.data.bossStage || currentFocus.data.bossStage.status === "BUILDING");
+    (!currentFocus.data.bossStage ||
+      currentFocus.data.bossStage.status === "BUILDING");
 
   const isGenerating = waitingOnVocab || waitingOnBoss;
 
   const completedLessonsCount = lessons.filter((l) => Boolean(l.completedAt)).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
-    return acc + (l.completedAt && l.bridge ? vocabWordCount(l.bridge.vocabMoment) : 0);
+    return (
+      acc +
+      (l.completedAt && l.bridge ? vocabWordCount(l.bridge.vocabMoment) : 0)
+    );
   }, 0);
 
-  // Unified route builders
-  const getLessonHref = (lessonId: string) => `/foundation/${lessonId}/${courseId}`;
+  const getLessonHref = (lessonId: string) =>
+    `/foundation/${lessonId}/${courseId}`;
+
   const getBossHref = (bossId: string, lessonId?: string) =>
     lessonId
       ? `/foundation/${lessonId}/${courseId}/boss?bossId=${bossId}`
       : `/foundation/boss/${bossId}`;
 
-  // Poll server state every 5s while bridge or boss stage is compiling
   useEffect(() => {
     if (!isGenerating) return;
     const interval = setInterval(() => router.refresh(), 5000);
@@ -62,7 +66,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
   }, [isGenerating, router]);
 
   return (
-    <div className="min-h-screen font-sans text-slate-900 selection:bg-indigo-100">
+    <div className="min-h-screen bg-slate-50/80 font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
         name={user?.firstName}
         lang={lang}
@@ -73,7 +77,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
       <main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-24 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* LEFT / MAIN COLUMN */}
-          <div className="flex flex-col gap-6 lg:col-span-8">
+          <div className="flex flex-col gap-7 lg:col-span-8">
             <PrimaryHeroCard
               path={path}
               vocabDue={vocabDue}
