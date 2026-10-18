@@ -7,9 +7,12 @@ import {
   RotateCcw,
   XCircle,
   Zap,
+  Loader2, // <-- Added Loader2 for the thinking spinner
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+// <-- Added Marker imports
+import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"; 
 import {
   BossMessage,
   useBossFoundation,
@@ -201,16 +204,18 @@ export default function BossFoundationFreestyle({ onEnd }: Props) {
               );
             })}
 
+            {/* Replaced standard Chat Bubble with shadcn Marker! */}
             {showThinking && (
-              <BossFoundationFreestyleChatBubble
-                message={{
-                  id: "thinking",
-                  role: "assistant",
-                  text: "",
-                }}
-                aiAvatarUrl={aiAvatarUrl}
-                ttsStatus="thinking"
-              />
+              <div className="flex w-full justify-center py-4 animate-in fade-in duration-300">
+                <Marker role="status">
+                  <MarkerIcon>
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  </MarkerIcon>
+                  <MarkerContent className="text-sm font-medium text-slate-500">
+                    Boss is thinking...
+                  </MarkerContent>
+                </Marker>
+              </div>
             )}
 
             <div ref={messagesEndRef} className="h-4" />
