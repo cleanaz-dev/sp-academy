@@ -11,7 +11,7 @@ interface PronunciationExerciseProps {
   startRecording: () => void;
   stopRecording?: () => void;
   onReset: () => void;
-  isCompleted?: boolean; // <-- Added prop
+  isCompleted?: boolean;
 }
 
 export function PronunciationExercise({
@@ -25,11 +25,13 @@ export function PronunciationExercise({
   onReset,
   isCompleted = false,
 }: PronunciationExerciseProps) {
+  
   const handleDoneSpeaking = () => {
     if (stopRecording) {
       stopRecording();
     }
-    onSubmit();
+    // Removed onSubmit() here so it doesn't submit immediately.
+    // This allows the UI to fall through to the review state.
   };
 
   return (
@@ -85,10 +87,11 @@ export function PronunciationExercise({
             <button
               type="button"
               onClick={handleDoneSpeaking}
-              className="mt-2 flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3 font-extrabold text-white shadow-md transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
+              // Changed styling from Emerald to Indigo to differentiate "Done Speaking" from the final "Submit" action
+              className="mt-2 flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border-b-4 border-indigo-700 bg-indigo-500 py-3 font-extrabold text-white shadow-md transition-all hover:bg-indigo-400 active:translate-y-1 active:border-b-0"
             >
               <Check size={20} />
-              Done / Send Answer
+              Done Speaking
             </button>
           )}
         </div>
