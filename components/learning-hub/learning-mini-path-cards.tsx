@@ -5,7 +5,7 @@ import {
   Loader2,
   ArrowRight,
   Mic,
-  BookOpen,
+  CheckCircle2,
   Swords,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
@@ -19,6 +19,7 @@ type ScenarioPreview = {
   description?: string;
   aiRole?: string;
   objective?: string;
+  coverUrl?: string;
 };
 
 export function LearningPathMiniCards({
@@ -45,157 +46,60 @@ export function LearningPathMiniCards({
       : `/foundation/${lessonId}/${courseId}/boss?bossId=${bossId}`;
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {/* 1. ACTIVE FOCUS */}
-      {currentFocus.type === "SPOON" && (
-        <CurrentSpoonCard
-          lesson={currentFocus.data}
-          href={resolveLessonHref(currentFocus.data.id)}
-        />
-      )}
-      {currentFocus.type === "BRIDGE" && (
-        <VocabBridgeCard
-          lesson={currentFocus.data}
-          href={`${resolveLessonHref(currentFocus.data.id)}?step=bridge`}
-        />
-      )}
-      {currentFocus.type === "BOSS" && (
-        <BossStageCard
-          lesson={currentFocus.data}
-          getHref={(bossId) => resolveBossHref(bossId, currentFocus.data.id)}
-        />
-      )}
-
-      {/* 2. UP NEXT LOCKED */}
-      {nextLocked && (
-        <LockedNextCard type={nextLocked.type} lesson={nextLocked.data} />
-      )}
-    </section>
-  );
-}
-
-function VocabBridgeCard({ lesson, href }: { lesson: Lesson; href: string }) {
-  const isGenerating = !lesson.bridge;
-  const vocabList = (lesson.bridge?.vocabMoment as Array<{ word: string }>) ?? [];
-  const wordsToReview = vocabList.slice(0, 3);
-  const remainingWords = Math.max(0, vocabList.length - 3);
-
-  return (
-    <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 border-amber-400/40 bg-white p-6 shadow-sm ring-1 ring-amber-400/20">
-      {lesson.imageUrl && (
-        <div
-          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[0.04]"
-          style={{ backgroundImage: `url(${lesson.imageUrl})` }}
-        />
-      )}
-
-      <div className="relative z-10">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-amber-700 uppercase">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-            Current Focus
-          </span>
-          {lesson.bridge && lesson.bridge.attempts > 0 && (
-            <span className="text-[11px] font-bold text-amber-700">
-              Best: {lesson.bridge.score ?? 0}%
-            </span>
-          )}
+    <div className="space-y-3">
+      {/* Subtle Section Header to ground the path */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-indigo-500" />
+          <h3 className="text-xs font-extrabold tracking-wider text-slate-400 uppercase">
+            Your Learning Path
+          </h3>
         </div>
+        <span className="text-xs font-semibold text-slate-400">
+          Step-by-step progression
+        </span>
+      </div>
 
-        <h4 className="mt-4 text-lg font-black text-slate-900">
-          Vocab Bridge {lesson.orderIndex}
-        </h4>
-        <p className="mt-0.5 text-sm font-bold text-slate-600">
-          Reviewing: {lesson.title}
-        </p>
-
-        {/* VOCAB PREVIEW PILLS */}
-        {isGenerating ? (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-50/80 px-3 py-2 text-xs font-semibold text-amber-800">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-600" />
-            Extracting key vocabulary...
-          </div>
-        ) : (
-          wordsToReview.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {wordsToReview.map((v, idx) => (
-                <span
-                  key={idx}
-                  className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-900"
-                >
-                  {v.word}
-                </span>
-              ))}
-              {remainingWords > 0 && (
-                <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">
-                  +{remainingWords} more
-                </span>
-              )}
+      <section className="relative grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {/* Desktop Progression Connector Pill */}
+        {nextLocked && (
+          <div className="pointer-events-none absolute top-1/2 left-1/2 z-20 hidden -translate-x-1/2 -translate-y-1/2 sm:flex">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 shadow-sm">
+              <ArrowRight className="h-4 w-4" />
             </div>
-          )
-        )}
-
-        <p className="mt-3 text-xs text-slate-500">
-          Master the new words to unlock the next step.
-        </p>
-      </div>
-
-      <div className="relative z-10 mt-6">
-        {isGenerating ? (
-          <div className="flex h-2 w-full overflow-hidden rounded-full bg-amber-100">
-            <div className="w-1/3 animate-pulse rounded-full bg-amber-400" />
           </div>
-        ) : (
-          <Link
-            href={href}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-[0.99]"
-          >
-            Start Vocab Bridge
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         )}
-      </div>
-    </div>
-  );
-}
 
-function CurrentSpoonCard({ lesson, href }: { lesson: Lesson; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="group flex h-full flex-col overflow-hidden rounded-3xl border-2 border-indigo-500/20 bg-white shadow-sm ring-1 ring-indigo-500/10 transition hover:border-indigo-500/40 hover:shadow-md"
-    >
-      {lesson.imageUrl && (
-        <div className="relative aspect-[16/8] w-full shrink-0 overflow-hidden bg-slate-100">
-          <img
-            src={lesson.imageUrl}
-            alt={lesson.imageAlt ?? ""}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            loading="lazy"
+        {/* 1. ACTIVE FOCUS */}
+        {currentFocus.type === "SPOON" && (
+          <CurrentSpoonCard
+            lesson={currentFocus.data}
+            href={resolveLessonHref(currentFocus.data.id)}
           />
-        </div>
-      )}
-      <div className="flex flex-1 flex-col justify-between p-6">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-indigo-700 uppercase">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-600" />
-            Current Focus
-          </span>
-          <h4 className="mt-3 text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-            Spoon {lesson.orderIndex}
-          </h4>
-          <p className="mt-0.5 text-sm font-bold text-slate-600">{lesson.title}</p>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Core audio lesson and speaking drills.
-          </p>
-        </div>
+        )}
+        {currentFocus.type === "BRIDGE" && (
+          <VocabBridgeCard
+            lesson={currentFocus.data}
+            href={
+              currentFocus.data.bridge
+                ? `/foundation/vocab/${currentFocus.data.bridge.id}`
+                : "#"
+            }
+          />
+        )}
+        {currentFocus.type === "BOSS" && (
+          <BossStageCard
+            lesson={currentFocus.data}
+            getHref={(bossId) => resolveBossHref(bossId, currentFocus.data.id)}
+          />
+        )}
 
-        <div className="mt-5 flex items-center text-xs font-extrabold text-indigo-600">
-          Continue Lesson
-          <ArrowRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-        </div>
-      </div>
-    </Link>
+        {/* 2. UP NEXT LOCKED */}
+        {nextLocked && (
+          <LockedNextCard type={nextLocked.type} lesson={nextLocked.data} />
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -211,66 +115,96 @@ function BossStageCard({
   const startSpoon = Math.max(1, lesson.orderIndex - 2);
   const endSpoon = lesson.orderIndex;
 
-  // Check if Boss Stage is still being assembled by the backend
   const isBuilding = !boss || boss.status === "BUILDING";
-
-  // Extract optional scenario metadata if scenarioData is populated JSON
   const scenario = (boss?.scenarioData ?? null) as ScenarioPreview | null;
+
+  // Use boss coverUrl if present, otherwise fallback to the lesson's imageUrl
+  const coverImage =
+    (boss as any)?.coverUrl || scenario?.coverUrl || lesson.imageUrl;
+
   const scenarioTitle = scenario?.title || scenario?.setting || "AI Conversation";
   const scenarioDesc =
     scenario?.description ||
     scenario?.objective ||
-    "Prove your fluency! Have a live conversation with AI using the patterns and vocabulary from your last 3 lessons.";
+    "Prove your fluency! Have a live conversation with AI using the patterns from your last 3 lessons.";
 
   return (
-    <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border-2 border-fuchsia-500/40 bg-gradient-to-br from-white via-fuchsia-50/40 to-fuchsia-100/60 p-6 shadow-sm ring-1 ring-fuchsia-500/20">
-      {/* Subtle decorative background icon */}
-      <Swords className="pointer-events-none absolute -right-4 -bottom-4 h-28 w-28 rotate-12 text-fuchsia-500/5" />
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-fuchsia-200/90 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-2 ring-fuchsia-500/15 transition-all hover:shadow-[0_8px_30px_rgb(217,70,239,0.12)]">
+      {/* Top Media Banner — matches Spoon 4 height so there's zero dead space */}
+      <div className="relative aspect-[16/8] w-full shrink-0 overflow-hidden bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-700">
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt={scenarioTitle}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Swords className="h-12 w-12 text-white/20" />
+          </div>
+        )}
+        {/* Gradient Scrim so badges pop */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/15 to-transparent" />
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-100 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-fuchsia-800 uppercase shadow-sm">
-            <Sparkles className="h-3 w-3 text-fuchsia-600" />
+        {/* Top Floating Badges */}
+        <div className="absolute top-3.5 right-3.5 left-3.5 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-500/95 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-white uppercase shadow-sm backdrop-blur-md">
+            <Sparkles className="h-3 w-3" />
             Milestone {milestoneNumber}
           </span>
-          <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-[11px] font-bold text-fuchsia-700 ring-1 ring-fuchsia-200">
+          <span className="rounded-full bg-slate-900/65 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
             Spoons {startSpoon}–{endSpoon}
           </span>
         </div>
 
-        <h4 className="mt-4 text-lg font-black text-slate-900">
-          {scenarioTitle}
-        </h4>
-
-        {scenario?.aiRole && (
-          <p className="mt-0.5 text-xs font-bold text-fuchsia-700">
-            Speaking with: {scenario.aiRole}
-          </p>
-        )}
-
-        <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-3">
-          {scenarioDesc}
-        </p>
+        {/* Roleplay Partner Pill on Image Bottom */}
+        <div className="absolute bottom-3 left-3.5 flex items-center gap-1.5 text-xs font-bold text-white/95">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20" />
+          {scenario?.aiRole ? `Partner: ${scenario.aiRole}` : "Live AI Checkpoint"}
+        </div>
       </div>
 
-      <div className="relative z-10 mt-6">
-        {isBuilding ? (
-          <button
-            disabled
-            className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-fuchsia-200/80 py-2.5 text-sm font-bold text-fuchsia-800"
-          >
-            <Loader2 className="h-4 w-4 animate-spin text-fuchsia-700" />
-            Building Scenario...
-          </button>
-        ) : (
-          <Link
-            href={getHref(boss.id)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 py-2.5 text-sm font-bold text-white shadow-md shadow-fuchsia-500/20 transition hover:bg-fuchsia-700 active:scale-95"
-          >
-            <Mic className="h-4 w-4" />
-            Start Conversation
-          </Link>
-        )}
+      {/* Card Body */}
+      <div className="flex flex-1 flex-col justify-between p-5">
+        <div>
+          <h4 className="text-lg font-black text-slate-900">{scenarioTitle}</h4>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-2">
+            {scenarioDesc}
+          </p>
+
+          {/* Mini Checkmarks showing the 3 Spoons feeding into this Boss */}
+          <div className="mt-3.5 flex items-center gap-1.5">
+            {[startSpoon, startSpoon + 1, endSpoon].map((num) => (
+              <span
+                key={num}
+                className="inline-flex items-center gap-1 rounded-lg bg-fuchsia-50 px-2 py-0.5 text-[10px] font-bold text-fuchsia-700"
+              >
+                <CheckCircle2 className="h-3 w-3 text-fuchsia-500" />
+                Spoon {num}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-slate-100 pt-3.5">
+          {isBuilding ? (
+            <div className="inline-flex w-full items-center justify-center gap-2 text-xs font-bold text-fuchsia-700">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Building Scenario...
+            </div>
+          ) : (
+            <Link
+              href={getHref(boss.id)}
+              className="flex w-full items-center justify-between text-xs font-extrabold text-fuchsia-600 transition group-hover:text-fuchsia-700"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Mic className="h-3.5 w-3.5" />
+                Enter Boss Arena
+              </span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -299,40 +233,53 @@ function LockedNextCard({
   };
 
   return (
-    <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-50/70 shadow-sm">
-      {type === "SPOON" && lesson.imageUrl && (
-        <div className="relative aspect-[16/8] w-full shrink-0 overflow-hidden bg-slate-200 grayscale opacity-60">
+    <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 bg-slate-50/60 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
+      {lesson.imageUrl && (
+        <div className="relative aspect-[16/8] w-full shrink-0 overflow-hidden bg-slate-200">
           <img
             src={lesson.imageUrl}
             alt={lesson.imageAlt ?? ""}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover saturate-[0.25] contrast-95 opacity-75 blur-[0.5px]"
           />
-        </div>
-      )}
+          <div className="absolute inset-0 bg-slate-900/20" />
 
-      <div className="flex flex-1 flex-col justify-between p-6">
-        <div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">
+          {/* Frosted Glass Lock Pill */}
+          <div className="absolute top-3.5 right-3.5 left-3.5 flex items-center justify-between">
+            <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-600 uppercase backdrop-blur-md">
               Up Next
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/65 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-white uppercase backdrop-blur-md">
               <Lock className="h-3 w-3" /> Locked
             </span>
           </div>
+        </div>
+      )}
 
-          <h4 className="mt-4 text-lg font-black text-slate-400">
-            {getTitle()}
-          </h4>
+      <div className="flex flex-1 flex-col justify-between p-5">
+        <div>
+          {!lesson.imageUrl && (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className="rounded-full bg-slate-200/80 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">
+                Up Next
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-slate-500 uppercase">
+                <Lock className="h-3 w-3" /> Locked
+              </span>
+            </div>
+          )}
+
+          <h4 className="text-lg font-black text-slate-500">{getTitle()}</h4>
           <p className="mt-0.5 text-sm font-bold text-slate-400">
             {getSubtitle()}
           </p>
         </div>
 
-        <p className="mt-6 flex items-center gap-1.5 text-xs font-medium text-slate-400">
-          <BookOpen className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-          Finish your current focus to unlock this step.
-        </p>
+        <div className="mt-5 border-t border-slate-200/60 pt-3.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            Pass current checkpoint to unlock
+          </p>
+        </div>
       </div>
     </div>
   );
