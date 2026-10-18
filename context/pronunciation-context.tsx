@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useRef, useCallback, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+  ReactNode,
+} from "react";
 import type * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 import { getAzureSpeechToken } from "@/app/actions/azure-speech";
@@ -13,49 +20,62 @@ interface PronunciationContextProps {
   isRecording: boolean;
   score: PronunciationScore | null;
   error: string | null;
-  assessSpeech: (text: string, targetLanguage: string) => Promise<void>;
+  assessSpeech: (
+    text: string,
+    targetLanguage: string,
+  ) => Promise<PronunciationScore | null>;
   cancelAssessment: () => void;
   reset: () => void;
   stopRecording: () => void;
 }
 
-const PronunciationContext = createContext<PronunciationContextProps | undefined>(undefined);
+const PronunciationContext = createContext<
+  PronunciationContextProps | undefined
+>(undefined);
 
-export const PronunciationProvider = ({ children }: { children: ReactNode }) => {
+export const PronunciationProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
   const [status, setStatus] = useState<AssessmentStatus>("idle");
   const [score, setScore] = useState<PronunciationScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recognizerRef = useRef<sdk.SpeechRecognizer | null>(null);
 
-  const assessSpeech = useCallback(async (text: string, targetLanguage: string) => {
-    try {
-      setScore(null);
-      setError(null);
-      setStatus("listening");
+  const assessSpeech = useCallback(
+    async (text: string, targetLanguage: string) => {
+      try {
+        setScore(null);
+        setError(null);
+        setStatus("listening");
 
-      const token = await getAzureSpeechToken();
+        const token = await getAzureSpeechToken();
 
-      const result = await evaluatePronunciation(
-        text,
-        targetLanguage,
-        token,
-        (recognizer) => {
-          recognizerRef.current = recognizer;
-        },
-        () => {
-          // Called when silence is detected
-          setStatus("analyzing");
-        }
-      );
+        const result = await evaluatePronunciation(
+          text,
+          targetLanguage,
+          token,
+          (recognizer) => {
+            recognizerRef.current = recognizer;
+          },
+          () => {
+            setStatus("analyzing");
+          },
+        );
 
-      setScore(result);
-    } catch (err: any) {
-      setError(typeof err === "string" ? err : err.message || err.toString());
-    } finally {
-      recognizerRef.current = null;
-      setStatus("idle");
-    }
-  }, []);
+        setScore(result);
+        return result; // 🟢 RETURN RESULT HERE
+      } catch (err: any) {
+        setError(typeof err === "string" ? err : err.message || err.toString());
+        return null;
+      } finally {
+        recognizerRef.current = null;
+        setStatus("idle");
+      }
+    },
+    [],
+  );
 
   const cancelAssessment = useCallback(() => {
     recognizerRef.current?.close();
@@ -70,20 +90,20 @@ export const PronunciationProvider = ({ children }: { children: ReactNode }) => 
   }, []);
 
   const stopRecording = useCallback(() => {
-  if (recognizerRef.current) {
-    recognizerRef.current.stopContinuousRecognitionAsync(
-      () => {
-        setStatus("idle");
-      },
-      (err) => {
-        console.error("Failed to stop recognition:", err);
-        setStatus("idle");
-      }
-    );
-  } else {
-    setStatus("idle");
-  }
-}, []);
+    if (recognizerRef.current) {
+      recognizerRef.current.stopContinuousRecognitionAsync(
+        () => {
+          setStatus("idle");
+        },
+        (err) => {
+          console.error("Failed to stop recognition:", err);
+          setStatus("idle");
+        },
+      );
+    } else {
+      setStatus("idle");
+    }
+  }, []);
 
   return (
     <PronunciationContext.Provider
@@ -105,6 +125,9 @@ export const PronunciationProvider = ({ children }: { children: ReactNode }) => 
 
 export const usePronunciation = () => {
   const context = useContext(PronunciationContext);
-  if (!context) throw new Error("usePronunciation must be used within a PronunciationProvider");
+  if (!context)
+    throw new Error(
+      "usePronunciation must be used within a PronunciationProvider",
+    );
   return context;
 };
