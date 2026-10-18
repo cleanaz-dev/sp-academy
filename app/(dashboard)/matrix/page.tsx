@@ -8,7 +8,7 @@ export default async function MatrixPage() {
 
   const matrix = await getUserMatrix(userId);
 
-  console.log("Matrix:", matrix)
+  console.log("Matrix:", JSON.stringify(matrix, null, 2));
 
   return <MatrixClient matrix={matrix} />;
 }
