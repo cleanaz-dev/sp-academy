@@ -586,3 +586,37 @@ html {
 .animate-dark-bg {
  @apply animate-[gradient_6s_ease_infinite] bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%]
 }
+
+@keyframes spin-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animated-rgb-border {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    #ff0000,
+    #ff7f00,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #4b0082,
+    #9400d3,
+    #ff0000
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Fades in and starts spinning when you hover over the card */
+.group:hover .animated-rgb-border {
+  opacity: 1;
+  animation: spin-border 3s linear infinite;
+}
