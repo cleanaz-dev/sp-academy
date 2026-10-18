@@ -22,6 +22,7 @@ export const BossPersonaSchema = z.object({
   persona: z.string().min(1),
   introMessage: z.string().min(1),
   avatarKey: z.string().nullable().optional(),
+  coverUrl: z.string().nullable().optional(), 
 });
 
 export const BossImageOptionSchema = z.object({
