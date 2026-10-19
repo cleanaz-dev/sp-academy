@@ -7,7 +7,15 @@ import { BossFoundationProvider } from "@/context/boss-context";
 import BossFoundationFreestyle from "./boss-foundation-freestyle";
 import { BossData } from "@/app/(dashboard)/foundation/actions/get-boss-data";
 import { BossScenarioData } from "@/lib/boss/schemas";
-import { ShieldAlert, Play, Target, Loader2 } from "lucide-react";
+import {
+  ShieldAlert,
+  Play,
+  Target,
+  Loader2,
+  Trophy,
+  Sparkles,
+  RotateCcw,
+} from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
 import { WordAudioProvider } from "@/context/word-audio-context";
 import { MatrixProvider } from "@/context/matrix-context";
@@ -15,8 +23,6 @@ import { MatrixProvider } from "@/context/matrix-context";
 const FALLBACK_AVATAR =
   "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
 
-// Helper: if a DB record has coverUrl ("boss/covers/m1_madame_chastain/cover.png")
-// but is missing boss.avatar, derive the 4 S3 avatar keys automatically
 function getBossAvatarKeys(boss: BossScenarioData["boss"] | null) {
   const derivedPrefix = boss?.coverUrl
     ? boss.coverUrl
@@ -56,7 +62,14 @@ export default function BossFoundationClient({
     session.scenarioData as unknown as BossScenarioData | null;
   const boss = scenarioData?.boss || null;
   const playlist = scenarioData?.exerciseBank || [];
-  const totalExercises = playlist.length || 0;
+  const totalExercises =
+    scenarioData?.rules?.totalExercises || playlist.length || 0;
+  const passingScore =
+    scenarioData?.rules?.passingScore || Math.max(1, Math.round(totalExercises * 0.8));
+
+  const milestoneIndex = (session as any)?.milestoneIndex ?? 1;
+  const attempts = (session as any)?.attempts ?? 0;
+  const bestScore = (session as any)?.score ?? null;
 
   const rawLang =
     session?.course?.targetLanguage ||
@@ -65,7 +78,6 @@ export default function BossFoundationClient({
 
   const avatarKeys = useMemo(() => getBossAvatarKeys(boss), [boss]);
 
-  // Index 0 = default avatar, Index 1 = coverUrl, Index 2..4 = happy, sad, angry
   const allKeys = useMemo(() => {
     const keys: (string | undefined)[] = [
       avatarKeys.default,
@@ -92,31 +104,47 @@ export default function BossFoundationClient({
   const bossAvatar = resolvedDefaultAvatarUrl || FALLBACK_AVATAR;
 
   return (
-    <div className="min-h-screen w-full animate-bg p-4 flex flex-col justify-center">
+    <div className="min-h-screen w-full animate-bg p-4 sm:p-6 flex flex-col justify-center">
       {!hasStarted ? (
-        <div className="flex w-full flex-col items-center justify-center py-8">
-          {/* Main Pre-Boss Card */}
-          <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white text-center shadow-2xl shadow-indigo-900/10">
+        <div className="flex w-full flex-col items-center justify-center py-6">
+          {/* Wider Main Pre-Boss Card (max-w-2xl) */}
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white text-center shadow-2xl shadow-indigo-900/15">
             {/* Widescreen Cover Banner */}
-            <div className="relative h-48 w-full bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 sm:h-56">
+            <div className="relative h-60 w-full bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 sm:h-72">
               {resolvedCoverUrl ? (
                 <img
                   src={resolvedCoverUrl}
                   alt={`${boss?.name || "Boss"} scene`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover object-top"
                 />
               ) : (
                 isLoading && (
                   <div className="flex h-full w-full items-center justify-center">
-                    <Loader2 className="animate-spin text-white/60" size={32} />
+                    <Loader2 className="animate-spin text-white/60" size={36} />
                   </div>
                 )
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/15" />
+
+              {/* Top-left Milestone Badge */}
+              <div className="absolute left-5 top-5 flex items-center gap-1.5 rounded-full bg-black/45 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
+                <Sparkles size={14} className="text-amber-300" />
+                Milestone {milestoneIndex} Boss
+              </div>
+
+              {/* Top-right Attempts / Best Score pill (if returning) */}
+              {attempts > 0 && (
+                <div className="absolute right-5 top-5 flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-extrabold text-slate-700 shadow-sm backdrop-blur-md">
+                  <RotateCcw size={13} className="text-indigo-500" />
+                  Attempt #{attempts + 1}
+                  {bestScore !== null && ` • Last: ${bestScore}/${totalExercises}`}
+                </div>
+              )}
             </div>
 
-            {/* Overlapping Circular Boss Avatar */}
-            <div className="relative px-8 pb-8 pt-16">
+            {/* Card Body */}
+            <div className="relative px-6 pb-8 pt-16 sm:px-10">
+              {/* Overlapping Circular Boss Avatar */}
               <div className="absolute -top-14 left-1/2 flex h-28 w-28 -translate-x-1/2 items-center justify-center overflow-hidden rounded-full border-[6px] border-white bg-slate-100 shadow-xl">
                 {isLoading && !resolvedDefaultAvatarUrl ? (
                   <Loader2 className="animate-spin text-indigo-300" size={32} />
@@ -129,21 +157,23 @@ export default function BossFoundationClient({
                 )}
               </div>
 
-              <h1 className="mb-4 text-3xl font-black text-slate-800">
+              <h1 className="mb-3 text-3xl font-black text-slate-800 sm:text-4xl">
                 {boss?.name || "Milestone Boss"}
               </h1>
 
-              <div className="mb-8 max-h-40 overflow-y-auto rounded-2xl bg-slate-50 p-5 shadow-inner scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200">
+              {/* Full Persona Bio (no cramped scrollbar needed on wider card) */}
+              <div className="mb-6 rounded-2xl bg-slate-50 px-6 py-4 text-center shadow-inner">
                 <p className="text-[15px] font-medium leading-relaxed text-slate-600">
                   {boss?.persona ||
                     "Prove your language skills in this final test."}
                 </p>
               </div>
 
-              <div className="mb-8 flex w-full gap-4">
-                <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-indigo-50 bg-indigo-50/40 py-4 transition-colors hover:bg-indigo-50/80">
-                  <div className="mb-1 rounded-full bg-indigo-100 p-2 text-indigo-600">
-                    <Target size={22} strokeWidth={2.5} />
+              {/* 3-Column Stats Row: Challenges | Pass Goal | Lives */}
+              <div className="mb-7 grid w-full grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-indigo-50 bg-indigo-50/40 py-3.5 transition-colors hover:bg-indigo-50/80">
+                  <div className="mb-0.5 rounded-full bg-indigo-100 p-2 text-indigo-600">
+                    <Target size={20} strokeWidth={2.5} />
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
                     Challenges
@@ -153,9 +183,21 @@ export default function BossFoundationClient({
                   </span>
                 </div>
 
-                <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-rose-50 bg-rose-50/40 py-4 transition-colors hover:bg-rose-50/80">
-                  <div className="mb-1 rounded-full bg-rose-100 p-2 text-rose-600">
-                    <ShieldAlert size={22} strokeWidth={2.5} />
+                <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-emerald-50 bg-emerald-50/40 py-3.5 transition-colors hover:bg-emerald-50/80">
+                  <div className="mb-0.5 rounded-full bg-emerald-100 p-2 text-emerald-600">
+                    <Trophy size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                    To Pass
+                  </span>
+                  <span className="text-2xl font-black text-emerald-900">
+                    {passingScore}/{totalExercises}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-rose-50 bg-rose-50/40 py-3.5 transition-colors hover:bg-rose-50/80">
+                  <div className="mb-0.5 rounded-full bg-rose-100 p-2 text-rose-600">
+                    <ShieldAlert size={20} strokeWidth={2.5} />
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-rose-400">
                     Lives
