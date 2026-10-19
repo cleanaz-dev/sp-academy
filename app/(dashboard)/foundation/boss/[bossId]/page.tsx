@@ -15,6 +15,6 @@ export default async function BossIdPage({ params }: Params) {
   const bossData = await getBossData(bossId, user.id);
   if (!bossData) notFound();
   
-
+  console.log("Boss Data:", JSON.stringify(bossData, null, 2));   
   return <BossFoundationClient session={bossData} />;
 }

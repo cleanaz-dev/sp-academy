@@ -1,6 +1,9 @@
 "use client";
 
-import { Check, Mic, Volume2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Mic, RotateCcw, Volume2 } from "lucide-react";
+
+const MAX_RETRIES = 3;
 
 interface PronunciationExerciseProps {
   target: string;
@@ -25,14 +28,44 @@ export function PronunciationExercise({
   onReset,
   isCompleted = false,
 }: PronunciationExerciseProps) {
-  
-  const handleDoneSpeaking = () => {
-    if (stopRecording) {
-      stopRecording();
+  // Forces the UI into the Review (Retry / Submit) state immediately when "Done Speaking" is clicked
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Reset retry count & review state when moving to a new target phrase
+  useEffect(() => {
+    setIsReviewing(false);
+    setRetryCount(0);
+  }, [target]);
+
+  // If recording stops naturally on its own and we have a transcript, move to review state
+  useEffect(() => {
+    if (!isRecording && transcript) {
+      setIsReviewing(true);
     }
-    // Removed onSubmit() here so it doesn't submit immediately.
-    // This allows the UI to fall through to the review state.
+  }, [isRecording, transcript]);
+
+  const handleStartRecording = () => {
+    setIsReviewing(false);
+    startRecording();
   };
+
+  const handleDoneSpeaking = () => {
+    setIsReviewing(true); // Immediately show Retry / Submit UI
+    stopRecording?.();
+  };
+
+  const handleRetry = () => {
+    if (retryCount >= MAX_RETRIES) return;
+    setRetryCount((prev) => prev + 1);
+    setIsReviewing(false);
+    stopRecording?.();
+    onReset();
+  };
+
+  const retriesRemaining = MAX_RETRIES - retryCount;
+  const showRecordingState = isRecording && !isReviewing && !isCompleted;
+  const showReviewState = Boolean(transcript) && (isReviewing || !isRecording);
 
   return (
     <div className="flex flex-col items-center gap-5 text-center">
@@ -53,19 +86,26 @@ export function PronunciationExercise({
       </div>
 
       {/* 1. Initial State: Start Recording */}
-      {!isRecording && !transcript && !isCompleted && (
-        <button
-          type="button"
-          onClick={startRecording}
-          className="flex h-20 w-20 items-center justify-center rounded-full border-b-4 border-indigo-700 bg-indigo-500 shadow-md transition-all hover:bg-indigo-400 active:translate-y-1 active:border-b-0"
-          aria-label="Start recording"
-        >
-          <Mic className="text-white" size={32} />
-        </button>
+      {!showRecordingState && !showReviewState && !isCompleted && (
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={handleStartRecording}
+            className="flex h-20 w-20 items-center justify-center rounded-full border-b-4 border-indigo-700 bg-indigo-500 shadow-md transition-all hover:bg-indigo-400 active:translate-y-1 active:border-b-0"
+            aria-label="Start recording"
+          >
+            <Mic className="text-white" size={32} />
+          </button>
+          {retryCount > 0 && (
+            <p className="text-xs font-semibold text-slate-400">
+              Attempt {retryCount + 1} of {MAX_RETRIES + 1}
+            </p>
+          )}
+        </div>
       )}
 
-      {/* 2. Recording State: Pulse Mic, Live Text, and Done Button */}
-      {isRecording && (
+      {/* 2. Recording State: Pulse Mic, Live Text, and Done Speaking Button */}
+      {showRecordingState && (
         <div className="flex w-full flex-col items-center gap-3">
           <div className="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-rose-500 shadow-lg shadow-rose-200">
             <Mic className="text-white" size={32} />
@@ -87,7 +127,6 @@ export function PronunciationExercise({
             <button
               type="button"
               onClick={handleDoneSpeaking}
-              // Changed styling from Emerald to Indigo to differentiate "Done Speaking" from the final "Submit" action
               className="mt-2 flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border-b-4 border-indigo-700 bg-indigo-500 py-3 font-extrabold text-white shadow-md transition-all hover:bg-indigo-400 active:translate-y-1 active:border-b-0"
             >
               <Check size={20} />
@@ -97,8 +136,8 @@ export function PronunciationExercise({
         </div>
       )}
 
-      {/* 3. Review & Completed State */}
-      {transcript && !isRecording && (
+      {/* 3. Review (Retry / Submit) & Completed State */}
+      {showReviewState && (
         <div className="mt-2 w-full animate-in rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 duration-300 zoom-in-95">
           <p
             className={`text-sm font-medium text-slate-500 ${
@@ -111,24 +150,37 @@ export function PronunciationExercise({
             </span>
           </p>
 
-          {/* Hide Retry Mic and Submit buttons once the exercise has been answered */}
           {!isCompleted && (
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={onReset}
-                className="flex-1 rounded-xl border-2 border-slate-200 bg-white py-3.5 font-bold text-slate-500 transition-all hover:bg-slate-100 hover:text-slate-700 active:translate-y-1"
-              >
-                Retry Mic
-              </button>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                {retriesRemaining > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleRetry}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border-2 border-slate-200 bg-white py-3.5 font-bold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-800 active:translate-y-1"
+                  >
+                    <RotateCcw size={16} />
+                    Retry ({retriesRemaining} left)
+                  </button>
+                )}
 
-              <button
-                type="button"
-                onClick={onSubmit}
-                className="flex-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3.5 font-extrabold text-white transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
-              >
-                Submit
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopRecording?.();
+                    onSubmit();
+                  }}
+                  className="flex-1 rounded-xl border-b-4 border-emerald-700 bg-emerald-500 py-3.5 font-extrabold text-white transition-all hover:bg-emerald-400 active:translate-y-1 active:border-b-0"
+                >
+                  Submit
+                </button>
+              </div>
+
+              {retriesRemaining === 0 && (
+                <p className="text-xs font-semibold text-amber-600">
+                  No retries remaining — please submit your answer.
+                </p>
+              )}
             </div>
           )}
         </div>

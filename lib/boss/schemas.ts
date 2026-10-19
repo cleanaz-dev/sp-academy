@@ -17,13 +17,33 @@ export type SpoonBossTaskMetadata = z.infer<typeof SpoonBossTaskMetadataSchema>;
 // ============================================================================
 // 2. SCENARIO DATA SCHEMAS (Boss, Exercises, Rules)
 // ============================================================================
+
+// ============================================================================
+// 2. SCENARIO DATA SCHEMAS (Boss, Exercises, Rules)
+// ============================================================================
+export const BossAvatarSchema = z.object({
+  default: z.string().nullable().optional(),
+  happy: z.string().nullable().optional(),
+  sad: z.string().nullable().optional(),
+  angry: z.string().nullable().optional(),
+});
+
+export type BossAvatar = z.infer<typeof BossAvatarSchema>;
+
 export const BossPersonaSchema = z.object({
   name: z.string().min(1),
   persona: z.string().min(1),
   introMessage: z.string().min(1),
+  appearance: z.string().nullable().optional(),
+  sceneDescription: z.string().nullable().optional(),
+  // Backwards-compatible if any older boss stages in the DB used avatarKey
   avatarKey: z.string().nullable().optional(),
-  coverUrl: z.string().nullable().optional(), 
+  coverUrl: z.string().nullable().optional(),
+  avatar: BossAvatarSchema.nullable().optional(),
 });
+
+export type BossPersona = z.infer<typeof BossPersonaSchema>;
+
 
 export const BossImageOptionSchema = z.object({
   label: z.string().min(1),
@@ -153,3 +173,4 @@ export const BossWebhookPayloadSchema = z.discriminatedUnion("status", [
 ]);
 
 export type BossWebhookPayload = z.infer<typeof BossWebhookPayloadSchema>;
+
