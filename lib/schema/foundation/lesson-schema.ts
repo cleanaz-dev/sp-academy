@@ -91,6 +91,26 @@ export const wordAudioSchema = z.record(
   z.object({ m: z.string(), f: z.string() })
 );
 
+// 🟢 NEW: Rich lexicon metadata per word/phrase from Foundation Builder
+export const wordLexiconEntrySchema = z.object({
+  slug: z.string(),
+  word: z.string(),
+  wordType: z.enum(["WORD", "PHRASE"]).default("WORD"),
+  partOfSpeech: z.string().default("OTHER"), // NOUN, VERB, PRONOUN, GREETING, EXPRESSION, etc.
+  translation: z.string().default(""),
+  lemma: z.string().nullable().optional(),
+  grammaticalGender: z.string().nullable().optional(), // "M", "F", or null
+  componentWords: z.array(z.string()).default([]),
+  audio: z
+    .object({
+      m: z.string().optional(),
+      f: z.string().optional(),
+    })
+    .default({}),
+});
+
+export const wordLexiconSchema = z.record(z.string(), wordLexiconEntrySchema);
+
 export const lessonHandoffSchema = z.object({
   day: z.number().int(),
   theme: z.string(),
@@ -117,7 +137,10 @@ export const lessonHandoffSchema = z.object({
   freestylePersona: z.string(),
   trueFalseStatement: z.string(),
   wordAudio: wordAudioSchema, // {} is valid (voice skipped)
+  wordLexicon: wordLexiconSchema.optional().default({}), // 🟢 NEW: Rich metadata + audio
 });
+
+export type WordLexiconEntry = z.infer<typeof wordLexiconEntrySchema>;
 
 /** Full webhook body from the foundation-builder lambda */
 export const foundationLessonWebhookSchema = z.object({

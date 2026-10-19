@@ -97,6 +97,80 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
     select: { id: true },
   });
 
+  // 3.5 🟢 Seed / Enrich User's Word Matrix from lessonHandoff.wordLexicon
+  const targetLang = data.targetLang;
+  const wordLexicon = data.lessonHandoff.wordLexicon;
+
+  if (targetLang && wordLexicon && Object.keys(wordLexicon).length > 0) {
+    try {
+      const profile = await prisma.languageProfile.upsert({
+        where: {
+          userId_languageCode: {
+            userId: data.userId,
+            languageCode: targetLang,
+          },
+        },
+        update: {},
+        create: {
+          userId: data.userId,
+          languageCode: targetLang,
+        },
+      });
+
+      const lexiconEntries = Object.values(wordLexicon);
+
+      await prisma.$transaction(
+        lexiconEntries.map((entry) => {
+          const cleanWord = entry.word.trim().toLowerCase();
+          return prisma.wordStat.upsert({
+            where: {
+              languageProfileId_word: {
+                languageProfileId: profile.id,
+                word: cleanWord,
+              },
+            },
+            update: {
+              // Enrich existing word row with metadata if it was missing
+              wordType: entry.wordType,
+              partOfSpeech: entry.partOfSpeech,
+              ...(entry.translation ? { translation: entry.translation } : {}),
+              ...(entry.lemma ? { lemma: entry.lemma } : {}),
+              ...(entry.grammaticalGender
+                ? { grammaticalGender: entry.grammaticalGender }
+                : {}),
+              ...(entry.componentWords?.length
+                ? { componentWords: entry.componentWords }
+                : {}),
+              ...(entry.audio?.m ? { audioMaleKey: entry.audio.m } : {}),
+              ...(entry.audio?.f ? { audioFemaleKey: entry.audio.f } : {}),
+            },
+            create: {
+              languageProfileId: profile.id,
+              word: cleanWord,
+              wordType: entry.wordType,
+              partOfSpeech: entry.partOfSpeech,
+              translation: entry.translation || null,
+              lemma: entry.lemma || null,
+              grammaticalGender: entry.grammaticalGender || null,
+              componentWords: entry.componentWords || [],
+              audioMaleKey: entry.audio?.m || null,
+              audioFemaleKey: entry.audio?.f || null,
+              seenCount: 0, // Will increment as soon as they see/tap it in the lesson
+              status: "NEW",
+            },
+          });
+        })
+      );
+
+      console.log(
+        `[spoon-generation] 🧠 Enriched ${lexiconEntries.length} lexicon items in Word Matrix for user=${data.userId}`
+      );
+    } catch (matrixErr) {
+      // Never fail lesson generation if matrix seeding has a hiccup
+      console.error("[spoon-generation] matrix lexicon seed error:", matrixErr);
+    }
+  }
+
   // 4. Tell the client it's ready (failure here must not fail the webhook)
   try {
     await pusherServer.trigger(`user-${data.userId}`, "foundation-lesson-ready", {
