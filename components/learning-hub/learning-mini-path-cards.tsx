@@ -8,7 +8,6 @@ import {
   Headphones,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
-import { resolveAssetUrl } from "./primary-hero-card";
 
 type FocusState = LearningPath["currentFocus"];
 type Lesson = LearningPath["lessons"][number];
@@ -40,21 +39,19 @@ export function LearningPathMiniCards({
 
   return (
     <div className="space-y-3">
-      {/* Subtle Section Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-indigo-500" />
           <h3 className="text-xs font-extrabold tracking-wider text-slate-500 uppercase">
-            Unit Progression Path
+            Current Unit Progression
           </h3>
         </div>
-        <span className="text-xs font-medium text-slate-400">
+        <span className="text-xs font-semibold text-slate-400">
           Complete current step to unlock next
         </span>
       </div>
 
-      {/* Sleek Horizontal Strip instead of Tall Heavy Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ActiveStepTile
           focus={currentFocus}
           resolveLessonHref={resolveLessonHref}
@@ -67,7 +64,7 @@ export function LearningPathMiniCards({
             lesson={nextLocked.data}
           />
         )}
-      </div>
+      </section>
     </div>
   );
 }
@@ -82,15 +79,8 @@ function ActiveStepTile({
   resolveBossHref: (bossId: string, lessonId: string) => string;
 }) {
   const { type, data: lesson } = focus;
-
-  // Extract Boss info if it's a boss stage
   const bossStage = lesson.bossStage;
-  const bossData = (bossStage?.scenarioData as any)?.boss;
-  const bossAvatar = resolveAssetUrl(bossData?.avatar?.default);
-  const bossCover =
-    resolveAssetUrl(bossStage?.coverUrl) ||
-    resolveAssetUrl(bossData?.coverUrl) ||
-    lesson.imageUrl;
+  const bossData = bossStage?.scenarioData?.boss;
 
   const href =
     type === "BOSS" && bossStage
@@ -99,7 +89,11 @@ function ActiveStepTile({
         ? `/foundation/vocab/${lesson.bridge.id}`
         : resolveLessonHref(lesson.id);
 
-  const thumbUrl = type === "BOSS" ? bossAvatar || bossCover : lesson.imageUrl;
+  // Uses the presigned Boss Avatar or Cover URL from getLearningPath
+  const thumbUrl =
+    type === "BOSS"
+      ? bossStage?.avatarUrl || bossStage?.coverUrl || lesson.imageUrl
+      : lesson.imageUrl;
 
   const badgeLabel =
     type === "BOSS"
@@ -118,9 +112,8 @@ function ActiveStepTile({
   return (
     <Link
       href={href}
-      className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-indigo-200/70 bg-white/85 p-3.5 shadow-xs backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-white hover:shadow-md"
+      className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-indigo-200/80 bg-white/90 p-3.5 shadow-xs backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-white hover:shadow-md"
     >
-      {/* Thumbnail / Boss Avatar */}
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-900">
         {thumbUrl ? (
           <img
@@ -141,7 +134,6 @@ function ActiveStepTile({
         )}
       </div>
 
-      {/* Compact Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
@@ -156,7 +148,7 @@ function ActiveStepTile({
             {badgeLabel}
           </span>
           <span className="text-[11px] font-bold text-emerald-600">
-            • Active Now
+            • Active Focus
           </span>
         </div>
 
@@ -165,19 +157,20 @@ function ActiveStepTile({
         </h4>
 
         {type === "BOSS" ? (
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="mt-1.5 flex items-center gap-2">
             {[startSpoon, startSpoon + 1, lesson.orderIndex].map((num) => (
               <span
                 key={num}
-                className="inline-flex items-center gap-0.5 text-[10px] font-bold text-slate-500"
+                className="inline-flex items-center gap-0.5 text-[11px] font-bold text-slate-500"
               >
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />S{num}
+                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                Spoon {num}
               </span>
             ))}
           </div>
         ) : (
           <p className="mt-0.5 truncate text-xs text-slate-500">
-            Click to continue your current step
+            Continue active step
           </p>
         )}
       </div>
@@ -201,7 +194,8 @@ function UpNextCompactTile({
       ? lesson.title
       : type === "BRIDGE"
         ? `Review: ${lesson.title}`
-        : `Milestone ${Math.ceil(lesson.orderIndex / 3)} Boss`;
+        : lesson.bossStage?.scenarioData?.boss?.name ||
+          `Milestone ${Math.ceil(lesson.orderIndex / 3)} Boss`;
 
   const badge =
     type === "SPOON"
@@ -210,13 +204,19 @@ function UpNextCompactTile({
         ? `Vocab Bridge ${lesson.orderIndex}`
         : `Boss Checkpoint`;
 
+  const thumbUrl =
+    type === "BOSS"
+      ? lesson.bossStage?.avatarUrl ||
+        lesson.bossStage?.coverUrl ||
+        lesson.imageUrl
+      : lesson.imageUrl;
+
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-slate-200/40 p-3.5">
-      {/* Muted Thumbnail */}
+    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-200/45 p-3.5">
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-200">
-        {lesson.imageUrl ? (
+        {thumbUrl ? (
           <img
-            src={lesson.imageUrl}
+            src={thumbUrl}
             alt={lesson.imageAlt ?? ""}
             className="h-full w-full object-cover opacity-60 saturate-[0.2]"
           />
@@ -226,18 +226,17 @@ function UpNextCompactTile({
         </div>
       </div>
 
-      {/* Locked Metadata */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="rounded-md bg-slate-200/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-600 uppercase">
-            Up Next • {badge}
+            Locked • {badge}
           </span>
         </div>
         <h4 className="mt-1 truncate text-sm font-bold text-slate-600">
           {title}
         </h4>
         <p className="mt-0.5 truncate text-xs text-slate-400">
-          Unlocks after current step
+          Unlocks automatically after current step
         </p>
       </div>
     </div>

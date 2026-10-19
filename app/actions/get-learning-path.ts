@@ -3,7 +3,27 @@ import { prisma } from "@/lib/prisma";
 import { getPresignedImageUrl } from "@/lib/aws/services/s3-presigned-url";
 
 type VisualContent = { imageS3Key?: string; altText?: string } | null;
+
 type BossScenarioData = {
+  boss?: {
+    name?: string;
+    persona?: string;
+    appearance?: string;
+    introMessage?: string;
+    sceneDescription?: string;
+    coverUrl?: string;
+    avatar?: {
+      default?: string;
+      happy?: string;
+      sad?: string;
+      angry?: string;
+    };
+  };
+  rules?: {
+    passingScore?: number;
+    totalExercises?: number;
+  };
+  // Legacy fallback fields
   title?: string;
   setting?: string;
   description?: string;
@@ -67,7 +87,7 @@ export async function getLearningPath(userId: string) {
   });
   const bridgeByIndex = new Map(bridges.map((b) => [b.bridgeIndex, b]));
 
-  // 2. Fetch Boss Stages
+  // 2. Fetch Boss Stages & Presign Cover + Avatar URLs
   const bossStages = await prisma.foundationBossStage.findMany({
     where: { foundationCourseId: course.id, userId },
     select: {
@@ -85,7 +105,9 @@ export async function getLearningPath(userId: string) {
   const resolvedBossStages = await Promise.all(
     bossStages.map(async (b) => {
       const scenario = b.scenarioData as unknown as BossScenarioData;
+
       const rawCover =
+        scenario?.boss?.coverUrl ??
         (b as any).coverUrl ??
         (b as any).coverS3Key ??
         scenario?.coverUrl ??
@@ -93,9 +115,38 @@ export async function getLearningPath(userId: string) {
         scenario?.imageS3Key ??
         null;
 
+      const rawAvatar = scenario?.boss?.avatar?.default ?? null;
+
+      const [presignedCover, presignedAvatar] = await Promise.all([
+        safePresign(rawCover),
+        safePresign(rawAvatar),
+      ]);
+
+      // Also inject the presigned URLs directly into scenarioData.boss so any child component gets signed URLs
+      const enrichedScenario: BossScenarioData = scenario
+        ? {
+            ...scenario,
+            boss: scenario.boss
+              ? {
+                  ...scenario.boss,
+                  coverUrl: presignedCover ?? scenario.boss.coverUrl,
+                  avatar: scenario.boss.avatar
+                    ? {
+                        ...scenario.boss.avatar,
+                        default:
+                          presignedAvatar ?? scenario.boss.avatar.default,
+                      }
+                    : undefined,
+                }
+              : undefined,
+          }
+        : null;
+
       return {
         ...b,
-        coverUrl: await safePresign(rawCover),
+        coverUrl: presignedCover,
+        avatarUrl: presignedAvatar,
+        scenarioData: enrichedScenario,
       };
     })
   );

@@ -3,55 +3,16 @@ import {
   ArrowRight,
   Headphones,
   Loader2,
-  Lock,
   Mic,
+  Quote,
   Sparkles,
   Swords,
   Zap,
-  Quote,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 import { vocabWordCount } from "./utils";
 
 type Lesson = LearningPath["lessons"][number];
-
-// Matches your actual JSON payload structure
-type BossScenarioData = {
-  boss?: {
-    name?: string;
-    persona?: string;
-    introMessage?: string;
-    coverUrl?: string;
-    sceneDescription?: string;
-    avatar?: {
-      default?: string;
-      happy?: string;
-      sad?: string;
-      angry?: string;
-    };
-  };
-  rules?: {
-    passingScore?: number;
-    totalExercises?: number;
-  };
-  // Legacy fallbacks just in case
-  title?: string;
-  description?: string;
-  aiRole?: string;
-};
-
-// Helper to resolve S3 keys like "boss/avatars/..." into full URLs
-const S3_BASE_URL =
-  process.env.NEXT_PUBLIC_S3_BASE_URL ||
-  "https://spoon-academy.s3.us-east-1.amazonaws.com";
-
-export function resolveAssetUrl(pathOrUrl?: string | null): string | null {
-  if (!pathOrUrl) return null;
-  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
-    return pathOrUrl;
-  }
-  return `${S3_BASE_URL}/${pathOrUrl.replace(/^\//, "")}`;
-}
 
 type PrimaryHeroCardProps = {
   path: LearningPath | null;
@@ -90,26 +51,24 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 1. BOSS STAGE READY — Immersive Character Spotlight (No white card!)
+  // 1. BOSS STAGE READY — Full-bleed Cover + Boss Avatar + Quote
   if (bossDue?.bossStage && !waitingOnBoss) {
     const bossStage = bossDue.bossStage;
     const milestoneNum =
       bossStage.milestoneIndex ?? Math.ceil(bossDue.orderIndex / 3);
     const startSpoon = Math.max(1, bossDue.orderIndex - 2);
-    const scenario = (bossStage.scenarioData ?? null) as BossScenarioData | null;
+    const scenario = bossStage.scenarioData;
     const boss = scenario?.boss;
 
     const coverUrl =
-      resolveAssetUrl(bossStage.coverUrl) ||
-      resolveAssetUrl(boss?.coverUrl) ||
-      bossDue.imageUrl;
-
-    const avatarUrl = resolveAssetUrl(boss?.avatar?.default);
+      bossStage.coverUrl || boss?.coverUrl || bossDue.imageUrl || null;
+    const avatarUrl = bossStage.avatarUrl || boss?.avatar?.default || null;
 
     const bossName =
       boss?.name ||
       scenario?.title ||
-      `Milestone ${milestoneNum} Boss Checkpoint`;
+      `Milestone ${milestoneNum}: AI Conversation Checkpoint`;
+
     const bossPersona =
       boss?.persona ||
       scenario?.description ||
@@ -121,27 +80,28 @@ export function PrimaryHeroCard({
 
     return (
       <div className="group relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-indigo-950/15">
-        {/* Atmospheric Cover Image Backdrop */}
+        {/* Presigned Boss Cover Background */}
         {coverUrl && (
           <img
             src={coverUrl}
             alt={bossName}
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-35 mix-blend-luminosity transition-transform duration-700 group-hover:scale-105"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 transition-transform duration-700 group-hover:scale-105"
           />
         )}
-        {/* Rich Gradient Overlays */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-fuchsia-950/60" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-fuchsia-500/20 via-transparent to-transparent" />
+
+        {/* Gradient Scrims so text is always crisp */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-fuchsia-950/40" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
 
         <div className="relative z-10 p-7 sm:p-8">
-          {/* Top Pills */}
+          {/* Top Status Pills */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/20 px-3.5 py-1 text-xs font-extrabold tracking-wide text-fuchsia-200 uppercase backdrop-blur-md">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/20 px-3.5 py-1 text-xs font-extrabold tracking-wide text-fuchsia-200 uppercase backdrop-blur-md">
               <Swords className="h-3.5 w-3.5 text-fuchsia-300" />
               Milestone {milestoneNum} Boss Stage
-            </div>
+            </span>
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200 backdrop-blur-md">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/75 px-3 py-1 text-xs font-bold text-slate-200 backdrop-blur-md">
               <span>🎯 Covers Spoons {startSpoon}–{bossDue.orderIndex}</span>
               {scenario?.rules?.passingScore && (
                 <>
@@ -152,30 +112,30 @@ export function PrimaryHeroCard({
                   </span>
                 </>
               )}
-            </div>
+            </span>
           </div>
 
-          {/* Boss Identity + Avatar Row */}
-          <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
+          {/* Boss Avatar + Name + Persona */}
+          <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
             {avatarUrl && (
               <div className="relative shrink-0">
-                <div className="relative h-24 w-24 overflow-hidden rounded-2xl border-2 border-fuchsia-400/60 bg-slate-900 shadow-lg shadow-fuchsia-500/20 sm:h-28 sm:w-28">
+                <div className="h-24 w-24 overflow-hidden rounded-2xl border-2 border-fuchsia-400/70 bg-slate-900 shadow-lg shadow-fuchsia-500/25 sm:h-28 sm:w-28">
                   <img
                     src={avatarUrl}
                     alt={bossName}
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <span className="absolute -bottom-2 -right-2 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-black tracking-wider text-slate-950 uppercase shadow">
-                  Live
+                <span className="absolute -right-1.5 -bottom-1.5 rounded-full bg-emerald-400 px-2 py-0.5 text-[10px] font-black tracking-wider text-slate-950 uppercase shadow">
+                  Boss
                 </span>
               </div>
             )}
 
-            <div className="space-y-2">
-              <div className="text-xs font-bold tracking-wider text-fuchsia-300 uppercase">
-                Your Challenger
-              </div>
+            <div className="space-y-1.5">
+              <span className="text-xs font-extrabold tracking-wider text-fuchsia-300 uppercase">
+                Milestone Challenger
+              </span>
               <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
                 {bossName}
               </h2>
@@ -185,28 +145,28 @@ export function PrimaryHeroCard({
             </div>
           </div>
 
-          {/* Boss Intro Quote Bubble */}
+          {/* Boss Intro Speech Bubble */}
           {boss?.introMessage && (
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.06] p-4 backdrop-blur-md">
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md">
               <div className="flex items-start gap-3">
                 <Quote className="mt-0.5 h-4 w-4 shrink-0 rotate-180 text-fuchsia-400" />
-                <p className="text-xs leading-relaxed font-medium text-slate-200 italic sm:text-sm">
+                <p className="text-xs leading-relaxed font-medium text-slate-100 italic sm:text-sm">
                   &ldquo;{boss.introMessage}&rdquo;
                 </p>
               </div>
             </div>
           )}
 
-          {/* Footer Action Bar */}
+          {/* Bottom Action Bar */}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
               <Mic className="h-4 w-4 text-fuchsia-400" />
-              <span>Interactive Checkpoint • Audio &amp; Speaking</span>
+              <span>Live AI Checkpoint • 15 Exercises</span>
             </div>
 
             <Link
               href={bossHref}
-              className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:from-fuchsia-400 hover:to-indigo-500 hover:shadow-fuchsia-500/40 active:scale-95"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:from-fuchsia-400 hover:to-indigo-500 active:scale-95"
             >
               Challenge {bossName.split(",")[0]}
               <ArrowRight className="h-4 w-4" />
@@ -217,7 +177,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 2. VOCAB BRIDGE READY — Warm Amber Tinted Spotlight
+  // 2. VOCAB BRIDGE READY
   if (vocabDue?.bridge) {
     const isMilestoneLesson = vocabDue.orderIndex % 3 === 0;
     const unlockTargetText = isMilestoneLesson
@@ -237,11 +197,11 @@ export function PrimaryHeroCard({
               {vocabDue.orderIndex}
             </div>
             <h3 className="text-2xl font-black text-slate-900 sm:text-3xl">
-              Lock in {vocabWordCount(vocabDue.bridge.vocabMoment)} Words from{" "}
-              {vocabDue.title}
+              Review Vocabulary for Spoon {vocabDue.orderIndex}
             </h3>
             <p className="text-sm text-slate-600">
-              Quick vocabulary drill to unlock{" "}
+              Solidify the {vocabWordCount(vocabDue.bridge.vocabMoment)} new
+              words you encountered to unlock{" "}
               <span className="font-bold text-slate-800">
                 {unlockTargetText}
               </span>
@@ -253,7 +213,7 @@ export function PrimaryHeroCard({
                 {words.map((w, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/80 bg-white/90 px-3 py-1 text-xs font-bold text-slate-800 shadow-2xs"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/80 bg-white/90 px-3 py-1 text-xs font-bold text-slate-800"
                   >
                     <span className="text-amber-600">{w.word}</span>
                     {w.gloss && (
@@ -271,7 +231,7 @@ export function PrimaryHeroCard({
             href={`/foundation/vocab/${vocabDue.bridge.id}`}
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-extrabold text-white shadow-md shadow-amber-500/20 transition hover:bg-amber-600 active:scale-95"
           >
-            <Zap className="h-4 w-4" /> Start Bridge{" "}
+            <Zap className="h-4 w-4" /> Start Vocab Bridge{" "}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -279,7 +239,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 3. NEXT SPOON READY — Split Visual + Action Banner
+  // 3. NEXT SPOON READY
   if (nextLesson) {
     return (
       <div className="group relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-lg">
@@ -331,12 +291,12 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 4. WAITING STATES
+  // 4. WAITING ON VOCAB OR BOSS GENERATION
   if (waitingOnVocab || waitingOnBoss) {
     return (
       <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-white p-7">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 px-3 py-1 text-xs font-extrabold text-indigo-700 uppercase">
-          <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Building Next Stage
+          <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Preparing Next Step
         </div>
         <h3 className="mt-3 text-2xl font-black text-slate-900">
           {waitingOnBoss
