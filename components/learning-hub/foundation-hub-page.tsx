@@ -84,8 +84,8 @@ export default function FoundationHubPage({ path, lang }: Props) {
         streak={1}
       />
 
-      <main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-24 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+<main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-20 lg:px-8">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
           {/* LEFT / MAIN COLUMN */}
           <div className="flex flex-col gap-7 lg:col-span-8">
             <PrimaryHeroCard
@@ -108,16 +108,18 @@ export default function FoundationHubPage({ path, lang }: Props) {
             />
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* RIGHT PANEL — Now aligns cleanly with the Left Column! */}
           <div className="flex flex-col gap-6 lg:col-span-4">
             <WordMatrixCard
               totalWordsLearned={totalWordsLearned}
               matrixStats={path?.matrixStats}
               fallbackWords={recentBridgeWords}
             />
-            <AiTutorCard />
           </div>
         </div>
+
+        {/* BOTTOM SANDBOX BAR — Spans full width below the main grid */}
+        <AiTutorCard />
       </main>
     </div>
   );
