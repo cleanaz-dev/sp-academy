@@ -3,12 +3,10 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-
 import FreestyleSetup from "./freestyle-setup";
 import FreestyleChat from "./freestyle-chat";
 import { FreestyleProvider } from "@/context/freestyle-context";
 import { FreestyleReviewHub } from "./review/freestyle-review-hub";
- 
 
 export type FreestyleSessionConfig = {
   id: string;
@@ -18,37 +16,40 @@ export type FreestyleSessionConfig = {
   targetLanguage: string;
   voiceGender: "male" | "female";
   aiAvatarUrl: string;
-  level: "EASY" | "MEDIUM" | "FLUENT" | "ZERO"
+  level: "EASY" | "MEDIUM" | "FLUENT" | "ZERO";
 };
 
-export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) {
-  const [activeSession, setActiveSession] = useState<FreestyleSessionConfig | null>(null);
-  const [pendingReviewId, setPendingReviewId] = useState<string | null>(null); 
+export default function FreestyleWrapper({
+  defaultNative,
+  defaultTarget,
+}: any) {
+  const [activeSession, setActiveSession] =
+    useState<FreestyleSessionConfig | null>(null);
+  const [pendingReviewId, setPendingReviewId] = useState<string | null>(null);
   const [reviewSessionId, setReviewSessionId] = useState<string | null>(null);
 
-// 🚨 Listen for Pusher event when a review is pending
   const handleReviewReady = useCallback((id: string) => {
     setPendingReviewId(null);
     setReviewSessionId(id);
   }, []);
 
-  // NEW: Handle failure so the user doesn't get stuck on the loading screen
   const handleReviewFailed = useCallback(() => {
-    setPendingReviewId(null); // Drops them back to the Setup screen
+    setPendingReviewId(null);
     setReviewSessionId(null);
   }, []);
 
-  // Pass both success and failure handlers to the hook
   // useReviewPusher(pendingReviewId, handleReviewReady, handleReviewFailed);
 
-
-  const handleStartSession = async (config: Omit<FreestyleSessionConfig, "id" | "aiAvatarUrl">) => {
-    const seed = Math.random().toString(36).substring(7);
-    const aiAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&style=circle&top=${config.voiceGender === 'female' ? 'longHair' : 'shortHair'}`;
+  const handleStartSession = async (
+    config: Omit<FreestyleSessionConfig, "id" | "aiAvatarUrl">
+  ) => {
+    const seed = config.voiceGender === "female" ? "Camille" : "Laurent";
+    // Valid Dicebear v7 URL (no broken `top=` param)
+    const aiAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
 
     const res = await fetch("/api/freestyle/create", {
       method: "POST",
-      body: JSON.stringify({ ...config, aiAvatarUrl })
+      body: JSON.stringify({ ...config, aiAvatarUrl }),
     });
     const data = await res.json();
 
@@ -62,39 +63,34 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
   const handleEndSession = () => {
     const endedSessionId = activeSession?.id || null;
     setActiveSession(null);
-    
-    // Instead of going straight to the review hub, we enter the "Waiting" phase
+
     if (endedSessionId) {
       setPendingReviewId(endedSessionId);
     }
   };
 
   const handleReviewComplete = () => {
-    // Review is over, return to Setup
     setReviewSessionId(null);
   };
 
   return (
-    <div className="flex-1 w-full h-full relative flex flex-col bg-gray-50/50">
+    <div className="relative flex min-h-screen w-full flex-1 flex-col bg-slate-100/80">
       <AnimatePresence mode="wait">
-        
-        {/* 1. SETUP SCREEN */}
+        {/* 1. SETUP SCREEN — Full width so Header & 7xl Grid work properly */}
         {!activeSession && !pendingReviewId && !reviewSessionId && (
           <motion.div
             key="setup"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="w-full h-full flex flex-col items-center justify-center overflow-y-auto p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="min-h-screen w-full"
           >
-            <div className="w-full max-w-2xl">
-              <FreestyleSetup
-                onStart={handleStartSession}
-                defaultNative={defaultNative}
-                defaultTarget={defaultTarget}
-              />
-            </div>
+            <FreestyleSetup
+              onStart={handleStartSession}
+              defaultNative={defaultNative}
+              defaultTarget={defaultTarget}
+            />
           </motion.div>
         )}
 
@@ -106,7 +102,7 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="w-full h-full flex flex-col"
+            className="flex h-screen w-full flex-col"
           >
             <FreestyleProvider session={activeSession} onEnd={handleEndSession}>
               <FreestyleChat />
@@ -114,7 +110,7 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
           </motion.div>
         )}
 
-        {/* 3. NEW: ANALYZING / WAITING SCREEN */}
+        {/* 3. ANALYZING / WAITING SCREEN */}
         {pendingReviewId && (
           <motion.div
             key="pending"
@@ -122,20 +118,23 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.4 }}
-            className="w-full h-full flex flex-col items-center justify-center p-6 text-center"
+            className="flex min-h-screen w-full flex-col items-center justify-center p-6 text-center"
           >
-            <div className="bg-white p-10 rounded-3xl shadow-xl border border-gray-100 max-w-sm w-full space-y-6">
-              <div className="relative w-20 h-20 mx-auto">
-                <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+            <div className="w-full max-w-sm space-y-6 rounded-3xl border border-gray-100 bg-white p-10 shadow-xl">
+              <div className="relative mx-auto h-20 w-20">
+                <div className="absolute inset-0 rounded-full border-4 border-indigo-100" />
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-2xl">🧠</span>
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Analyzing Session</h3>
-                <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                  Your AI tutor is reviewing your grammar, vocabulary, and pronunciation. Give us just a moment...
+                <h3 className="text-xl font-bold text-gray-900">
+                  Analyzing Session
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                  Your AI tutor is reviewing your grammar, vocabulary, and
+                  pronunciation. Give us just a moment...
                 </p>
               </div>
             </div>
@@ -150,16 +149,14 @@ export default function FreestyleWrapper({ defaultNative, defaultTarget }: any) 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="w-full h-full flex flex-col overflow-y-auto"
+            className="flex min-h-screen w-full flex-col overflow-y-auto"
           >
-            {/* Note: FreestyleReviewHub no longer needs to poll, because Pusher told us it's ready! */}
             <FreestyleReviewHub
               sessionId={reviewSessionId}
               onComplete={handleReviewComplete}
             />
           </motion.div>
         )}
-
       </AnimatePresence>
     </div>
   );
