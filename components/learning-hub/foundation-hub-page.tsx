@@ -65,7 +65,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
   }, [isGenerating, router]);
 
   return (
-    <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-slate-100/90 to-slate-100 font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
         name={user?.firstName}
         lang={lang}
