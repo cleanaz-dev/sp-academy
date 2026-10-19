@@ -17,6 +17,7 @@ type BossScenarioData = {
       happy?: string;
       sad?: string;
       angry?: string;
+      confused?: string
     };
   };
   rules?: {
