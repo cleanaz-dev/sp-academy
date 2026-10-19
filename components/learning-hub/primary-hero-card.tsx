@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -13,6 +16,76 @@ import type { LearningPath } from "@/app/actions/get-learning-path";
 import { vocabWordCount } from "./utils";
 
 type Lesson = LearningPath["lessons"][number];
+
+// Curated high-contrast Boss Arena palettes so every render feels fresh & intentional
+const BOSS_THEMES = [
+  {
+    name: "neon-fuchsia",
+    scrim: "from-slate-950 via-slate-950/85 to-fuchsia-950/55",
+    glow: "radial-gradient(circle at 85% 20%, rgba(217, 70, 239, 0.28), transparent 60%)",
+    badge: "border-fuchsia-400/35 bg-fuchsia-500/20 text-fuchsia-200",
+    icon: "text-fuchsia-300",
+    accentText: "text-fuchsia-300",
+    avatarBorder: "border-fuchsia-400/75 shadow-fuchsia-500/30",
+    button:
+      "from-fuchsia-500 to-indigo-600 shadow-fuchsia-500/30 hover:from-fuchsia-400 hover:to-indigo-500",
+  },
+  {
+    name: "cyber-emerald",
+    scrim: "from-slate-950 via-slate-950/85 to-teal-950/60",
+    glow: "radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.28), transparent 60%)",
+    badge: "border-emerald-400/35 bg-emerald-500/20 text-emerald-200",
+    icon: "text-emerald-300",
+    accentText: "text-emerald-300",
+    avatarBorder: "border-emerald-400/75 shadow-emerald-500/30",
+    button:
+      "from-emerald-500 to-teal-600 shadow-emerald-500/30 hover:from-emerald-400 hover:to-teal-500",
+  },
+  {
+    name: "crimson-velvet",
+    scrim: "from-slate-950 via-slate-950/85 to-rose-950/60",
+    glow: "radial-gradient(circle at 85% 20%, rgba(244, 63, 94, 0.28), transparent 60%)",
+    badge: "border-rose-400/35 bg-rose-500/20 text-rose-200",
+    icon: "text-rose-300",
+    accentText: "text-rose-300",
+    avatarBorder: "border-rose-400/75 shadow-rose-500/30",
+    button:
+      "from-rose-500 to-orange-600 shadow-rose-500/30 hover:from-rose-400 hover:to-orange-500",
+  },
+  {
+    name: "imperial-gold",
+    scrim: "from-slate-950 via-slate-950/85 to-amber-950/55",
+    glow: "radial-gradient(circle at 85% 20%, rgba(245, 158, 11, 0.26), transparent 60%)",
+    badge: "border-amber-400/35 bg-amber-500/20 text-amber-200",
+    icon: "text-amber-300",
+    accentText: "text-amber-300",
+    avatarBorder: "border-amber-400/75 shadow-amber-500/30",
+    button:
+      "from-amber-500 to-rose-600 shadow-amber-500/30 hover:from-amber-400 hover:to-rose-500",
+  },
+  {
+    name: "electric-cyan",
+    scrim: "from-slate-950 via-slate-950/85 to-cyan-950/60",
+    glow: "radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.28), transparent 60%)",
+    badge: "border-cyan-400/35 bg-cyan-500/20 text-cyan-200",
+    icon: "text-cyan-300",
+    accentText: "text-cyan-300",
+    avatarBorder: "border-cyan-400/75 shadow-cyan-500/30",
+    button:
+      "from-cyan-500 to-blue-600 shadow-cyan-500/30 hover:from-cyan-400 hover:to-blue-500",
+  },
+  {
+    name: "royal-violet",
+    scrim: "from-slate-950 via-slate-950/85 to-violet-950/60",
+    glow: "radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.30), transparent 60%)",
+    badge: "border-violet-400/35 bg-violet-500/20 text-violet-200",
+    icon: "text-violet-300",
+    accentText: "text-violet-300",
+    avatarBorder: "border-violet-400/75 shadow-violet-500/30",
+    button:
+      "from-violet-500 to-fuchsia-600 shadow-violet-500/30 hover:from-violet-400 hover:to-fuchsia-500",
+  },
+] as const;
 
 type PrimaryHeroCardProps = {
   path: LearningPath | null;
@@ -35,6 +108,15 @@ export function PrimaryHeroCard({
   getLessonHref,
   getBossHref,
 }: PrimaryHeroCardProps) {
+  // Pick a random Boss palette on client mount (avoids Next.js SSR hydration mismatch)
+  const [themeIndex, setThemeIndex] = useState(0);
+
+  useEffect(() => {
+    setThemeIndex(Math.floor(Math.random() * BOSS_THEMES.length));
+  }, []);
+
+  const theme = BOSS_THEMES[themeIndex];
+
   if (!path) {
     return (
       <div className="rounded-3xl bg-white/80 p-8 backdrop-blur-md">
@@ -51,7 +133,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 1. BOSS STAGE READY — Full-bleed Cover + Boss Avatar + Quote
+  // 1. BOSS STAGE READY — Full-bleed Cover + Dynamic Theme + Boss Avatar + Quote
   if (bossDue?.bossStage && !waitingOnBoss) {
     const bossStage = bossDue.bossStage;
     const milestoneNum =
@@ -79,7 +161,7 @@ export function PrimaryHeroCard({
       : `/foundation/boss/${bossStage.id}`;
 
     return (
-      <div className="group relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-indigo-950/15">
+      <div className="group relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-indigo-950/15 transition-colors duration-700">
         {/* Presigned Boss Cover Background */}
         {coverUrl && (
           <img
@@ -89,15 +171,23 @@ export function PrimaryHeroCard({
           />
         )}
 
-        {/* Gradient Scrims so text is always crisp */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-fuchsia-950/40" />
+        {/* Dynamic Randomized Gradient Scrims */}
+        <div
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-r transition-all duration-700 ${theme.scrim}`}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 transition-all duration-700"
+          style={{ background: theme.glow }}
+        />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
 
         <div className="relative z-10 p-7 sm:p-8">
           {/* Top Status Pills */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/20 px-3.5 py-1 text-xs font-extrabold tracking-wide text-fuchsia-200 uppercase backdrop-blur-md">
-              <Swords className="h-3.5 w-3.5 text-fuchsia-300" />
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-extrabold tracking-wide uppercase backdrop-blur-md transition-colors duration-500 ${theme.badge}`}
+            >
+              <Swords className={`h-3.5 w-3.5 ${theme.icon}`} />
               Milestone {milestoneNum} Boss Stage
             </span>
 
@@ -106,7 +196,7 @@ export function PrimaryHeroCard({
               {scenario?.rules?.passingScore && (
                 <>
                   <span className="text-white/30">•</span>
-                  <span className="text-fuchsia-300">
+                  <span className={theme.accentText}>
                     Pass: {scenario.rules.passingScore}/
                     {scenario.rules.totalExercises}
                   </span>
@@ -119,7 +209,9 @@ export function PrimaryHeroCard({
           <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
             {avatarUrl && (
               <div className="relative shrink-0">
-                <div className="h-24 w-24 overflow-hidden rounded-2xl border-2 border-fuchsia-400/70 bg-slate-900 shadow-lg shadow-fuchsia-500/25 sm:h-28 sm:w-28">
+                <div
+                  className={`h-24 w-24 overflow-hidden rounded-2xl border-2 bg-slate-900 shadow-lg transition-all duration-500 sm:h-28 sm:w-28 ${theme.avatarBorder}`}
+                >
                   <img
                     src={avatarUrl}
                     alt={bossName}
@@ -133,7 +225,9 @@ export function PrimaryHeroCard({
             )}
 
             <div className="space-y-1.5">
-              <span className="text-xs font-extrabold tracking-wider text-fuchsia-300 uppercase">
+              <span
+                className={`text-xs font-extrabold tracking-wider uppercase ${theme.accentText}`}
+              >
                 Milestone Challenger
               </span>
               <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
@@ -149,7 +243,9 @@ export function PrimaryHeroCard({
           {boss?.introMessage && (
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md">
               <div className="flex items-start gap-3">
-                <Quote className="mt-0.5 h-4 w-4 shrink-0 rotate-180 text-fuchsia-400" />
+                <Quote
+                  className={`mt-0.5 h-4 w-4 shrink-0 rotate-180 ${theme.icon}`}
+                />
                 <p className="text-xs leading-relaxed font-medium text-slate-100 italic sm:text-sm">
                   &ldquo;{boss.introMessage}&rdquo;
                 </p>
@@ -160,13 +256,13 @@ export function PrimaryHeroCard({
           {/* Bottom Action Bar */}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <Mic className="h-4 w-4 text-fuchsia-400" />
+              <Mic className={`h-4 w-4 ${theme.icon}`} />
               <span>Live AI Checkpoint • 15 Exercises</span>
             </div>
 
             <Link
               href={bossHref}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-indigo-600 px-7 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-fuchsia-500/30 transition-all hover:from-fuchsia-400 hover:to-indigo-500 active:scale-95"
+              className={`inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r px-7 py-3.5 text-sm font-extrabold text-white shadow-lg transition-all active:scale-95 ${theme.button}`}
             >
               Challenge {bossName.split(",")[0]}
               <ArrowRight className="h-4 w-4" />
