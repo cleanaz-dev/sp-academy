@@ -1,48 +1,23 @@
-// app/(dashboard)/conversation/page.jsx
+// app/(dashboard)/conversation/page.tsx
+import { getUserLanguage } from "@/app/actions/get-user-language";
+import FreestyleWrapper from "@/components/freestyle/freestyle-wrapper";
+import { requireUser } from "@/lib/auth-guard";
 
-import ConversationCardCopy from "@/components/conversation/ConversationCardCopy";
-import FreestyleCard from "@/components/conversation/freestyle-card";
-import { getAllConversations } from "@/lib/actions";
-import { MessagesSquare } from "lucide-react";
+export default async function ConversationPage() {
+  const user = await requireUser();
+  const { lang } = await getUserLanguage(user.id);
 
-export default async function Page() {
-  const conversations = await getAllConversations();
-  if (!conversations) return null;
+  const defaultNative = lang?.nativeLanguage ?? "ENGLISH";
+  const defaultTarget = lang?.targetLanguage ?? "fr-FR";
 
   return (
-    <main className="">
-      <header className="mb-8 animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-16 text-white">
-        <div className="mx-auto max-w-7xl px-6">
-          <h1 className="mb-4 flex items-center gap-4 text-4xl font-bold">
-            Conversations{" "}
-            <MessagesSquare
-              strokeWidth={1.5}
-              className="size-10 drop-shadow-xl"
-            />
-          </h1>
-          <p className="text-xl opacity-90">
-            Practice and improve your language skills through engaging
-            conversations with our AI. Explore new vocabulary and gain
-            confidence in expressing yourself!
-          </p>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        
-        {/* 👈 Add the Freestyle Card at the very front of the grid */}
-        <FreestyleCard /> 
-
-        {conversations &&
-          conversations
-            .filter((conversation) => conversation.metadata !== null)
-            .map((conversation) => (
-              <ConversationCardCopy
-                key={conversation.id}
-                conversation={conversation}
-              />
-            ))}
-      </div>
-    </main>
+    <div className="flex min-h-screen w-full flex-col bg-slate-100/80">
+      <FreestyleWrapper
+        userId={user.id}
+        userName={user.firstName}
+        defaultNative={defaultNative}
+        defaultTarget={defaultTarget}
+      />
+    </div>
   );
 }
