@@ -654,7 +654,7 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
   return (
     <div className="min-h-screen animate-bg dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24">
       {/* ================= HERO HEADER ================= */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <div className=" border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
