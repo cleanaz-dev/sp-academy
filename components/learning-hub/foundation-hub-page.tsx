@@ -26,8 +26,10 @@ export default function FoundationHubPage({ path, lang }: Props) {
   const currentFocus = path?.currentFocus ?? null;
   const nextLocked = path?.nextLocked ?? null;
 
-  const vocabDue = currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
-  const nextLesson = currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
+  const vocabDue =
+    currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
+  const nextLesson =
+    currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
   const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
   const waitingOnVocab =
@@ -42,7 +44,9 @@ export default function FoundationHubPage({ path, lang }: Props) {
 
   const isGenerating = waitingOnVocab || waitingOnBoss;
 
-  const completedLessonsCount = lessons.filter((l) => Boolean(l.completedAt)).length;
+  const completedLessonsCount = lessons.filter((l) =>
+    Boolean(l.completedAt),
+  ).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
     return (
@@ -51,12 +55,19 @@ export default function FoundationHubPage({ path, lang }: Props) {
     );
   }, 0);
 
+  const recentBridgeWords = lessons
+    .filter((l) => l.completedAt && l.bridge?.vocabMoment)
+    .flatMap(
+      (l) =>
+        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ??
+        [],
+    )
+    .reverse();
+
   const getLessonHref = (lessonId: string) =>
     `/foundation/${lessonId}/${courseId}`;
 
-  const getBossHref = (bossId: string) =>
-    `/foundation/boss/${bossId}`;
-     
+  const getBossHref = (bossId: string) => `/foundation/boss/${bossId}`;
 
   useEffect(() => {
     if (!isGenerating) return;
@@ -99,7 +110,11 @@ export default function FoundationHubPage({ path, lang }: Props) {
 
           {/* RIGHT PANEL */}
           <div className="flex flex-col gap-6 lg:col-span-4">
-            <WordMatrixCard totalWordsLearned={totalWordsLearned} />
+            <WordMatrixCard
+              totalWordsLearned={totalWordsLearned}
+              matrixStats={path?.matrixStats}
+              fallbackWords={recentBridgeWords}
+            />
             <AiTutorCard />
           </div>
         </div>

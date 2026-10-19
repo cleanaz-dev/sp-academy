@@ -217,11 +217,115 @@ export async function getLearningPath(userId: string) {
     }
   }
 
+ // Replace the bottom of get-learning-path.ts (from `const wordMatrix = ...` to the end) with:
   const wordMatrix = await prisma.languageProfile.findUnique({
     where: {
       userId_languageCode: { userId, languageCode: course.targetLanguage },
     },
+    include: {
+      wordStats: {
+        orderBy: [
+          { spokenAttempts: "desc" },
+          { masteryScore: "desc" },
+          { seenCount: "desc" },
+        ],
+      },
+    },
   });
+
+  const allStats = wordMatrix?.wordStats ?? [];
+
+  // Top Spoken Word (wordType === "WORD")
+  const topWord =
+    allStats
+      .filter((w) => w.wordType === "WORD")
+      .sort(
+        (a, b) =>
+          b.spokenAttempts - a.spokenAttempts ||
+          b.tappedCorrect - a.tappedCorrect ||
+          b.seenCount - a.seenCount
+      )[0] ?? null;
+
+  // Top Spoken Phrase (wordType === "PHRASE")
+  const topPhrase =
+    allStats
+      .filter((w) => w.wordType === "PHRASE")
+      .sort(
+        (a, b) =>
+          b.spokenAttempts - a.spokenAttempts ||
+          b.tappedCorrect - a.tappedCorrect ||
+          b.seenCount - a.seenCount
+      )[0] ?? null;
+
+  // Overall Speech & Mastery Telemetry
+  const spokenItems = allStats.filter(
+    (w) => w.spokenAttempts > 0 && w.avgSpokenScore != null
+  );
+  const avgPronunciation =
+    spokenItems.length > 0
+      ? Math.round(
+          spokenItems.reduce((sum, w) => sum + (w.avgSpokenScore ?? 0), 0) /
+            spokenItems.length
+        )
+      : null;
+
+  const avgMastery =
+    allStats.length > 0
+      ? Math.round(
+          allStats.reduce((sum, w) => sum + (w.masteryScore ?? 0), 0) /
+            allStats.length
+        )
+      : null;
+
+  const statusCounts = {
+    MASTERED: allStats.filter((w) => w.status === "MASTERED").length,
+    FAMILIAR: allStats.filter((w) => w.status === "FAMILIAR").length,
+    LEARNING: allStats.filter((w) => w.status === "LEARNING").length,
+    NEW: allStats.filter((w) => w.status === "NEW").length,
+  };
+
+  const matrixStats = {
+    totalTracked: allStats.length,
+    wordsCount: allStats.filter((w) => w.wordType === "WORD").length,
+    phrasesCount: allStats.filter((w) => w.wordType === "PHRASE").length,
+    totalSpokenAttempts: allStats.reduce((s, w) => s + w.spokenAttempts, 0),
+    avgPronunciation,
+    avgMastery,
+    statusCounts,
+    topWord: topWord
+      ? {
+          word: topWord.word,
+          translation: topWord.translation,
+          partOfSpeech: topWord.partOfSpeech,
+          gender: topWord.grammaticalGender,
+          spokenAttempts: topWord.spokenAttempts,
+          avgSpokenScore: topWord.avgSpokenScore
+            ? Math.round(topWord.avgSpokenScore)
+            : null,
+          seenCount: topWord.seenCount,
+          status: topWord.status,
+        }
+      : null,
+    topPhrase: topPhrase
+      ? {
+          word: topPhrase.word,
+          translation: topPhrase.translation,
+          partOfSpeech: topPhrase.partOfSpeech,
+          spokenAttempts: topPhrase.spokenAttempts,
+          avgSpokenScore: topPhrase.avgSpokenScore
+            ? Math.round(topPhrase.avgSpokenScore)
+            : null,
+          seenCount: topPhrase.seenCount,
+          status: topPhrase.status,
+        }
+      : null,
+    recentWords: allStats.slice(0, 4).map((w) => ({
+      word: w.word,
+      translation: w.translation,
+      wordType: w.wordType,
+      status: w.status,
+    })),
+  };
 
   return {
     courseId: course.id,
@@ -231,7 +335,14 @@ export async function getLearningPath(userId: string) {
     currentFocus,
     nextLocked,
     user: course.user,
-    matrix: wordMatrix,
+    matrix: wordMatrix
+      ? {
+          id: wordMatrix.id,
+          userId: wordMatrix.userId,
+          languageCode: wordMatrix.languageCode,
+        }
+      : null,
+    matrixStats,
   };
 }
 
