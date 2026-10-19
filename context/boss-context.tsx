@@ -7,6 +7,7 @@ import React, {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import { useSpeech } from "@/context/speech-context";
@@ -21,6 +22,15 @@ export type ExerciseType =
   | "PRONUNCIATION"
   | "LISTEN_SENTENCE_BUILDER"
   | "LISTEN_PICTURE_SELECTOR";
+
+export type BossMood = "default" | "happy" | "sad" | "angry";
+
+export interface BossAvatar {
+  default?: string | null;
+  happy?: string | null;
+  sad?: string | null;
+  angry?: string | null;
+}
 
 export interface ImageOption {
   label: string;
@@ -45,7 +55,11 @@ export interface BossPersona {
   name: string;
   persona: string;
   introMessage: string;
+  appearance?: string | null;
+  sceneDescription?: string | null;
   avatarKey?: string | null;
+  coverUrl?: string | null;
+  avatar?: BossAvatar | null;
 }
 
 export interface BossMessage {
@@ -55,6 +69,7 @@ export interface BossMessage {
   translation?: string;
   exercise?: PlaylistItem;
   status?: "pending" | "correct" | "incorrect";
+  mood?: BossMood;
   isAnalyzingPronunciation?: boolean;
 }
 
@@ -64,6 +79,11 @@ interface BossFoundationContextType {
   session: any;
   boss: BossPersona | null;
   messages: BossMessage[];
+
+  bossMood: BossMood;
+  bossAvatarUrl: string;
+  bossCoverUrl: string;
+  getBossAvatarUrl: (mood?: BossMood) => string;
 
   chances: number;
   xp: number;
@@ -86,6 +106,7 @@ interface BossFoundationContextType {
   handleTimeOut: () => void;
   handleEndSession: () => Promise<void>;
   startRecording: () => void;
+  stopRecording: () => Promise<void>;
   resetRecording: () => void;
   handleReplay: (text: string) => Promise<void>;
   playExerciseAudio: (
@@ -107,6 +128,8 @@ const LANGUAGE_CODES: Record<string, string> = {
 };
 
 const NEXT_EXERCISE_PAUSE_MS = 900;
+const FALLBACK_AVATAR =
+  "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
 
 const wait = (milliseconds: number) =>
   new Promise<void>((resolve) => {
@@ -204,23 +227,18 @@ export function BossFoundationProvider({
   const [hasStartedExercises, setHasStartedExercises] =
     useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [bossMood, setBossMood] = useState<BossMood>("default");
 
   const sessionStartTime = useRef(Date.now());
 
-  /*
-   * Immediate refs are used as locks because React state updates are async.
-   * They prevent two submissions/timeouts from entering the result pipeline.
-   */
   const resultPipelineRef = useRef(false);
   const startExercisesRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const mountedRef = useRef(true);
-
-  /*
-   * Incrementing this invalidates an older async sequence.
-   * For example, pressing "skip intro" invalidates the intro speech sequence.
-   */
   const sequenceRef = useRef(0);
+
+  // Holds the recorded audioBlob when the user clicks "Done Speaking" before "Submit"
+  const recordedBlobRef = useRef<Blob | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentIndexRef = useRef(0);
@@ -251,7 +269,7 @@ export function BossFoundationProvider({
 
   const {
     startRecording: startSpeech,
-    stopRecording,
+    stopRecording: stopSpeechRecording,
     isRecording,
     transcript,
     resetSpeechState,
@@ -319,14 +337,66 @@ export function BossFoundationProvider({
     [preloadedKeys, preloadedUrls],
   );
 
-  /**
-   * Plays a native Audio element and resolves only when:
-   * - playback emits `ended`,
-   * - playback emits `error`, or
-   * - playback is interrupted and emits `pause`.
-   *
-   * The pause handler ignores the pause event produced after natural ending.
-   */
+  // Derive the 4 avatar S3 keys from boss.avatar (or fallback to coverUrl folder path)
+  const avatarKeyMap = useMemo(() => {
+    const derivedPrefix = boss?.coverUrl
+      ? boss.coverUrl
+          .replace(/^boss\/covers\//, "boss/avatars/")
+          .replace(/\/cover\.png$/, "")
+      : null;
+
+    return {
+      default:
+        boss?.avatar?.default ??
+        boss?.avatarKey ??
+        (derivedPrefix ? `${derivedPrefix}/default.png` : null),
+      happy:
+        boss?.avatar?.happy ??
+        (derivedPrefix ? `${derivedPrefix}/happy.png` : null),
+      sad:
+        boss?.avatar?.sad ??
+        (derivedPrefix ? `${derivedPrefix}/sad.png` : null),
+      angry:
+        boss?.avatar?.angry ??
+        (derivedPrefix ? `${derivedPrefix}/angry.png` : null),
+    };
+  }, [boss]);
+
+  const getBossAvatarUrl = useCallback(
+    (mood: BossMood = "default"): string => {
+      const key = avatarKeyMap[mood] || avatarKeyMap.default;
+      return key ? resolveAssetUrl(key) || FALLBACK_AVATAR : FALLBACK_AVATAR;
+    },
+    [avatarKeyMap, resolveAssetUrl],
+  );
+
+  const bossAvatarUrl = useMemo(
+    () => getBossAvatarUrl(bossMood),
+    [getBossAvatarUrl, bossMood],
+  );
+
+  const bossCoverUrl = useMemo(
+    () => (boss?.coverUrl ? resolveAssetUrl(boss.coverUrl) : ""),
+    [boss?.coverUrl, resolveAssetUrl],
+  );
+
+  // Stop recording handler that preserves the audioBlob for when the user clicks "Submit"
+  const handleStopRecording = useCallback(async () => {
+    try {
+      const blob = await stopSpeechRecording();
+      if (blob) {
+        recordedBlobRef.current = blob;
+      }
+    } catch (err) {
+      console.warn("Error stopping speech recording:", err);
+    }
+  }, [stopSpeechRecording]);
+
+  const handleResetRecording = useCallback(() => {
+    recordedBlobRef.current = null;
+    resetSpeechState();
+  }, [resetSpeechState]);
+
   const playNativeAudioUntilSettled = useCallback(
     async (url: string): Promise<void> => {
       if (audioRef.current) {
@@ -370,19 +440,9 @@ export function BossFoundationProvider({
           reject(new Error("Audio playback failed."));
         };
 
-        const handleEnded = () => {
-          finish();
-        };
-
-        const handleError = () => {
-          fail();
-        };
-
+        const handleEnded = () => finish();
+        const handleError = () => fail();
         const handlePause = () => {
-          /*
-           * A natural ending may also produce a pause event.
-           * In that case `audio.ended` is true, so ended handles it.
-           */
           if (!audio.ended) {
             finish();
           }
@@ -422,10 +482,6 @@ export function BossFoundationProvider({
 
       if (!speechText) return;
 
-      /*
-       * useSpeak.speak must resolve on actual audio ended/interruption,
-       * not merely after the TTS request returns.
-       */
       await speak(
         speechText,
         bcp47Language,
@@ -450,7 +506,7 @@ export function BossFoundationProvider({
       resultPipelineRef.current = true;
       sequenceRef.current += 1;
 
-      void stopRecording();
+      void stopSpeechRecording();
       stopAudio();
 
       if (audioRef.current) {
@@ -495,7 +551,7 @@ export function BossFoundationProvider({
         resultPipelineRef.current = false;
       }
     },
-    [onEnd, session?.id, stopAudio, stopRecording],
+    [onEnd, session?.id, stopAudio, stopSpeechRecording],
   );
 
   const presentNextPlaylistItem = useCallback(
@@ -510,6 +566,7 @@ export function BossFoundationProvider({
       if (index >= playlist.length) {
         stageStatusRef.current = "PASSED";
         setStageStatus("PASSED");
+        setBossMood("happy");
         void handleEndSession(true);
         return;
       }
@@ -544,12 +601,6 @@ export function BossFoundationProvider({
     [handleEndSession, playExerciseAudio, playlist],
   );
 
-  /*
-   * Initialization:
-   * 1. Add intro message.
-   * 2. Speak intro.
-   * 3. Do not inject an exercise until the user starts.
-   */
   useEffect(() => {
     mountedRef.current = true;
     const sequence = ++sequenceRef.current;
@@ -559,6 +610,7 @@ export function BossFoundationProvider({
         id: `intro-${Date.now()}`,
         role: "assistant",
         text: introMessage,
+        mood: "default",
       };
 
       setMessages([welcomeMessage]);
@@ -571,9 +623,6 @@ export function BossFoundationProvider({
           session?.voiceGender,
         );
       } catch (error) {
-        /*
-         * An interruption is expected when the user presses skip/start.
-         */
         console.warn("Intro speech ended or was interrupted:", error);
       }
 
@@ -609,9 +658,6 @@ export function BossFoundationProvider({
   ]);
 
   const startExercises = useCallback(() => {
-    /*
-     * Immediate guard: multiple clicks cannot inject exercise zero twice.
-     */
     if (
       startExercisesRef.current ||
       stageStatusRef.current !== "PLAYING"
@@ -634,17 +680,6 @@ export function BossFoundationProvider({
     presentNextPlaylistItem(0);
   }, [presentNextPlaylistItem, stopAudio]);
 
-  /**
-   * Central result pipeline:
-   *
-   * 1. Acquire immediate ref lock.
-   * 2. Mark exercise correct/incorrect.
-   * 3. Add reaction message.
-   * 4. Start and await speech until ended/interrupted.
-   * 5. Apply score/chance result.
-   * 6. Wait for an intentional pause.
-   * 7. Inject the next exercise.
-   */
   const processResult = useCallback(
     async (
       isCorrect: boolean,
@@ -663,6 +698,14 @@ export function BossFoundationProvider({
 
       const sequence = ++sequenceRef.current;
 
+      // Update boss facial expression immediately based on answer & remaining lives
+      const nextMood: BossMood = isCorrect
+        ? "happy"
+        : chancesRef.current - 1 <= 1
+          ? "angry"
+          : "sad";
+      setBossMood(nextMood);
+
       try {
         setMessages((previous) =>
           previous.map((message) =>
@@ -680,23 +723,16 @@ export function BossFoundationProvider({
         const reaction = aiReactionText?.trim();
 
         if (reaction) {
-          /*
-           * Add the reaction to the UI before speech starts.
-           */
           setMessages((previous) => [
             ...previous,
             {
               id: `reaction-${Date.now()}-${exerciseId}`,
               role: "assistant",
               text: reaction,
+              mood: nextMood,
             },
           ]);
 
-          /*
-           * This await must represent actual playback completion or
-           * interruption. If useSpeak does not currently behave that
-           * way, update it as shown after this file.
-           */
           await speak(
             forSpeech(reaction),
             bcp47Language,
@@ -731,6 +767,7 @@ export function BossFoundationProvider({
           if (nextChances <= 0) {
             stageStatusRef.current = "FAILED";
             setStageStatus("FAILED");
+            setBossMood("angry");
             await handleEndSession(false);
             return;
           }
@@ -741,9 +778,6 @@ export function BossFoundationProvider({
         currentIndexRef.current = nextIndex;
         setCurrentIndex(nextIndex);
 
-        /*
-         * Short intentional silence after the reaction has finished.
-         */
         await wait(NEXT_EXERCISE_PAUSE_MS);
 
         if (
@@ -756,10 +790,6 @@ export function BossFoundationProvider({
 
         presentNextPlaylistItem(nextIndex);
       } catch (error) {
-        /*
-         * If speech was deliberately interrupted, continuing is safe.
-         * Actual speech failures also should not permanently block the game.
-         */
         console.warn(
           "Reaction playback failed or was interrupted:",
           error,
@@ -788,6 +818,7 @@ export function BossFoundationProvider({
             if (nextChances <= 0) {
               stageStatusRef.current = "FAILED";
               setStageStatus("FAILED");
+              setBossMood("angry");
               await handleEndSession(false);
               return;
             }
@@ -813,9 +844,6 @@ export function BossFoundationProvider({
           setIsAiProcessing(false);
         }
 
-        /*
-         * Only the sequence that acquired the lock may release it.
-         */
         if (sequence === sequenceRef.current) {
           resultPipelineRef.current = false;
         }
@@ -832,9 +860,6 @@ export function BossFoundationProvider({
 
   const submitExerciseAnswer = useCallback(
     async (userAnswer: any) => {
-      /*
-       * Check and acquire the immediate lock before any await.
-       */
       if (
         resultPipelineRef.current ||
         stageStatusRef.current !== "PLAYING"
@@ -850,7 +875,7 @@ export function BossFoundationProvider({
       resultPipelineRef.current = true;
 
       if (isRecording) {
-        await stopRecording();
+        await stopSpeechRecording();
         resetSpeechState();
       }
 
@@ -894,10 +919,6 @@ export function BossFoundationProvider({
             ? "Bien."
             : "Non, ce n'est pas exact.");
 
-        /*
-         * Release the request lock immediately before handing ownership
-         * to processResult. processResult reacquires it synchronously.
-         */
         resultPipelineRef.current = false;
 
         await processResult(
@@ -919,7 +940,7 @@ export function BossFoundationProvider({
       playlist,
       processResult,
       resetSpeechState,
-      stopRecording,
+      stopSpeechRecording,
     ],
   );
 
@@ -931,9 +952,6 @@ export function BossFoundationProvider({
       return;
     }
 
-    /*
-     * Acquire before stopRecording() because that operation is async.
-     */
     resultPipelineRef.current = true;
 
     const currentItem = playlist[currentIndexRef.current];
@@ -944,7 +962,13 @@ export function BossFoundationProvider({
     }
 
     try {
-      const audioBlob = await stopRecording();
+      // Use the blob captured when "Done Speaking" was clicked, or stop recording now if still active
+      let audioBlob = recordedBlobRef.current;
+      if (!audioBlob && isRecording) {
+        audioBlob = await stopSpeechRecording();
+      }
+      recordedBlobRef.current = null;
+
       const userText = transcript.trim();
 
       if (!userText && !audioBlob) {
@@ -1057,10 +1081,11 @@ export function BossFoundationProvider({
   }, [
     bcp47Language,
     boss,
+    isRecording,
     playlist,
     processResult,
     resetSpeechState,
-    stopRecording,
+    stopSpeechRecording,
     transcript,
   ]);
 
@@ -1075,9 +1100,6 @@ export function BossFoundationProvider({
     const currentItem = playlist[currentIndexRef.current];
     if (!currentItem) return;
 
-    /*
-     * processResult acquires the lock synchronously before its first await.
-     */
     void processResult(
       false,
       "Trop lent ! Time is up.",
@@ -1106,6 +1128,10 @@ export function BossFoundationProvider({
         session,
         boss,
         messages,
+        bossMood,
+        bossAvatarUrl,
+        bossCoverUrl,
+        getBossAvatarUrl,
         chances,
         xp,
         score,
@@ -1134,10 +1160,11 @@ export function BossFoundationProvider({
           ) {
             return;
           }
-
+          recordedBlobRef.current = null;
           startSpeech(bcp47Language);
         },
-        resetRecording: resetSpeechState,
+        stopRecording: handleStopRecording,
+        resetRecording: handleResetRecording,
         handleReplay,
         playExerciseAudio,
         resolveAssetUrl,

@@ -5,13 +5,12 @@ import {
   ArrowRight,
   Heart,
   RotateCcw,
-  XCircle,
   Zap,
   Loader2,
 } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker"; 
+import { Marker, MarkerContent, MarkerIcon } from "@/components/ui/marker";
 import {
   BossMessage,
   useBossFoundation,
@@ -19,11 +18,10 @@ import {
 import { BossFoundationFreestyleChatBubble } from "./boss-freestyle-chat-bubble";
 import { useWordAudio } from "@/context/word-audio-context";
 import { ExerciseBlock } from "./exercise-block";
-import { usePronunciation } from "@/context/pronunciation-context";
 
 interface Props {
   onEnd: () => void;
-  onRetry: () => void; // <-- Add onRetry prop
+  onRetry: () => void;
   scenarioData?: unknown;
 }
 
@@ -31,6 +29,8 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
   const {
     boss,
     messages,
+    bossAvatarUrl,
+    getBossAvatarUrl,
     chances,
     xp,
     currentIndex,
@@ -46,19 +46,15 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
     handleTimeOut,
     submitTurn,
     startRecording,
+    stopRecording,
     playExerciseAudio,
     resolveAssetUrl,
     resetRecording,
   } = useBossFoundation();
 
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
-  const { stopRecording } = usePronunciation();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const aiAvatarUrl = boss?.avatarKey
-    ? resolveAssetUrl(boss.avatarKey)
-    : "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=boss";
 
   const showThinking = isAiProcessing && !isRecording;
 
@@ -80,8 +76,12 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
       {/* Failed state */}
       {stageStatus === "FAILED" && (
         <div className="absolute inset-0 z-50 flex animate-in flex-col items-center justify-center bg-white/95 p-8 text-center backdrop-blur-sm duration-500 zoom-in-95">
-          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-rose-100">
-            <XCircle className="text-rose-500" size={48} />
+          <div className="mb-6 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-rose-200 bg-rose-50 shadow-lg">
+            <img
+              src={getBossAvatarUrl("angry")}
+              alt={boss?.name || "Boss"}
+              className="h-full w-full object-cover"
+            />
           </div>
 
           <h2 className="mb-3 text-3xl font-extrabold text-slate-900">
@@ -95,7 +95,7 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
 
           <button
             type="button"
-            onClick={onRetry} // <-- Replaced window.location.reload() with onRetry()
+            onClick={onRetry}
             className="flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl border-b-4 border-indigo-800 bg-indigo-600 py-4 text-lg font-extrabold text-white shadow-sm transition-all hover:bg-indigo-500 active:translate-y-1 active:border-b-0"
           >
             <RotateCcw size={20} />
@@ -114,14 +114,13 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
 
       {/* Stats header */}
       <div className="z-10 flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6">
-        {/* ... existing header logic ... */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100">
+            <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 shadow-sm">
               <img
-                src={aiAvatarUrl}
+                src={bossAvatarUrl}
                 alt={boss?.name ? `${boss.name} avatar` : "Boss avatar"}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition-all duration-300"
               />
             </div>
 
@@ -178,7 +177,7 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
                   <BossFoundationFreestyleChatBubble
                     key={message.id}
                     message={message}
-                    aiAvatarUrl={aiAvatarUrl}
+                    aiAvatarUrl={getBossAvatarUrl(message.mood || "default")}
                     ttsStatus="idle"
                   />
                 );
@@ -195,12 +194,12 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
                   isAiProcessing={isAiProcessing}
                   transcript={transcript}
                   startRecording={startRecording}
+                  stopRecording={stopRecording}
                   resetRecording={resetRecording}
                   playExerciseAudio={playExerciseAudio}
                   resolveAssetUrl={resolveAssetUrl}
                   playWord={playWord}
                   stopWordAudio={stopWordAudio}
-                  stopRecording={stopRecording}
                 />
               );
             })}
@@ -225,7 +224,6 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
 
       {/* Bottom action bar */}
       <div className="relative z-10 flex shrink-0 flex-col gap-4 border-t border-slate-200 bg-white p-4 sm:p-6 md:flex-row">
-        {/* ... remaining code ... */}
         {!hasStartedExercises ? (
           <button
             type="button"
