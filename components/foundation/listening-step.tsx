@@ -5,17 +5,34 @@ import { Play, Square, ArrowRight, RotateCcw, Loader2 } from "lucide-react";
 import { useS3Media } from "@/context/s3-context";
 import { useWordAudio } from "@/context/word-audio-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
+import { useMatrix } from "@/context/matrix-context";
 
-export function ListeningStep({ data, onNext }: { data: any; onNext: () => void }) {
-  // Word audio context to pronounce words as they are tapped
+type WordTile = {
+  id: string;
+  text: string;
+};
+
+// Normalize punctuation/case when comparing words if needed, or exact match
+function isSameWord(a?: string, b?: string) {
+  if (!a || !b) return false;
+  return a.trim() === b.trim();
+}
+
+export function ListeningStep({
+  data,
+  onNext,
+}: {
+  data: any;
+  onNext: () => void;
+}) {
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
-
-  // <-- MATRIX TRACKING -->
   const { trackInteraction } = useMatrix();
+
   const hasTrackedSeen = useRef(false);
   const hasHeardMainAudio = useRef(false);
-  const heardWords = useRef<Set<string>>(new Set());
+  // Track by unique tile ID so duplicate words in the bank are tracked & handled cleanly
+  const heardTileIds = useRef<Set<string>>(new Set());
+  const lastAudioTriggerRef = useRef<number>(0);
 
   // Resolve full sentence S3 audio key
   const { urls, isLoading: isAudioLoading } = useS3Media([data.audioS3Key]);
@@ -25,16 +42,40 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // State for sentence building
-  const [availableWords, setAvailableWords] = useState<string[]>(data.wordBank || []);
-  const [selectedWords, setSelectedWords] = useState<string[]>([]);
-  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">("idle");
+  // Build unique WordTile objects so duplicate words ("un", "un") never share keys or state
+  const initialTiles: WordTile[] = React.useMemo(
+    () =>
+      (data.wordBank || []).map((word: string, index: number) => ({
+        id: `word-tile-${index}-${word}`,
+        text: word,
+      })),
+    [data.wordBank]
+  );
+
+  const [availableWords, setAvailableWords] =
+    useState<WordTile[]>(initialTiles);
+  const [selectedWords, setSelectedWords] = useState<WordTile[]>([]);
+  const [status, setStatus] = useState<"idle" | "correct" | "incorrect">(
+    "idle"
+  );
   const [feedbackMsg, setFeedbackMsg] = useState<string>("");
 
-  // 1. TRACK "SEEN" FOR ENTIRE WORD BANK ON MOUNT
+  // Reset tiles if `data` changes between steps
+  useEffect(() => {
+    setAvailableWords(initialTiles);
+    setSelectedWords([]);
+    setStatus("idle");
+    setFeedbackMsg("");
+    hasTrackedSeen.current = false;
+    hasHeardMainAudio.current = false;
+    heardTileIds.current.clear();
+  }, [initialTiles]);
+
+  // 1. TRACK "SEEN" ONCE PER UNIQUE WORD ON MOUNT (Prevents duplicate concurrent calls)
   useEffect(() => {
     if (!hasTrackedSeen.current && data.wordBank) {
-      data.wordBank.forEach((word: string) => {
+      const uniqueWords = Array.from(new Set<string>(data.wordBank));
+      uniqueWords.forEach((word) => {
         trackInteraction(word, { seen: 1 });
       });
       hasTrackedSeen.current = true;
@@ -61,13 +102,14 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       return;
     }
 
-    if (!resolvedAudioUrl) return; 
+    if (!resolvedAudioUrl) return;
 
     stopWordAudio();
 
-    // 2. TRACK "HEARD" FOR EXPECTED WORDS (Only track once per step)
+    // 2. TRACK "HEARD" FOR UNIQUE EXPECTED WORDS (Only once per step)
     if (!hasHeardMainAudio.current && data.expectedOrder) {
-      data.expectedOrder.forEach((word: string) => {
+      const uniqueExpected = Array.from(new Set<string>(data.expectedOrder));
+      uniqueExpected.forEach((word) => {
         trackInteraction(word, { heard: 1 });
       });
       hasHeardMainAudio.current = true;
@@ -76,72 +118,78 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
     const audio = new Audio(resolvedAudioUrl);
     audioRef.current = audio;
     audio.onended = () => setIsPlaying(false);
-    
-    audio.play().catch(err => {
+
+    audio.play().catch((err) => {
       console.warn("Audio playback skipped:", err);
       setIsPlaying(false);
     });
-    
+
     setIsPlaying(true);
   };
 
-  // Move word from Bank to Sentence & PLAY AUDIO
-  const handleAddWord = (word: string, idx: number) => {
+  // Move word tile from Bank to Sentence & PLAY AUDIO ONCE
+  const handleAddWord = (tile: WordTile) => {
     stopAudio();
-    playWord(word, "m"); // Play native audio (m voice by default)
 
-    // 3. TRACK "HEARD" FOR INDIVIDUAL WORD CLICKS
-    if (!heardWords.current.has(word)) {
-      trackInteraction(word, { heard: 1 });
-      heardWords.current.add(word);
+    // Guard against double-triggering audio within 80ms
+    const now = Date.now();
+    if (now - lastAudioTriggerRef.current > 80) {
+      lastAudioTriggerRef.current = now;
+      playWord(tile.text, "m");
+    }
+
+    // 3. TRACK "HEARD" PER TILE (So tapping a second occurrence of a word still counts!)
+    if (!heardTileIds.current.has(tile.id)) {
+      trackInteraction(tile.text, { heard: 1 });
+      heardTileIds.current.add(tile.id);
     }
 
     setStatus("idle");
-    setSelectedWords([...selectedWords, word]);
-    const newAvailable = [...availableWords];
-    newAvailable.splice(idx, 1);
-    setAvailableWords(newAvailable);
+    setSelectedWords((prev) => [...prev, tile]);
+    setAvailableWords((prev) => prev.filter((item) => item.id !== tile.id));
   };
 
-  // Move word from Sentence back to Bank
-  const handleRemoveWord = (word: string, idx: number) => {
+  // Move word tile from Sentence back to Bank
+  const handleRemoveWord = (tile: WordTile) => {
     setStatus("idle");
-    const newSelected = [...selectedWords];
-    newSelected.splice(idx, 1);
-    setSelectedWords(newSelected);
-    setAvailableWords([...availableWords, word]);
+    setSelectedWords((prev) => prev.filter((item) => item.id !== tile.id));
+    setAvailableWords((prev) => [...prev, tile]);
   };
 
-  // Reset the whole board
+  // Reset the whole board in original bank order
   const handleReset = () => {
     stopAudio();
     setStatus("idle");
     setSelectedWords([]);
-    setAvailableWords(data.wordBank || []);
+    setAvailableWords(initialTiles);
   };
 
   // Check if they built the right sentence
   const handleCheck = () => {
-    const expected = data.expectedOrder || [];
-    
+    const expected: string[] = data.expectedOrder || [];
+
     // 4. TRACK CORRECT / WRONG TAPS
-    selectedWords.forEach((word, i) => {
-      if (word === expected[i]) {
-        trackInteraction(word, { tappedCorrect: 1 });
+    selectedWords.forEach((tile, i) => {
+      if (isSameWord(tile.text, expected[i])) {
+        trackInteraction(tile.text, { tappedCorrect: 1 });
       } else {
-        trackInteraction(word, { tappedWrong: 1 });
+        trackInteraction(tile.text, { tappedWrong: 1 });
       }
     });
 
     const isCorrectLength = selectedWords.length === expected.length;
-    const isPerfectMatch = isCorrectLength && selectedWords.every((word, i) => word === expected[i]);
+    const isPerfectMatch =
+      isCorrectLength &&
+      selectedWords.every((tile, i) => isSameWord(tile.text, expected[i]));
 
     if (isPerfectMatch) {
       setStatus("correct");
       setFeedbackMsg("✅ Excellent ear! You nailed it.");
     } else {
       setStatus("incorrect");
-      setFeedbackMsg("❌ Not quite right. Review your word order and try again.");
+      setFeedbackMsg(
+        "❌ Not quite right. Review your word order and try again."
+      );
     }
   };
 
@@ -151,28 +199,28 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
   };
 
   return (
-    <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
-      
-      <div className="mb-8 text-center shrink-0">
-        <h2 className="text-xl md:text-2xl font-extrabold text-gray-900 mb-3">
-          Listen & Build
+    <div className="flex h-full flex-col overflow-y-auto p-8 animate-in fade-in duration-500">
+      <div className="mb-8 shrink-0 text-center">
+        <h2 className="mb-3 text-xl font-extrabold text-gray-900 md:text-2xl">
+          Listen &amp; Build
         </h2>
-        <p className="text-gray-500 text-lg">
+        <p className="text-lg text-gray-500">
           Tap the words to recreate what you hear.
         </p>
       </div>
-      
+
       {/* Big Audio Play Button */}
-      <div className="flex justify-center mb-10 shrink-0">
-        <button 
+      <div className="mb-10 flex shrink-0 justify-center">
+        <button
+          type="button"
           onClick={toggleAudio}
           disabled={isAudioLoading}
-          className={`group relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
-            isAudioLoading 
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              : isPlaying 
-                ? 'bg-blue-100 text-blue-600 ring-8 ring-blue-50' 
-                : 'bg-gray-900 text-white hover:bg-black hover:scale-105'
+          className={`group relative flex h-20 w-20 items-center justify-center rounded-full shadow-lg transition-all md:h-24 md:w-24 ${
+            isAudioLoading
+              ? "cursor-not-allowed bg-gray-200 text-gray-400"
+              : isPlaying
+                ? "bg-blue-100 text-blue-600 ring-8 ring-blue-50"
+                : "bg-gray-900 text-white hover:scale-105 hover:bg-black"
           }`}
         >
           {isAudioLoading ? (
@@ -180,54 +228,59 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
           ) : isPlaying ? (
             <Square size={28} className="fill-current" />
           ) : (
-            <Play size={32} className="fill-current ml-1" />
+            <Play size={32} className="ml-1 fill-current" />
           )}
           {isPlaying && (
-            <span className="absolute inset-0 rounded-full border-4 border-blue-400 animate-ping opacity-20"></span>
+            <span className="absolute inset-0 animate-ping rounded-full border-4 border-blue-400 opacity-20" />
           )}
         </button>
       </div>
-      
+
       {/* Sentence Builder Drop Zone */}
       <div className="mb-6 shrink-0">
-        <div className={`min-h-[80px] w-full p-4 rounded-2xl border-2 border-dashed flex flex-wrap gap-2 items-center transition-colors ${
-          status === "correct" ? "border-green-400 bg-green-50" : 
-          status === "incorrect" ? "border-red-400 bg-red-50" : 
-          "border-gray-300 bg-gray-50"
-        }`}>
+        <div
+          className={`flex min-h-[80px] w-full flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition-colors ${
+            status === "correct"
+              ? "border-green-400 bg-green-50"
+              : status === "incorrect"
+                ? "border-red-400 bg-red-50"
+                : "border-gray-300 bg-gray-50"
+          }`}
+        >
           {selectedWords.length === 0 && (
-            <span className="text-gray-400 font-medium w-full text-center">
+            <span className="w-full text-center font-medium text-gray-400">
               Tap words below to build the sentence...
             </span>
           )}
-          
-          {selectedWords.map((word, idx) => {
-            const expected = data.expectedOrder || [];
-            const isCorrectPosition = word === expected[idx];
-            
-            // Default word styling
-            let wordStyle = "bg-white border-gray-200 text-gray-800 hover:bg-red-50 hover:border-red-200";
-            
+
+          {selectedWords.map((tile, idx) => {
+            const expected: string[] = data.expectedOrder || [];
+            const isCorrectPosition = isSameWord(tile.text, expected[idx]);
+
+            let wordStyle =
+              "bg-white border-gray-200 text-gray-800 hover:bg-red-50 hover:border-red-200";
+
             if (status === "correct") {
-              wordStyle = "bg-green-500 border-green-600 text-white hover:bg-green-600";
+              wordStyle =
+                "bg-green-500 border-green-600 text-white hover:bg-green-600";
             } else if (status === "incorrect") {
-              wordStyle = isCorrectPosition 
+              wordStyle = isCorrectPosition
                 ? "bg-green-100 border-green-500 text-green-900 hover:bg-red-50 hover:border-red-300"
                 : "bg-red-100 border-red-400 text-red-900 hover:bg-red-200";
-            } else {
-              if (isCorrectPosition) {
-                wordStyle = "bg-green-50 border-green-300 text-green-800 hover:bg-red-50 hover:border-red-200";
-              }
+            } else if (isCorrectPosition) {
+              wordStyle =
+                "bg-green-50 border-green-300 text-green-800 hover:bg-red-50 hover:border-red-200";
             }
 
             return (
               <button
-                key={`selected-${idx}`}
-                onClick={() => handleRemoveWord(word, idx)}
-                className={`px-4 py-2 border-2 rounded-xl shadow-xs font-bold transition-all active:scale-95 text-lg ${wordStyle}`}
+                key={tile.id}
+                type="button"
+                onClick={() => handleRemoveWord(tile)}
+                className={`rounded-xl border-2 px-4 py-2 text-lg font-bold shadow-xs transition-all active:scale-95 ${wordStyle}`}
                 title="Tap to remove"
               >
-                {word}
+                {tile.text}
               </button>
             );
           })}
@@ -238,17 +291,18 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       <div className="mb-10 w-full shrink-0">
         <ScrollArea className="max-h-[125px] w-full rounded-2xl border border-gray-100 bg-gray-50/50">
           <div className="flex flex-wrap justify-center gap-3 p-4">
-            {availableWords.map((word, idx) => (
+            {availableWords.map((tile) => (
               <button
-                key={`bank-${idx}`}
-                onClick={() => handleAddWord(word, idx)}
-                className="px-4 py-2 bg-white border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 shadow-xs transition-all active:scale-95 text-lg"
+                key={tile.id}
+                type="button"
+                onClick={() => handleAddWord(tile)}
+                className="rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-lg font-bold text-gray-700 shadow-xs transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 active:scale-95"
               >
-                {word}
+                {tile.text}
               </button>
             ))}
             {availableWords.length === 0 && (
-              <span className="text-gray-400 text-sm font-medium py-2">
+              <span className="py-2 text-sm font-medium text-gray-400">
                 All words used!
               </span>
             )}
@@ -257,21 +311,23 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
       </div>
 
       {/* Feedback & Action Area */}
-      <div className="mt-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-gray-100 shrink-0">
-        
+      <div className="mt-auto flex shrink-0 flex-col items-center justify-between gap-6 border-t border-gray-100 pt-6 sm:flex-row">
         {/* Feedback Message */}
-        <div className="flex-1 flex flex-col justify-center gap-1 w-full">
+        <div className="flex w-full flex-1 flex-col justify-center gap-1">
           {status !== "idle" && (
-            <div className={`font-bold animate-in fade-in text-sm md:text-base flex items-center justify-between ${
-              status === "correct" ? 'text-green-600' : 'text-red-600'
-            }`}>
+            <div
+              className={`flex items-center justify-between text-sm font-bold animate-in fade-in md:text-base ${
+                status === "correct" ? "text-green-600" : "text-red-600"
+              }`}
+            >
               <span>{feedbackMsg}</span>
-              
+
               {/* Reset Button */}
               {selectedWords.length > 0 && status !== "correct" && (
-                <button 
+                <button
+                  type="button"
                   onClick={handleReset}
-                  className="ml-3 p-2 text-red-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                  className="ml-3 shrink-0 rounded-lg p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-700"
                   title="Reset Sentence"
                 >
                   <RotateCcw size={20} />
@@ -279,10 +335,10 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
               )}
             </div>
           )}
-          
+
           {/* Freeform contrast hint if they get it wrong */}
           {status === "incorrect" && data.contrast && (
-            <p className="text-sm font-medium text-red-400/80 animate-in fade-in mt-1">
+            <p className="mt-1 text-sm font-medium text-red-400/80 animate-in fade-in">
               Hint — pay attention to: {data.contrast}
             </p>
           )}
@@ -290,20 +346,22 @@ export function ListeningStep({ data, onNext }: { data: any; onNext: () => void 
 
         {/* Action Button (Check or Next) */}
         {status === "correct" ? (
-          <button 
-            onClick={handleNext} 
-            className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-lg shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2"
+          <button
+            type="button"
+            onClick={handleNext}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-8 py-4 text-lg font-bold text-white shadow-md transition-transform hover:bg-black active:scale-95 sm:w-auto"
           >
             Next: Knowledge Check <ArrowRight size={20} />
           </button>
         ) : (
-          <button 
+          <button
+            type="button"
             onClick={handleCheck}
             disabled={selectedWords.length === 0}
-            className={`w-full sm:w-auto px-8 py-4 font-bold rounded-xl text-lg transition-all flex items-center justify-center ${
+            className={`flex w-full items-center justify-center rounded-xl px-8 py-4 text-lg font-bold transition-all sm:w-auto ${
               selectedWords.length > 0
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md active:scale-95' 
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? "bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95"
+                : "cursor-not-allowed bg-gray-100 text-gray-400"
             }`}
           >
             Check Answer
