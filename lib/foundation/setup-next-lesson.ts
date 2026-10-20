@@ -24,18 +24,27 @@ export async function setupNextLesson(
     },
     select: { id: true, title: true, visualContent: true },
   });
-  if (existing) {
-    throw new Error(`Lesson ${spoon} already exists for this course.`);
+
+  // Only block if the lesson actually finished generating content!
+  if (existing && (existing.title || existing.visualContent)) {
+    throw new Error(`Lesson ${spoon} already exists and is ready.`);
   }
 
-
   return prisma.$transaction(async (tx) => {
-    const lesson = await tx.foundationLesson.create({
-      data: {
+    // Upsert: creates the row if new, or reuses the empty shell if a prior build failed/timed out!
+    const lesson = await tx.foundationLesson.upsert({
+      where: {
+        foundationCourseId_orderIndex: {
+          foundationCourseId,
+          orderIndex: spoon,
+        },
+      },
+      create: {
         user: { connect: { id: userId } },
         course: { connect: { id: foundationCourseId } },
         orderIndex: spoon,
       },
+      update: {},
     });
 
     const taskPayload = JSON.stringify({
