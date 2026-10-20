@@ -316,7 +316,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 3. VOCAB BRIDGE READY
+// 3. VOCAB BRIDGE READY — Full-bleed Scene Image + Warm Amber/Daylight Overlay
   if (vocabDue?.bridge) {
     const isMilestoneLesson = vocabDue.orderIndex % 3 === 0;
     const unlockTargetText = isMilestoneLesson
@@ -324,39 +324,64 @@ export function PrimaryHeroCard({
       : `Spoon ${vocabDue.orderIndex + 1}`;
 
     const words =
-      (vocabDue.bridge.vocabMoment as Array<{ word: string; gloss?: string }>) ??
-      [];
+      (vocabDue.bridge.vocabMoment as Array<{
+        word: string;
+        gloss?: string;
+      }>) ?? [];
 
     return (
-      <div className="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-7 shadow-sm">
-        <div className="relative z-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-extrabold text-amber-800 uppercase">
-              <Zap className="h-3.5 w-3.5 text-amber-600" /> Vocab Bridge{" "}
-              {vocabDue.orderIndex}
+      <div className="group relative overflow-hidden rounded-3xl border border-amber-300/80 bg-amber-50 text-slate-900 shadow-xl shadow-amber-950/5">
+        {/* Full-bleed Lesson Scene Image in the background (matches Spoon & Boss cards) */}
+        {vocabDue.imageUrl && (
+          <img
+            src={vocabDue.imageUrl}
+            alt={vocabDue.imageAlt ?? ""}
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-35 transition-transform duration-700 group-hover:scale-105"
+          />
+        )}
+
+        {/* Warm Daylight / Amber-Orange Scrim Overlay (Opposite of the dark Spoon/Boss overlay) */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-amber-50/92 to-orange-100/70" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-amber-100/60 via-transparent to-white/50" />
+
+        <div className="relative z-10 flex flex-col justify-between p-7 sm:p-8">
+          <div>
+            {/* Top Status Pills (Matches Spoon & Boss Card Header) */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/60 bg-amber-500/15 px-3.5 py-1 text-xs font-extrabold tracking-wide text-amber-900 uppercase backdrop-blur-md">
+                <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-600" />
+                Vocab Bridge {vocabDue.orderIndex} Ready
+              </span>
+
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-white/85 px-3 py-1 text-xs font-bold text-amber-900 shadow-2xs backdrop-blur-md">
+                🔓 Unlocks {unlockTargetText}
+              </span>
             </div>
-            <h3 className="text-2xl font-black text-slate-900 sm:text-3xl">
-              Review Vocabulary for Spoon {vocabDue.orderIndex}
+
+            {/* Title & Subtitle */}
+            <h3 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              Vocab Bridge {vocabDue.orderIndex}: {vocabDue.title}
             </h3>
-            <p className="text-sm text-slate-600">
-              Solidify the {vocabWordCount(vocabDue.bridge.vocabMoment)} new
-              words you encountered to unlock{" "}
-              <span className="font-bold text-slate-800">
+            <p className="mt-1.5 max-w-xl text-sm font-medium leading-relaxed text-slate-600">
+              Solidify the {vocabWordCount(vocabDue.bridge.vocabMoment)} key
+              scene words from Spoon {vocabDue.orderIndex} to unlock{" "}
+              <span className="font-extrabold text-amber-900">
                 {unlockTargetText}
               </span>
               .
             </p>
 
+            {/* Word Pills */}
             {words.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {words.map((w, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200/80 bg-white/90 px-3 py-1 text-xs font-bold text-slate-800"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-white/95 px-3.5 py-1.5 text-xs font-extrabold text-slate-900 shadow-2xs backdrop-blur-md"
                   >
-                    <span className="text-amber-600">{w.word}</span>
+                    <span className="text-amber-700">{w.word}</span>
                     {w.gloss && (
-                      <span className="font-normal text-slate-400">
+                      <span className="font-semibold text-slate-400">
                         • {w.gloss}
                       </span>
                     )}
@@ -366,13 +391,21 @@ export function PrimaryHeroCard({
             )}
           </div>
 
-          <Link
-            href={`/foundation/vocab/${vocabDue.bridge.id}`}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-3.5 text-sm font-extrabold text-white shadow-md shadow-amber-500/20 transition hover:bg-amber-600 active:scale-95"
-          >
-            <Zap className="h-4 w-4" /> Start Vocab Bridge{" "}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          {/* Bottom Action Bar (Matches Spoon & Boss Card Footer) */}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-amber-300/50 pt-4">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-900/80">
+              <Zap className="h-4 w-4 text-amber-600" />
+              <span>Interactive Scene Checkpoint • ~3 mins</span>
+            </div>
+
+            <Link
+              href={`/foundation/vocab/${vocabDue.bridge.id}`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-500/25 transition-all hover:from-amber-600 hover:to-orange-600 active:scale-95"
+            >
+              Start Vocab Bridge {vocabDue.orderIndex}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </div>
     );
