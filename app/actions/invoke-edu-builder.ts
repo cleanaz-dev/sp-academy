@@ -222,13 +222,13 @@ export async function invokeEduBuilder(
       }),
     ]);
 
-    // 1. Pass the actual lessonHandoff objects so planner.py sees prior targetSentences & taughtChunks!
     previous_lessons = pastLessons.map((l) => {
-      const handoff = (l.lessonHandoff as Record<string, any>) || {};
+      const { wordAudio, wordLexicon, ...cleanHandoff } =
+        (l.lessonHandoff as Record<string, any>) || {};
       return {
         day: l.orderIndex,
-        theme: l.title || handoff.theme || "",
-        ...handoff,
+        theme: l.title || cleanHandoff.theme || "",
+        ...cleanHandoff,
       };
     });
 
