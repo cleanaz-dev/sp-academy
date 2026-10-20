@@ -33,15 +33,21 @@ export function GrammarStep({
   const [hasPlayedSentence, setHasPlayedSentence] = useState(false);
   const [heardWords, setHeardWords] = useState<Set<string>>(new Set());
 
-  // 1. Track "seen" for all words on load (Only Once!)
+  // Get an array of unique word strings
+  const uniqueWords = React.useMemo(() => {
+    if (!data.words) return [];
+    return Array.from(new Set(data.words.map((w: any) => w.word))) as string[];
+  }, [data.words]);
+
+  // 1. Track "seen" once per unique word in this step
   useEffect(() => {
-    if (!hasTrackedSeen.current && data.words) {
-      data.words.forEach((wordObj: any) => {
-        trackInteraction(wordObj.word, { seen: 1 });
+    if (!hasTrackedSeen.current && uniqueWords.length > 0) {
+      uniqueWords.forEach((word) => {
+        trackInteraction(word, { seen: 1 });
       });
       hasTrackedSeen.current = true;
     }
-  }, [data.words, trackInteraction]);
+  }, [uniqueWords, trackInteraction]);
 
   const handlePlaySentence = async () => {
     setHasPlayedSentence(true);
@@ -58,10 +64,14 @@ export function GrammarStep({
     }
   };
 
-  // 3. Ensure they listened to the sentence AND every single word
-  const allWordsHeard = heardWords.size === data.words.length;
+  // 1. Calculate unique words count
+  const uniqueWordsCount = new Set(data.words.map((w: any) => w.word)).size;
+
+  // 2. Compare against uniqueWordsCount instead of data.words.length
+  const allWordsHeard = heardWords.size === uniqueWords.length;
   const isNextEnabled = hasPlayedSentence && allWordsHeard;
 
+  
   return (
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       <div className="mb-10 shrink-0">
@@ -143,7 +153,7 @@ export function GrammarStep({
                 : "bg-blue-100 text-blue-700"
             }`}
           >
-            {heardWords.size} / {data.words.length} Played
+            {heardWords.size} / {uniqueWordsCount} Played
           </span>
         </div>
 
