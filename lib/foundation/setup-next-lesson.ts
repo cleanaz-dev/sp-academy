@@ -22,11 +22,12 @@ export async function setupNextLesson(
     where: {
       foundationCourseId_orderIndex: { foundationCourseId, orderIndex: spoon },
     },
-    select: { id: true },
+    select: { id: true, title: true, visualContent: true },
   });
   if (existing) {
     throw new Error(`Lesson ${spoon} already exists for this course.`);
   }
+
 
   return prisma.$transaction(async (tx) => {
     const lesson = await tx.foundationLesson.create({
