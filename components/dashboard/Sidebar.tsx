@@ -14,7 +14,7 @@ import {
 import { navItems, settingItems } from "./NavLinks";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth-client"; // 👈 Adjust if your Better Auth client is in another path
+import { authClient } from "@/lib/auth-client";
 
 import {
   Sidebar as ShadcnSidebar,
@@ -75,7 +75,7 @@ export const Sidebar = ({
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/login"); // 👈 Adjust if your sign-in route is different
+          router.push("/login");
         },
       },
     });
@@ -243,64 +243,9 @@ export const Sidebar = ({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Settings Group */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="py-4 text-lg font-bold tracking-widest text-emerald-500">
-            Settings
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingItems.map((settingItem) => {
-                const isActive = pathname === settingItem.href;
-                const isTextActive = pathname.includes(settingItem.href);
-
-                return (
-                  <SidebarMenuItem
-                    key={settingItem.href}
-                    className={cn("py-1", sidebarOpen ? "px-2" : "px-0")}
-                  >
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      tooltip={settingItem.label}
-                      className={cn(
-                        "group flex h-auto items-center gap-4 rounded-sm p-3 transition-all group-data-[collapsible=icon]:justify-center",
-                        isActive
-                          ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-500",
-                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
-                      )}
-                      render={
-                        <Link href={settingItem.href}>
-                          <div
-                            className={cn(
-                              "shrink-0",
-                              isActive ? "text-white" : "text-blue-400"
-                            )}
-                          >
-                            {settingItem.icon}
-                          </div>
-                          {sidebarOpen && (
-                            <span
-                              className={`truncate text-sm font-medium ${
-                                isTextActive ? "text-white" : "text-blue-500"
-                              }`}
-                            >
-                              {settingItem.label}
-                            </span>
-                          )}
-                        </Link>
-                      }
-                    />
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
-      {/* BOTTOM: Admin Button (if admin) + Logo */}
+      {/* BOTTOM: Admin Button (if admin) + Dynamic Logo */}
       <SidebarFooter className="flex flex-col gap-4 p-3">
         {isAdmin && sidebarOpen && (
           <div className="animate-gradient overflow-hidden rounded-lg bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-[length:300%_300%] p-1 shadow-lg">
@@ -319,7 +264,7 @@ export const Sidebar = ({
 
         <div className="flex items-center justify-center py-1">
           <Image
-            src="/logo1-up.png"
+            src={sidebarOpen ? "/logo1-up.png" : "/logo1-min.png"}
             width={1000}
             height={1000}
             alt="SPOON Logo"
@@ -327,13 +272,12 @@ export const Sidebar = ({
             quality={100}
             className={cn(
               "h-auto object-contain transition-all duration-200",
-              sidebarOpen ? "w-[160px]" : "w-9"
+              sidebarOpen ? "w-[160px]" : "w-8"
             )}
           />
         </div>
       </SidebarFooter>
 
-      {/* 👈 Adds the clickable edge on the side of the sidebar to collapse/expand */}
       <SidebarRail />
     </ShadcnSidebar>
   );
