@@ -71,7 +71,7 @@ export const sendMessage = async (
       },
     },
     temperature: 0.3,
-    max_tokens: 2000,
+    max_tokens: 5000,
   });
 
   const content = completion.choices[0]?.message?.content;
