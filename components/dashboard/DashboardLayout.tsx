@@ -11,7 +11,7 @@ import { NotificationsPanel } from "./NotificationsPanel";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  isAdmin?: boolean; // 👈 Add this prop
+  isAdmin?: boolean;
 }
 
 export default function DashboardLayout({ children, isAdmin }: DashboardLayoutProps) {
@@ -20,8 +20,11 @@ export default function DashboardLayout({ children, isAdmin }: DashboardLayoutPr
 
   return (
     <SidebarProvider>
-      {/* Pass isAdmin directly to your Sidebar */}
-      <Sidebar pathname={pathname} isAdmin={isAdmin} />
+      <Sidebar 
+        pathname={pathname} 
+        isAdmin={isAdmin} 
+        onOpenNotifications={() => setShowNotifications(true)} 
+      />
 
       <div className="flex h-screen w-full flex-col overflow-hidden bg-white">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 lg:hidden">
