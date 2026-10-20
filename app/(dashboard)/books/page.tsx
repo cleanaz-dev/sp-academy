@@ -3,7 +3,7 @@ import CreateBookReportCard from "@/components/books/CreateBookReportCard";
 import { getBooksByUserId } from "@/lib/actions";
 import { requireUser } from "@/lib/auth-guard";
 import { auth } from "@clerk/nextjs/server";
-import { LibraryBig } from "lucide-react";
+import { BookOpen, LibraryBig } from "lucide-react";
 
 export default async function BookReportsPage() {
   const user = await requireUser();
