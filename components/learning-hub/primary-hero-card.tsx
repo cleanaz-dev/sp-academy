@@ -8,7 +8,6 @@ import {
   Loader2,
   Mic,
   Quote,
-  Sparkles,
   Swords,
   Zap,
 } from "lucide-react";
@@ -17,7 +16,6 @@ import { vocabWordCount } from "./utils";
 
 type Lesson = LearningPath["lessons"][number];
 
-// Curated high-contrast Boss Arena palettes so every render feels fresh & intentional
 const BOSS_THEMES = [
   {
     name: "neon-fuchsia",
@@ -92,6 +90,7 @@ type PrimaryHeroCardProps = {
   vocabDue?: Lesson;
   nextLesson?: Lesson;
   bossDue?: Lesson;
+  waitingOnSpoon?: boolean;
   waitingOnVocab: boolean;
   waitingOnBoss?: boolean;
   getLessonHref: (id: string) => string;
@@ -103,12 +102,12 @@ export function PrimaryHeroCard({
   vocabDue,
   nextLesson,
   bossDue,
+  waitingOnSpoon = false,
   waitingOnVocab,
   waitingOnBoss = false,
   getLessonHref,
   getBossHref,
 }: PrimaryHeroCardProps) {
-  // Pick a random Boss palette on client mount (avoids Next.js SSR hydration mismatch)
   const [themeIndex, setThemeIndex] = useState(0);
 
   useEffect(() => {
@@ -133,8 +132,58 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 1. BOSS STAGE READY — Full-bleed Cover + Dynamic Theme + Boss Avatar + Quote
-  if (bossDue?.bossStage && !waitingOnBoss) {
+  // 1. WAITING ON SPOON, VOCAB, OR BOSS GENERATION (Check FIRST so unbaked lessons never show empty UI)
+  if (waitingOnSpoon || waitingOnVocab || waitingOnBoss) {
+    const spoonNum =
+      nextLesson?.orderIndex ??
+      vocabDue?.orderIndex ??
+      bossDue?.orderIndex ??
+      1;
+
+    return (
+      <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl sm:p-8">
+        <div className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-indigo-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-fuchsia-500/15 blur-3xl" />
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3.5 py-1 text-xs font-extrabold tracking-wide text-indigo-200 uppercase">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-300" />
+            {waitingOnSpoon
+              ? `Crafting Spoon ${spoonNum}`
+              : waitingOnBoss
+                ? "Building Boss Arena"
+                : `Building Vocab Bridge ${spoonNum}`}
+          </div>
+
+          <h3 className="mt-4 text-2xl font-black tracking-tight text-white sm:text-3xl">
+            {waitingOnSpoon
+              ? `Personalizing Spoon ${spoonNum} for you...`
+              : waitingOnBoss
+                ? "Designing Your Boss Stage Scenario..."
+                : "Synthesizing Your Vocab Bridge..."}
+          </h3>
+
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">
+            {waitingOnSpoon
+              ? "Our language engine is generating your custom audio, speaking drills, and visual scene. This takes about 20–30 seconds."
+              : "Preparing your interactive checkpoint. Ready in just a moment..."}
+          </p>
+
+          <div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
+            <div className="h-2 w-48 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-indigo-400" />
+            </div>
+            <span className="text-xs font-bold text-indigo-300">
+              Auto-updating when ready...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. BOSS STAGE READY
+  if (bossDue?.bossStage) {
     const bossStage = bossDue.bossStage;
     const milestoneNum =
       bossStage.milestoneIndex ?? Math.ceil(bossDue.orderIndex / 3);
@@ -162,7 +211,6 @@ export function PrimaryHeroCard({
 
     return (
       <div className="group relative overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-indigo-950/15 transition-colors duration-700">
-        {/* Presigned Boss Cover Background */}
         {coverUrl && (
           <img
             src={coverUrl}
@@ -171,7 +219,6 @@ export function PrimaryHeroCard({
           />
         )}
 
-        {/* Dynamic Randomized Gradient Scrims */}
         <div
           className={`pointer-events-none absolute inset-0 bg-gradient-to-r transition-all duration-700 ${theme.scrim}`}
         />
@@ -182,7 +229,6 @@ export function PrimaryHeroCard({
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
 
         <div className="relative z-10 p-7 sm:p-8">
-          {/* Top Status Pills */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-extrabold tracking-wide uppercase backdrop-blur-md transition-colors duration-500 ${theme.badge}`}
@@ -205,7 +251,6 @@ export function PrimaryHeroCard({
             </span>
           </div>
 
-          {/* Boss Avatar + Name + Persona */}
           <div className="mt-6 flex flex-col gap-5 sm:flex-row sm:items-center">
             {avatarUrl && (
               <div className="relative shrink-0">
@@ -239,7 +284,6 @@ export function PrimaryHeroCard({
             </div>
           </div>
 
-          {/* Boss Intro Speech Bubble */}
           {boss?.introMessage && (
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md">
               <div className="flex items-start gap-3">
@@ -253,7 +297,6 @@ export function PrimaryHeroCard({
             </div>
           )}
 
-          {/* Bottom Action Bar */}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
               <Mic className={`h-4 w-4 ${theme.icon}`} />
@@ -273,7 +316,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 2. VOCAB BRIDGE READY
+  // 3. VOCAB BRIDGE READY
   if (vocabDue?.bridge) {
     const isMilestoneLesson = vocabDue.orderIndex % 3 === 0;
     const unlockTargetText = isMilestoneLesson
@@ -335,7 +378,7 @@ export function PrimaryHeroCard({
     );
   }
 
-  // 3. NEXT SPOON READY
+  // 4. NEXT SPOON READY
   if (nextLesson) {
     return (
       <div className="group relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-lg">
@@ -364,8 +407,8 @@ export function PrimaryHeroCard({
               Spoon {nextLesson.orderIndex}: {nextLesson.title}
             </h3>
             <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-300">
-              {nextLesson.imageAlt ||
-                "Target speaking exercises, sentence construction, and listening drills tailored to your level."}
+              Master essential speech patterns, native pronunciation, and
+              interactive listening drills in this bite-sized audio lesson.
             </p>
           </div>
 
@@ -382,25 +425,6 @@ export function PrimaryHeroCard({
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 4. WAITING ON VOCAB OR BOSS GENERATION
-  if (waitingOnVocab || waitingOnBoss) {
-    return (
-      <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-white p-7">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 px-3 py-1 text-xs font-extrabold text-indigo-700 uppercase">
-          <Sparkles className="h-3.5 w-3.5 animate-pulse" /> Preparing Next Step
-        </div>
-        <h3 className="mt-3 text-2xl font-black text-slate-900">
-          {waitingOnBoss
-            ? "Designing Your Boss Stage Scenario..."
-            : "Synthesizing Your Vocab Bridge..."}
-        </h3>
-        <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-indigo-600">
-          <Loader2 className="h-4 w-4 animate-spin" /> Ready in just a moment...
         </div>
       </div>
     );

@@ -45,6 +45,14 @@ export interface LessonDbContext {
   vocabWebhookUrl: string;
 }
 
+function normalizeGender(g?: string | null): "M" | "F" | "N" {
+  if (!g) return "N";
+  const upper = g.trim().toUpperCase();
+  if (upper === "M" || upper === "MALE") return "M";
+  if (upper === "F" || upper === "FEMALE") return "F";
+  return "N";
+}
+
 /**
  * Reassigns the Stripe subscription from the temporary webhook user
  * to the actual user who just finished onboarding.
@@ -85,11 +93,17 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
           include: { accounts: true, sessions: true },
         });
 
-        if (oldUser && oldUser.accounts.length === 0 && oldUser.sessions.length === 0) {
+        if (
+          oldUser &&
+          oldUser.accounts.length === 0 &&
+          oldUser.sessions.length === 0
+        ) {
           await prisma.user.delete({ where: { id: oldUserId } }).catch(() => {});
         }
 
-        console.log(`✅ Subscription transferred from ${oldUserId} to ${userId}`);
+        console.log(
+          `✅ Subscription transferred from ${oldUserId} to ${userId}`,
+        );
       }
     } else {
       // Fallback: If webhook was delayed and hasn't arrived yet, create billing now
@@ -107,7 +121,8 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
           (subItem as any)?.current_period_end;
 
         if (periodEnd) nextBillingDate = new Date(periodEnd * 1000);
-        if (subItem?.price.recurring?.interval === "year") interval = BillingInterval.MONTHLY;
+        if (subItem?.price.recurring?.interval === "year")
+          interval = BillingInterval.MONTHLY;
         cancelAtPeriodEnd = sub.cancel_at_period_end;
       }
 
@@ -147,12 +162,18 @@ export async function invokeEduBuilder(
     await claimSubscriptionForUser(payload.userId, payload.sessionId);
   }
 
+  // Normalize gender upfront so setupFirstLesson / setupNextLesson stores "M" | "F" | "N"
+  const normalizedPayload: InvokeEduBuilderPayload = {
+    ...payload,
+    gender: normalizeGender(payload.gender),
+  };
+
   // 1. DB setup
   let dbContext: LessonDbContext;
   try {
-    dbContext = payload.isOnboarding
-      ? await setupFirstLesson(payload)
-      : await setupNextLesson(payload);
+    dbContext = normalizedPayload.isOnboarding
+      ? await setupFirstLesson(normalizedPayload)
+      : await setupNextLesson(normalizedPayload);
   } catch (error) {
     console.error("❌ Lesson setup failed:", error);
     return {
@@ -162,33 +183,90 @@ export async function invokeEduBuilder(
   }
 
   // =========================================================================
-  // AUTOMATICALLY FETCH HISTORICAL CONTEXT FOR THE LAMBDA
+  // AUTOMATICALLY FETCH HISTORICAL CONTEXT & RECOVER USER PROFILE FOR LAMBDA
   // =========================================================================
-  let previous_lessons: string[] = [];
+  let previous_lessons: any[] = [];
   let yesterdayLanded: string[] = [];
 
-  // If they are NOT onboarding, it means they have past lessons we should look at
-  if (!payload.isOnboarding && dbContext.courseId) {
-    const pastLessons = await prisma.foundationLesson.findMany({
-      where: {
-        foundationCourseId: dbContext.courseId,
-        id: { not: dbContext.lessonId }, // FIX: exclude the lesson we just created
-      },
-      orderBy: { orderIndex: "asc" },
-      select: { title: true, lessonHandoff: true },
-    });
+  // Calculate which 3-Spoon Milestone & Sub-Step (1, 2, or 3) this Spoon belongs to
+  const milestoneIndex = Math.ceil(normalizedPayload.spoon / 3);
+  const milestoneSubStep = ((normalizedPayload.spoon - 1) % 3) + 1; // 1, 2, or 3
 
-    // 1. Extract past lesson titles so the AI router doesn't repeat topics
-    previous_lessons = pastLessons
-      .map((l) => l.title)
-      .filter(Boolean) as string[];
+  let resolvedLevelBand = normalizedPayload.levelBand;
+  let resolvedGoal = normalizedPayload.goal;
+  let resolvedGender = normalizeGender(normalizedPayload.gender);
+  let resolvedFirstName = normalizedPayload.firstName;
+
+  if (!normalizedPayload.isOnboarding && dbContext.courseId) {
+    const [pastLessons, firstTask] = await Promise.all([
+      prisma.foundationLesson.findMany({
+        where: {
+          foundationCourseId: dbContext.courseId,
+          id: { not: dbContext.lessonId }, // Exclude the empty lesson we just created
+        },
+        orderBy: { orderIndex: "asc" },
+        select: { orderIndex: true, title: true, lessonHandoff: true },
+      }),
+
+      // Recover onboarding profile from Spoon 1's SystemTask if returning user call omitted them
+      prisma.systemTask.findFirst({
+        where: {
+          type: "SPOON_GENERATION",
+          metadata: {
+            path: ["foundationCourseId"],
+            equals: dbContext.courseId,
+          },
+        },
+        orderBy: { createdAt: "asc" },
+        select: { payload: true },
+      }),
+    ]);
+
+    // 1. Pass the actual lessonHandoff objects so planner.py sees prior targetSentences & taughtChunks!
+    previous_lessons = pastLessons.map((l) => {
+      const handoff = (l.lessonHandoff as Record<string, any>) || {};
+      return {
+        day: l.orderIndex,
+        theme: l.title || handoff.theme || "",
+        ...handoff,
+      };
+    });
 
     // 2. Extract the exact words they learned in the very last lesson
     if (pastLessons.length > 0) {
-      const lastHandoff = pastLessons[pastLessons.length - 1].lessonHandoff as any;
+      const lastHandoff = pastLessons[pastLessons.length - 1]
+        .lessonHandoff as any;
       if (lastHandoff) {
-        // Map to whatever key your handoff uses for the vocabulary
-        yesterdayLanded = lastHandoff.targetPhrases || lastHandoff.words || [];
+        yesterdayLanded =
+          lastHandoff.taughtChunks ||
+          lastHandoff.targetPhrases ||
+          lastHandoff.words ||
+          [];
+      }
+    }
+
+    // 3. Recover onboarding levelBand, goal, gender, firstName from Spoon 1's task payload
+    if (firstTask?.payload) {
+      try {
+        const initialData =
+          typeof firstTask.payload === "string"
+            ? JSON.parse(firstTask.payload)
+            : (firstTask.payload as Record<string, any>);
+
+        if (!resolvedLevelBand || resolvedLevelBand === "unspecified") {
+          resolvedLevelBand = initialData.levelBand || "beginner";
+        }
+        if (!resolvedGoal || resolvedGoal === "unspecified") {
+          resolvedGoal = initialData.goal || "general";
+        }
+        if (resolvedGender === "N" && initialData.gender) {
+          resolvedGender = normalizeGender(initialData.gender);
+        }
+        if (!resolvedFirstName || resolvedFirstName === "Learner") {
+          resolvedFirstName = initialData.firstName || resolvedFirstName;
+        }
+      } catch (e) {
+        console.warn("Could not parse initial task payload:", e);
       }
     }
   }
@@ -196,18 +274,33 @@ export async function invokeEduBuilder(
 
   // 2. Lambda payload wrapped in { body }
   const lambdaPayload = {
-    ...payload,
+    ...normalizedPayload,
     type: "lang",
-    day: payload.spoon,
+    day: normalizedPayload.spoon,
+    milestoneIndex,
+    subStep: milestoneSubStep,
     foundationCourseId: dbContext.courseId,
     foundationLessonId: dbContext.lessonId,
     webhookUrl: dbContext.webhookUrl,
     vocabWebhookUrl: dbContext.vocabWebhookUrl,
+    levelBand: resolvedLevelBand || "beginner",
+    goal: resolvedGoal || "general",
+    gender: resolvedGender,
+    firstName: resolvedFirstName || "there",
 
     // Inject the historical data directly overriding anything empty
-    previous_lessons: previous_lessons.length > 0 ? previous_lessons : payload.previous_lessons,
-    yesterdayAttempted: yesterdayLanded.length > 0 ? yesterdayLanded : payload.yesterdayAttempted,
-    yesterdayLanded: yesterdayLanded.length > 0 ? yesterdayLanded : payload.yesterdayLanded,
+    previous_lessons:
+      previous_lessons.length > 0
+        ? previous_lessons
+        : normalizedPayload.previous_lessons,
+    yesterdayAttempted:
+      yesterdayLanded.length > 0
+        ? yesterdayLanded
+        : normalizedPayload.yesterdayAttempted,
+    yesterdayLanded:
+      yesterdayLanded.length > 0
+        ? yesterdayLanded
+        : normalizedPayload.yesterdayLanded,
   };
 
   try {

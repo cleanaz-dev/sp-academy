@@ -6,7 +6,7 @@ import {
   Sparkles,
   MessageSquareQuote,
   BookOpenCheck,
-  Flame,
+  Lock,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 
@@ -16,13 +16,53 @@ type WordMatrixCardProps = {
   totalWordsLearned: number;
   matrixStats?: MatrixStats | null;
   fallbackWords?: Array<{ word: string; gloss?: string }>;
+  isLocked?: boolean;
 };
 
 export function WordMatrixCard({
   totalWordsLearned,
   matrixStats,
   fallbackWords = [],
+  isLocked = false,
 }: WordMatrixCardProps) {
+  // Locked State before Spoon 1 is completed
+  if (isLocked) {
+    return (
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold tracking-wider text-slate-600 uppercase">
+            <Grid3X3 className="h-3.5 w-3.5 text-slate-500" /> Word Matrix
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-white uppercase">
+            <Lock className="h-3 w-3" /> Locked
+          </span>
+        </div>
+
+        <div className="my-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-9 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+            <Lock className="h-5 w-5" />
+          </div>
+          <h3 className="mt-3 text-base font-black text-slate-900">
+            Word Matrix Locked
+          </h3>
+          <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500">
+            Complete <strong className="text-slate-700">Spoon 1</strong> to
+            unlock your personal vocabulary bank, pronunciation scores, and
+            spaced-repetition tracker.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled
+          className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-xs font-extrabold text-slate-400"
+        >
+          <Lock className="h-3.5 w-3.5" /> Complete Spoon 1 to Unlock
+        </button>
+      </div>
+    );
+  }
+
   const totalCount =
     matrixStats && matrixStats.totalTracked > 0
       ? matrixStats.totalTracked
@@ -32,7 +72,6 @@ export function WordMatrixCard({
   const topPhrase = matrixStats?.topPhrase ?? null;
   const avgPronunciation = matrixStats?.avgPronunciation ?? null;
 
-  // Calculate segmented SRS bar percentages if WordStats exist
   const totalTracked = matrixStats?.totalTracked || 0;
   const masteredPct = totalTracked
     ? Math.round((matrixStats!.statusCounts.MASTERED / totalTracked) * 100)
@@ -46,10 +85,8 @@ export function WordMatrixCard({
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-      {/* Subtle Top Gradient Accent */}
       <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-indigo-500/10 blur-2xl" />
 
-      {/* Header Row */}
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-extrabold tracking-wider text-indigo-700 uppercase">
           <Grid3X3 className="h-3.5 w-3.5 text-indigo-600" /> Word Matrix
@@ -59,7 +96,6 @@ export function WordMatrixCard({
         </span>
       </div>
 
-      {/* Top Telemetry Strip */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3 text-center">
           <span className="block text-xl font-black text-slate-900">
@@ -89,7 +125,6 @@ export function WordMatrixCard({
         </div>
       </div>
 
-      {/* Spotlight Section: Top Spoken Word & Top Spoken Phrase */}
       <div className="mt-4 space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
           <span className="text-[11px] font-extrabold tracking-wider text-slate-400 uppercase">
@@ -103,7 +138,6 @@ export function WordMatrixCard({
           ) : null}
         </div>
 
-        {/* 1. MOST SPOKEN WORD */}
         {topWord ? (
           <div className="group flex items-center justify-between rounded-2xl border border-slate-100 bg-gradient-to-r from-slate-50/90 to-white p-3.5 transition hover:border-indigo-200">
             <div className="min-w-0 flex-1">
@@ -155,7 +189,6 @@ export function WordMatrixCard({
           </div>
         ) : null}
 
-        {/* 2. MOST SPOKEN PHRASE */}
         {topPhrase ? (
           <div className="group flex items-center justify-between rounded-2xl border border-slate-100 bg-gradient-to-r from-fuchsia-50/40 via-slate-50/60 to-white p-3.5 transition hover:border-fuchsia-200">
             <div className="min-w-0 flex-1">
@@ -197,7 +230,6 @@ export function WordMatrixCard({
           </div>
         ) : null}
 
-        {/* Fallback if WordStat table hasn't populated yet */}
         {!topWord && !topPhrase && fallbackWords.length > 0 && (
           <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
             <div className="mb-2 flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
@@ -223,7 +255,6 @@ export function WordMatrixCard({
         )}
       </div>
 
-      {/* SRS Retention Distribution Bar (Only shows when WordStats exist) */}
       {totalTracked > 0 && (
         <div className="mt-4 pt-1">
           <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase">
@@ -258,7 +289,6 @@ export function WordMatrixCard({
         </div>
       )}
 
-      {/* CTA Button */}
       <Link
         href="/matrix"
         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3 text-xs font-extrabold text-white shadow-md shadow-indigo-500/20 transition hover:bg-indigo-700 active:scale-98"

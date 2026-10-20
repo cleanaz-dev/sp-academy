@@ -15,7 +15,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-
 import { IntroStep } from "./intro-step";
 import { VisualStep } from "./visual-step";
 import { GrammarStep } from "./grammar-step";
@@ -69,10 +68,10 @@ function FoundationContent({ foundation }: FoundationContentProps) {
     (foundation.foundationBridge as any)?.wordAudio ||
     {};
 
-    const userFirstName =
-  (foundation as any).user?.firstName ||
-  (foundation as any).user?.name?.split(" ")[0] ||
-  "Learner";
+  const userFirstName =
+    (foundation as any).user?.firstName ||
+    (foundation as any).user?.name?.split(" ")[0] ||
+    "Learner";
 
   // Profile data payload for queuing the subsequent Spoon
   const profileData = {
@@ -98,7 +97,9 @@ function FoundationContent({ foundation }: FoundationContentProps) {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <IntroStep data={foundation as any} onNext={() => handleNext(2)} />;
+        return (
+          <IntroStep data={foundation as any} onNext={() => handleNext(2)} />
+        );
       case 2:
         return (
           <VisualStep
@@ -158,15 +159,20 @@ function FoundationContent({ foundation }: FoundationContentProps) {
                 feedback,
               });
 
-              // 2. Trigger asynchronous background builder for the next Spoon
-              const res = await invokeEduBuilder({
-                ...profileData,
-                foundationCourseId: courseId,
-                previous_lessons: [{ ...lessonHandoff, feedback }],
-              });
+              // 2. Only queue the next Spoon if this is NOT a Boss milestone boundary (Spoon 1 & 2, 4 & 5, etc.)
+              // On Spoon 3, 6, 9, the Boss Review route queues Spoon 4, 7, 10 after the Boss is defeated!
+              if (currentSpoon % 3 !== 0) {
+                const res = await invokeEduBuilder({
+                  ...profileData,
+                  spoon: currentSpoon + 1,
+                  isOnboarding: false,
+                  foundationCourseId: courseId,
+                  previous_lessons: [{ ...lessonHandoff, feedback }],
+                });
 
-              if (!res.ok) {
-                console.error("Failed to queue next spoon:", res.error);
+                if (!res.ok) {
+                  console.error("Failed to queue next spoon:", res.error);
+                }
               }
 
               // 3. Return user to the hub
@@ -176,7 +182,9 @@ function FoundationContent({ foundation }: FoundationContentProps) {
           />
         );
       default:
-        return <div className="p-8 text-center text-slate-500">Unknown Step</div>;
+        return (
+          <div className="p-8 text-center text-slate-500">Unknown Step</div>
+        );
     }
   };
 

@@ -6,6 +6,7 @@ import {
   Swords,
   Zap,
   Headphones,
+  Loader2,
 } from "lucide-react";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 
@@ -82,14 +83,19 @@ function ActiveStepTile({
   const bossStage = lesson.bossStage;
   const bossData = bossStage?.scenarioData?.boss;
 
-  const href =
-    type === "BOSS" && bossStage
+  const isBuilding =
+    (type === "SPOON" && !lesson.title && !lesson.imageUrl) ||
+    (type === "BRIDGE" && !lesson.bridge) ||
+    (type === "BOSS" && (!bossStage || bossStage.status === "BUILDING"));
+
+  const href = isBuilding
+    ? "#"
+    : type === "BOSS" && bossStage
       ? resolveBossHref(bossStage.id, lesson.id)
       : type === "BRIDGE" && lesson.bridge
         ? `/foundation/vocab/${lesson.bridge.id}`
         : resolveLessonHref(lesson.id);
 
-  // Uses the presigned Boss Avatar or Cover URL from getLearningPath
   const thumbUrl =
     type === "BOSS"
       ? bossStage?.avatarUrl || bossStage?.coverUrl || lesson.imageUrl
@@ -102,8 +108,9 @@ function ActiveStepTile({
         ? `Vocab Bridge ${lesson.orderIndex}`
         : `Spoon ${lesson.orderIndex}`;
 
-  const title =
-    type === "BOSS"
+  const title = isBuilding
+    ? `Generating ${badgeLabel}...`
+    : type === "BOSS"
       ? bossData?.name || "AI Boss Checkpoint"
       : lesson.title || `Spoon ${lesson.orderIndex}`;
 
@@ -112,7 +119,14 @@ function ActiveStepTile({
   return (
     <Link
       href={href}
-      className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-indigo-200/80 bg-white/90 p-3.5 shadow-xs backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-white hover:shadow-md"
+      onClick={(e) => {
+        if (isBuilding) e.preventDefault();
+      }}
+      className={`group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-3.5 shadow-xs backdrop-blur-md transition-all ${
+        isBuilding
+          ? "cursor-wait border-indigo-100 bg-white/75"
+          : "border-indigo-200/80 bg-white/90 hover:border-indigo-300 hover:bg-white hover:shadow-md"
+      }`}
     >
       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-900">
         {thumbUrl ? (
@@ -123,7 +137,9 @@ function ActiveStepTile({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            {type === "BOSS" ? (
+            {isBuilding ? (
+              <Loader2 className="h-6 w-6 animate-spin text-indigo-300" />
+            ) : type === "BOSS" ? (
               <Swords className="h-6 w-6 text-fuchsia-300" />
             ) : type === "BRIDGE" ? (
               <Zap className="h-6 w-6 text-amber-300" />
@@ -147,8 +163,12 @@ function ActiveStepTile({
           >
             {badgeLabel}
           </span>
-          <span className="text-[11px] font-bold text-emerald-600">
-            • Active Focus
+          <span
+            className={`text-[11px] font-bold ${
+              isBuilding ? "text-indigo-500" : "text-emerald-600"
+            }`}
+          >
+            • {isBuilding ? "Building..." : "Active Focus"}
           </span>
         </div>
 
@@ -170,13 +190,19 @@ function ActiveStepTile({
           </div>
         ) : (
           <p className="mt-0.5 truncate text-xs text-slate-500">
-            Continue active step
+            {isBuilding
+              ? "Preparing audio & visual assets..."
+              : "Continue active step"}
           </p>
         )}
       </div>
 
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
-        <ArrowRight className="h-4 w-4" />
+        {isBuilding ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <ArrowRight className="h-4 w-4" />
+        )}
       </div>
     </Link>
   );
@@ -191,9 +217,11 @@ function UpNextCompactTile({
 }) {
   const title =
     type === "SPOON"
-      ? lesson.title
+      ? lesson.title || `Spoon ${lesson.orderIndex}`
       : type === "BRIDGE"
-        ? `Review: ${lesson.title}`
+        ? lesson.title
+          ? `Review: ${lesson.title}`
+          : `Vocab Checkpoint ${lesson.orderIndex}`
         : lesson.bossStage?.scenarioData?.boss?.name ||
           `Milestone ${Math.ceil(lesson.orderIndex / 3)} Boss`;
 

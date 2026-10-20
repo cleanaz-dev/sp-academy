@@ -2,6 +2,7 @@
 
 import { Dices } from "lucide-react";
 import { USERNAME_MAX } from "@/lib/username-validation"; // NEW
+import { Gender } from "../onboarding-shell";
 
 interface AccountStepProps {
   hasAccount: boolean;
@@ -12,6 +13,8 @@ interface AccountStepProps {
   setFirstName: (val: string) => void;
   lastName: string;
   setLastName: (val: string) => void;
+  gender: string;
+  setGender: (val: Gender) => void;
   username: string;
   setUsername: (val: string) => void;
   onShuffleUsername: () => void;
@@ -32,6 +35,8 @@ export function AccountStep({
   setFirstName,
   lastName,
   setLastName,
+  gender,
+  setGender,
   username,
   setUsername,
   onShuffleUsername,
@@ -78,6 +83,43 @@ export function AccountStep({
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
+        </div>
+
+        {/* Grammatical Gender Selector inside AccountStep */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold tracking-wider text-gray-600 uppercase">
+              Grammatical Gender
+            </label>
+            <span className="text-[11px] font-medium text-gray-400">
+              For gendered words (e.g., enchanté / enchantée)
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                { value: "male", label: "Male (Masculine)", icon: "👨" },
+                { value: "female", label: "Female (Feminine)", icon: "👩" },
+              ] as const
+            ).map((opt) => {
+              const selected = gender === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGender(opt.value)}
+                  className={`flex items-center justify-center gap-2 rounded-2xl border-2 px-4 py-3.5 text-sm font-bold transition-all ${
+                    selected
+                      ? "border-violet-600 bg-violet-50/70 text-violet-900 shadow-xs ring-2 ring-violet-500/15"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <span>{opt.icon}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* NEW: wrapper div so the error sits right under the field */}
@@ -134,7 +176,10 @@ export function AccountStep({
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 text-center text-sm font-medium text-red-600">
+        <p
+          role="alert"
+          className="mt-4 text-center text-sm font-medium text-red-600"
+        >
           {error}
         </p>
       )}
@@ -152,7 +197,9 @@ function Field({
 } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-bold text-gray-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-bold text-gray-700">
+        {label}
+      </span>
       <div className="relative">
         <input
           {...props}

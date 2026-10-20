@@ -30,7 +30,14 @@ export default function FoundationHubPage({ path, lang }: Props) {
     currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson =
     currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
-  const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
+  const bossDue =
+    currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
+
+  // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
+  const waitingOnSpoon =
+    currentFocus?.type === "SPOON" &&
+    !currentFocus.data.title &&
+    !currentFocus.data.imageUrl;
 
   const waitingOnVocab =
     currentFocus?.type === "BRIDGE"
@@ -42,10 +49,10 @@ export default function FoundationHubPage({ path, lang }: Props) {
     (!currentFocus.data.bossStage ||
       currentFocus.data.bossStage.status === "BUILDING");
 
-  const isGenerating = waitingOnVocab || waitingOnBoss;
+  const isGenerating = waitingOnSpoon || waitingOnVocab || waitingOnBoss;
 
   const completedLessonsCount = lessons.filter((l) =>
-    Boolean(l.completedAt),
+    Boolean(l.completedAt)
   ).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
@@ -59,8 +66,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
     .filter((l) => l.completedAt && l.bridge?.vocabMoment)
     .flatMap(
       (l) =>
-        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ??
-        [],
+        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ?? []
     )
     .reverse();
 
@@ -71,12 +77,12 @@ export default function FoundationHubPage({ path, lang }: Props) {
 
   useEffect(() => {
     if (!isGenerating) return;
-    const interval = setInterval(() => router.refresh(), 5000);
+    const interval = setInterval(() => router.refresh(), 4000);
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-slate-100/90 to-slate-100 font-sans text-slate-900 selection:bg-indigo-100">
+    <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
         name={user?.firstName}
         lang={lang}
@@ -84,7 +90,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
         streak={1}
       />
 
-<main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-20 lg:px-8">
+      <main className="relative z-20 mx-auto -mt-12 max-w-7xl px-6 pb-20 lg:px-8">
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
           {/* LEFT / MAIN COLUMN */}
           <div className="flex flex-col gap-7 lg:col-span-8">
@@ -93,6 +99,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
               vocabDue={vocabDue}
               nextLesson={nextLesson}
               bossDue={bossDue}
+              waitingOnSpoon={waitingOnSpoon}
               waitingOnVocab={waitingOnVocab}
               waitingOnBoss={waitingOnBoss}
               getLessonHref={getLessonHref}
@@ -108,17 +115,18 @@ export default function FoundationHubPage({ path, lang }: Props) {
             />
           </div>
 
-          {/* RIGHT PANEL — Now aligns cleanly with the Left Column! */}
+          {/* RIGHT PANEL */}
           <div className="flex flex-col gap-6 lg:col-span-4">
             <WordMatrixCard
               totalWordsLearned={totalWordsLearned}
               matrixStats={path?.matrixStats}
               fallbackWords={recentBridgeWords}
+              isLocked={completedLessonsCount === 0}
             />
           </div>
         </div>
 
-        {/* BOTTOM SANDBOX BAR — Spans full width below the main grid */}
+        {/* BOTTOM SANDBOX BAR */}
         <AiTutorCard />
       </main>
     </div>

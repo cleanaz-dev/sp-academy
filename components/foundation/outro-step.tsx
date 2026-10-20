@@ -148,7 +148,7 @@ export function OutroStep({
             Mission Accomplished!
           </h2>
           <p className="text-gray-500 text-sm md:text-base max-w-xl">
-            You've completed Day {handoff.day || 1}. Let's review what you
+            You've completed Spoon {handoff.day || 1}. Let's review what you
             learned and wrap things up.
           </p>
         </div>

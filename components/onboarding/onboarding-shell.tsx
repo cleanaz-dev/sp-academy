@@ -21,6 +21,9 @@ import { SelectionCard } from "./selection-card";
 import { AccountStep } from "./steps/account-step";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 
+export type Gender = "male" | "female" | "";
+
+
 // 🛡️ Guarantees plain English names always convert to valid BCP-47 locale codes
 const LANGUAGE_LOCALE_MAP: Record<string, string> = {
   English: "en-US",
@@ -65,6 +68,7 @@ export default function OnboardingShell({
   // Account State
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [gender, setGender] = useState<Gender>("");
   const [username, setUsername] = useState("");
   const [emailValue, setEmailValue] = useState(email ?? "");
   const [password, setPassword] = useState("");
@@ -131,6 +135,7 @@ export default function OnboardingShell({
     firstName.trim().length > 0 &&
     lastName.trim().length > 0 &&
     validateUsername(username) === null &&
+    (gender === "male" || gender === "female") &&
     (hasAccount || (EMAIL_RE.test(emailValue.trim()) && password.length >= 8));
 
   const canContinue =
@@ -189,7 +194,7 @@ export default function OnboardingShell({
         userId,
         sessionId,
         firstName,
-        gender: "unspecified",
+        gender: gender || "male",
         spoon: 1,
         nativeLanguage,
         targetLanguage,
@@ -317,6 +322,8 @@ export default function OnboardingShell({
                     setFirstName={setFirstName}
                     lastName={lastName}
                     setLastName={setLastName}
+                    gender={gender} // <-- NEW
+                    setGender={setGender} // <-- NEW
                     username={username}
                     setUsername={handleUsernameChange} // CHANGED
                     onShuffleUsername={shuffleUsername} // NEW
