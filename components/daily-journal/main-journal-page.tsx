@@ -130,7 +130,7 @@ function JournalPageContent({
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100/80 font-sans text-slate-900">
-      {/* SPOON HEADER BANNER (Matches Learning Hub) */}
+    {/* SPOON HEADER BANNER (Matches Learning Hub) */}
       <header className="relative shrink-0 overflow-hidden animate-bg pt-9 pb-22 text-white shadow-lg">
         {/* Subtle dark-glass contrast scrim so white text is always razor-sharp */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/25 via-slate-950/15 to-slate-950/35 backdrop-blur-[2px]" />
@@ -139,6 +139,21 @@ function JournalPageContent({
         <div className="pointer-events-none absolute -top-24 left-1/2 h-80 w-[850px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+          {/* Top Bar: Frosted Dark-Glass Pills */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-slate-950/35 px-4 py-1.5 text-xs font-extrabold tracking-wide text-white uppercase shadow-sm backdrop-blur-md">
+              <Mic className="h-4 w-4 text-cyan-300" />
+              <span>Spoken Audio Diary</span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-950/35 px-3.5 py-1.5 text-xs font-extrabold text-emerald-300 shadow-sm backdrop-blur-md">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span>{journals.length} Entries Logged</span>
+              </div>
+            </div>
+          </div>
+
           <div className="max-w-3xl">
             <h1 className="flex items-center gap-3.5 text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_10px_rgba(15,23,42,0.22)] sm:text-4xl lg:text-5xl">
               <span>Daily Journal</span>
