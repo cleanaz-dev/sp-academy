@@ -1,14 +1,20 @@
 // app/journal/page.tsx
 "use client";
 
-import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
-import { SpeechProvider } from "@/context/speech-context"; 
-import JournalModal from "./journal-modal"; 
+import { SpeechProvider } from "@/context/speech-context";
+import JournalModal from "./journal-modal";
 import InteractiveReviewModal from "./interactive-review-modal";
 import CompletedJournalsSidebar from "./completed-journal-sidebar";
-import { 
-  BookAudio, ChevronLeft, ChevronRight, CheckCircle2, Mic, Plus, Quote, Sparkles
+import {
+  BookAudio,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Mic,
+  Plus,
+  Quote,
+  Sparkles,
 } from "lucide-react";
 
 // --- TIMEZONE HELPERS (Hardcoded to EST for now) ---
@@ -35,8 +41,13 @@ const getESTDate = (date: Date = new Date()) => {
   return new Date(date.toLocaleString("en-US", { timeZone: TIMEZONE }));
 };
 
-
-export default function MainJournalPage({ journals = [], nativeLanguage = "en-US" }: { journals: any[], nativeLanguage?: string }) {
+export default function MainJournalPage({
+  journals = [],
+  nativeLanguage = "en-US",
+}: {
+  journals: any[];
+  nativeLanguage?: string;
+}) {
   return (
     <SpeechProvider>
       <JournalPageContent journals={journals} nativeLanguage={nativeLanguage} />
@@ -44,12 +55,18 @@ export default function MainJournalPage({ journals = [], nativeLanguage = "en-US
   );
 }
 
-function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: any[], nativeLanguage?: string }) {
+function JournalPageContent({
+  journals,
+  nativeLanguage = "en-US",
+}: {
+  journals: any[];
+  nativeLanguage?: string;
+}) {
   // Initialize calendar with current EST time
   const [currentDate, setCurrentDate] = useState(getESTDate());
-  
+
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedJournal, setSelectedJournal] = useState<any>(null); 
+  const [selectedJournal, setSelectedJournal] = useState<any>(null);
 
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -58,7 +75,6 @@ function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: 
   const completedDates = useMemo(() => {
     const map = new Map<string, any>();
     journals.forEach((j) => {
-      // Convert database UTC date into an EST YYYY-MM-DD string
       const estString = formatDateEST(j.entryDate || j.createdAt);
       map.set(estString, j);
     });
@@ -71,15 +87,14 @@ function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: 
 
     if (typeof dateOrStr === "string") {
       dateStr = dateOrStr;
-      // To prevent timezone shifting, parse the string as local time by adding T12:00:00
-      actualDate = new Date(`${dateStr}T12:00:00`); 
+      actualDate = new Date(`${dateStr}T12:00:00`);
     } else {
       dateStr = formatDateEST(dateOrStr);
       actualDate = new Date(`${dateStr}T12:00:00`);
     }
 
     const journalData = completedDates.get(dateStr);
-    
+
     setSelectedDate(actualDate);
     setSelectedJournal(journalData || null);
 
@@ -104,7 +119,8 @@ function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: 
 
   const calendarDays: (Date | null)[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
-  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(new Date(year, month, i));
+  for (let i = 1; i <= daysInMonth; i++)
+    calendarDays.push(new Date(year, month, i));
 
   const changeMonth = (delta: number) => {
     setCurrentDate(new Date(year, month + delta, 1));
@@ -113,134 +129,150 @@ function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: 
   const todayStr = formatDateEST(new Date());
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="animate-gradient bg-linear-to-r from-sky-400 via-emerald-400 to-violet-400 bg-size-[300%_300%] py-12 text-white shrink-0"
-      >
-        <div className="mx-auto w-full max-w-[1600px] px-6">
-          <motion.h1
-            className="flex items-center gap-2 mb-2 text-3xl font-bold md:text-4xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            Daily Journal
-            <BookAudio className="size-8" />
-          </motion.h1>
-          <motion.p
-            className="mt-2 text-lg opacity-90 md:text-xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            Reflect, record, and revisit your thoughts. 🎙️
-          </motion.p>
-        </div>
-      </motion.header>
+    <div className="flex min-h-screen flex-col bg-slate-100/80 font-sans text-slate-900">
+      {/* SPOON HEADER BANNER (Matches Learning Hub) */}
+      <header className="relative shrink-0 overflow-hidden animate-bg pt-9 pb-22 text-white shadow-lg">
+        {/* Subtle dark-glass contrast scrim so white text is always razor-sharp */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/25 via-slate-950/15 to-slate-950/35 backdrop-blur-[2px]" />
 
-      <main className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 lg:flex-row items-start">
-          
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex-1 w-full rounded-xl bg-white shadow-xs border border-gray-200 flex flex-col overflow-hidden"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+        {/* Soft ambient highlights */}
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-80 w-[850px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h1 className="flex items-center gap-3.5 text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_10px_rgba(15,23,42,0.22)] sm:text-4xl lg:text-5xl">
+              <span>Daily Journal</span>
+              <BookAudio
+                strokeWidth={2}
+                className="size-9 text-white/95 drop-shadow-md sm:size-11"
+              />
+            </h1>
+            <p className="mt-2.5 text-base font-medium text-white/90 drop-shadow-[0_1px_4px_rgba(15,23,42,0.18)] sm:text-lg">
+              Reflect, record, and revisit your spoken thoughts day by day.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <main className="relative z-20 mx-auto -mt-12 w-full max-w-7xl px-6 pb-24 lg:px-8">
+        <div className="flex flex-col items-start gap-8 lg:flex-row">
+          <div className=" flex w-full flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="flex items-center justify-between border-b border-gray-200 bg-white p-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                {currentDate.toLocaleString("default", { month: "long", year: "numeric" })}
+                {currentDate.toLocaleString("default", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </h2>
               <div className="flex gap-2">
-                <button onClick={() => changeMonth(-1)} className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                  <ChevronLeft className="w-4 h-4" /> Prev
+                <button
+                  onClick={() => changeMonth(-1)}
+                  className="flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Prev
                 </button>
-                <button onClick={() => setCurrentDate(getESTDate())} className="rounded-md bg-white border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors hidden sm:block">
+                <button
+                  onClick={() => setCurrentDate(getESTDate())}
+                  className="hidden rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:block"
+                >
                   Today
                 </button>
-                <button onClick={() => changeMonth(1)} className="flex items-center gap-1 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                  Next <ChevronRight className="w-4 h-4" />
+                <button
+                  onClick={() => changeMonth(1)}
+                  className="flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  Next <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                <div key={d} className="py-3 text-center text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider border-r last:border-r-0 border-gray-200">
+                <div
+                  key={d}
+                  className="border-r border-gray-200 py-3 text-center text-xs font-semibold tracking-wider text-gray-500 uppercase last:border-r-0 sm:text-sm"
+                >
                   <span className="hidden sm:inline">{d}</span>
                   <span className="sm:hidden">{d.charAt(0)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 auto-rows-[minmax(120px,1fr)] bg-gray-200 gap-px">
+            <div className="grid auto-rows-[minmax(120px,1fr)] grid-cols-7 gap-px bg-gray-200">
               {calendarDays.map((date, idx) => {
                 if (!date) return <div key={idx} className="bg-gray-50/50" />;
-                
+
                 const dateStr = formatDateEST(date);
                 const journalData = completedDates.get(dateStr);
                 const isCompleted = !!journalData;
                 const isToday = todayStr === dateStr;
-                
+
                 const hasAudio = !!journalData?.s3Key;
-                const langCode = journalData?.language?.split("-")[0].toUpperCase() || "EN";
+                const langCode =
+                  journalData?.language?.split("-")[0].toUpperCase() || "EN";
                 const transcriptPreview = journalData?.transcript;
 
                 return (
                   <button
                     key={idx}
                     onClick={() => openModal(date)}
-                    className={`relative flex flex-col p-2 sm:p-3 text-left transition-all duration-200 group focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-sky-500 ${
-                      isCompleted ? "bg-white hover:bg-emerald-50/30" : "bg-white hover:bg-sky-50"
+                    className={`group relative flex flex-col p-2 text-left transition-all duration-200 focus:ring-2 focus:ring-sky-500 focus:outline-hidden focus:ring-inset sm:p-3 ${
+                      isCompleted
+                        ? "bg-white hover:bg-emerald-50/30"
+                        : "bg-white hover:bg-sky-50"
                     }`}
                   >
-                    <div className="flex justify-between items-start w-full">
-                      <span className={`text-sm font-semibold h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
-                          isToday ? "bg-sky-500 text-white" : isCompleted ? "text-emerald-700" : "text-gray-600 group-hover:text-sky-700"
+                    <div className="flex w-full items-start justify-between">
+                      <span
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+                          isToday
+                            ? "bg-sky-500 text-white"
+                            : isCompleted
+                              ? "text-emerald-700"
+                              : "text-gray-600 group-hover:text-sky-700"
                         }`}
                       >
                         {date.getDate()}
                       </span>
-                      
+
                       {!isCompleted && (
-                         <Plus className="w-4 h-4 text-sky-300 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
+                        <Plus className="hidden h-4 w-4 text-sky-300 opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
                       )}
 
                       {isCompleted && hasAudio && (
-                        <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 shadow-xs">
-                          <Mic className="w-3 h-3" />
+                        <div className="rounded-full bg-emerald-100 p-1 text-emerald-600 shadow-xs">
+                          <Mic className="h-3 w-3" />
                         </div>
                       )}
                     </div>
 
                     {isCompleted && transcriptPreview && (
-                      <div className="mt-2 hidden sm:block w-full flex-1">
+                      <div className="mt-2 hidden w-full flex-1 sm:block">
                         <div className="flex gap-1 text-gray-500">
-                          <Quote className="w-3 h-3 shrink-0 mt-0.5 opacity-50" />
-                          <p className="text-xs italic leading-relaxed text-gray-600 line-clamp-2">
-                            "{transcriptPreview}"
+                          <Quote className="mt-0.5 h-3 w-3 shrink-0 opacity-50" />
+                          <p className="line-clamp-2 text-xs leading-relaxed text-gray-600 italic">
+                            &ldquo;{transcriptPreview}&rdquo;
                           </p>
                         </div>
                       </div>
                     )}
 
                     {isCompleted && (
-                      <div className="mt-auto pt-2 w-full flex flex-wrap items-center gap-1.5">
+                      <div className="mt-auto flex w-full flex-wrap items-center gap-1.5 pt-2">
                         {!journalData?.review && (
-                          <span className="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm flex items-center gap-1 font-medium shadow-xs">
-                            <CheckCircle2 className="w-3 h-3" /> <span className="hidden md:inline">Logged</span>
+                          <span className="flex items-center gap-1 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-medium text-white shadow-xs">
+                            <CheckCircle2 className="h-3 w-3" />{" "}
+                            <span className="hidden md:inline">Logged</span>
                           </span>
                         )}
-                        <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[9px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider">
+                        <span className="rounded-sm border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-gray-600">
                           {langCode}
                         </span>
-                        
+
                         {journalData?.review && (
-                           <span className="text-[10px] w-full mt-1 bg-indigo-100 border border-indigo-200 text-indigo-700 px-1.5 py-1 rounded-sm font-bold tracking-wider flex justify-center items-center gap-1 shadow-xs transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                             <Sparkles className="w-3 h-3" /> REVIEW READY
-                           </span>
+                          <span className="mt-1 flex w-full items-center justify-center gap-1 rounded-sm border border-indigo-200 bg-indigo-100 px-1.5 py-1 text-[10px] font-bold tracking-wider text-indigo-700 shadow-xs transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                            <Sparkles className="h-3 w-3" /> REVIEW READY
+                          </span>
                         )}
                       </div>
                     )}
@@ -248,17 +280,17 @@ function JournalPageContent({ journals, nativeLanguage = "en-US" }: { journals: 
                 );
               })}
             </div>
-          </motion.div>
+          </div>
 
-          <CompletedJournalsSidebar 
-            completedDates={completedDates} 
-            openModal={openModal} 
+          <CompletedJournalsSidebar
+            completedDates={completedDates}
+            openModal={openModal}
           />
         </div>
       </main>
 
       {isRecordModalOpen && (
-         <JournalModal
+        <JournalModal
           date={selectedDate}
           onClose={closeModals}
           existingEntry={selectedJournal}
