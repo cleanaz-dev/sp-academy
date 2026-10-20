@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Volume2, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { useSpeak } from "@/hooks/use-speak";
 import { useWordAudio } from "@/context/word-audio-context";
-import { useMatrix } from "@/context/matrix-context"; // <-- ADDED IMPORT
+import { useMatrix } from "@/context/matrix-context";
 
 export function GrammarStep({
   data,
@@ -33,13 +33,13 @@ export function GrammarStep({
   const [hasPlayedSentence, setHasPlayedSentence] = useState(false);
   const [heardWords, setHeardWords] = useState<Set<string>>(new Set());
 
-  // Get an array of unique word strings
-  const uniqueWords = React.useMemo(() => {
-    if (!data.words) return [];
+  // Extract unique words so duplicates don't break the counter or double-track
+  const uniqueWords = useMemo(() => {
+    if (!data?.words) return [];
     return Array.from(new Set(data.words.map((w: any) => w.word))) as string[];
-  }, [data.words]);
+  }, [data?.words]);
 
-  // 1. Track "seen" once per unique word in this step
+  // 1. Track "seen" for all unique words on load (Only Once!)
   useEffect(() => {
     if (!hasTrackedSeen.current && uniqueWords.length > 0) {
       uniqueWords.forEach((word) => {
@@ -64,14 +64,10 @@ export function GrammarStep({
     }
   };
 
-  // 1. Calculate unique words count
-  const uniqueWordsCount = new Set(data.words.map((w: any) => w.word)).size;
-
-  // 2. Compare against uniqueWordsCount instead of data.words.length
+  // 3. Ensure they listened to the sentence AND every unique word
   const allWordsHeard = heardWords.size === uniqueWords.length;
   const isNextEnabled = hasPlayedSentence && allWordsHeard;
 
-  
   return (
     <div className="flex flex-col h-full p-8 animate-in fade-in duration-500 overflow-y-auto">
       <div className="mb-10 shrink-0">
@@ -153,7 +149,7 @@ export function GrammarStep({
                 : "bg-blue-100 text-blue-700"
             }`}
           >
-            {heardWords.size} / {uniqueWordsCount} Played
+            {heardWords.size} / {uniqueWords.length} Played
           </span>
         </div>
 

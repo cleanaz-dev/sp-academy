@@ -100,7 +100,7 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
       if (subscriptionId) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const subItem = sub.items.data[0];
-        
+
         // Safe cast to avoid TypeScript errors across different Stripe SDK versions
         const periodEnd =
           (sub as any).current_period_end ??
@@ -162,7 +162,7 @@ export async function invokeEduBuilder(
   }
 
   // =========================================================================
-  // NEW: AUTOMATICALLY FETCH HISTORICAL CONTEXT FOR THE LAMBDA!
+  // AUTOMATICALLY FETCH HISTORICAL CONTEXT FOR THE LAMBDA
   // =========================================================================
   let previous_lessons: string[] = [];
   let yesterdayLanded: string[] = [];
@@ -170,22 +170,25 @@ export async function invokeEduBuilder(
   // If they are NOT onboarding, it means they have past lessons we should look at
   if (!payload.isOnboarding && dbContext.courseId) {
     const pastLessons = await prisma.foundationLesson.findMany({
-      where: { foundationCourseId: dbContext.courseId },
+      where: {
+        foundationCourseId: dbContext.courseId,
+        id: { not: dbContext.lessonId }, // FIX: exclude the lesson we just created
+      },
       orderBy: { orderIndex: "asc" },
       select: { title: true, lessonHandoff: true },
     });
 
     // 1. Extract past lesson titles so the AI router doesn't repeat topics
     previous_lessons = pastLessons
-      .map(l => l.title)
+      .map((l) => l.title)
       .filter(Boolean) as string[];
 
     // 2. Extract the exact words they learned in the very last lesson
     if (pastLessons.length > 0) {
       const lastHandoff = pastLessons[pastLessons.length - 1].lessonHandoff as any;
       if (lastHandoff) {
-         // Map to whatever key your handoff uses for the vocabulary
-         yesterdayLanded = lastHandoff.targetPhrases || lastHandoff.words || [];
+        // Map to whatever key your handoff uses for the vocabulary
+        yesterdayLanded = lastHandoff.targetPhrases || lastHandoff.words || [];
       }
     }
   }
@@ -231,7 +234,7 @@ export async function invokeEduBuilder(
         data: { status: "FAILED" },
       })
       .catch((e) => console.error("Could not mark tasks failed", e));
-      
+
     await prisma.foundationLesson
       .delete({ where: { id: dbContext.lessonId } })
       .catch((e) => console.error("Could not delete empty lesson", e));
