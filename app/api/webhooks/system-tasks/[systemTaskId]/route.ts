@@ -7,6 +7,7 @@ import { handleGameSchema } from "@/lib/system-tasks/handlers/handle-game-schema
 import { handleGameVariation } from "@/lib/system-tasks/handlers/handle-game-variation";
 import { handleSpeechAnalysisTask } from "@/lib/system-tasks/handlers/handle-speech-analysis-task";
 import { handleSpoonGeneration } from "@/lib/system-tasks/handlers/handle-spoon-generation";
+import { handleSpriteNotificationGeneration } from "@/lib/system-tasks/handlers/handle-sprite-notification";
 import { handleVocabBridgeGeneration } from "@/lib/system-tasks/handlers/handle-vocab-bridge";
 import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
 import { SystemTaskType } from "@prisma/client";
@@ -75,6 +76,10 @@ export async function POST(req: Request, { params }: Params) {
 
       case SystemTaskType.SPOON_BOSS_GENERATION: {
         return await handleBossGeneration(task, body)
+      }
+
+      case SystemTaskType.SPRITE_NOTIFICATION_GENERATION: {
+        return await handleSpriteNotificationGeneration(task, body)
       }
 
       default:

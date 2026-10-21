@@ -28,6 +28,11 @@ export interface InvokeEduBuilderPayload {
   previous_lessons?: JsonValue[];
   sessionId?: string;
 
+  // NEW: Sprite fields from onboarding
+  spriteSlug?: "vox" | "vivi";
+  nativeVoiceId?: string;
+  targetVoiceId?: string;
+
   yesterdayAttempted?: string[];
   yesterdayLanded?: string[];
 }
@@ -41,8 +46,11 @@ export interface LessonDbContext {
   lessonId: string;
   taskId: string;
   vocabTaskId: string;
+  spriteTaskId: string;
+  spriteProfileId: string;
   webhookUrl: string;
   vocabWebhookUrl: string;
+  spriteWebhookUrl: string;
 }
 
 function normalizeGender(g?: string | null): "M" | "F" | "N" {
