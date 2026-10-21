@@ -7,15 +7,11 @@ import type {
   InvokeEduBuilderPayload,
   LessonDbContext,
 } from "@/app/actions/invoke-edu-builder";
+import { getSpoonSpriteOrderIndex } from "./tool";
 
 const BASE = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;
 
-// Maps spoon number (1,2,3,4...) to the 7-step cycle index (1,3,5, 8,10,12...)
-function getSpoonSpriteOrderIndex(spoon: number): number {
-  const milestoneIndex = Math.ceil(spoon / 3);
-  return (spoon - 1) * 2 + (milestoneIndex - 1) + 1;
-}
 
 export async function setupNextLesson(
   payload: InvokeEduBuilderPayload,
