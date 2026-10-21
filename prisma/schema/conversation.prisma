@@ -146,14 +146,14 @@ model WordStat {
   word              String // Normalized lowercase: e.g., "bonjour", "au revoir", "je suis"
 
   // 🟢 NEW: Linguistic Metadata (Populated automatically from Foundation Builder)
-  wordType          String   @default("WORD")  // "WORD" | "PHRASE"
+  wordType          String   @default("WORD") // "WORD" | "PHRASE"
   partOfSpeech      String   @default("OTHER") // "NOUN", "VERB", "PRONOUN", "GREETING", "EXPRESSION", etc.
-  translation       String?                    // e.g., "madam / Mrs.", "I am"
-  lemma             String?                    // Root form: e.g., "être" for "suis"
-  grammaticalGender String?                    // "M", "F", or null
-  componentWords    String[] @default([])      // For phrases: ["je", "suis"]
-  audioMaleKey      String?                    // S3 key: foundation/words/fr-FR/m/madame.mp3
-  audioFemaleKey    String?                    // S3 key: foundation/words/fr-FR/f/madame.mp3
+  translation       String? // e.g., "madam / Mrs.", "I am"
+  lemma             String? // Root form: e.g., "être" for "suis"
+  grammaticalGender String? // "M", "F", or null
+  componentWords    String[] @default([]) // For phrases: ["je", "suis"]
+  audioMaleKey      String? // S3 key: foundation/words/fr-FR/m/madame.mp3
+  audioFemaleKey    String? // S3 key: foundation/words/fr-FR/f/madame.mp3
 
   // 1. Passive Metrics
   seenCount   Int      @default(0)

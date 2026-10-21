@@ -4,10 +4,63 @@ enum Gender {
   N
 }
 
+model Sprite {
+  id        String   @id @default(cuid())
+  slug      String   @unique // "vox" | "vivi"
+  name      String // "Vox" | "Vivi"
+  avatarUrl String // "/sprite-m.png" | "/sprite-f.png"
+  moodUrls  String[]
+  persona   String?
+
+  profiles SpriteProfile[]
+  users    User[]
+}
+
+model SpriteProfile {
+  id       String @id @default(cuid())
+  userId   String @unique
+  spriteId String
+
+  nativeLanguage String // e.g. "en-US"
+  targetLanguage String // e.g. "fr-FR"
+  nativeVoiceId  String // e.g. "en-US-boy-01"
+  targetVoiceId  String // e.g. "fr-FR-boy-01"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sprite Sprite       @relation(fields: [spriteId], references: [id])
+  posts  SpritePost[]
+}
+
+model SpritePost {
+  id              String @id @default(cuid())
+  spriteProfileId String
+
+  // 1=Spoon1, 2=Vocab1, 3=Spoon2, 4=Vocab2, 5=Spoon3, 6=Vocab3, 7=Boss1 ...
+  orderIndex Int
+
+  header   String // e.g. "Boss Alert ⚔️" or "Vocab Bridge 1"
+  body     String  @db.Text // What Vox/Vivi says
+  action   String? // e.g. "/foundation/boss/123" or action label/type
+  audioUrl String? // Optional S3 audio clip if generated
+
+  createdAt DateTime @default(now())
+
+  spriteProfile SpriteProfile @relation(fields: [spriteProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([spriteProfileId, orderIndex])
+  @@index([spriteProfileId, orderIndex])
+}
+
 model User {
   id    String @id @default(cuid())
   email String @unique
   name  String
+
+  spriteId String?
+  sprite   Sprite? @relation(fields: [spriteId], references: [id])
 
   emailVerified   Boolean @default(false) // NEW
   image           String? // NEW
@@ -68,6 +121,7 @@ model User {
   languageProfiles       LanguageProfile[]
   foundationCourses      FoundationCourse[]
   foundationBossStages   FoundationBossStage[]
+  spriteProfile          SpriteProfile?
 }
 
 model BillingInformation {
