@@ -10,11 +10,21 @@ import {
   Languages,
   Sparkles,
   UserRound,
+  Volume2,
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { generateUsername } from "@/lib/username"; // NEW
-import { LANGUAGES, LEVELS, GOALS, EMAIL_RE } from "./constants";
+import {
+  LANGUAGES,
+  LEVELS,
+  GOALS,
+  EMAIL_RE,
+  SPRITES,
+  SPRITE_VOICES,
+  SpriteSlug,
+  LANGUAGE_LOCALE_MAP,
+} from "./constants";
 import { normalizeUsername, validateUsername } from "@/lib/username-validation";
 import { Question } from "./question";
 import { SelectionCard } from "./selection-card";
@@ -22,21 +32,9 @@ import { AccountStep } from "./steps/account-step";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 import { setUserGeneration } from "@/lib/upstash";
 import { Gender } from "@prisma/client";
+import { SpriteStep } from "./steps/stripe-step";
 
 // 🛡️ Guarantees plain English names always convert to valid BCP-47 locale codes
-const LANGUAGE_LOCALE_MAP: Record<string, string> = {
-  English: "en-US",
-  French: "fr-FR",
-  Spanish: "es-ES",
-  German: "de-DE",
-  Italian: "it-IT",
-  Portuguese: "pt-BR",
-  Japanese: "ja-JP",
-  Korean: "ko-KR",
-  Chinese: "zh-CN",
-  Russian: "ru-RU",
-  Arabic: "ar-SA",
-};
 
 function getLanguageCode(item: any): string {
   if (item?.code && /^[a-z]{2,3}-[A-Z]{2,4}$/.test(item.code)) return item.code;
@@ -62,7 +60,7 @@ export default function OnboardingShell({
   const hasAccount = !!session?.user;
 
   const [step, setStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 6;
 
   // Account State
   const [firstName, setFirstName] = useState("");
@@ -79,6 +77,8 @@ export default function OnboardingShell({
   const [targetLanguage, setTargetLanguage] = useState("");
   const [level, setLevel] = useState("");
   const [goal, setGoal] = useState("");
+  const [sprite, setSprite] = useState<SpriteSlug>("vox");
+  const [voiceId, setVoiceId] = useState<string>("");
 
   // NEW: user typing goes through this so it's always lowercase
   const handleUsernameChange = (value: string) => {
@@ -146,7 +146,9 @@ export default function OnboardingShell({
           ? !!targetLanguage && targetLanguage !== nativeLanguage
           : step === 4
             ? !!level
-            : !!goal;
+            : step === 5
+              ? !!goal
+              : !!sprite && !!voiceId;
 
   const signInWithGoogle = async (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -467,6 +469,25 @@ export default function OnboardingShell({
                       </SelectionCard>
                     ))}
                   </div>
+                </Question>
+              )}
+
+              {/* Step 6: Sprite & Voice */}
+              {step === 6 && (
+                <Question
+                  key="sprite"
+                  icon={<Volume2 className="h-5 w-5" />}
+                  eyebrow="Your AI Companion"
+                  title="Choose your guide & voice"
+                  description="Vox or Vivi will brief you before every Spoon and coach you through the curriculum."
+                >
+                  <SpriteStep
+                    targetLanguage={targetLanguage}
+                    selectedSprite={sprite}
+                    setSelectedSprite={setSprite}
+                    selectedVoiceId={voiceId}
+                    setSelectedVoiceId={setVoiceId}
+                  />
                 </Question>
               )}
             </AnimatePresence>
