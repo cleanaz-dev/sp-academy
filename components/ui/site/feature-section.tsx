@@ -130,6 +130,7 @@ export default function FeaturesSection() {
 
   return (
     <section
+      id="features"
       aria-labelledby="features-heading"
       className="relative isolate overflow-clip py-[clamp(4rem,7vh,5.5rem)] transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] lg:flex lg:min-h-[100svh] lg:items-center lg:py-0"
       style={{ backgroundColor: currentTheme.bg }}

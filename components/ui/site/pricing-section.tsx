@@ -112,6 +112,7 @@ export default function PricingSection() {
     <section
       aria-labelledby="pricing-heading"
       className="relative isolate overflow-clip bg-background py-[clamp(4rem,7vh,5.5rem)]"
+      id="pricing"
     >
       <div
         aria-hidden="true"
