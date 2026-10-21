@@ -60,6 +60,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       overrideUserInfoOnSignIn: true,
       disableSignUp: false,
+      prompt: "select_account"
     },
   },
 
