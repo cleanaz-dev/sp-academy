@@ -2,7 +2,7 @@
 
 import { Dices } from "lucide-react";
 import { USERNAME_MAX } from "@/lib/username-validation"; // NEW
-import { Gender } from "../onboarding-shell";
+import { Gender } from "@prisma/client";
 
 interface AccountStepProps {
   hasAccount: boolean;
@@ -98,8 +98,8 @@ export function AccountStep({
           <div className="grid grid-cols-2 gap-3">
             {(
               [
-                { value: "male", label: "Male (Masculine)", icon: "👨" },
-                { value: "female", label: "Female (Feminine)", icon: "👩" },
+                { value: "M", label: "Male (Masculine)", icon: "👨" },
+                { value: "F", label: "Female (Feminine)", icon: "👩" },
               ] as const
             ).map((opt) => {
               const selected = gender === opt.value;
