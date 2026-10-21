@@ -1,5 +1,4 @@
 // lib/upstash.ts
-"use server";
 
 import { Redis } from "@upstash/redis";
 import crypto from "crypto";
