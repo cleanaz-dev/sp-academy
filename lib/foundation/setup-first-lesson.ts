@@ -7,6 +7,7 @@ import {
   LessonDbContext,
 } from "@/app/actions/invoke-edu-builder";
 import { prisma } from "@/lib/prisma";
+import { getSpoonSpriteOrderIndex } from "./tool";
 
 const BASE = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;
