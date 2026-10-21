@@ -20,9 +20,8 @@ import { Question } from "./question";
 import { SelectionCard } from "./selection-card";
 import { AccountStep } from "./steps/account-step";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
-
-export type Gender = "male" | "female" | "";
-
+import { setUserGeneration } from "@/lib/upstash";
+import { Gender } from "@prisma/client";
 
 // 🛡️ Guarantees plain English names always convert to valid BCP-47 locale codes
 const LANGUAGE_LOCALE_MAP: Record<string, string> = {
@@ -68,7 +67,7 @@ export default function OnboardingShell({
   // Account State
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [gender, setGender] = useState<Gender>("");
+  const [gender, setGender] = useState<Gender>(Gender.M);
   const [username, setUsername] = useState("");
   const [emailValue, setEmailValue] = useState(email ?? "");
   const [password, setPassword] = useState("");
@@ -135,7 +134,7 @@ export default function OnboardingShell({
     firstName.trim().length > 0 &&
     lastName.trim().length > 0 &&
     validateUsername(username) === null &&
-    (gender === "male" || gender === "female") &&
+    (gender === Gender.M || gender === Gender.F) &&
     (hasAccount || (EMAIL_RE.test(emailValue.trim()) && password.length >= 8));
 
   const canContinue =
@@ -171,6 +170,7 @@ export default function OnboardingShell({
     }
   };
 
+  // 2. Replace handleCompleteOnboarding (lines 166-206) with this:
   const handleCompleteOnboarding = async () => {
     const userId = session?.user?.id;
 
@@ -189,23 +189,33 @@ export default function OnboardingShell({
         targetLanguage,
       });
 
-      // Passes "en-US", "fr-FR", etc. directly
-      await invokeEduBuilder({
-        userId,
-        sessionId,
-        firstName,
-        gender: gender || "male",
-        spoon: 1,
-        nativeLanguage,
-        targetLanguage,
-        levelBand: level.toLowerCase(),
-        goal: goal.toLowerCase(),
-        scriptComfort: "unspecified",
-        type: "lang",
-        isOnboarding: true,
-      });
+      // Run both the builder invocation and the Redis token creation in parallel
+      const [_, setupToken] = await Promise.all([
+        invokeEduBuilder({
+          userId,
+          sessionId,
+          firstName,
+          gender: gender || "male",
+          spoon: 1,
+          nativeLanguage,
+          targetLanguage,
+          levelBand: level.toLowerCase(),
+          goal: goal.toLowerCase(),
+          scriptComfort: "unspecified",
+          type: "lang",
+          isOnboarding: true,
+        }),
+        setUserGeneration({
+          firstName: firstName.trim(),
+          gender: gender || "male",
+          nativeLanguage,
+          targetLanguage,
+          level: level.toLowerCase(),
+          goal,
+        }),
+      ]);
 
-      router.push("/learning-hub");
+      router.push(`/learning-hub?setup=${setupToken}`);
       router.refresh();
     } catch (err) {
       console.error("Failed to save onboarding:", err);

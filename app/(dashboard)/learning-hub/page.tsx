@@ -2,19 +2,28 @@ import FoundationHubPage from "@/components/learning-hub/foundation-hub-page";
 import { getLearningPath } from "@/app/actions/get-learning-path";
 import { getUserLanguage } from "@/app/actions/get-user-language";
 import { requireUser } from "@/lib/auth-guard";
+import { getUserGeneration } from "@/lib/upstash";
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const user = await requireUser();
+  const params = await searchParams;
+  const setupToken = typeof params?.setup === "string" ? params.setup : undefined;
 
-  const [path, userLang] = await Promise.all([
+  const [path, userLang, generationData] = await Promise.all([
     getLearningPath(user.id),
     getUserLanguage(user.id),
+    getUserGeneration(setupToken),
   ]);
 
-  console.log(`[learning-hub] path for ${user.id}:`, JSON.stringify(path, null, 2));
-
-  console.log(`[learning-hub] lang for ${user.id}:`, JSON.stringify(userLang, null, 2));
-
-  // Access the inner `.lang` object and cast to any to bypass the Enum vs String type complaint
-  return <FoundationHubPage path={path} lang={userLang as any} />;
+  return (
+    <FoundationHubPage
+      path={path}
+      lang={userLang as any}
+      generationData={generationData}
+    />
+  );
 }

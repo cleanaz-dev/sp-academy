@@ -1,3 +1,9 @@
+enum Gender {
+  M
+  F
+  N
+}
+
 model User {
   id    String @id @default(cuid())
   email String @unique
@@ -9,7 +15,7 @@ model User {
   displayUsername String? // NEW
   firstName       String? // NEW
   lastName        String? // NEW
-  gender          String?
+  gender          Gender? @default(N)
 
   avatarUrl  String?
   phone      String?

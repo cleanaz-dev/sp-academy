@@ -3,10 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { LearningPath } from "@/app/actions/get-learning-path";
+import type { UserGenerationData } from "@/lib/upstash";
 import { vocabWordCount } from "./utils";
 
 import { DashboardHeader } from "./dashboard-header";
 import { PrimaryHeroCard } from "./primary-hero-card";
+import { GenerationCycleCard } from "./generation-cycle-card";
 import { LearningPathMiniCards } from "./learning-mini-path-cards";
 import { WordMatrixCard } from "./word-matrix-card";
 import { AiTutorCard } from "./ai-tutor-card";
@@ -14,9 +16,14 @@ import { AiTutorCard } from "./ai-tutor-card";
 type Props = {
   path: LearningPath | null;
   lang: { nativeLanguage: string; targetLanguage: string | null | any };
+  generationData?: UserGenerationData | null;
 };
 
-export default function FoundationHubPage({ path, lang }: Props) {
+export default function FoundationHubPage({
+  path,
+  lang,
+  generationData,
+}: Props) {
   const router = useRouter();
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
@@ -84,7 +91,7 @@ export default function FoundationHubPage({ path, lang }: Props) {
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
-        name={user?.firstName}
+        name={user?.firstName || generationData?.firstName}
         lang={lang}
         completedCount={completedLessonsCount}
         streak={1}
@@ -94,17 +101,21 @@ export default function FoundationHubPage({ path, lang }: Props) {
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
           {/* LEFT / MAIN COLUMN */}
           <div className="flex flex-col gap-7 lg:col-span-8">
-            <PrimaryHeroCard
-              path={path}
-              vocabDue={vocabDue}
-              nextLesson={nextLesson}
-              bossDue={bossDue}
-              waitingOnSpoon={waitingOnSpoon}
-              waitingOnVocab={waitingOnVocab}
-              waitingOnBoss={waitingOnBoss}
-              getLessonHref={getLessonHref}
-              getBossHref={getBossHref}
-            />
+            {waitingOnSpoon && generationData ? (
+              <GenerationCycleCard data={generationData} />
+            ) : (
+              <PrimaryHeroCard
+                path={path}
+                vocabDue={vocabDue}
+                nextLesson={nextLesson}
+                bossDue={bossDue}
+                waitingOnSpoon={waitingOnSpoon}
+                waitingOnVocab={waitingOnVocab}
+                waitingOnBoss={waitingOnBoss}
+                getLessonHref={getLessonHref}
+                getBossHref={getBossHref}
+              />
+            )}
 
             <LearningPathMiniCards
               courseId={courseId}
