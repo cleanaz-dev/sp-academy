@@ -151,7 +151,7 @@ export async function completeVocabBridge(bridgeId: string) {
           },
         });
 
-        const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/webhooks/system-tasks/${systemTask.id}`;
+        const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/system-tasks/${systemTask.id}`;
 
         // D. Assemble the slimmed payload via buildBossPayload
         const payload = buildBossPayload({
