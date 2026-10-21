@@ -37,6 +37,7 @@ import { MatrixProvider, useMatrix } from "@/context/matrix-context";
 import { useRouter } from "next/navigation";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 import { completeLesson } from "@/app/actions/complete-lesson";
+import { SpriteCoachPop } from "./sprite-step-pop";
 
 const STEPS_CONFIG = [
   { id: 0, title: "Language Setup", icon: Languages },
@@ -246,10 +247,13 @@ function FoundationContent() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
+       {/* RIGHT SIDE: MAIN CONTENT "CARD" */}
         <div className="flex-1 bg-white rounded-4xl shadow-xs overflow-hidden min-h-[600px] flex flex-col">
           {renderStep()}
         </div>
+
+        {/* FLOATING SPRITE POPUP ON STEPS 2-7 */}
+        <SpriteCoachPop step={step} sprite="vox" />
       </div>
     </WordAudioProvider>
   );
