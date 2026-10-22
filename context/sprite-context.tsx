@@ -10,7 +10,15 @@ import React, {
   useCallback,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Volume2, Square, X, ArrowRight, RotateCcw } from "lucide-react";
+import {
+  Sparkles,
+  Volume2,
+  Square,
+  X,
+  ArrowRight,
+  RotateCcw,
+} from "lucide-react";
+import { getPresignedUrls } from "@/app/actions/s3";
 
 export type SpriteType = "vox" | "vivi";
 
@@ -77,6 +85,7 @@ export function SpriteProvider({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const s3CacheRef = useRef<Record<string, string>>({});
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
@@ -93,10 +102,39 @@ export function SpriteProvider({
     setCurrent(null);
   }, [stopAudio]);
 
+  const resolvePlayableUrl = useCallback(async (urlOrKey: string) => {
+    if (
+      urlOrKey.startsWith("http://") ||
+      urlOrKey.startsWith("https://") ||
+      urlOrKey.startsWith("/")
+    ) {
+      return urlOrKey;
+    }
+
+    if (s3CacheRef.current[urlOrKey]) {
+      return s3CacheRef.current[urlOrKey];
+    }
+
+    try {
+      const signed = await getPresignedUrls([urlOrKey]);
+      if (signed?.[urlOrKey]) {
+        s3CacheRef.current[urlOrKey] = signed[urlOrKey];
+        return signed[urlOrKey];
+      }
+    } catch (err) {
+      console.warn("Failed to resolve S3 key for sprite audio:", err);
+    }
+
+    return null;
+  }, []);
+
   const playAudioUrl = useCallback(
-    (url: string) => {
+    async (urlOrKey: string) => {
       stopAudio();
-      const audio = new Audio(url);
+      const playableUrl = await resolvePlayableUrl(urlOrKey);
+      if (!playableUrl) return;
+
+      const audio = new Audio(playableUrl);
       audioRef.current = audio;
       setIsPlaying(true);
 
@@ -109,7 +147,7 @@ export function SpriteProvider({
         setIsPlaying(false);
       });
     },
-    [stopAudio]
+    [stopAudio, resolvePlayableUrl]
   );
 
   const summonSprite = useCallback(
