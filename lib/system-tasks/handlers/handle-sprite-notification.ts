@@ -13,7 +13,7 @@ export async function handleSpriteNotificationGeneration(
       where: { id: task.id },
       data: {
         status: "FAILED",
-        output: body,
+        result: JSON.stringify(body),
       },
     });
     return NextResponse.json({ ok: false, error: body.error }, { status: 200 });
@@ -81,7 +81,7 @@ export async function handleSpriteNotificationGeneration(
       where: { id: task.id },
       data: {
         status: "COMPLETED",
-        result: body,
+        result: JSON.stringify(body),
       },
     }),
   ]);
