@@ -1,3 +1,4 @@
+// app/actions/invoke-edu-builder.ts
 "use server";
 import { lambda, createCommand } from "@/lib/aws/lambda";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,7 @@ export interface InvokeEduBuilderPayload {
   previous_lessons?: JsonValue[];
   sessionId?: string;
 
-  // NEW: Sprite fields from onboarding
+  // Sprite fields from onboarding
   spriteSlug?: "vox" | "vivi";
   nativeVoiceId?: string;
   targetVoiceId?: string;
@@ -52,6 +53,13 @@ export interface LessonDbContext {
   vocabWebhookUrl: string;
   spriteWebhookUrl?: string | null;
   cachedSpriteNode?: any | null;
+  spriteSlug?: string;
+  spriteName?: string;
+  persona?: string | null;
+  nativeVoiceId?: string;
+  targetVoiceId?: string;
+  spriteOrderIndex?: number;
+  nodeId?: string;
 }
 
 function normalizeGender(g?: string | null): "M" | "F" | "N" {
@@ -62,10 +70,6 @@ function normalizeGender(g?: string | null): "M" | "F" | "N" {
   return "N";
 }
 
-/**
- * Reassigns the Stripe subscription from the temporary webhook user
- * to the actual user who just finished onboarding.
- */
 async function claimSubscriptionForUser(userId: string, sessionId?: string) {
   if (!sessionId) return;
 
@@ -76,7 +80,6 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
 
     if (!customerId && !subscriptionId) return;
 
-    // Find the billing row created by the webhook
     const existingBilling = await prisma.billingInformation.findFirst({
       where: {
         OR: [
@@ -90,13 +93,11 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
       if (existingBilling.userId !== userId) {
         const oldUserId = existingBilling.userId;
 
-        // 1. Move billing to the active user who just finished onboarding
         await prisma.billingInformation.update({
           where: { id: existingBilling.id },
           data: { userId },
         });
 
-        // 2. Clean up the orphaned filler user if it was only a placeholder
         const oldUser = await prisma.user.findUnique({
           where: { id: oldUserId },
           include: { accounts: true, sessions: true },
@@ -115,7 +116,6 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
         );
       }
     } else {
-      // Fallback: If webhook was delayed and hasn't arrived yet, create billing now
       let interval = BillingInterval.MONTHLY;
       let nextBillingDate: Date | null = null;
       let cancelAtPeriodEnd = false;
@@ -124,7 +124,6 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const subItem = sub.items.data[0];
 
-        // Safe cast to avoid TypeScript errors across different Stripe SDK versions
         const periodEnd =
           (sub as any).current_period_end ??
           (subItem as any)?.current_period_end;
@@ -166,12 +165,10 @@ async function claimSubscriptionForUser(userId: string, sessionId?: string) {
 export async function invokeEduBuilder(
   payload: InvokeEduBuilderPayload,
 ): Promise<InvokeEduBuilderResult> {
-  // 0. Link the subscription to this user immediately
   if (payload.sessionId) {
     await claimSubscriptionForUser(payload.userId, payload.sessionId);
   }
 
-  // Normalize gender upfront so setupFirstLesson / setupNextLesson stores "M" | "F" | "N"
   const normalizedPayload: InvokeEduBuilderPayload = {
     ...payload,
     gender: normalizeGender(payload.gender),
@@ -191,15 +188,11 @@ export async function invokeEduBuilder(
     };
   }
 
-  // =========================================================================
-  // AUTOMATICALLY FETCH HISTORICAL CONTEXT & RECOVER USER PROFILE FOR LAMBDA
-  // =========================================================================
   let previous_lessons: any[] = [];
   let yesterdayLanded: string[] = [];
 
-  // Calculate which 3-Spoon Milestone & Sub-Step (1, 2, or 3) this Spoon belongs to
   const milestoneIndex = Math.ceil(normalizedPayload.spoon / 3);
-  const milestoneSubStep = ((normalizedPayload.spoon - 1) % 3) + 1; // 1, 2, or 3
+  const milestoneSubStep = ((normalizedPayload.spoon - 1) % 3) + 1;
 
   let resolvedLevelBand = normalizedPayload.levelBand;
   let resolvedGoal = normalizedPayload.goal;
@@ -211,13 +204,12 @@ export async function invokeEduBuilder(
       prisma.foundationLesson.findMany({
         where: {
           foundationCourseId: dbContext.courseId,
-          id: { not: dbContext.lessonId }, // Exclude the empty lesson we just created
+          id: { not: dbContext.lessonId },
         },
         orderBy: { orderIndex: "asc" },
         select: { orderIndex: true, title: true, lessonHandoff: true },
       }),
 
-      // Recover onboarding profile from Spoon 1's SystemTask if returning user call omitted them
       prisma.systemTask.findFirst({
         where: {
           type: "SPOON_GENERATION",
@@ -241,7 +233,6 @@ export async function invokeEduBuilder(
       };
     });
 
-    // 2. Extract the exact words they learned in the very last lesson
     if (pastLessons.length > 0) {
       const lastHandoff = pastLessons[pastLessons.length - 1]
         .lessonHandoff as any;
@@ -254,7 +245,6 @@ export async function invokeEduBuilder(
       }
     }
 
-    // 3. Recover onboarding levelBand, goal, gender, firstName from Spoon 1's task payload
     if (firstTask?.payload) {
       try {
         const initialData =
@@ -279,9 +269,7 @@ export async function invokeEduBuilder(
       }
     }
   }
-  // =========================================================================
 
-  // 2. Lambda payload wrapped in { body }
   const lambdaPayload = {
     ...normalizedPayload,
     type: "lang",
@@ -292,12 +280,11 @@ export async function invokeEduBuilder(
     foundationLessonId: dbContext.lessonId,
     webhookUrl: dbContext.webhookUrl,
     vocabWebhookUrl: dbContext.vocabWebhookUrl,
+    spriteWebhookUrl: dbContext.spriteWebhookUrl,
     levelBand: resolvedLevelBand || "beginner",
     goal: resolvedGoal || "general",
     gender: resolvedGender,
     firstName: resolvedFirstName || "there",
-
-    // Inject the historical data directly overriding anything empty
     previous_lessons:
       previous_lessons.length > 0
         ? previous_lessons
@@ -313,27 +300,68 @@ export async function invokeEduBuilder(
   };
 
   try {
-    const response = await lambda.send(
-      createCommand({
-        functionName: "spoon-edu-builder",
-        payload: { body: JSON.stringify(lambdaPayload) },
-        invocationType: "Event",
-      }),
-    );
+    const invocations: Promise<any>[] = [
+      lambda.send(
+        createCommand({
+          functionName: "spoon-edu-builder",
+          payload: { body: JSON.stringify(lambdaPayload) },
+          invocationType: "Event",
+        }),
+      ),
+    ];
 
-    if (response.StatusCode !== 202) {
-      throw new Error(`Unexpected lambda status: ${response.StatusCode}`);
+    // If SpriteNode wasn't in DB cache, invoke spoon-sprite-builder in parallel
+    if (dbContext.spriteWebhookUrl && dbContext.spriteTaskId) {
+      const spriteLambdaPayload = {
+        spriteSlug: dbContext.spriteSlug || normalizedPayload.spriteSlug || "vox",
+        spriteName: dbContext.spriteName || "Vox",
+        persona: dbContext.persona || "",
+        nativeLanguage: normalizedPayload.nativeLanguage,
+        targetLanguage: normalizedPayload.targetLanguage,
+        nativeVoiceId: dbContext.nativeVoiceId || normalizedPayload.nativeVoiceId,
+        targetVoiceId: dbContext.targetVoiceId || normalizedPayload.targetVoiceId,
+        spoon: normalizedPayload.spoon,
+        milestoneIndex,
+        subStep: milestoneSubStep,
+        orderIndex: dbContext.spriteOrderIndex,
+        levelBand: resolvedLevelBand || "beginner",
+        goal: resolvedGoal || "general",
+        nodeId: dbContext.nodeId,
+        webhookUrl: dbContext.spriteWebhookUrl,
+      };
+
+      invocations.push(
+        lambda.send(
+          createCommand({
+            functionName: "spoon-sprite-builder",
+            payload: { body: JSON.stringify(spriteLambdaPayload) },
+            invocationType: "Event",
+          }),
+        ),
+      );
     }
-    
+
+    const [eduResponse] = await Promise.all(invocations);
+
+    if (eduResponse.StatusCode !== 202) {
+      throw new Error(`Unexpected lambda status: ${eduResponse.StatusCode}`);
+    }
 
     return { ok: true, lessonId: dbContext.lessonId, taskId: dbContext.taskId };
   } catch (error) {
     console.error("❌ Error invoking Lambda:", error);
 
-    // Clean up tasks on failure so retry works
     await prisma.systemTask
       .updateMany({
-        where: { id: { in: [dbContext.taskId, dbContext.vocabTaskId] } },
+        where: {
+          id: {
+            in: [
+              dbContext.taskId,
+              dbContext.vocabTaskId,
+              ...(dbContext.spriteTaskId ? [dbContext.spriteTaskId] : []),
+            ],
+          },
+        },
         data: { status: "FAILED" },
       })
       .catch((e) => console.error("Could not mark tasks failed", e));

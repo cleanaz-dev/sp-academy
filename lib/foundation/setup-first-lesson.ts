@@ -9,7 +9,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getSpoonSpriteOrderIndex } from "./tool";
 
-const BASE = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
+const BASE = `${process.env.NEXT_PUBLIC_APP_URL2 ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;
 
 export async function setupFirstLesson(
@@ -72,8 +72,8 @@ export async function setupFirstLesson(
     });
 
     // 3. Option 1 Cache Check: Does this SpriteNode already exist?
-    const spriteOrderIndex = getSpoonSpriteOrderIndex(payload.spoon); // 1 for Spoon 1
-    const nodeId = `${chosenSlug}:${nativeVoiceId}:${payload.nativeLanguage}:${payload.targetLanguage}:${spriteOrderIndex}`;
+    const spriteOrderIndex = getSpoonSpriteOrderIndex(payload.spoon);
+    const nodeId = `${chosenSlug}:${nativeVoiceId}:${targetVoiceId}:${spriteOrderIndex}`;
 
     const cachedSpriteNode = await tx.spriteNode.findUnique({
       where: { nodeId },
@@ -81,10 +81,16 @@ export async function setupFirstLesson(
 
     const taskPayload = JSON.stringify({
       ...payload,
+      spriteSlug: chosenSlug,
+      spriteName: sprite.name,
+      persona: sprite.persona,
+      nativeVoiceId,
+      targetVoiceId,
       foundationCourseId: course.id,
       foundationLessonId: lesson.id,
       spriteProfileId: spriteProfile.id,
       spriteOrderIndex,
+      orderIndex: spriteOrderIndex,
       nodeId,
     });
 
@@ -96,6 +102,9 @@ export async function setupFirstLesson(
       foundationLessonId: lesson.id,
       spriteProfileId: spriteProfile.id,
       spriteOrderIndex,
+      orderIndex: spriteOrderIndex,
+      nativeLanguage: payload.nativeLanguage,
+      targetLanguage: payload.targetLanguage,
       nodeId,
       day: payload.spoon,
       spoon: payload.spoon,
@@ -127,10 +136,7 @@ export async function setupFirstLesson(
         data: {
           type: SystemTaskType.SPRITE_NOTIFICATION_GENERATION,
           payload: taskPayload,
-          metadata: {
-            ...metadata,
-            orderIndex: spriteOrderIndex,
-          },
+          metadata,
         },
       });
       spriteTaskId = spriteTask.id;
@@ -148,6 +154,13 @@ export async function setupFirstLesson(
       vocabWebhookUrl: hookUrl(vocabTask.id),
       spriteWebhookUrl,
       cachedSpriteNode,
+      spriteSlug: chosenSlug,
+      spriteName: sprite.name,
+      persona: sprite.persona,
+      nativeVoiceId,
+      targetVoiceId,
+      spriteOrderIndex,
+      nodeId,
     };
   });
 }
