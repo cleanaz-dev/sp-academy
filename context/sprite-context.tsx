@@ -33,26 +33,45 @@ export type SpritePayload = {
   action?: SpriteAction;
 };
 
+// Matches what getUserSprite(userId) returns: SpriteProfile + its Sprite
+export type SpriteProfileData = {
+  id: string;
+  nativeLanguage: string;
+  targetLanguage: string;
+  nativeVoiceId: string;
+  targetVoiceId: string;
+  sprite: {
+    slug: string;
+    name: string;
+    avatarUrl: string;
+    moodUrls: string[];
+    persona: string | null;
+  };
+} | null;
+
 interface SpriteContextValue {
   activeSprite: SpriteType;
   setActiveSprite: (sprite: SpriteType) => void;
   summonSprite: (payload: SpritePayload) => void;
   dismissSprite: () => void;
   isShowing: boolean;
+  profile: SpriteProfileData; // id, voice IDs, languages, sprite (name/avatar/persona)
 }
 
 const SpriteContext = createContext<SpriteContextValue | null>(null);
 
 export function SpriteProvider({
   children,
-  defaultSprite = "vox",
-  defaultSpriteUrl,
+  spriteData = null,
 }: {
   children: React.ReactNode;
-  defaultSprite?: SpriteType;
-  defaultSpriteUrl?: string;
+  spriteData?: SpriteProfileData;
 }) {
-  const [activeSprite, setActiveSprite] = useState<SpriteType>(defaultSprite);
+  const dbSprite = spriteData?.sprite ?? null;
+
+  const [activeSprite, setActiveSprite] = useState<SpriteType>(
+    (dbSprite?.slug as SpriteType) ?? "vox"
+  );
   const [current, setCurrent] = useState<SpritePayload | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -127,12 +146,13 @@ export function SpriteProvider({
     };
   }, [stopAudio]);
 
+  // Sprite identity now comes from the DB (via layout), with the old hardcoded values as fallback
   const resolvedSprite = current?.sprite || activeSprite;
   const isVivi = resolvedSprite === "vivi";
-  const spriteName = isVivi ? "Vivi" : "Vox";
+  const spriteName = dbSprite?.name ?? (isVivi ? "Vivi" : "Vox");
   const avatarSrc =
     current?.spriteUrl ||
-    defaultSpriteUrl ||
+    dbSprite?.avatarUrl ||
     (isVivi ? "/sprite-f.png" : "/sprite-m.png");
 
   const positionClasses =
@@ -150,6 +170,7 @@ export function SpriteProvider({
         summonSprite,
         dismissSprite,
         isShowing: !!current,
+        profile: spriteData,
       }}
     >
       {children}

@@ -1,39 +1,31 @@
 // app/(dashboard)/layout.tsx
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 
 import DashboardClientLayout from "@/components/dashboard/DashboardLayout";
+import { SpriteProvider } from "@/context/sprite-context";
+import { requireUser, hasActiveAccess } from "@/lib/auth-guard";
+import { getUserSprite } from "@/lib/sprites/get-user-sprite";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  
-  if (!session) {
-    redirect("/verify?type=sign-in");
+  const user = await requireUser();
+  const isAdmin = user.role === "ADMIN";
+
+  const [hasAccess, spriteData] = await Promise.all([
+    hasActiveAccess(user.id), // returns true for admins
+    getUserSprite(user.id),
+  ]);
+
+  if (!hasAccess) {
+    redirect("/verify?type=subscription-required");
   }
 
-  const isAdmin = session.user.role === "ADMIN";
-
-  if (!isAdmin) {
-    const billing = await prisma.billingInformation.findUnique({
-      where: { userId: session.user.id },
-      select: { isActive: true },
-    });
-    
-    if (!billing?.isActive) {
-      redirect("/verify?type=subscription-required");
-    }
-  }
-
-  // ✅ Pass isAdmin down directly
   return (
     <DashboardClientLayout isAdmin={isAdmin}>
-      {children}
+      <SpriteProvider spriteData={spriteData}>{children}</SpriteProvider>
     </DashboardClientLayout>
   );
 }
