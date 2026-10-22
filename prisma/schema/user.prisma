@@ -36,21 +36,25 @@ model SpriteProfile {
 
 // 3. GLOBAL DETERMINISTIC CACHE (Option 1)
 model SpriteNode {
-  id         String   @id @default(cuid())
-  nodeId     String   @unique // "vox:en-US-boy-01:en-US:fr-FR:1"
-  spriteSlug String   // "vox"
-  voiceId    String   // "en-US-boy-01"
-  orderIndex Int      // 1..7 (1=Spoon1, 2=Vocab1, ... 7=Boss1)
+  id             String   @id @default(cuid())
+  nodeId         String   @unique // "vox:en-US-boy-01:fr-FR-boy-01:1"
+  spriteSlug     String   // "vox" | "vivi"
+  nativeLanguage String   // "en-US"
+  targetLanguage String   // "fr-FR"
+  nativeVoiceId  String   // "en-US-boy-01"
+  targetVoiceId  String   // "fr-FR-boy-01"
+  orderIndex     Int      // 1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1
 
-  header     String   // "Spoon 1 Ready 🥄"
-  body       String   @db.Text
-  action     String?  // "Start Spoon 1"
-  audioUrl   String?  // S3 path: "sprites/vox/en-US-boy-01/en-US_fr-FR/node_1.mp3"
+  header         String   // "Spoon 1 Ready 🥄"
+  nativeBody     String   @db.Text
+  targetBody     String   @db.Text
+  nativeAudioUrl String?  // S3 key for native MP3
+  targetAudioUrl String?  // S3 key for target MP3
+  action         String?  // "Start Spoon 1"
 
-  createdAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   @@index([spriteSlug, orderIndex])
-  @@index([nodeId])
 }
 
 model User {

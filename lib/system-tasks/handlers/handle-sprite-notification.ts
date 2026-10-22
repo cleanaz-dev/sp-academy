@@ -32,17 +32,24 @@ export async function handleSpriteNotificationGeneration(
         {
           nodeId: fallbackNodeId,
           spriteSlug: body.spriteSlug || "vox",
-          voiceId: body.voiceId || "en-US-boy-01",
+          nativeLanguage: body.nativeLanguage || meta.nativeLanguage || "en-US",
+          targetLanguage: body.targetLanguage || meta.targetLanguage || "fr-FR",
+          nativeVoiceId: body.nativeVoiceId || "en-US-boy-01",
+          targetVoiceId: body.targetVoiceId || "fr-FR-boy-01",
           orderIndex: defaultOrderIndex,
           header: body.header || "Mission Update",
-          body: body.body || body.text || "",
+          nativeBody: body.nativeBody || body.body || "",
+          targetBody: body.targetBody || "",
+          nativeAudioUrl: body.nativeAudioUrl ?? null,
+          targetAudioUrl: body.targetAudioUrl ?? null,
           action: body.action ?? null,
-          audioUrl: body.audioUrl ?? null,
         },
       ];
 
   // Filter out any malformed items missing a nodeId
-  const validPosts = incomingPosts.filter((p: any) => Boolean(p.nodeId || fallbackNodeId));
+  const validPosts = incomingPosts.filter((p: any) =>
+    Boolean(p.nodeId || fallbackNodeId),
+  );
 
   if (validPosts.length === 0) {
     return NextResponse.json(
@@ -55,25 +62,33 @@ export async function handleSpriteNotificationGeneration(
   await prisma.$transaction([
     ...validPosts.map((post: any) => {
       const resolvedNodeId = String(post.nodeId || fallbackNodeId);
+      const parts = resolvedNodeId.split(":");
       const resolvedOrderIndex = Number(post.orderIndex ?? defaultOrderIndex);
 
       return prisma.spriteNode.upsert({
         where: { nodeId: resolvedNodeId },
         update: {
           header: post.header || "Mission Update",
-          body: post.body || "",
+          nativeBody: post.nativeBody || "",
+          targetBody: post.targetBody || "",
+          nativeAudioUrl: post.nativeAudioUrl ?? null,
+          targetAudioUrl: post.targetAudioUrl ?? null,
           action: post.action ?? null,
-          audioUrl: post.audioUrl ?? null,
         },
         create: {
           nodeId: resolvedNodeId,
-          spriteSlug: post.spriteSlug || resolvedNodeId.split(":")[0] || "vox",
-          voiceId: post.voiceId || resolvedNodeId.split(":")[1] || "en-US-boy-01",
+          spriteSlug: post.spriteSlug || parts[0] || "vox",
+          nativeLanguage: post.nativeLanguage || "en-US",
+          targetLanguage: post.targetLanguage || "fr-FR",
+          nativeVoiceId: post.nativeVoiceId || parts[1] || "en-US-boy-01",
+          targetVoiceId: post.targetVoiceId || parts[2] || "fr-FR-boy-01",
           orderIndex: resolvedOrderIndex,
           header: post.header || "Mission Update",
-          body: post.body || "",
+          nativeBody: post.nativeBody || "",
+          targetBody: post.targetBody || "",
+          nativeAudioUrl: post.nativeAudioUrl ?? null,
+          targetAudioUrl: post.targetAudioUrl ?? null,
           action: post.action ?? null,
-          audioUrl: post.audioUrl ?? null,
         },
       });
     }),
