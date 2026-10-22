@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 import type { UserGenerationData } from "@/lib/upstash";
+import { getSpriteNode } from "@/lib/sprites/get-sprite-node";
+import { useSprite } from "@/context/sprite-context";
 import { vocabWordCount } from "./utils";
 
 import { DashboardHeader } from "./dashboard-header";
@@ -25,6 +27,9 @@ export default function FoundationHubPage({
   generationData,
 }: Props) {
   const router = useRouter();
+  const { summonSprite, profile } = useSprite();
+  const lastSummonedKeyRef = useRef<string | null>(null);
+
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
   const user = path?.user;
@@ -40,7 +45,6 @@ export default function FoundationHubPage({
   const bossDue =
     currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
-  // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
     !currentFocus.data.title &&
@@ -82,11 +86,111 @@ export default function FoundationHubPage({
 
   const getBossHref = (bossId: string) => `/foundation/boss/${bossId}`;
 
+  // Poll while Lambda is generating
   useEffect(() => {
     if (!isGenerating) return;
     const interval = setInterval(() => router.refresh(), 4000);
     return () => clearInterval(interval);
   }, [isGenerating, router]);
+
+  // --- SPRITE TRIGGER LOGIC ---
+  useEffect(() => {
+    if (!profile?.sprite) return;
+
+    // 1. Determine which orderIndex makes sense right now
+    let orderIndex: number | null = null;
+    let actionConfig: { label: string; href: string } | null = null;
+
+    if (waitingOnSpoon && completedLessonsCount === 0) {
+      orderIndex = 0; // Onboarding / baking first lesson
+    } else if (!isGenerating && nextLesson) {
+      orderIndex = completedLessonsCount === 0 ? 1 : 4; // First lesson ready vs Next lesson ready
+      actionConfig = {
+        label: "Start Lesson",
+        href: getLessonHref(nextLesson.id),
+      };
+    } else if (!waitingOnVocab && vocabDue) {
+      orderIndex = 2; // Vocab Bridge ready
+      actionConfig = {
+        label: "Unlock Bridge",
+        href: getLessonHref(vocabDue.id),
+      };
+    } else if (!waitingOnBoss && bossDue) {
+      orderIndex = 3; // Boss Stage ready
+      actionConfig = {
+        label: "Challenge Boss",
+        href: getBossHref(bossDue.id),
+      };
+    }
+
+    if (orderIndex === null) return;
+
+    // 2. Build a unique key for this state + focus item so we don't spam on re-renders
+    const focusItemId =
+      nextLesson?.id ?? vocabDue?.id ?? bossDue?.id ?? "generating";
+    const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
+
+    if (
+      lastSummonedKeyRef.current === triggerKey ||
+      sessionStorage.getItem(triggerKey)
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function triggerSprite(idx: number) {
+      const node = await getSpriteNode(
+        {
+          slug: profile!.sprite.slug,
+          nativeVoiceId: profile!.nativeVoiceId,
+          targetVoiceId: profile!.targetVoiceId,
+        },
+        idx
+      );
+
+      if (cancelled || !node) return;
+
+      lastSummonedKeyRef.current = triggerKey;
+      sessionStorage.setItem(triggerKey, "1");
+
+      summonSprite({
+        id: node.nodeId,
+        badge: node.header ?? undefined,
+        text: node.nativeBody,
+        audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
+        autoPlayAudio: true,
+        duration: isGenerating ? 8000 : 10000,
+        position: "bottom-right",
+        action: actionConfig
+          ? {
+              label: node.action || actionConfig.label,
+              onClick: () => router.push(actionConfig!.href),
+              variant: "primary",
+            }
+          : undefined,
+      });
+    }
+
+    triggerSprite(orderIndex);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    profile,
+    isGenerating,
+    waitingOnSpoon,
+    waitingOnVocab,
+    waitingOnBoss,
+    completedLessonsCount,
+    nextLesson?.id,
+    vocabDue?.id,
+    bossDue?.id,
+    courseId,
+    router,
+    summonSprite,
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
