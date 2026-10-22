@@ -42,7 +42,8 @@ export default function FoundationHubPage({
     currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson =
     currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
-  const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
+  const bossDue =
+    currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
@@ -56,7 +57,7 @@ export default function FoundationHubPage({
 
   const bossStageObj =
     currentFocus?.type === "BOSS"
-      ? ((currentFocus.data as any)?.bossStage ?? currentFocus.data)
+      ? (currentFocus.data as any)?.bossStage ?? currentFocus.data
       : null;
 
   const waitingOnBoss =
@@ -66,7 +67,7 @@ export default function FoundationHubPage({
   const isGenerating = waitingOnSpoon || waitingOnVocab || waitingOnBoss;
 
   const completedLessonsCount = lessons.filter((l) =>
-    Boolean(l.completedAt),
+    Boolean(l.completedAt)
   ).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
@@ -80,8 +81,7 @@ export default function FoundationHubPage({
     .filter((l) => l.completedAt && l.bridge?.vocabMoment)
     .flatMap(
       (l) =>
-        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ??
-        [],
+        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ?? []
     )
     .reverse();
 
@@ -97,18 +97,8 @@ export default function FoundationHubPage({
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
-  // --- SPRITE TRIGGER LOGIC ---
+  // --- SPRITE TRIGGER LOGIC (1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1) ---
   useEffect(() => {
-    console.log("🚨 [SPRITE DEBUG 1: EFFECT FIRED]", {
-      profile,
-      currentFocusType: currentFocus?.type,
-      bossDueData: JSON.stringify(currentFocus?.data),
-      completedLessonsCount,
-      waitingOnSpoon,
-      waitingOnVocab,
-      waitingOnBoss,
-    });
-
     if (!profile?.sprite) return;
 
     let orderIndex: number | null = null;
@@ -124,18 +114,17 @@ export default function FoundationHubPage({
       actionHref = getBossHref(bossId);
     }
 
-    console.log("🚨 [SPRITE DEBUG 2: COMPUTED TARGET]", {
-      orderIndex,
-      actionHref,
-      expectedNodeId: `${profile.sprite.slug}:${profile.nativeVoiceId}:${profile.targetVoiceId}:${orderIndex}`,
-    });
-
     if (!orderIndex || !actionHref) return;
 
     const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
     const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
 
-    if (lastSummonedKeyRef.current === triggerKey) return;
+    if (
+      lastSummonedKeyRef.current === triggerKey ||
+      sessionStorage.getItem(triggerKey)
+    ) {
+      return;
+    }
 
     let cancelled = false;
 
@@ -146,14 +135,13 @@ export default function FoundationHubPage({
           nativeVoiceId: profile!.nativeVoiceId,
           targetVoiceId: profile!.targetVoiceId,
         },
-        idx,
+        idx
       );
-
-      console.log("🚨 [SPRITE DEBUG 4: SERVER ACTION RETURNED]", node);
 
       if (cancelled || !node) return;
 
       lastSummonedKeyRef.current = triggerKey;
+      sessionStorage.setItem(triggerKey, "1");
 
       summonSprite({
         id: node.nodeId,
@@ -161,7 +149,7 @@ export default function FoundationHubPage({
         text: node.nativeBody,
         audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
         autoPlayAudio: true,
-        duration: 10000,
+        duration: 20000, // 20s so user can listen to the full 8-9s clip + read/click
         position: "bottom-right",
         action: {
           label:
