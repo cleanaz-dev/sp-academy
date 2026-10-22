@@ -56,10 +56,14 @@ export default function FoundationHubPage({
       ? !currentFocus.data.bridge
       : lessons.some((l) => l.completedAt && !l.bridge);
 
+  const bossStageObj =
+    currentFocus?.type === "BOSS"
+      ? (currentFocus.data as any)?.bossStage ?? currentFocus.data
+      : null;
+
   const waitingOnBoss =
     currentFocus?.type === "BOSS" &&
-    (!currentFocus.data.bossStage ||
-      currentFocus.data.bossStage.status === "BUILDING");
+    (!bossStageObj || bossStageObj.status === "BUILDING");
 
   const isGenerating = waitingOnSpoon || waitingOnVocab || waitingOnBoss;
 
@@ -96,22 +100,21 @@ export default function FoundationHubPage({
 
   // --- SPRITE TRIGGER LOGIC (1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1) ---
   useEffect(() => {
-    if (!profile?.sprite || isGenerating) return;
+    if (!profile?.sprite) return;
 
     let orderIndex: number | null = null;
     let actionHref: string | null = null;
 
-    if (currentFocus?.type === "SPOON" && nextLesson) {
+    if (currentFocus?.type === "SPOON" && nextLesson && !waitingOnSpoon) {
       // completedLessonsCount: 0 -> Spoon 1 (idx 1), 1 -> Spoon 2 (idx 2), 2 -> Spoon 3 (idx 3)
-      orderIndex = completedLessonsCount + 1;
+      orderIndex = (completedLessonsCount % 3) + 1;
       actionHref = getLessonHref(nextLesson.id);
-    } else if (currentFocus?.type === "BOSS" && bossDue) {
-      orderIndex = 4; // 4 = Boss 1
+    } else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
+      orderIndex = 4; // 4 = Boss Stage
       actionHref = getBossHref(bossDue.id);
     }
 
-    // Guard: Only trigger for valid seeded orderIndex values (1..4)
-    if (!orderIndex || orderIndex > 4 || !actionHref) return;
+    if (!orderIndex || !actionHref) return;
 
     const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
     const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
@@ -149,7 +152,9 @@ export default function FoundationHubPage({
         duration: 10000,
         position: "bottom-right",
         action: {
-          label: node.action || (idx === 4 ? "Challenge Boss" : `Start Spoon ${idx}`),
+          label:
+            node.action ||
+            (idx === 4 ? "Challenge Boss" : `Start Spoon ${idx}`),
           onClick: () => router.push(href),
           variant: "primary",
         },
@@ -163,7 +168,8 @@ export default function FoundationHubPage({
     };
   }, [
     profile,
-    isGenerating,
+    waitingOnSpoon,
+    waitingOnBoss,
     currentFocus?.type,
     completedLessonsCount,
     nextLesson?.id,
