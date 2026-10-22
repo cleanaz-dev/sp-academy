@@ -45,7 +45,6 @@ export default function FoundationHubPage({
   const bossDue =
     currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
-  // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
     !currentFocus.data.title &&
@@ -98,37 +97,56 @@ export default function FoundationHubPage({
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
-  // --- SPRITE TRIGGER LOGIC (1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1) ---
+  // --- SPRITE TRIGGER LOGIC WITH FULL LOGS ---
   useEffect(() => {
-    if (!profile?.sprite) return;
+    console.log("🚨 [SPRITE DEBUG 1: EFFECT FIRED]", {
+      profile,
+      currentFocusType: currentFocus?.type,
+      currentFocusData: currentFocus?.data,
+      completedLessonsCount,
+      waitingOnSpoon,
+      waitingOnVocab,
+      waitingOnBoss,
+      isGenerating,
+    });
+
+    if (!profile?.sprite) {
+      console.warn("❌ [SPRITE ABORT] profile or profile.sprite is NULL! Check <SpriteProvider spriteData={...}> in layout.tsx");
+      return;
+    }
 
     let orderIndex: number | null = null;
     let actionHref: string | null = null;
 
     if (currentFocus?.type === "SPOON" && nextLesson && !waitingOnSpoon) {
-      // completedLessonsCount: 0 -> Spoon 1 (idx 1), 1 -> Spoon 2 (idx 2), 2 -> Spoon 3 (idx 3)
       orderIndex = (completedLessonsCount % 3) + 1;
       actionHref = getLessonHref(nextLesson.id);
     } else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
-      orderIndex = 4; // 4 = Boss Stage
+      orderIndex = 4;
       actionHref = getBossHref(bossDue.id);
     }
 
-    if (!orderIndex || !actionHref) return;
+    console.log("🚨 [SPRITE DEBUG 2: COMPUTED TARGET]", {
+      orderIndex,
+      actionHref,
+      expectedNodeId: `${profile.sprite.slug}:${profile.nativeVoiceId}:${profile.targetVoiceId}:${orderIndex}`,
+    });
 
-    const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
-    const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
-
-    if (
-      lastSummonedKeyRef.current === triggerKey ||
-      sessionStorage.getItem(triggerKey)
-    ) {
+    if (!orderIndex || !actionHref) {
+      console.warn("❌ [SPRITE ABORT] No matching orderIndex or actionHref for currentFocus:", currentFocus);
       return;
     }
 
     let cancelled = false;
 
     async function triggerSprite(idx: number, href: string) {
+      console.log("🚨 [SPRITE DEBUG 3: CALLING SERVER ACTION getSpriteNode]...", {
+        slug: profile!.sprite.slug,
+        nativeVoiceId: profile!.nativeVoiceId,
+        targetVoiceId: profile!.targetVoiceId,
+        idx,
+      });
+
       const node = await getSpriteNode(
         {
           slug: profile!.sprite.slug,
@@ -138,10 +156,19 @@ export default function FoundationHubPage({
         idx
       );
 
-      if (cancelled || !node) return;
+      console.log("🚨 [SPRITE DEBUG 4: SERVER ACTION RETURNED]", node);
 
-      lastSummonedKeyRef.current = triggerKey;
-      sessionStorage.setItem(triggerKey, "1");
+      if (cancelled) {
+        console.warn("⚠️ [SPRITE ABORT] Effect was cleaned up before node returned");
+        return;
+      }
+
+      if (!node) {
+        console.error("❌ [SPRITE ABORT] getSpriteNode returned NULL!");
+        return;
+      }
+
+      console.log("✅ [SPRITE DEBUG 5: SUMMONING SPRITE NOW!]", node.nodeId);
 
       summonSprite({
         id: node.nodeId,
