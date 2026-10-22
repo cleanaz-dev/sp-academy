@@ -81,7 +81,7 @@ export async function handleSpriteNotificationGeneration(
       where: { id: task.id },
       data: {
         status: "COMPLETED",
-        output: body,
+        result: body,
       },
     }),
   ]);
