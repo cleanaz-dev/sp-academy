@@ -60,6 +60,12 @@ export interface LessonDbContext {
   targetVoiceId?: string;
   spriteOrderIndex?: number;
   nodeId?: string;
+
+  // Vocab Bridge Sprite Support
+  bridgeTaskId?: string | null;
+  bridgeWebhookUrl?: string | null;
+  bridgeOrderIndex?: number;
+  bridgeNodeId?: string;
 }
 
 function normalizeGender(g?: string | null): "M" | "F" | "N" {
@@ -310,7 +316,7 @@ export async function invokeEduBuilder(
       ),
     ];
 
-    // If SpriteNode wasn't in DB cache, invoke spoon-sprite-builder in parallel
+    // 1. If Spoon SpriteNode wasn't in DB cache, invoke spoon-sprite-builder for Spoon
     if (dbContext.spriteWebhookUrl && dbContext.spriteTaskId) {
       const spriteLambdaPayload = {
         spriteSlug: dbContext.spriteSlug || normalizedPayload.spriteSlug || "vox",
@@ -324,6 +330,7 @@ export async function invokeEduBuilder(
         milestoneIndex,
         subStep: milestoneSubStep,
         orderIndex: dbContext.spriteOrderIndex,
+        stepType: "SPOON",
         levelBand: resolvedLevelBand || "beginner",
         goal: resolvedGoal || "general",
         nodeId: dbContext.nodeId,
@@ -335,6 +342,42 @@ export async function invokeEduBuilder(
           createCommand({
             functionName: "spoon-sprite-builder",
             payload: { body: JSON.stringify(spriteLambdaPayload) },
+            invocationType: "Event",
+          }),
+        ),
+      );
+    }
+
+    // 2. If Bridge SpriteNode wasn't in DB cache, invoke spoon-sprite-builder for Vocab Bridge too
+    if (
+      dbContext.bridgeWebhookUrl &&
+      dbContext.bridgeTaskId &&
+      dbContext.bridgeOrderIndex
+    ) {
+      const bridgeLambdaPayload = {
+        spriteSlug: dbContext.spriteSlug || normalizedPayload.spriteSlug || "vox",
+        spriteName: dbContext.spriteName || "Vox",
+        persona: dbContext.persona || "",
+        nativeLanguage: normalizedPayload.nativeLanguage,
+        targetLanguage: normalizedPayload.targetLanguage,
+        nativeVoiceId: dbContext.nativeVoiceId || normalizedPayload.nativeVoiceId,
+        targetVoiceId: dbContext.targetVoiceId || normalizedPayload.targetVoiceId,
+        spoon: normalizedPayload.spoon - 1,
+        milestoneIndex,
+        subStep: milestoneSubStep,
+        orderIndex: dbContext.bridgeOrderIndex,
+        stepType: "BRIDGE",
+        levelBand: resolvedLevelBand || "beginner",
+        goal: resolvedGoal || "general",
+        nodeId: dbContext.bridgeNodeId,
+        webhookUrl: dbContext.bridgeWebhookUrl,
+      };
+
+      invocations.push(
+        lambda.send(
+          createCommand({
+            functionName: "spoon-sprite-builder",
+            payload: { body: JSON.stringify(bridgeLambdaPayload) },
             invocationType: "Event",
           }),
         ),
@@ -359,6 +402,7 @@ export async function invokeEduBuilder(
               dbContext.taskId,
               dbContext.vocabTaskId,
               ...(dbContext.spriteTaskId ? [dbContext.spriteTaskId] : []),
+              ...(dbContext.bridgeTaskId ? [dbContext.bridgeTaskId] : []),
             ],
           },
         },

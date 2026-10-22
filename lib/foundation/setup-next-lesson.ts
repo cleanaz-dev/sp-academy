@@ -7,7 +7,7 @@ import type {
   InvokeEduBuilderPayload,
   LessonDbContext,
 } from "@/app/actions/invoke-edu-builder";
-import { getSpoonSpriteOrderIndex } from "./tools";
+import { getSpoonSpriteOrderIndex, getBridgeSpriteOrderIndex } from "./tool";
 
 const BASE = `${process.env.NEXT_PUBLIC_APP_URL2 ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;
@@ -84,14 +84,25 @@ export async function setupNextLesson(
       update: {},
     });
 
-    // 3. Option 1 Cache Check: Does this SpriteNode already exist?
+    // 3. Option 1 Cache Check: Spoon Node
     const spriteOrderIndex = getSpoonSpriteOrderIndex(spoon);
     const spriteSlug = spriteProfile.sprite.slug;
     const nodeId = `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.targetVoiceId}:${spriteOrderIndex}`;
 
-    const cachedSpriteNode = await tx.spriteNode.findUnique({
-      where: { nodeId },
-    });
+    // Also check previous Vocab Bridge node if this isn't spoon 1!
+    const bridgeSpoonNum = spoon - 1;
+    const bridgeOrderIndex =
+      bridgeSpoonNum > 0 ? getBridgeSpriteOrderIndex(bridgeSpoonNum) : null;
+    const bridgeNodeId = bridgeOrderIndex
+      ? `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.targetVoiceId}:${bridgeOrderIndex}`
+      : null;
+
+    const [cachedSpriteNode, cachedBridgeNode] = await Promise.all([
+      tx.spriteNode.findUnique({ where: { nodeId } }),
+      bridgeNodeId
+        ? tx.spriteNode.findUnique({ where: { nodeId: bridgeNodeId } })
+        : Promise.resolve(null),
+    ]);
 
     const taskPayload = JSON.stringify({
       ...payload,
@@ -140,7 +151,7 @@ export async function setupNextLesson(
       },
     });
 
-    // 5. Only create Sprite Task if NOT in cache!
+    // 5. Create Sprite Tasks if not cached
     let spriteTaskId: string | null = null;
     let spriteWebhookUrl: string | null = null;
 
@@ -154,6 +165,42 @@ export async function setupNextLesson(
       });
       spriteTaskId = spriteTask.id;
       spriteWebhookUrl = hookUrl(spriteTask.id);
+    }
+
+    // Bridge sprite task if missing!
+    let bridgeTaskId: string | null = null;
+    let bridgeWebhookUrl: string | null = null;
+
+    if (bridgeNodeId && bridgeOrderIndex && !cachedBridgeNode) {
+      const bridgeTaskPayload = JSON.stringify({
+        ...payload,
+        stepType: "BRIDGE",
+        spriteSlug,
+        spriteName: spriteProfile.sprite.name,
+        persona: spriteProfile.sprite.persona,
+        nativeVoiceId: spriteProfile.nativeVoiceId,
+        targetVoiceId: spriteProfile.targetVoiceId,
+        foundationLessonId: lesson.id,
+        spriteProfileId: spriteProfile.id,
+        spriteOrderIndex: bridgeOrderIndex,
+        orderIndex: bridgeOrderIndex,
+        nodeId: bridgeNodeId,
+      });
+
+      const bridgeTask = await tx.systemTask.create({
+        data: {
+          type: SystemTaskType.SPRITE_NOTIFICATION_GENERATION,
+          payload: bridgeTaskPayload,
+          metadata: {
+            ...metadata,
+            stepType: "BRIDGE",
+            orderIndex: bridgeOrderIndex,
+            nodeId: bridgeNodeId,
+          },
+        },
+      });
+      bridgeTaskId = bridgeTask.id;
+      bridgeWebhookUrl = hookUrl(bridgeTask.id);
     }
 
     return {
@@ -174,6 +221,11 @@ export async function setupNextLesson(
       targetVoiceId: spriteProfile.targetVoiceId,
       spriteOrderIndex,
       nodeId,
+      // Bridge info
+      bridgeTaskId,
+      bridgeWebhookUrl,
+      bridgeOrderIndex: bridgeOrderIndex ?? undefined,
+      bridgeNodeId: bridgeNodeId ?? undefined,
     };
   });
 }
