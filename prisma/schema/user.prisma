@@ -57,6 +57,7 @@ model SpriteNode {
   @@index([spriteSlug, orderIndex])
 }
 
+
 model User {
   id    String @id @default(cuid())
   email String @unique
