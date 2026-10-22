@@ -12,7 +12,6 @@ import { getSpoonSpriteOrderIndex } from "./tool";
 const BASE = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;
 
-
 export async function setupNextLesson(
   payload: InvokeEduBuilderPayload,
 ): Promise<LessonDbContext> {
@@ -28,15 +27,15 @@ export async function setupNextLesson(
     select: { id: true, title: true, visualContent: true },
   });
 
-  // Only block if the lesson actually finished generating content!
   if (existing && (existing.title || existing.visualContent)) {
     throw new Error(`Lesson ${spoon} already exists and is ready.`);
   }
 
   return prisma.$transaction(async (tx) => {
-    // 1. Lookup existing SpriteProfile (or create default Vox fallback if missing)
+    // 1. Lookup existing SpriteProfile
     let spriteProfile = await tx.spriteProfile.findUnique({
       where: { userId },
+      include: { sprite: true },
     });
 
     if (!spriteProfile) {
@@ -49,23 +48,27 @@ export async function setupNextLesson(
         throw new Error(`Sprite "${chosenSlug}" not found. Run seed-sprites first.`);
       }
 
+      const nativeVoiceId =
+        payload.nativeVoiceId ||
+        `${payload.nativeLanguage}-${chosenSlug === "vivi" ? "girl" : "boy"}-01`;
+      const targetVoiceId =
+        payload.targetVoiceId ||
+        `${payload.targetLanguage}-${chosenSlug === "vivi" ? "girl" : "boy"}-01`;
+
       spriteProfile = await tx.spriteProfile.create({
         data: {
           userId,
           spriteId: sprite.id,
           nativeLanguage: payload.nativeLanguage,
           targetLanguage: payload.targetLanguage,
-          nativeVoiceId:
-            payload.nativeVoiceId ||
-            `${payload.nativeLanguage}-${chosenSlug === "vivi" ? "girl" : "boy"}-01`,
-          targetVoiceId:
-            payload.targetVoiceId ||
-            `${payload.targetLanguage}-${chosenSlug === "vivi" ? "girl" : "boy"}-01`,
+          nativeVoiceId,
+          targetVoiceId,
         },
+        include: { sprite: true },
       });
     }
 
-    // 2. Upsert Lesson: creates the row if new, or reuses the empty shell if a prior build failed/timed out!
+    // 2. Upsert Lesson
     const lesson = await tx.foundationLesson.upsert({
       where: {
         foundationCourseId_orderIndex: {
@@ -81,13 +84,21 @@ export async function setupNextLesson(
       update: {},
     });
 
+    // 3. Option 1 Cache Check: Does this SpriteNode already exist?
     const spriteOrderIndex = getSpoonSpriteOrderIndex(spoon);
+    const spriteSlug = spriteProfile.sprite.slug;
+    const nodeId = `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.nativeLanguage}:${spriteProfile.targetLanguage}:${spriteOrderIndex}`;
+
+    const cachedSpriteNode = await tx.spriteNode.findUnique({
+      where: { nodeId },
+    });
 
     const taskPayload = JSON.stringify({
       ...payload,
       foundationLessonId: lesson.id,
       spriteProfileId: spriteProfile.id,
       spriteOrderIndex,
+      nodeId,
     });
 
     const metadata = {
@@ -98,11 +109,12 @@ export async function setupNextLesson(
       foundationLessonId: lesson.id,
       spriteProfileId: spriteProfile.id,
       spriteOrderIndex,
+      nodeId,
       day: spoon,
       spoon,
     };
 
-    // 3. Create Spoon, Vocab, and Sprite SystemTasks
+    // 4. Create Core Spoon & Vocab Tasks
     const lessonTask = await tx.systemTask.create({
       data: {
         type: SystemTaskType.SPOON_GENERATION,
@@ -119,27 +131,36 @@ export async function setupNextLesson(
       },
     });
 
-    const spriteTask = await tx.systemTask.create({
-      data: {
-        type: SystemTaskType.SPRITE_NOTIFICATION_GENERATION,
-        payload: taskPayload,
-        metadata: {
-          ...metadata,
-          orderIndex: spriteOrderIndex,
+    // 5. Only create Sprite Task if NOT in cache!
+    let spriteTaskId: string | null = null;
+    let spriteWebhookUrl: string | null = null;
+
+    if (!cachedSpriteNode) {
+      const spriteTask = await tx.systemTask.create({
+        data: {
+          type: SystemTaskType.SPRITE_NOTIFICATION_GENERATION,
+          payload: taskPayload,
+          metadata: {
+            ...metadata,
+            orderIndex: spriteOrderIndex,
+          },
         },
-      },
-    });
+      });
+      spriteTaskId = spriteTask.id;
+      spriteWebhookUrl = hookUrl(spriteTask.id);
+    }
 
     return {
       courseId: foundationCourseId,
       lessonId: lesson.id,
       taskId: lessonTask.id,
       vocabTaskId: vocabTask.id,
-      spriteTaskId: spriteTask.id,
+      spriteTaskId,
       spriteProfileId: spriteProfile.id,
       webhookUrl: hookUrl(lessonTask.id),
       vocabWebhookUrl: hookUrl(vocabTask.id),
-      spriteWebhookUrl: hookUrl(spriteTask.id),
+      spriteWebhookUrl,
+      cachedSpriteNode,
     };
   });
 }

@@ -46,11 +46,12 @@ export interface LessonDbContext {
   lessonId: string;
   taskId: string;
   vocabTaskId: string;
-  spriteTaskId: string;
+  spriteTaskId?: string | null;
   spriteProfileId: string;
   webhookUrl: string;
   vocabWebhookUrl: string;
-  spriteWebhookUrl: string;
+  spriteWebhookUrl?: string | null;
+  cachedSpriteNode?: any | null;
 }
 
 function normalizeGender(g?: string | null): "M" | "F" | "N" {
@@ -323,6 +324,7 @@ export async function invokeEduBuilder(
     if (response.StatusCode !== 202) {
       throw new Error(`Unexpected lambda status: ${response.StatusCode}`);
     }
+    
 
     return { ok: true, lessonId: dbContext.lessonId, taskId: dbContext.taskId };
   } catch (error) {

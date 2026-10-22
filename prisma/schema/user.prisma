@@ -4,54 +4,53 @@ enum Gender {
   N
 }
 
+// 1. STATIC CATALOG: Vox and Vivi
 model Sprite {
   id        String   @id @default(cuid())
   slug      String   @unique // "vox" | "vivi"
-  name      String // "Vox" | "Vivi"
-  avatarUrl String // "/sprite-m.png" | "/sprite-f.png"
+  name      String   // "Vox" | "Vivi"
+  avatarUrl String   // "/sprite-m.png" | "/sprite-f.png"
   moodUrls  String[]
   persona   String?
 
   profiles SpriteProfile[]
-  users    User[]
 }
 
+// 2. USER'S SELECTION: Links User -> Sprite + their chosen Voice IDs
 model SpriteProfile {
-  id       String @id @default(cuid())
-  userId   String @unique
-  spriteId String
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  spriteId       String
 
-  nativeLanguage String // e.g. "en-US"
-  targetLanguage String // e.g. "fr-FR"
-  nativeVoiceId  String // e.g. "en-US-boy-01"
-  targetVoiceId  String // e.g. "fr-FR-boy-01"
+  nativeLanguage String   // e.g. "en-US"
+  targetLanguage String   // e.g. "fr-FR"
+  nativeVoiceId  String   // e.g. "en-US-boy-01"
+  targetVoiceId  String   // e.g. "fr-FR-boy-01"
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sprite Sprite       @relation(fields: [spriteId], references: [id])
-  posts  SpritePost[]
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sprite         Sprite   @relation(fields: [spriteId], references: [id])
 }
 
-model SpritePost {
-  id              String @id @default(cuid())
-  spriteProfileId String
+// 3. GLOBAL DETERMINISTIC CACHE (Option 1)
+model SpriteNode {
+  id         String   @id @default(cuid())
+  nodeId     String   @unique // "vox:en-US-boy-01:en-US:fr-FR:1"
+  spriteSlug String   // "vox"
+  voiceId    String   // "en-US-boy-01"
+  orderIndex Int      // 1..7 (1=Spoon1, 2=Vocab1, ... 7=Boss1)
 
-  // 1=Spoon1, 2=Vocab1, 3=Spoon2, 4=Vocab2, 5=Spoon3, 6=Vocab3, 7=Boss1 ...
-  orderIndex Int
+  header     String   // "Spoon 1 Ready 🥄"
+  body       String   @db.Text
+  action     String?  // "Start Spoon 1"
+  audioUrl   String?  // S3 path: "sprites/vox/en-US-boy-01/en-US_fr-FR/node_1.mp3"
 
-  header   String // e.g. "Boss Alert ⚔️" or "Vocab Bridge 1"
-  body     String  @db.Text // What Vox/Vivi says
-  action   String? // e.g. "/foundation/boss/123" or action label/type
-  audioUrl String? // Optional S3 audio clip if generated
+  createdAt  DateTime @default(now())
 
-  createdAt DateTime @default(now())
-
-  spriteProfile SpriteProfile @relation(fields: [spriteProfileId], references: [id], onDelete: Cascade)
-
-  @@unique([spriteProfileId, orderIndex])
-  @@index([spriteProfileId, orderIndex])
+  @@index([spriteSlug, orderIndex])
+  @@index([nodeId])
 }
 
 model User {
@@ -59,16 +58,16 @@ model User {
   email String @unique
   name  String
 
-  spriteId String?
-  sprite   Sprite? @relation(fields: [spriteId], references: [id])
+  // Kept clean via 1-to-1 SpriteProfile relation:
+  spriteProfile SpriteProfile?
 
-  emailVerified   Boolean @default(false) // NEW
-  image           String? // NEW
-  username        String? @unique // NEW
-  displayUsername String? // NEW
-  firstName       String? // NEW
-  lastName        String? // NEW
-  gender          Gender? @default(N)
+  emailVerified   Boolean  @default(false)
+  image           String?
+  username        String?  @unique
+  displayUsername String?
+  firstName       String?
+  lastName        String?
+  gender          Gender?  @default(N)
 
   avatarUrl  String?
   phone      String?
@@ -76,8 +75,8 @@ model User {
   banReason  String?
   banExpires DateTime?
 
-  sessions Session[] // NEW
-  accounts Account[] // NEW
+  sessions Session[]
+  accounts Account[]
 
   role      UserRole @default(CUSTOMER)
   createdAt DateTime @default(now())
@@ -90,7 +89,7 @@ model User {
   StoryQuestions        StoryQuestions[]
   PronunciationSession  PronunciationSession[]
   PronunciationProgress PronunciationProgress[]
-  PracticeSessions      PracticeSession[] // Add this relation
+  PracticeSessions      PracticeSession[]
   BookReport            BookReport[]
   Book                  Book[]
   Conversation          Conversation[]
@@ -121,7 +120,6 @@ model User {
   languageProfiles       LanguageProfile[]
   foundationCourses      FoundationCourse[]
   foundationBossStages   FoundationBossStage[]
-  spriteProfile          SpriteProfile?
 }
 
 model BillingInformation {

@@ -173,7 +173,7 @@ export default function OnboardingShell({
   };
 
   // 2. Replace handleCompleteOnboarding (lines 166-206) with this:
-  const handleCompleteOnboarding = async () => {
+const handleCompleteOnboarding = async () => {
     const userId = session?.user?.id;
 
     if (!userId) {
@@ -186,9 +186,21 @@ export default function OnboardingShell({
     setError(null);
 
     try {
-      console.log("Submitting Onboarding with languages:", {
+      // Extract the voice style suffix (e.g. "boy-01", "man-01", "girl-01", "woman-01")
+      // from the selected voiceId ("fr-FR-boy-01") so both native & target match their choice!
+      const voiceSuffix =
+        voiceId.split("-").slice(2).join("-") ||
+        (sprite === "vivi" ? "girl-01" : "boy-01");
+
+      const resolvedNativeVoiceId = `${nativeLanguage}-${voiceSuffix}`;
+      const resolvedTargetVoiceId = voiceId || `${targetLanguage}-${voiceSuffix}`;
+
+      console.log("Submitting Onboarding:", {
         nativeLanguage,
         targetLanguage,
+        sprite,
+        resolvedNativeVoiceId,
+        resolvedTargetVoiceId,
       });
 
       // Run both the builder invocation and the Redis token creation in parallel
@@ -197,7 +209,7 @@ export default function OnboardingShell({
           userId,
           sessionId,
           firstName,
-          gender: gender || "male",
+          gender: gender || "M",
           spoon: 1,
           nativeLanguage,
           targetLanguage,
@@ -206,14 +218,20 @@ export default function OnboardingShell({
           scriptComfort: "unspecified",
           type: "lang",
           isOnboarding: true,
+          spriteSlug: sprite,
+          nativeVoiceId: resolvedNativeVoiceId,
+          targetVoiceId: resolvedTargetVoiceId,
         }),
         setUserGeneration({
           firstName: firstName.trim(),
-          gender: gender || "male",
+          gender: gender || "M",
           nativeLanguage,
           targetLanguage,
           level: level.toLowerCase(),
           goal,
+          spriteSlug: sprite,
+          nativeVoiceId: resolvedNativeVoiceId,
+          targetVoiceId: resolvedTargetVoiceId,
         }),
       ]);
 
