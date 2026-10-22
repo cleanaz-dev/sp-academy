@@ -7,7 +7,7 @@ import type {
   InvokeEduBuilderPayload,
   LessonDbContext,
 } from "@/app/actions/invoke-edu-builder";
-import { getSpoonSpriteOrderIndex } from "./tool";
+import { getSpoonSpriteOrderIndex } from "./tools";
 
 const BASE = `${process.env.NEXT_PUBLIC_APP_URL2 ?? "https://spoonacademy.com"}/api/webhooks/system-tasks`;
 const hookUrl = (taskId: string) => `${BASE}/${taskId}`;

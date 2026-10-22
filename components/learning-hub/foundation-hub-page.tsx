@@ -6,6 +6,11 @@ import type { LearningPath } from "@/app/actions/get-learning-path";
 import type { UserGenerationData } from "@/lib/upstash";
 import { getSpriteNode } from "@/lib/sprites/get-sprite-node";
 import { useSprite } from "@/context/sprite-context";
+import {
+  getSpoonSpriteOrderIndex,
+  getBridgeSpriteOrderIndex,
+  getBossSpriteOrderIndex,
+} from "@/lib/foundation/tool";
 import { vocabWordCount } from "./utils";
 
 import { DashboardHeader } from "./dashboard-header";
@@ -45,6 +50,7 @@ export default function FoundationHubPage({
   const bossDue =
     currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
+  // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
     !currentFocus.data.title &&
@@ -97,26 +103,55 @@ export default function FoundationHubPage({
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
-  // --- SPRITE TRIGGER LOGIC (1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1) ---
+  // --- SPRITE TRIGGER LOGIC ---
   useEffect(() => {
     if (!profile?.sprite) return;
 
     let orderIndex: number | null = null;
     let actionHref: string | null = null;
+    let stepLabel = "";
 
+    // 1. SPOON FOCUS
     if (currentFocus?.type === "SPOON" && nextLesson && !waitingOnSpoon) {
-      orderIndex = (completedLessonsCount % 3) + 1;
+      const spoonNum =
+        (nextLesson as any)?.orderIndex ?? completedLessonsCount + 1;
+
+      // Spoon 1 -> 1, Spoon 2 -> 3, Spoon 3 -> 5 | Spoon 4 -> 8, Spoon 5 -> 10...
+      orderIndex = getSpoonSpriteOrderIndex(spoonNum);
       actionHref = getLessonHref(nextLesson.id);
-    } else if (currentFocus?.type === "BOSS" && bossDue) {
-      orderIndex = 4;
+      stepLabel = `Start Spoon ${spoonNum}`;
+    }
+
+    // 2. VOCAB BRIDGE FOCUS
+    else if (currentFocus?.type === "BRIDGE" && vocabDue && !waitingOnVocab) {
+      const spoonNum =
+        (vocabDue as any)?.orderIndex ?? completedLessonsCount;
+
+      // Bridge 1 -> 2, Bridge 2 -> 4, Bridge 3 -> 6 | Bridge 4 -> 9...
+      orderIndex = getBridgeSpriteOrderIndex(spoonNum);
+      actionHref = getLessonHref(vocabDue.id);
+      stepLabel = "Unlock Bridge";
+    }
+
+    // 3. BOSS STAGE FOCUS
+    else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
+      const milestoneNum =
+        (bossDue as any)?.milestoneIndex ??
+        (bossDue as any)?.bossStage?.milestoneIndex ??
+        Math.max(1, Math.ceil(completedLessonsCount / 3));
+
+      // Boss 1 -> 7, Boss 2 -> 14, Boss 3 -> 21...
+      orderIndex = getBossSpriteOrderIndex(milestoneNum);
       const bossId =
         (bossDue as any)?.bossStage?.id ?? (bossDue as any)?.id ?? courseId;
       actionHref = getBossHref(bossId);
+      stepLabel = "Challenge Boss";
     }
 
     if (!orderIndex || !actionHref) return;
 
-    const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
+    const focusItemId =
+      nextLesson?.id ?? vocabDue?.id ?? bossDue?.id ?? String(orderIndex);
     const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
 
     if (
@@ -128,7 +163,11 @@ export default function FoundationHubPage({
 
     let cancelled = false;
 
-    async function triggerSprite(idx: number, href: string) {
+    async function triggerSprite(
+      idx: number,
+      href: string,
+      fallbackLabel: string
+    ) {
       const node = await getSpriteNode(
         {
           slug: profile!.sprite.slug,
@@ -149,19 +188,17 @@ export default function FoundationHubPage({
         text: node.nativeBody,
         audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
         autoPlayAudio: true,
-        duration: 20000, // 20s so user can listen to the full 8-9s clip + read/click
+        duration: 20000,
         position: "bottom-right",
         action: {
-          label:
-            node.action ||
-            (idx === 4 ? "Challenge Boss" : `Start Spoon ${idx}`),
+          label: node.action || fallbackLabel,
           onClick: () => router.push(href),
           variant: "primary",
         },
       });
     }
 
-    triggerSprite(orderIndex, actionHref);
+    triggerSprite(orderIndex, actionHref, stepLabel);
 
     return () => {
       cancelled = true;
@@ -169,9 +206,12 @@ export default function FoundationHubPage({
   }, [
     profile,
     waitingOnSpoon,
+    waitingOnVocab,
+    waitingOnBoss,
     currentFocus?.type,
     completedLessonsCount,
     nextLesson?.id,
+    vocabDue?.id,
     bossDue?.id,
     courseId,
     router,
