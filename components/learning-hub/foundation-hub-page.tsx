@@ -10,7 +10,7 @@ import {
   getSpoonSpriteOrderIndex,
   getBridgeSpriteOrderIndex,
   getBossSpriteOrderIndex,
-} from "@/lib/foundation/tool";
+} from "@/lib/foundation/tools";
 import { vocabWordCount } from "./utils";
 
 import { DashboardHeader } from "./dashboard-header";
