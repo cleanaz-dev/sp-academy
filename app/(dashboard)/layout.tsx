@@ -5,6 +5,7 @@ import DashboardClientLayout from "@/components/dashboard/DashboardLayout";
 import { SpriteProvider } from "@/context/sprite-context";
 import { requireUser, hasActiveAccess } from "@/lib/auth-guard";
 import { getUserSprite } from "@/lib/sprites/get-user-sprite";
+import { S3Provider } from "@/context/s3-context";
 
 export default async function DashboardLayout({
   children,
@@ -25,7 +26,9 @@ export default async function DashboardLayout({
 
   return (
     <DashboardClientLayout isAdmin={isAdmin}>
-      <SpriteProvider spriteData={spriteData}>{children}</SpriteProvider>
+      <S3Provider>
+        <SpriteProvider spriteData={spriteData}>{children}</SpriteProvider>
+      </S3Provider>
     </DashboardClientLayout>
   );
 }

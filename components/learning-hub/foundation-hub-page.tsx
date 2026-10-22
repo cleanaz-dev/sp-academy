@@ -45,6 +45,7 @@ export default function FoundationHubPage({
   const bossDue =
     currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
+  // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
     !currentFocus.data.title &&
@@ -93,41 +94,26 @@ export default function FoundationHubPage({
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
-  // --- SPRITE TRIGGER LOGIC ---
+  // --- SPRITE TRIGGER LOGIC (1=Spoon1, 2=Spoon2, 3=Spoon3, 4=Boss1) ---
   useEffect(() => {
-    if (!profile?.sprite) return;
+    if (!profile?.sprite || isGenerating) return;
 
-    // 1. Determine which orderIndex makes sense right now
     let orderIndex: number | null = null;
-    let actionConfig: { label: string; href: string } | null = null;
+    let actionHref: string | null = null;
 
-    if (waitingOnSpoon && completedLessonsCount === 0) {
-      orderIndex = 0; // Onboarding / baking first lesson
-    } else if (!isGenerating && nextLesson) {
-      orderIndex = completedLessonsCount === 0 ? 1 : 4; // First lesson ready vs Next lesson ready
-      actionConfig = {
-        label: "Start Lesson",
-        href: getLessonHref(nextLesson.id),
-      };
-    } else if (!waitingOnVocab && vocabDue) {
-      orderIndex = 2; // Vocab Bridge ready
-      actionConfig = {
-        label: "Unlock Bridge",
-        href: getLessonHref(vocabDue.id),
-      };
-    } else if (!waitingOnBoss && bossDue) {
-      orderIndex = 3; // Boss Stage ready
-      actionConfig = {
-        label: "Challenge Boss",
-        href: getBossHref(bossDue.id),
-      };
+    if (currentFocus?.type === "SPOON" && nextLesson) {
+      // completedLessonsCount: 0 -> Spoon 1 (idx 1), 1 -> Spoon 2 (idx 2), 2 -> Spoon 3 (idx 3)
+      orderIndex = completedLessonsCount + 1;
+      actionHref = getLessonHref(nextLesson.id);
+    } else if (currentFocus?.type === "BOSS" && bossDue) {
+      orderIndex = 4; // 4 = Boss 1
+      actionHref = getBossHref(bossDue.id);
     }
 
-    if (orderIndex === null) return;
+    // Guard: Only trigger for valid seeded orderIndex values (1..4)
+    if (!orderIndex || orderIndex > 4 || !actionHref) return;
 
-    // 2. Build a unique key for this state + focus item so we don't spam on re-renders
-    const focusItemId =
-      nextLesson?.id ?? vocabDue?.id ?? bossDue?.id ?? "generating";
+    const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
     const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
 
     if (
@@ -139,7 +125,7 @@ export default function FoundationHubPage({
 
     let cancelled = false;
 
-    async function triggerSprite(idx: number) {
+    async function triggerSprite(idx: number, href: string) {
       const node = await getSpriteNode(
         {
           slug: profile!.sprite.slug,
@@ -160,19 +146,17 @@ export default function FoundationHubPage({
         text: node.nativeBody,
         audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
         autoPlayAudio: true,
-        duration: isGenerating ? 8000 : 10000,
+        duration: 10000,
         position: "bottom-right",
-        action: actionConfig
-          ? {
-              label: node.action || actionConfig.label,
-              onClick: () => router.push(actionConfig!.href),
-              variant: "primary",
-            }
-          : undefined,
+        action: {
+          label: node.action || (idx === 4 ? "Challenge Boss" : `Start Spoon ${idx}`),
+          onClick: () => router.push(href),
+          variant: "primary",
+        },
       });
     }
 
-    triggerSprite(orderIndex);
+    triggerSprite(orderIndex, actionHref);
 
     return () => {
       cancelled = true;
@@ -180,12 +164,9 @@ export default function FoundationHubPage({
   }, [
     profile,
     isGenerating,
-    waitingOnSpoon,
-    waitingOnVocab,
-    waitingOnBoss,
+    currentFocus?.type,
     completedLessonsCount,
     nextLesson?.id,
-    vocabDue?.id,
     bossDue?.id,
     courseId,
     router,

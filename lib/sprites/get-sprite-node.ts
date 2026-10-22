@@ -1,8 +1,9 @@
-// app/actions/get-sprite-node.ts
+// lib/sprites/get-sprite-node.ts
 "use server";
 
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
+import { getPresignedUrls } from "@/app/actions/s3";
 
 export type SpriteNodeRecord = {
   nodeId: string;
@@ -19,7 +20,7 @@ export const getSpriteNode = cache(
     p: { slug: string; nativeVoiceId: string; targetVoiceId: string },
     orderIndex: number
   ): Promise<SpriteNodeRecord | null> => {
-    return prisma.spriteNode.findUnique({
+    const node = await prisma.spriteNode.findUnique({
       where: {
         nodeId: `${p.slug}:${p.nativeVoiceId}:${p.targetVoiceId}:${orderIndex}`,
       },
@@ -33,5 +34,24 @@ export const getSpriteNode = cache(
         action: true,
       },
     });
+
+    if (!node) return null;
+
+    const keysToSign = [node.nativeAudioUrl, node.targetAudioUrl].filter(
+      Boolean
+    ) as string[];
+
+    const signedMap =
+      keysToSign.length > 0 ? await getPresignedUrls(keysToSign) : {};
+
+    return {
+      ...node,
+      nativeAudioUrl: node.nativeAudioUrl
+        ? signedMap[node.nativeAudioUrl] ?? null
+        : null,
+      targetAudioUrl: node.targetAudioUrl
+        ? signedMap[node.targetAudioUrl] ?? null
+        : null,
+    };
   }
 );
