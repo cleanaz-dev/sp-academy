@@ -42,8 +42,7 @@ export default function FoundationHubPage({
     currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson =
     currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
-  const bossDue =
-    currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
+  const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
   const waitingOnSpoon =
     currentFocus?.type === "SPOON" &&
@@ -57,7 +56,7 @@ export default function FoundationHubPage({
 
   const bossStageObj =
     currentFocus?.type === "BOSS"
-      ? (currentFocus.data as any)?.bossStage ?? currentFocus.data
+      ? ((currentFocus.data as any)?.bossStage ?? currentFocus.data)
       : null;
 
   const waitingOnBoss =
@@ -67,7 +66,7 @@ export default function FoundationHubPage({
   const isGenerating = waitingOnSpoon || waitingOnVocab || waitingOnBoss;
 
   const completedLessonsCount = lessons.filter((l) =>
-    Boolean(l.completedAt)
+    Boolean(l.completedAt),
   ).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
@@ -81,7 +80,8 @@ export default function FoundationHubPage({
     .filter((l) => l.completedAt && l.bridge?.vocabMoment)
     .flatMap(
       (l) =>
-        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ?? []
+        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ??
+        [],
     )
     .reverse();
 
@@ -97,23 +97,19 @@ export default function FoundationHubPage({
     return () => clearInterval(interval);
   }, [isGenerating, router]);
 
-  // --- SPRITE TRIGGER LOGIC WITH FULL LOGS ---
+  // --- SPRITE TRIGGER LOGIC ---
   useEffect(() => {
     console.log("🚨 [SPRITE DEBUG 1: EFFECT FIRED]", {
       profile,
       currentFocusType: currentFocus?.type,
-      currentFocusData: currentFocus?.data,
+      bossDueData: JSON.stringify(currentFocus?.data),
       completedLessonsCount,
       waitingOnSpoon,
       waitingOnVocab,
       waitingOnBoss,
-      isGenerating,
     });
 
-    if (!profile?.sprite) {
-      console.warn("❌ [SPRITE ABORT] profile or profile.sprite is NULL! Check <SpriteProvider spriteData={...}> in layout.tsx");
-      return;
-    }
+    if (!profile?.sprite) return;
 
     let orderIndex: number | null = null;
     let actionHref: string | null = null;
@@ -121,9 +117,11 @@ export default function FoundationHubPage({
     if (currentFocus?.type === "SPOON" && nextLesson && !waitingOnSpoon) {
       orderIndex = (completedLessonsCount % 3) + 1;
       actionHref = getLessonHref(nextLesson.id);
-    } else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
+    } else if (currentFocus?.type === "BOSS" && bossDue) {
       orderIndex = 4;
-      actionHref = getBossHref(bossDue.id);
+      const bossId =
+        (bossDue as any)?.bossStage?.id ?? (bossDue as any)?.id ?? courseId;
+      actionHref = getBossHref(bossId);
     }
 
     console.log("🚨 [SPRITE DEBUG 2: COMPUTED TARGET]", {
@@ -132,43 +130,30 @@ export default function FoundationHubPage({
       expectedNodeId: `${profile.sprite.slug}:${profile.nativeVoiceId}:${profile.targetVoiceId}:${orderIndex}`,
     });
 
-    if (!orderIndex || !actionHref) {
-      console.warn("❌ [SPRITE ABORT] No matching orderIndex or actionHref for currentFocus:", currentFocus);
-      return;
-    }
+    if (!orderIndex || !actionHref) return;
+
+    const focusItemId = nextLesson?.id ?? bossDue?.id ?? String(orderIndex);
+    const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
+
+    if (lastSummonedKeyRef.current === triggerKey) return;
 
     let cancelled = false;
 
     async function triggerSprite(idx: number, href: string) {
-      console.log("🚨 [SPRITE DEBUG 3: CALLING SERVER ACTION getSpriteNode]...", {
-        slug: profile!.sprite.slug,
-        nativeVoiceId: profile!.nativeVoiceId,
-        targetVoiceId: profile!.targetVoiceId,
-        idx,
-      });
-
       const node = await getSpriteNode(
         {
           slug: profile!.sprite.slug,
           nativeVoiceId: profile!.nativeVoiceId,
           targetVoiceId: profile!.targetVoiceId,
         },
-        idx
+        idx,
       );
 
       console.log("🚨 [SPRITE DEBUG 4: SERVER ACTION RETURNED]", node);
 
-      if (cancelled) {
-        console.warn("⚠️ [SPRITE ABORT] Effect was cleaned up before node returned");
-        return;
-      }
+      if (cancelled || !node) return;
 
-      if (!node) {
-        console.error("❌ [SPRITE ABORT] getSpriteNode returned NULL!");
-        return;
-      }
-
-      console.log("✅ [SPRITE DEBUG 5: SUMMONING SPRITE NOW!]", node.nodeId);
+      lastSummonedKeyRef.current = triggerKey;
 
       summonSprite({
         id: node.nodeId,
@@ -196,7 +181,6 @@ export default function FoundationHubPage({
   }, [
     profile,
     waitingOnSpoon,
-    waitingOnBoss,
     currentFocus?.type,
     completedLessonsCount,
     nextLesson?.id,
