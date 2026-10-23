@@ -29,6 +29,7 @@ import { MatrixProvider, useMatrix } from "@/context/matrix-context";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 import { completeLesson } from "@/app/actions/complete-lesson";
 import type { UserFoundation } from "@/app/(dashboard)/foundation/actions/get-foundation-user";
+import { triggerMilestoneBossAndNextSpoon } from "@/lib/foundation/trigger-milestone-boss";
 
 // 8 Production Steps (Language Setup removed)
 const STEPS_CONFIG = [
@@ -144,6 +145,54 @@ function FoundationContent({ foundation }: FoundationContentProps) {
           />
         );
       case 8:
+        return (
+          <OutroStep
+            data={foundation as any}
+            targetLang={targetLang}
+            userId={userId}
+            onFinish={async (feedback) => {
+              await syncCart(userId, targetLang);
+
+              // 1. Mark current Spoon completed
+              await completeLesson({
+                courseId,
+                orderIndex: currentSpoon,
+                feedback,
+              });
+
+              // 2A. Normal Spoon (1, 2, 4, 5...): Queue next Spoon while user does current Vocab Bridge
+              if (currentSpoon % 3 !== 0) {
+                const res = await invokeEduBuilder({
+                  ...profileData,
+                  spoon: currentSpoon + 1,
+                  isOnboarding: false,
+                  foundationCourseId: courseId,
+                  previous_lessons: [{ ...lessonHandoff, feedback }],
+                });
+
+                if (!res.ok) {
+                  console.error("Failed to queue next spoon:", res.error);
+                }
+              }
+              // 2B. Milestone Boundary Spoon (3, 6, 9...): Queue Boss Stage + Boss Sprite + Pre-bake Next Spoon (4, 7, 10...)
+              // while user does Vocab Bridge 3!
+              else {
+                await triggerMilestoneBossAndNextSpoon({
+                  userId,
+                  courseId,
+                  milestoneIndex: currentSpoon / 3,
+                  prebakeNextSpoon: true,
+                }).catch((err) =>
+                  console.error("Failed to trigger milestone boss & next spoon:", err)
+                );
+              }
+
+              // 3. Return user to the hub
+              router.push("/learning-hub");
+              router.refresh();
+            }}
+          />
+        );
         return (
           <OutroStep
             data={foundation as any}

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { pusherServer } from "@/lib/pusher-server";
 import { foundationBridgeWebhookSchema } from "@/lib/schema/foundation/vocab-schema";
+import { triggerMilestoneBossAndNextSpoon } from "@/lib/foundation/trigger-milestone-boss";
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
@@ -25,7 +26,7 @@ export async function handleVocabBridgeGeneration(
   }
   const data = parsed.data;
   const { userId, courseId, bridgeIndex } = data.meta;
-  
+
   const { wordAudio, ...rest } = data;
   console.log(
     `[vocab-bridge] parsed body for task ${task.id} (wordAudio: ${Object.keys(wordAudio ?? {}).length} words):`,
@@ -44,7 +45,7 @@ export async function handleVocabBridgeGeneration(
         orderIndex: bridgeIndex,
       },
     },
-    select: { id: true, userId: true },
+    select: { id: true, userId: true, title: true },
   });
 
   if (!lesson || lesson.userId !== userId) {
@@ -56,13 +57,11 @@ export async function handleVocabBridgeGeneration(
   }
 
   // 3. Clean up before saving
-  // itemId arrives as "", so give each cooldown item a stable id for answer tracking
   const cooldown = data.cooldown.map((item, i) => ({
     ...item,
     itemId: `${bridgeIndex}-${item.mechanic}-${i}`,
   }));
 
-  // wordAudio is sent twice; keep only the top-level copy
   const { wordAudio: _duplicate, ...handoffFragment } = data.handoffFragment;
 
   const content = {
@@ -113,6 +112,23 @@ export async function handleVocabBridgeGeneration(
   console.log(
     `[vocab-bridge] completed task ${task.id} (bridgeId=${bridge.id}, lessonId=${lesson.id})`,
   );
+
+  // 7. PIPELINE PRE-BAKE: If this is the 3rd, 6th, 9th bridge AND Lesson 3 has finished baking,
+  // immediately pre-bake the Boss Stage + Boss Sprite + Next Milestone's first Spoon!
+  if (bridgeIndex % 3 === 0 && lesson.title) {
+    const milestoneIndex = bridgeIndex / 3;
+    triggerMilestoneBossAndNextSpoon({
+      userId,
+      courseId,
+      milestoneIndex,
+      prebakeNextSpoon: true,
+    }).catch((err) => {
+      console.error(
+        `[vocab-bridge] background pre-bake for milestone ${milestoneIndex} failed (will retry on bridge completion):`,
+        err,
+      );
+    });
+  }
 
   return NextResponse.json({ bridgeId: bridge.id, lessonId: lesson.id });
 }

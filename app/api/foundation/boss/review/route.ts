@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder"; // <-- Your existing robust action!
+import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     } = body;
 
     console.log(`Boss Session ${sessionId} ended. Passed: ${passed}`);
-    console.log("Boss Payload:", body)
+    console.log("Boss Payload:", body);
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
@@ -36,72 +36,82 @@ export async function POST(request: Request) {
       },
     });
 
-    // // 2. Award Global XP
-    // if (xp > 0) {
-    //   await prisma.user.update({
-    //     where: { id: updatedStage.userId },
-    //     data: { totalXp: { increment: xp } }
-    //   });
-    // }
-
-    // 3. IF PASSED: Use your existing action to build the next Spoon!
+    // 2. IF PASSED: Ensure the next Spoon is either already pre-baked OR queue it now as a fallback!
     if (passed) {
       const course = updatedStage.course;
       const user = course.user;
-      const nextLessonDay = (updatedStage.milestoneIndex * 3) + 1; // e.g., Milestone 1 -> Day 4
+      const nextLessonDay = updatedStage.milestoneIndex * 3 + 1; // e.g., Milestone 1 -> Day 4
 
-      console.log(`Boss Defeated! Prepping payload for Lesson ${nextLessonDay}...`);
-
-      // 3a. Fetch the exact 3 lessons the Boss covered using targetLessonIds
-      const pastLessons = await prisma.foundationLesson.findMany({
-        where: { id: { in: updatedStage.targetLessonIds } },
-        orderBy: { orderIndex: "asc" }, // Order them Day 1, Day 2, Day 3
-        select: { title: true, lessonHandoff: true },
+      // Check if triggerMilestoneBossAndNextSpoon already pre-baked (or is baking) this Spoon
+      const existingNextSpoon = await prisma.foundationLesson.findUnique({
+        where: {
+          foundationCourseId_orderIndex: {
+            foundationCourseId: course.id,
+            orderIndex: nextLessonDay,
+          },
+        },
+        select: { id: true, title: true },
       });
 
-      // 3b. Extract the titles so the LLM Router doesn't duplicate topics
-      const previousLessonTitles = pastLessons.map(l => l.title);
-
-      // 3c. Extract the vocab from the LAST lesson so the Foundation Builder can inject review words
-      let yesterdayWords: string[] = [];
-      const lastLessonHandoff = pastLessons[pastLessons.length - 1]?.lessonHandoff as any;
-      
-      if (lastLessonHandoff) {
-         yesterdayWords = lastLessonHandoff.targetPhrases || lastLessonHandoff.words || [];
-      }
-
-      // 3d. Invoke YOUR existing Builder Action!
-      const result = await invokeEduBuilder({
-        userId: user.id,
-        firstName: user.firstName || user.name || "Learner",
-        gender: user.gender || "N", // Replace if you store M/F
-        foundationCourseId: course.id,
-        spoon: nextLessonDay, // The "Day" number
-        nativeLanguage: course.nativeLanguage,
-        targetLanguage: course.targetLanguage,
-        levelBand: "beginner",
-        goal: "travel",
-        scriptComfort: "script",
-        type: "lang",
-        isOnboarding: false, // Ensures LLM Router is used
-        previous_lessons: previousLessonTitles,
-        yesterdayAttempted: yesterdayWords,
-        yesterdayLanded: yesterdayWords, // They beat the boss, so they landed them!
-      });
-
-      if (!result.ok) {
-        console.error("❌ Failed to queue next lesson:", result.error);
+      if (existingNextSpoon) {
+        console.log(
+          `⚡ Boss Defeated! Lesson ${nextLessonDay} (${existingNextSpoon.id}) is already pre-baked/baking!`
+        );
       } else {
-        console.log(`✅ Next lesson (${nextLessonDay}) successfully queued for generation!`);
+        console.log(
+          `Boss Defeated! Pre-bake not found—queuing Lesson ${nextLessonDay} now...`
+        );
+
+        const pastLessons = await prisma.foundationLesson.findMany({
+          where: { id: { in: updatedStage.targetLessonIds } },
+          orderBy: { orderIndex: "asc" },
+          select: { title: true, lessonHandoff: true },
+        });
+
+        const previousLessonTitles = pastLessons.map((l) => l.title);
+
+        let yesterdayWords: string[] = [];
+        const lastLessonHandoff = pastLessons[pastLessons.length - 1]
+          ?.lessonHandoff as any;
+
+        if (lastLessonHandoff) {
+          yesterdayWords =
+            lastLessonHandoff.targetPhrases || lastLessonHandoff.words || [];
+        }
+
+        const result = await invokeEduBuilder({
+          userId: user.id,
+          firstName: user.firstName || user.name || "Learner",
+          gender: user.gender || "N",
+          foundationCourseId: course.id,
+          spoon: nextLessonDay,
+          nativeLanguage: course.nativeLanguage,
+          targetLanguage: course.targetLanguage,
+          levelBand: "unspecified", // Auto-recovered from Spoon 1 inside invokeEduBuilder
+          goal: "unspecified",      // Auto-recovered from Spoon 1 inside invokeEduBuilder
+          scriptComfort: "script",
+          type: "lang",
+          isOnboarding: false,
+          previous_lessons: previousLessonTitles,
+          yesterdayAttempted: yesterdayWords,
+          yesterdayLanded: yesterdayWords,
+        });
+
+        if (!result.ok) {
+          console.error("❌ Failed to queue next lesson:", result.error);
+        } else {
+          console.log(
+            `✅ Next lesson (${nextLessonDay}) successfully queued for generation!`
+          );
+        }
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: passed ? "Boss Defeated! Next milestone queued." : "Try Again.",
-      stage: updatedStage
+      message: passed ? "Boss Defeated! Next milestone ready." : "Try Again.",
+      stage: updatedStage,
     });
-
   } catch (error) {
     console.error("Boss Review Route Error:", error);
     return NextResponse.json(
