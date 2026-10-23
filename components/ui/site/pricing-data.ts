@@ -26,29 +26,30 @@ export type PricingData = {
 export const PRICING_DATA: PricingData = {
   eyebrow: "Pricing",
   heading: "Simple pricing.",
-  headingAccent: "Real progress.",
+  headingAccent: "Real fluency.",
   intro:
-    "Lock in founder pricing while we're in beta, go unlimited, or talk to us about rolling Spoon out to your whole organization.",
+    "Lock in Beta Founder pricing for full access to personalized Spoons, video Vocab Bridges, Boss Stages, and daily AI speaking practice—plus our private learner community.",
   footnote:
-    "Prices in USD. Beta founders keep their rate for as long as their subscription stays active.",
+    "Prices in CAD. Beta founders keep their rate locked in for as long as their subscription stays active.",
   plans: [
     {
       id: "founder",
-      name: "Beta Founder",
+      name: "Spoon Core • Founder",
       label: "Limited beta offer",
       accent: "primary",
       featured: true,
-      price: "$20",
-      originalPrice: "$34",
-      period: "/month",
-      description: "Full access to Spoon at a founder rate that never goes up.",
+      price: "$35",
+      originalPrice: "$49",
+      period: "CAD /month",
+      description:
+        "15 full custom-baked learning cycles every month, personal Sprite coaching, and daily AI conversation practice.",
       features: [
-        "3 Spoon lessons per day",
-        "Unlimited conversational AI practice",
-        "Lessons, quizzes, and games built around your goals",
-        "Achievements",
+        "15 full learning cycles per month (45 Spoons + 45 Video Vocab Bridges)",
+        "15 interactive Boss Stage assessments with live speech grading",
+        "5 AI Conversation sessions per day (5-min sprints, 5-min cooldown)",
+        "Personal AI Sprite Coach (Vox or Vivi) + Word Matrix tracking",
+        "Private Founder Community access & weekly speaking challenges",
         "Founder rate locked in for life",
-        "Early access to new features",
       ],
       cta: {
         label: "Become a founder",
@@ -57,26 +58,27 @@ export const PRICING_DATA: PricingData = {
     },
     {
       id: "unlimited",
-      name: "Unlimited Learner",
-      label: "For serious learners",
+      name: "Spoon Unlimited+",
+      label: "For intensive learners",
       accent: "secondary",
       featured: false,
-      price: "$100", // placeholder, set your real price
-      originalPrice: "",
-      period: "/month",
-      description: "Everything in Spoon with no daily limits on lessons.",
+      price: "$125",
+      originalPrice: "$159",
+      period: "CAD /month",
+      description:
+        "Built for rapid immersion—4x the monthly learning cycles, cinematic Boss Stages, and expanded AI speaking time.",
       features: [
-        "Unlimited Spoon lessons",
-        "Unlimited conversational AI practice",
-        "Lessons, quizzes, and games built around your goals",
-        "Achievements and verified certificates",
-        "Early access to new features",
+        "60 full learning cycles per month (180 Spoons + 180 Video Vocab Bridges)",
+        "60 cinematic, video-enhanced Boss Stage assessments",
+        "15 AI Conversation sessions per day with zero cooldown friction",
+        "Priority background lesson & audio baking",
+        "VIP Founder Community access + verified fluency milestones",
+        "Early access to new Sprite Exercises & languages",
       ],
       cta: {
-        label: "Go unlimited",
+        label: "Go Unlimited+",
         href: "/signup",
       },
-     
     },
     {
       id: "enterprise",
@@ -88,19 +90,18 @@ export const PRICING_DATA: PricingData = {
       originalPrice: "",
       period: "",
       description:
-        "Language learning for schools, companies, and training programs.",
+        "Custom spoken-language training for schools, government teams, and organizations.",
       features: [
-        "Everything in Unlimited Learner",
-        "Team dashboards and progress reporting",
-        "Custom learning paths and content",
-        "Single sign-on and admin controls",
-        "Dedicated onboarding and support",
+        "Everything in Spoon Unlimited+",
+        "Team dashboards, Word Matrix analytics, and progress reporting",
+        "Custom industry scenarios and Boss Stage roleplays",
+        "Single sign-on (SSO) and admin seat management",
+        "Dedicated onboarding and priority support",
       ],
       cta: {
         label: "Contact sales",
         href: "/contact",
       },
-     
     },
   ],
 };

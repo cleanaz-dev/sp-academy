@@ -12,6 +12,10 @@ import { handleVocabBridgeGeneration } from "@/lib/system-tasks/handlers/handle-
 import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
+import {
+  isLambdaErrorPayload,
+  handleLambdaError,
+} from "@/lib/system-tasks/handlers/handle-lambda-error";
 
 interface Params {
   params: Promise<{
@@ -47,6 +51,10 @@ export async function POST(req: Request, { params }: Params) {
     // Parse webhook JSON body
     const body = await req.json();
 
+    if (isLambdaErrorPayload(body)) {
+      return handleLambdaError(task, body);
+    }
+
     // 3. Dispatch Task Handler based on SystemTaskType enum
     switch (task.type) {
       case SystemTaskType.SPEECH_PRONUNCIATION_ANALYSIS: {
@@ -75,11 +83,11 @@ export async function POST(req: Request, { params }: Params) {
       }
 
       case SystemTaskType.SPOON_BOSS_GENERATION: {
-        return await handleBossGeneration(task, body)
+        return await handleBossGeneration(task, body);
       }
 
       case SystemTaskType.SPRITE_NOTIFICATION_GENERATION: {
-        return await handleSpriteNotificationGeneration(task, body)
+        return await handleSpriteNotificationGeneration(task, body);
       }
 
       default:
