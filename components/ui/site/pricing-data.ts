@@ -1,4 +1,5 @@
 export type PlanAccent = "primary" | "secondary" | "tertiary";
+export type BillingIntervalOption = "monthly" | "annual";
 
 export type Plan = {
   id: string;
@@ -9,6 +10,9 @@ export type Plan = {
   price: string;
   originalPrice: string;
   period: string;
+  annualPrice?: string;         // Equivalent monthly price when billed yearly (e.g. "$29")
+  annualTotal?: string;         // Total billed once per year (e.g. "$348 CAD billed annually")
+  annualSavingsLabel?: string;  // Badge (e.g. "Save $72/yr")
   description: string;
   features: string[];
   cta: { label: string; href: string };
@@ -41,6 +45,9 @@ export const PRICING_DATA: PricingData = {
       price: "$35",
       originalPrice: "$49",
       period: "CAD /month",
+      annualPrice: "$29",
+      annualTotal: "$348 CAD billed annually",
+      annualSavingsLabel: "2 months free (Save $72)",
       description:
         "15 full custom-baked learning cycles every month, personal Sprite coaching, and daily AI conversation practice.",
       features: [
@@ -65,6 +72,9 @@ export const PRICING_DATA: PricingData = {
       price: "$125",
       originalPrice: "$159",
       period: "CAD /month",
+      annualPrice: "$99",
+      annualTotal: "$1,188 CAD billed annually",
+      annualSavingsLabel: "Save $312/year",
       description:
         "Built for rapid immersion—4x the monthly learning cycles, cinematic Boss Stages, and expanded AI speaking time.",
       features: [

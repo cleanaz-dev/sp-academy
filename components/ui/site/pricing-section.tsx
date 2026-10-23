@@ -18,6 +18,7 @@ import {
   PRICING_DATA as pricingData,
   type Plan,
   type PlanAccent,
+  type BillingIntervalOption,
 } from "./pricing-data";
 
 const PLANS = pricingData.plans;
@@ -81,8 +82,12 @@ const CTA_BASE =
   "h-[2.85rem] w-fit gap-2 rounded-full border px-5 font-semibold shadow-none transition-all duration-200 hover:-translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-60 motion-reduce:transition-none";
 
 export default function PricingSection() {
+  const [billingInterval, setBillingInterval] =
+    useState<BillingIntervalOption>("monthly");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isAnnual = billingInterval === "annual";
 
   async function startCheckout(plan: Plan) {
     setError(null);
@@ -92,7 +97,10 @@ export default function PricingSection() {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: plan.id }),
+        body: JSON.stringify({
+          planId: plan.id,
+          interval: billingInterval, // "monthly" | "annual"
+        }),
       });
 
       const data = await response.json();
@@ -138,6 +146,35 @@ export default function PricingSection() {
           <p className="mx-auto mt-3.5 max-w-[37rem] text-balance text-[clamp(1rem,1.5vw,1.1rem)] leading-relaxed text-muted-foreground">
             {pricingData.intro}
           </p>
+
+          {/* Monthly / Annual Billing Toggle */}
+          <div className="mt-7 inline-flex items-center gap-1 rounded-full border border-border/80 bg-muted/50 p-1.5 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => setBillingInterval("monthly")}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
+                !isAnnual
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval("annual")}
+              className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-all ${
+                isAnnual
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>Annual</span>
+              <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide text-emerald-600 uppercase">
+                2 Months Free
+              </span>
+            </button>
+          </div>
         </Reveal>
 
         <div className="mx-auto mt-[clamp(2rem,4vh,3rem)] grid max-w-6xl grid-cols-1 gap-4 md:gap-6 lg:grid-cols-3">
@@ -147,6 +184,11 @@ export default function PricingSection() {
             const isLoading = loadingId === plan.id;
             const isSolid = SOLID_PLANS.includes(plan.id);
             const usesCheckout = plan.id !== "enterprise";
+
+            const displayPrice =
+              isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
+            const displayOriginalPrice =
+              isAnnual && plan.annualPrice ? plan.price : plan.originalPrice;
 
             return (
               <Reveal
@@ -176,13 +218,27 @@ export default function PricingSection() {
                   />
 
                   <div className="relative z-10 flex w-full flex-col">
-                    <span
-                      className={`inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest before:h-px before:w-7 before:bg-current before:content-[''] ${
-                        isSolid ? "text-white" : accent.text
-                      }`}
-                    >
-                      {plan.label}
-                    </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`inline-flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest before:h-px before:w-7 before:bg-current before:content-[''] ${
+                          isSolid ? "text-white" : accent.text
+                        }`}
+                      >
+                        {plan.label}
+                      </span>
+
+                      {isAnnual && plan.annualSavingsLabel && (
+                        <span
+                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide uppercase ${
+                            isSolid
+                              ? "bg-white/20 text-white"
+                              : "bg-emerald-500/15 text-emerald-600"
+                          }`}
+                        >
+                          {plan.annualSavingsLabel}
+                        </span>
+                      )}
+                    </div>
 
                     <h3
                       id={`plan-${plan.id}-name`}
@@ -199,7 +255,7 @@ export default function PricingSection() {
                           isSolid ? "text-white" : "text-foreground"
                         }`}
                       >
-                        {plan.price}
+                        {displayPrice}
                       </span>
 
                       {plan.period && (
@@ -214,7 +270,7 @@ export default function PricingSection() {
                         </span>
                       )}
 
-                      {plan.originalPrice && (
+                      {displayOriginalPrice && (
                         <span
                           className={`text-base font-medium line-through ${
                             isSolid
@@ -223,10 +279,20 @@ export default function PricingSection() {
                           }`}
                         >
                           <span className="sr-only">Regular price </span>
-                          {plan.originalPrice}
+                          {displayOriginalPrice}
                         </span>
                       )}
                     </div>
+
+                    {isAnnual && plan.annualTotal && (
+                      <p
+                        className={`mt-1.5 text-xs font-semibold ${
+                          isSolid ? "text-white/75" : "text-muted-foreground"
+                        }`}
+                      >
+                        {plan.annualTotal}
+                      </p>
+                    )}
 
                     <p
                       className={`mt-4 text-[clamp(1rem,1.35vw,1.05rem)] leading-[1.7] ${
