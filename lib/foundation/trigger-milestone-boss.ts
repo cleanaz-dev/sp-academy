@@ -7,7 +7,7 @@ import { toLanguageCode } from "@/lib/languages";
 import { getWordMatrix } from "@/lib/boss/get-word-matrix";
 import { buildBossPayload } from "@/lib/boss/build-boss-payload";
 import { SpoonBossTaskMetadataSchema } from "@/lib/boss/schemas";
-import { getBossSpriteOrderIndex } from "@/lib/foundation/tool";
+import { getBossSpriteOrderIndex } from "@/lib/foundation/tools";
 import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 import { SystemTaskType } from "@prisma/client";
 
