@@ -1,11 +1,10 @@
+// freestyle-step.tsx
 "use client";
 
 import React, { useState } from "react";
 import { Mic, ArrowRight, Play, Loader2 } from "lucide-react";
 import FoundationChat from "./foundation-chat";
-import { FoundationIntroOrSuggestion } from "./foundation-suggestion";
-import { FoundationProvider } from "@/context/foundation-context";
-import { AudioProvider } from "@/context/audio-context";
+import { useSprite } from "@/context/sprite-context";
 
 export function FreestyleStep({
   data,
@@ -15,8 +14,8 @@ export function FreestyleStep({
   onNext: () => void;
 }) {
   const { freestyle, grammarContent, visualContent } = data;
+  const { profile } = useSprite();
 
-  // 1. EXTRACT REAL USER ID & LANGUAGES FROM PRISMA DATA
   const userId = data.userId || (data as any).meta?.userId || "usr_Paul";
   const nativeLanguage =
     data.nativeLanguage ||
@@ -36,9 +35,16 @@ export function FreestyleStep({
     setIsStarting(true);
     try {
       const seed = Math.random().toString(36).substring(7);
-      const aiAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&style=circle&top=longHair`;
+      const aiAvatarUrl =
+        profile?.sprite?.avatarUrl ||
+        `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&style=circle&top=longHair`;
 
-      // 2. INCLUDE userId, nativeLanguage, and targetLanguage
+      const freestyleData = {
+        ...freestyle,
+        nativeSentence: grammarContent?.nativeSentence,
+        npcLine: visualContent?.npcLine,
+      };
+
       const config = {
         userId,
         mode: freestyle?.mode || "roleplay",
@@ -46,31 +52,44 @@ export function FreestyleStep({
         topic: freestyle?.topic || "General Practice",
         nativeLanguage,
         targetLanguage,
+        targetVoiceId: profile?.targetVoiceId || `${targetLanguage}-boy-01`,
         voiceGender: "female",
-        freestyleData: {
-          ...freestyle,
-          nativeSentence: grammarContent?.nativeSentence,
-          npcLine: visualContent?.npcLine,
-        },
+        freestyleData,
       };
 
-      const res = await fetch("/api/foundation/freestyle/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...config, aiAvatarUrl }),
-      });
+      // Create DB session AND mint LiveKit WebRTC token in parallel
+      const [sessionRes, lkRes] = await Promise.all([
+        fetch("/api/foundation/freestyle/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...config, aiAvatarUrl }),
+        }),
+        fetch("/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lessonId: data.id,
+            nativeLanguage,
+            targetLanguage,
+            targetVoiceId: config.targetVoiceId,
+            freestyleData,
+          }),
+        }),
+      ]);
 
-      if (!res.ok) {
-        throw new Error(`Failed to create session: ${res.status}`);
+      const sessionData = sessionRes.ok ? await sessionRes.json() : {};
+      const lkData = await lkRes.json();
+
+      if (!lkRes.ok || !lkData.token) {
+        throw new Error(lkData.error || "Failed to get LiveKit token");
       }
 
-      const resData = await res.json();
-
-      // 3. PASS ALL REQUIRED FIELDS INTO activeSession SO CHAT HAS THEM
       setActiveSession({
-        id: resData.sessionId,
+        id: sessionData.sessionId || `lk-${Date.now()}`,
         ...config,
         aiAvatarUrl,
+        livekitToken: lkData.token,
+        livekitUrl: lkData.wsUrl,
       });
     } catch (error) {
       console.error("Failed to start session:", error);
@@ -88,7 +107,7 @@ export function FreestyleStep({
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
             {freestyle?.openingLine ||
-              "Practice speaking in a simulated conversation."}
+              "Practice speaking in a live voice simulation."}
           </p>
         </div>
       )}
@@ -103,11 +122,11 @@ export function FreestyleStep({
             </div>
 
             <h3 className="text-2xl font-bold text-white mb-3">
-              AI Conversation Ready
+              Live Voice Arena Ready
             </h3>
             <p className="text-slate-400 mb-10 max-w-md text-lg">
-              Tap the button below to initialize your AI Tutor and begin the
-              voice simulation.
+              Tap below to enter the real-time voice room with your AI language
+              partner.
             </p>
 
             <button
@@ -118,12 +137,12 @@ export function FreestyleStep({
               {isStarting ? (
                 <>
                   <Loader2 className="animate-spin" size={28} />
-                  Connecting...
+                  Joining Live Room...
                 </>
               ) : (
                 <>
                   <Play size={28} fill="currentColor" />
-                  Start Simulation
+                  Start Live Conversation
                 </>
               )}
             </button>
@@ -140,20 +159,13 @@ export function FreestyleStep({
         </div>
       ) : (
         <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-500">
-          <FoundationProvider session={activeSession} onEnd={onNext}>
-            <AudioProvider>
-              <div className="text-center mb-8 shrink-0">
-                <h2 className="text-3xl md:text-2xl font-extrabold text-white mb-3">
-                  {freestyle?.topic || "Conversation"}
-                </h2>
-                <FoundationIntroOrSuggestion
-                  intro={freestyle?.openingLine || ""}
-                />
-              </div>
+          <div className="text-center mb-4 shrink-0">
+            <h2 className="text-2xl font-extrabold text-white">
+              {freestyle?.topic || "Live Conversation"}
+            </h2>
+          </div>
 
-              <FoundationChat onEnd={onNext} />
-            </AudioProvider>
-          </FoundationProvider>
+          <FoundationChat session={activeSession} onEnd={onNext} />
         </div>
       )}
     </div>
