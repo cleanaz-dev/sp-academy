@@ -12,12 +12,14 @@ export async function POST(req: Request) {
       lessonId,
       nativeLanguage = "en-US",
       targetLanguage = "fr-FR",
+      targetVoiceId,
       freestyleData = {},
     } = body;
 
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
-    const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+    const wsUrl =
+      process.env.NEXT_PUBLIC_LIVEKIT_URL || process.env.LIVEKIT_URL;
 
     if (!apiKey || !apiSecret || !wsUrl) {
       return NextResponse.json(
@@ -28,23 +30,33 @@ export async function POST(req: Request) {
 
     const roomName = `freestyle-${user.id}-${lessonId || Date.now()}`;
 
-    // Pass all lesson & language context inside participant metadata!
+    // Matches the exact keys read by src/agent.py!
     const metadata = JSON.stringify({
       userId: user.id,
       firstName: user.firstName || "Learner",
       nativeLanguage,
       targetLanguage,
-      setting: freestyleData.setting || "Casual conversation",
-      aiRole: freestyleData.aiRole || "Native speaker friend",
-      userGoal: freestyleData.objective || "Practice speaking naturally",
+      targetVoiceId: targetVoiceId || `${targetLanguage}-boy-01`,
+      topic: freestyleData.topic || "Casual conversation",
+      persona:
+        freestyleData.persona ||
+        freestyleData.aiRole ||
+        "A friendly native speaker",
+      openingLine:
+        freestyleData.openingLine ||
+        freestyleData.objective ||
+        "Practice speaking naturally",
+      requiredChunks:
+        freestyleData.requiredChunks || freestyleData.targetPhrases || [],
+      aiOpeningTarget: freestyleData.aiOpeningTarget || "",
+      npcLine: freestyleData.npcLine || "",
       nativeSentence: freestyleData.nativeSentence || "",
-      targetPhrases: freestyleData.targetPhrases || [],
     });
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: user.id,
       name: user.firstName || "Learner",
-      ttl: "6m", // Hard 5-6 minute sprint cap
+      ttl: "6m", // 5-minute sprint + 1m buffer
       metadata,
     });
 
