@@ -1,3 +1,4 @@
+// context/boss-context.tsx
 "use client";
 
 import React, {
@@ -10,7 +11,13 @@ import React, {
   useMemo,
   ReactNode,
 } from "react";
-import { useSpeech } from "@/context/speech-context";
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  useVoiceAssistant,
+  useDataChannel,
+  useLocalParticipant,
+} from "@livekit/components-react";
 import { useSpeak } from "@/hooks/use-speak";
 import { toast } from "sonner";
 
@@ -71,6 +78,12 @@ export interface BossMessage {
   status?: "pending" | "correct" | "incorrect";
   mood?: BossMood;
   isAnalyzingPronunciation?: boolean;
+  pronunciationScore?: {
+    accuracyScore: number;
+    fluencyScore: number;
+    score: number;
+    words?: Array<{ word: string; accuracyScore: number }>;
+  };
 }
 
 export type StageStatus = "PLAYING" | "PASSED" | "FAILED";
@@ -149,7 +162,6 @@ const forSpeech = (text: string) =>
 
 export const resolveAssetUrl = (key?: string | null): string => {
   if (!key) return "";
-
   if (
     key.startsWith("http://") ||
     key.startsWith("https://") ||
@@ -158,7 +170,6 @@ export const resolveAssetUrl = (key?: string | null): string => {
   ) {
     return key;
   }
-
   const baseUrl = (
     process.env.NEXT_PUBLIC_S3_CDN_URL ||
     process.env.NEXT_PUBLIC_ASSET_URL ||
@@ -184,10 +195,7 @@ function checkDeterministicAnswer(
     item.type === "SENTENCE_BUIL" ||
     item.type === "LISTEN_SENTENCE_BUILDER"
   ) {
-    if (
-      !Array.isArray(userAnswer) ||
-      !Array.isArray(item.correctAnswer)
-    ) {
+    if (!Array.isArray(userAnswer) || !Array.isArray(item.correctAnswer)) {
       return false;
     }
 
@@ -195,8 +203,7 @@ function checkDeterministicAnswer(
       userAnswer.length === item.correctAnswer.length &&
       userAnswer.every(
         (word, index) =>
-          String(word).trim() ===
-          String(item.correctAnswer?.[index]).trim(),
+          String(word).trim() === String(item.correctAnswer?.[index]).trim(),
       )
     );
   }
@@ -204,7 +211,10 @@ function checkDeterministicAnswer(
   return false;
 }
 
-export function BossFoundationProvider({
+// ============================================================================
+// INNER PROVIDER (Runs inside <LiveKitRoom>)
+// ============================================================================
+function BossLiveKitInnerProvider({
   session,
   onEnd,
   preloadedKeys,
@@ -217,28 +227,31 @@ export function BossFoundationProvider({
   preloadedUrls: string[];
   children: ReactNode;
 }) {
+  const { state: agentState } = useVoiceAssistant();
+  const { localParticipant } = useLocalParticipant();
+  const { send: sendBossCmd } = useDataChannel("spoon-boss-cmd");
+
   const [messages, setMessages] = useState<BossMessage[]>([]);
   const [chances, setChances] = useState(3);
   const [xp, setXp] = useState(0);
   const [score, setScore] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [stageStatus, setStageStatus] =
-    useState<StageStatus>("PLAYING");
-  const [hasStartedExercises, setHasStartedExercises] =
-    useState(false);
+  const [stageStatus, setStageStatus] = useState<StageStatus>("PLAYING");
+  const [hasStartedExercises, setHasStartedExercises] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [bossMood, setBossMood] = useState<BossMood>("default");
 
-  const sessionStartTime = useRef(Date.now());
+  // LiveKit Mic & Transcript state for Voice Exercises (PRONUNCIATION / CONVERSATION)
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const latestPronunciationRef = useRef<any>(null);
 
+  const sessionStartTime = useRef(Date.now());
   const resultPipelineRef = useRef(false);
   const startExercisesRef = useRef(false);
   const isSubmittingRef = useRef(false);
   const mountedRef = useRef(true);
   const sequenceRef = useRef(0);
-
-  // Holds the recorded audioBlob when the user clicks "Done Speaking" before "Submit"
-  const recordedBlobRef = useRef<Blob | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentIndexRef = useRef(0);
@@ -247,52 +260,50 @@ export function BossFoundationProvider({
   const scoreRef = useRef(0);
   const stageStatusRef = useRef<StageStatus>("PLAYING");
 
+  // Pending reaction resolver when waiting on LiveKit Boss to finish speaking reaction
+  const reactionResolverRef = useRef<(() => void) | null>(null);
+
+  const transcriptRef = useRef("");
+
+  const updateTranscript = useCallback((val: string) => {
+    transcriptRef.current = val;
+    setTranscript(val);
+  }, []);
+
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
-
   useEffect(() => {
     chancesRef.current = chances;
   }, [chances]);
-
   useEffect(() => {
     xpRef.current = xp;
   }, [xp]);
-
   useEffect(() => {
     scoreRef.current = score;
   }, [score]);
-
   useEffect(() => {
     stageStatusRef.current = stageStatus;
   }, [stageStatus]);
 
   const {
-    startRecording: startSpeech,
-    stopRecording: stopSpeechRecording,
-    isRecording,
-    transcript,
-    resetSpeechState,
-  } = useSpeech();
-
-  const {
     speak,
-    isPlaying,
+    isPlaying: isFallbackPlaying,
     isLoading: isSpeechLoading,
     stop: stopAudio,
   } = useSpeak();
 
-  const isProcessing =
-    isPlaying || isAiProcessing || isSpeechLoading;
+  const isPlaying = agentState === "speaking" || isFallbackPlaying;
+  const isProcessing = isPlaying || isAiProcessing || isSpeechLoading;
 
   const bcp47Language =
     LANGUAGE_CODES[session?.targetLanguage] ||
+    session?.course?.targetLanguage ||
     session?.targetLanguage ||
     "fr-FR";
 
   const scenarioData = (session?.scenarioData as any) || {};
-  const boss: BossPersona | null =
-    scenarioData.boss || session?.boss || null;
+  const boss: BossPersona | null = scenarioData.boss || session?.boss || null;
 
   const playlist: PlaylistItem[] =
     scenarioData.exerciseBank ||
@@ -307,10 +318,59 @@ export function BossFoundationProvider({
     session?.introMessage ||
     "Let's begin your milestone challenge.";
 
+  // Keep mic muted by default until user clicks "Record" on a voice exercise!
+  useEffect(() => {
+    localParticipant?.setMicrophoneEnabled(false);
+  }, [localParticipant]);
+
+  // Listen for LiveKit Agent events over "spoon-meta"
+  useDataChannel("spoon-meta", (msg) => {
+    try {
+      const payload = JSON.parse(new TextDecoder().decode(msg.payload));
+
+      // 1. LiveKit Agent spoke a reaction line
+      if (payload.type === "AGENT_TURN" && hasStartedExercises) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `lk-reaction-${Date.now()}`,
+            role: "assistant",
+            text: payload.text,
+            mood: bossMood,
+          },
+        ]);
+      }
+
+      // 2. LiveKit Agent finished speaking the exercise reaction
+      if (payload.type === "BOSS_REACTION_DONE") {
+        if (reactionResolverRef.current) {
+          reactionResolverRef.current();
+          reactionResolverRef.current = null;
+        }
+      }
+
+      // 3. User spoke during a Voice Exercise -> LiveKit STT + Azure Pronunciation Assessment
+      if (payload.type === "TURN_META" && payload.role === "user") {
+        const text = payload.originalText || "";
+        const pron = payload.pronunciation;
+        if (text) updateTranscript(text);
+        if (pron) {
+          latestPronunciationRef.current = {
+            accuracyScore: pron.accuracyScore,
+            fluencyScore: pron.fluencyScore,
+            score: pron.pronScore ?? pron.accuracyScore,
+            words: pron.words ?? [],
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("Boss spoon-meta parse error:", e);
+    }
+  });
+
   const resolveAssetUrl = useCallback(
     (key?: string | null): string => {
       if (!key) return "";
-
       if (
         key.startsWith("http://") ||
         key.startsWith("https://") ||
@@ -319,25 +379,20 @@ export function BossFoundationProvider({
       ) {
         return key;
       }
-
       const index = preloadedKeys.indexOf(key);
-
       if (index !== -1 && preloadedUrls[index]) {
         return preloadedUrls[index];
       }
-
       const baseUrl = (
         process.env.NEXT_PUBLIC_S3_CDN_URL ||
         process.env.NEXT_PUBLIC_ASSET_URL ||
         ""
       ).replace(/\/$/, "");
-
       return baseUrl ? `${baseUrl}/${key}` : `/${key}`;
     },
     [preloadedKeys, preloadedUrls],
   );
 
-  // Derive the 4 avatar S3 keys from boss.avatar (or fallback to coverUrl folder path)
   const avatarKeyMap = useMemo(() => {
     const derivedPrefix = boss?.coverUrl
       ? boss.coverUrl
@@ -380,22 +435,27 @@ export function BossFoundationProvider({
     [boss?.coverUrl, resolveAssetUrl],
   );
 
-  // Stop recording handler that preserves the audioBlob for when the user clicks "Submit"
-  const handleStopRecording = useCallback(async () => {
-    try {
-      const blob = await stopSpeechRecording();
-      if (blob) {
-        recordedBlobRef.current = blob;
-      }
-    } catch (err) {
-      console.warn("Error stopping speech recording:", err);
+  const handleStartRecording = useCallback(() => {
+    if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
+      return;
     }
-  }, [stopSpeechRecording]);
+    setTranscript("");
+    latestPronunciationRef.current = null;
+    setIsRecording(true);
+    localParticipant?.setMicrophoneEnabled(true);
+  }, [localParticipant]);
+
+  const handleStopRecording = useCallback(async () => {
+    setIsRecording(false);
+    await localParticipant?.setMicrophoneEnabled(false);
+  }, [localParticipant]);
 
   const handleResetRecording = useCallback(() => {
-    recordedBlobRef.current = null;
-    resetSpeechState();
-  }, [resetSpeechState]);
+    setTranscript("");
+    latestPronunciationRef.current = null;
+    setIsRecording(false);
+    localParticipant?.setMicrophoneEnabled(false);
+  }, [localParticipant]);
 
   const playNativeAudioUntilSettled = useCallback(
     async (url: string): Promise<void> => {
@@ -403,55 +463,26 @@ export function BossFoundationProvider({
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
-
       const audio = new Audio(url);
       audioRef.current = audio;
 
       await new Promise<void>((resolve, reject) => {
         let settled = false;
-
-        const cleanup = () => {
-          audio.removeEventListener("ended", handleEnded);
-          audio.removeEventListener("error", handleError);
-          audio.removeEventListener("pause", handlePause);
-        };
-
         const finish = () => {
           if (settled) return;
           settled = true;
-          cleanup();
-
-          if (audioRef.current === audio) {
-            audioRef.current = null;
-          }
-
+          if (audioRef.current === audio) audioRef.current = null;
           resolve();
         };
-
         const fail = () => {
           if (settled) return;
           settled = true;
-          cleanup();
-
-          if (audioRef.current === audio) {
-            audioRef.current = null;
-          }
-
+          if (audioRef.current === audio) audioRef.current = null;
           reject(new Error("Audio playback failed."));
         };
-
-        const handleEnded = () => finish();
-        const handleError = () => fail();
-        const handlePause = () => {
-          if (!audio.ended) {
-            finish();
-          }
-        };
-
-        audio.addEventListener("ended", handleEnded, { once: true });
-        audio.addEventListener("error", handleError, { once: true });
-        audio.addEventListener("pause", handlePause);
-
+        audio.addEventListener("ended", finish, { once: true });
+        audio.addEventListener("error", fail, { once: true });
+        audio.addEventListener("pause", () => !audio.ended && finish());
         audio.play().catch(fail);
       });
     },
@@ -470,29 +501,32 @@ export function BossFoundationProvider({
           return;
         } catch (error) {
           console.warn(
-            "Audio playback failed, falling back to TTS:",
+            "Audio playback failed, falling back to LiveKit TTS:",
             error,
           );
         }
       }
 
-      const speechText = fallbackText
-        ? forSpeech(fallbackText)
-        : "";
-
+      const speechText = fallbackText ? forSpeech(fallbackText) : "";
       if (!speechText) return;
 
-      await speak(
-        speechText,
-        bcp47Language,
-        1.0,
-        session?.voiceGender,
-      );
+      // Tell LiveKit Agent to speak the fallback text!
+      try {
+        await sendBossCmd(
+          new TextEncoder().encode(
+            JSON.stringify({ action: "SPEAK", text: speechText }),
+          ),
+          { reliable: true },
+        );
+      } catch {
+        await speak(speechText, bcp47Language, 1.0, session?.voiceGender);
+      }
     },
     [
       bcp47Language,
       playNativeAudioUntilSettled,
       resolveAssetUrl,
+      sendBossCmd,
       session?.voiceGender,
       speak,
     ],
@@ -506,7 +540,7 @@ export function BossFoundationProvider({
       resultPipelineRef.current = true;
       sequenceRef.current += 1;
 
-      void stopSpeechRecording();
+      await localParticipant?.setMicrophoneEnabled(false);
       stopAudio();
 
       if (audioRef.current) {
@@ -537,29 +571,24 @@ export function BossFoundationProvider({
           }),
         });
 
-        toast.success(
-          passed ? "Milestone Passed!" : "Milestone Failed",
-          { id: toastId },
-        );
+        toast.success(passed ? "Milestone Passed!" : "Milestone Failed", {
+          id: toastId,
+        });
 
         onEnd();
       } catch (error) {
         console.error("Failed to submit boss session:", error);
         toast.error("Failed to save progress.", { id: toastId });
-
         isSubmittingRef.current = false;
         resultPipelineRef.current = false;
       }
     },
-    [onEnd, session?.id, stopAudio, stopSpeechRecording],
+    [localParticipant, onEnd, session?.id, stopAudio],
   );
 
   const presentNextPlaylistItem = useCallback(
     (index: number) => {
-      if (
-        !mountedRef.current ||
-        stageStatusRef.current !== "PLAYING"
-      ) {
+      if (!mountedRef.current || stageStatusRef.current !== "PLAYING") {
         return;
       }
 
@@ -581,93 +610,45 @@ export function BossFoundationProvider({
         status: "pending",
       };
 
-      setMessages((previous) => [
-        ...previous,
-        exerciseMessage,
-      ]);
+      setMessages((previous) => [...previous, exerciseMessage]);
 
       if (
         currentItem.type === "LISTEN_SENTENCE_BUILDER" ||
         currentItem.type === "LISTEN_PICTURE_SELECTOR" ||
-        (currentItem.type === "PRONUNCIATION" &&
-          currentItem.targetText)
+        (currentItem.type === "PRONUNCIATION" && currentItem.targetText)
       ) {
-        void playExerciseAudio(
-          currentItem.audioKey,
-          currentItem.targetText,
-        );
+        void playExerciseAudio(currentItem.audioKey, currentItem.targetText);
       }
     },
     [handleEndSession, playExerciseAudio, playlist],
   );
 
+  // Initial Intro Message
   useEffect(() => {
     mountedRef.current = true;
-    const sequence = ++sequenceRef.current;
-
-    const startStage = async () => {
-      const welcomeMessage: BossMessage = {
-        id: `intro-${Date.now()}`,
-        role: "assistant",
-        text: introMessage,
-        mood: "default",
-      };
-
-      setMessages([welcomeMessage]);
-
-      try {
-        await speak(
-          forSpeech(introMessage),
-          bcp47Language,
-          1.0,
-          session?.voiceGender,
-        );
-      } catch (error) {
-        console.warn("Intro speech ended or was interrupted:", error);
-      }
-
-      if (
-        !mountedRef.current ||
-        sequence !== sequenceRef.current
-      ) {
-        return;
-      }
+    const welcomeMessage: BossMessage = {
+      id: `intro-${Date.now()}`,
+      role: "assistant",
+      text: introMessage,
+      mood: "default",
     };
-
-    void startStage();
+    setMessages([welcomeMessage]);
 
     return () => {
       mountedRef.current = false;
       sequenceRef.current += 1;
       resultPipelineRef.current = true;
-
       stopAudio();
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        audioRef.current = null;
-      }
     };
-  }, [
-    bcp47Language,
-    introMessage,
-    session?.voiceGender,
-    speak,
-    stopAudio,
-  ]);
+  }, [introMessage, stopAudio]);
 
   const startExercises = useCallback(() => {
-    if (
-      startExercisesRef.current ||
-      stageStatusRef.current !== "PLAYING"
-    ) {
+    if (startExercisesRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
 
     startExercisesRef.current = true;
     sequenceRef.current += 1;
-
     stopAudio();
 
     if (audioRef.current) {
@@ -683,13 +664,10 @@ export function BossFoundationProvider({
   const processResult = useCallback(
     async (
       isCorrect: boolean,
-      aiReactionText: string,
-      exerciseId: string,
+      userAnswerText: string,
+      currentItem: PlaylistItem,
     ) => {
-      if (
-        resultPipelineRef.current ||
-        stageStatusRef.current !== "PLAYING"
-      ) {
+      if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
         return;
       }
 
@@ -698,7 +676,6 @@ export function BossFoundationProvider({
 
       const sequence = ++sequenceRef.current;
 
-      // Update boss facial expression immediately based on answer & remaining lives
       const nextMood: BossMood = isCorrect
         ? "happy"
         : chancesRef.current - 1 <= 1
@@ -709,37 +686,44 @@ export function BossFoundationProvider({
       try {
         setMessages((previous) =>
           previous.map((message) =>
-            message.exercise?.id === exerciseId
+            message.exercise?.id === currentItem.id
               ? {
                   ...message,
-                  status: isCorrect
-                    ? "correct"
-                    : "incorrect",
+                  status: isCorrect ? "correct" : "incorrect",
                 }
               : message,
           ),
         );
 
-        const reaction = aiReactionText?.trim();
+        // Trigger LiveKit Boss Agent reaction over WebRTC data channel (with 4s timeout fallback)
+        await new Promise<void>((resolve) => {
+          reactionResolverRef.current = resolve;
+          const timeout = setTimeout(() => {
+            if (reactionResolverRef.current === resolve) {
+              reactionResolverRef.current = null;
+              resolve();
+            }
+          }, 4500);
 
-        if (reaction) {
-          setMessages((previous) => [
-            ...previous,
-            {
-              id: `reaction-${Date.now()}-${exerciseId}`,
-              role: "assistant",
-              text: reaction,
-              mood: nextMood,
-            },
-          ]);
-
-          await speak(
-            forSpeech(reaction),
-            bcp47Language,
-            1.0,
-            session?.voiceGender,
-          );
-        }
+          sendBossCmd(
+            new TextEncoder().encode(
+              JSON.stringify({
+                action: "REACT_EXERCISE",
+                exerciseId: currentItem.id,
+                question:
+                  currentItem.question ||
+                  currentItem.targetText ||
+                  currentItem.instruction,
+                userAnswer: userAnswerText,
+                isCorrect,
+              }),
+            ),
+            { reliable: true },
+          ).catch(() => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
 
         if (
           !mountedRef.current ||
@@ -752,15 +736,12 @@ export function BossFoundationProvider({
         if (isCorrect) {
           const nextXp = xpRef.current + 50;
           const nextScore = scoreRef.current + 1;
-
           xpRef.current = nextXp;
           scoreRef.current = nextScore;
-
           setXp(nextXp);
           setScore(nextScore);
         } else {
           const nextChances = chancesRef.current - 1;
-
           chancesRef.current = nextChances;
           setChances(nextChances);
 
@@ -774,352 +755,131 @@ export function BossFoundationProvider({
         }
 
         const nextIndex = currentIndexRef.current + 1;
-
         currentIndexRef.current = nextIndex;
         setCurrentIndex(nextIndex);
 
         await wait(NEXT_EXERCISE_PAUSE_MS);
 
         if (
-          !mountedRef.current ||
-          sequence !== sequenceRef.current ||
-          stageStatusRef.current !== "PLAYING"
-        ) {
-          return;
-        }
-
-        presentNextPlaylistItem(nextIndex);
-      } catch (error) {
-        console.warn(
-          "Reaction playback failed or was interrupted:",
-          error,
-        );
-
-        if (
           mountedRef.current &&
           sequence === sequenceRef.current &&
           stageStatusRef.current === "PLAYING"
         ) {
-          if (isCorrect) {
-            const nextXp = xpRef.current + 50;
-            const nextScore = scoreRef.current + 1;
-
-            xpRef.current = nextXp;
-            scoreRef.current = nextScore;
-
-            setXp(nextXp);
-            setScore(nextScore);
-          } else {
-            const nextChances = chancesRef.current - 1;
-
-            chancesRef.current = nextChances;
-            setChances(nextChances);
-
-            if (nextChances <= 0) {
-              stageStatusRef.current = "FAILED";
-              setStageStatus("FAILED");
-              setBossMood("angry");
-              await handleEndSession(false);
-              return;
-            }
-          }
-
-          const nextIndex = currentIndexRef.current + 1;
-
-          currentIndexRef.current = nextIndex;
-          setCurrentIndex(nextIndex);
-
-          await wait(NEXT_EXERCISE_PAUSE_MS);
-
-          if (
-            mountedRef.current &&
-            sequence === sequenceRef.current &&
-            stageStatusRef.current === "PLAYING"
-          ) {
-            presentNextPlaylistItem(nextIndex);
-          }
+          presentNextPlaylistItem(nextIndex);
         }
       } finally {
         if (mountedRef.current) {
           setIsAiProcessing(false);
         }
-
         if (sequence === sequenceRef.current) {
           resultPipelineRef.current = false;
         }
       }
     },
-    [
-      bcp47Language,
-      handleEndSession,
-      presentNextPlaylistItem,
-      session?.voiceGender,
-      speak,
-    ],
+    [handleEndSession, presentNextPlaylistItem, sendBossCmd],
   );
 
+  // Deterministic Exercise Submission (0ms local evaluation + LiveKit Boss voice reaction!)
   const submitExerciseAnswer = useCallback(
     async (userAnswer: any) => {
-      if (
-        resultPipelineRef.current ||
-        stageStatusRef.current !== "PLAYING"
-      ) {
+      if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
         return;
       }
 
       const index = currentIndexRef.current;
       const currentItem = playlist[index];
-
       if (!currentItem) return;
 
-      resultPipelineRef.current = true;
-
       if (isRecording) {
-        await stopSpeechRecording();
-        resetSpeechState();
+        await handleStopRecording();
       }
 
-      setIsAiProcessing(true);
+      const localIsCorrect = checkDeterministicAnswer(currentItem, userAnswer);
+      const answerStr = Array.isArray(userAnswer)
+        ? userAnswer.join(" ")
+        : String(userAnswer);
 
-      try {
-        const localIsCorrect = checkDeterministicAnswer(
-          currentItem,
-          userAnswer,
-        );
-
-        const response = await fetch(
-          "/api/foundation/boss/evaluate-exercise",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              exercise: currentItem,
-              userAnswer,
-              isCorrect: localIsCorrect,
-              bossPersona: boss,
-              targetLanguage: bcp47Language,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error("Evaluation endpoint failed.");
-        }
-
-        const data = await response.json();
-
-        const finalIsCorrect =
-          typeof data.isCorrect === "boolean"
-            ? data.isCorrect
-            : localIsCorrect;
-
-        const reactionText =
-          data.text ||
-          (finalIsCorrect
-            ? "Bien."
-            : "Non, ce n'est pas exact.");
-
-        resultPipelineRef.current = false;
-
-        await processResult(
-          finalIsCorrect,
-          reactionText,
-          currentItem.id,
-        );
-      } catch (error) {
-        console.error("Evaluation failed:", error);
-        toast.error("Network error, please try again.");
-        resultPipelineRef.current = false;
-        setIsAiProcessing(false);
-      }
+      await processResult(localIsCorrect, answerStr, currentItem);
     },
-    [
-      bcp47Language,
-      boss,
-      isRecording,
-      playlist,
-      processResult,
-      resetSpeechState,
-      stopSpeechRecording,
-    ],
+    [handleStopRecording, isRecording, playlist, processResult],
   );
 
+  // Voice Exercise Submission (Uses LiveKit STT + Azure Pronunciation Assessment!)
   const submitTurn = useCallback(async () => {
-    if (
-      resultPipelineRef.current ||
-      stageStatusRef.current !== "PLAYING"
-    ) {
-      return;
-    }
-
-    resultPipelineRef.current = true;
-
-    const currentItem = playlist[currentIndexRef.current];
-
-    if (!currentItem) {
-      resultPipelineRef.current = false;
-      return;
-    }
-
-    try {
-      // Use the blob captured when "Done Speaking" was clicked, or stop recording now if still active
-      let audioBlob = recordedBlobRef.current;
-      if (!audioBlob && isRecording) {
-        audioBlob = await stopSpeechRecording();
-      }
-      recordedBlobRef.current = null;
-
-      const userText = transcript.trim();
-
-      if (!userText && !audioBlob) {
-        resultPipelineRef.current = false;
-        return;
-      }
-
-      setMessages((previous) => [
-        ...previous,
-        {
-          id: `user-${Date.now()}`,
-          role: "user",
-          text: userText,
-          isAnalyzingPronunciation: Boolean(audioBlob),
-        },
-      ]);
-
-      resetSpeechState();
-      setIsAiProcessing(true);
-
-      let finalIsCorrect = false;
-
-      if (audioBlob) {
-        const formData = new FormData();
-
-        formData.append("audio", audioBlob);
-        formData.append(
-          "transcript",
-          currentItem.targetText || userText || "bonjour",
-        );
-        formData.append("language", bcp47Language);
-
-        const azureResponse = await fetch(
-          "/api/foundation/boss/pronunciation",
-          {
-            method: "POST",
-            body: formData,
-          },
-        );
-
-        if (azureResponse.ok) {
-          const azureData = await azureResponse.json();
-          const azurePassed = azureData.score >= 50;
-
-          const cleanTarget = (
-            currentItem.targetText || ""
-          )
-            .toLowerCase()
-            .replace(/[^\p{L}\p{N}\s]/gu, "");
-
-          const cleanUser = userText
-            .toLowerCase()
-            .replace(/[^\p{L}\p{N}\s]/gu, "");
-
-          const textPassed =
-            cleanUser.length > 2 &&
-            cleanTarget.length > 0 &&
-            (cleanUser.includes(cleanTarget) ||
-              cleanTarget.includes(cleanUser));
-
-          finalIsCorrect = azurePassed || textPassed;
-        } else {
-          console.warn(
-            "Azure failed, falling back to generous mode.",
-          );
-          finalIsCorrect = true;
-        }
-      } else {
-        finalIsCorrect = true;
-      }
-
-      const llmResponse = await fetch(
-        "/api/foundation/boss/evaluate-voice",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            exercise: currentItem,
-            userText,
-            isCorrect: finalIsCorrect,
-            bossPersona: boss,
-          }),
-        },
-      );
-
-      if (!llmResponse.ok) {
-        throw new Error("Voice evaluation endpoint failed.");
-      }
-
-      const data = await llmResponse.json();
-
-      resultPipelineRef.current = false;
-
-      await processResult(
-        typeof data.isCorrect === "boolean"
-          ? data.isCorrect
-          : finalIsCorrect,
-        data.text ||
-          (finalIsCorrect
-            ? "Bien."
-            : "Non, ce n'est pas exact."),
-        currentItem.id,
-      );
-    } catch (error) {
-      console.error("Failed to evaluate voice turn:", error);
-      toast.error("Could not evaluate your answer. Please try again.");
-      resultPipelineRef.current = false;
-      setIsAiProcessing(false);
-    }
-  }, [
-    bcp47Language,
-    boss,
-    isRecording,
-    playlist,
-    processResult,
-    resetSpeechState,
-    stopSpeechRecording,
-    transcript,
-  ]);
-
-  const handleTimeOut = useCallback(() => {
-    if (
-      resultPipelineRef.current ||
-      stageStatusRef.current !== "PLAYING"
-    ) {
+    if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
 
     const currentItem = playlist[currentIndexRef.current];
     if (!currentItem) return;
 
-    void processResult(
-      false,
-      "Trop lent ! Time is up.",
-      currentItem.id,
-    );
+    await handleStopRecording();
+
+    let attempts = 0;
+    while (!transcriptRef.current.trim() && attempts < 9) {
+      await wait(100);
+      attempts++;
+    }
+
+    const userText = transcriptRef.current.trim();
+
+    const pronData = latestPronunciationRef.current;
+
+    setMessages((previous) => [
+      ...previous,
+      {
+        id: `user-${Date.now()}`,
+        role: "user",
+        text: userText,
+        pronunciationScore: pronData,
+      },
+    ]);
+
+    setTranscript("");
+    latestPronunciationRef.current = null;
+
+    const cleanTarget = (currentItem.targetText || "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, "");
+    const cleanUser = userText.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "");
+
+    const azurePassed = pronData ? pronData.score >= 55 : false;
+    const textPassed =
+      cleanUser.length > 2 &&
+      cleanTarget.length > 0 &&
+      (cleanUser.includes(cleanTarget) || cleanTarget.includes(cleanUser));
+
+    const finalIsCorrect = azurePassed || textPassed || !cleanTarget;
+
+    await processResult(finalIsCorrect, userText, currentItem);
+  }, [handleStopRecording, playlist, processResult, transcript]);
+
+  const handleTimeOut = useCallback(() => {
+    if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
+      return;
+    }
+    const currentItem = playlist[currentIndexRef.current];
+    if (!currentItem) return;
+
+    void processResult(false, "[TIMEOUT]", currentItem);
   }, [playlist, processResult]);
 
   const handleReplay = useCallback(
     async (text: string) => {
       const cleanText = forSpeech(text);
       if (!cleanText) return;
-
-      await speak(
-        cleanText,
-        bcp47Language,
-        1.0,
-        session?.voiceGender,
-      );
+      try {
+        await sendBossCmd(
+          new TextEncoder().encode(
+            JSON.stringify({ action: "SPEAK", text: cleanText }),
+          ),
+          { reliable: true },
+        );
+      } catch {
+        await speak(cleanText, bcp47Language, 1.0, session?.voiceGender);
+      }
     },
-    [bcp47Language, session?.voiceGender, speak],
+    [bcp47Language, sendBossCmd, session?.voiceGender, speak],
   );
 
   return (
@@ -1150,19 +910,8 @@ export function BossFoundationProvider({
         submitExerciseAnswer,
         handleTimeOut,
         handleEndSession: () =>
-          handleEndSession(
-            stageStatusRef.current === "PASSED",
-          ),
-        startRecording: () => {
-          if (
-            resultPipelineRef.current ||
-            stageStatusRef.current !== "PLAYING"
-          ) {
-            return;
-          }
-          recordedBlobRef.current = null;
-          startSpeech(bcp47Language);
-        },
+          handleEndSession(stageStatusRef.current === "PASSED"),
+        startRecording: handleStartRecording,
         stopRecording: handleStopRecording,
         resetRecording: handleResetRecording,
         handleReplay,
@@ -1170,19 +919,113 @@ export function BossFoundationProvider({
         resolveAssetUrl,
       }}
     >
+      <RoomAudioRenderer />
       {children}
     </BossFoundationContext.Provider>
   );
 }
 
+// ============================================================================
+// OUTER WRAPPER (Mints LiveKit Token & Wraps with <LiveKitRoom>)
+// ============================================================================
+export function BossFoundationProvider({
+  session,
+  onEnd,
+  preloadedKeys,
+  preloadedUrls,
+  children,
+}: {
+  session: any;
+  onEnd: () => void;
+  preloadedKeys: (string | undefined)[];
+  preloadedUrls: string[];
+  children: ReactNode;
+}) {
+  const [lkCredentials, setLkCredentials] = useState<{
+    token: string;
+    wsUrl: string;
+  } | null>(null);
+
+  const scenarioData = (session?.scenarioData as any) || {};
+  const boss: BossPersona | null = scenarioData.boss || session?.boss || null;
+  const targetLanguage =
+    LANGUAGE_CODES[session?.targetLanguage] ||
+    session?.course?.targetLanguage ||
+    session?.targetLanguage ||
+    "fr-FR";
+  const nativeLanguage =
+    session?.course?.nativeLanguage || session?.nativeLanguage || "en-US";
+
+  useEffect(() => {
+    let cancelled = false;
+    async function initBossRoom() {
+      try {
+        const res = await fetch("/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lessonId: `boss-${session?.id || Date.now()}`,
+            nativeLanguage,
+            targetLanguage,
+            freestyleData: {
+              topic: `Milestone Boss: ${boss?.name || "Challenge"}`,
+              persona: boss?.persona || "Strict milestone examiner",
+              openingLine: boss?.sceneDescription || "",
+              aiOpeningTarget: boss?.introMessage || "",
+            },
+          }),
+        });
+        const data = await res.json();
+        if (!cancelled && data.token && data.wsUrl) {
+          setLkCredentials({ token: data.token, wsUrl: data.wsUrl });
+        }
+      } catch (e) {
+        console.error("Failed to fetch LiveKit token for Boss:", e);
+      }
+    }
+    initBossRoom();
+    return () => {
+      cancelled = true;
+    };
+  }, [boss, nativeLanguage, session?.id, targetLanguage]);
+
+  if (!lkCredentials) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-8 text-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+        <p className="text-sm font-bold uppercase tracking-wider text-slate-500">
+          Connecting Live Boss Arena...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <LiveKitRoom
+      serverUrl={lkCredentials.wsUrl}
+      token={lkCredentials.token}
+      connect={true}
+      audio={true}
+      video={false}
+    >
+      <BossLiveKitInnerProvider
+        session={session}
+        onEnd={onEnd}
+        preloadedKeys={preloadedKeys}
+        preloadedUrls={preloadedUrls}
+      >
+        {children}
+      </BossLiveKitInnerProvider>
+    </LiveKitRoom>
+  );
+}
+
 export function useBossFoundation() {
   const context = useContext(BossFoundationContext);
-
   if (context === undefined) {
     throw new Error(
       "useBossFoundation must be used within a BossFoundationProvider",
     );
   }
-
   return context;
 }
