@@ -39,7 +39,7 @@ export const PRICING_DATA: PricingData = {
     {
       id: "founder",
       name: "Spoon Core • Founder",
-      label: "Limited beta offer",
+      label: "Beta Founder Offer",
       accent: "primary",
       featured: true,
       price: "$35",
@@ -66,7 +66,7 @@ export const PRICING_DATA: PricingData = {
     {
       id: "unlimited",
       name: "Spoon Unlimited+",
-      label: "For intensive learners",
+      label: "For Intensive Learners",
       accent: "secondary",
       featured: false,
       price: "$125",
