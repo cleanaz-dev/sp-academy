@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import FreestyleSetup from "./freestyle-setup";
 import FreestyleChat from "./freestyle-chat";
-import { FreestyleProvider } from "@/context/freestyle-context";
 import { FreestyleReviewHub } from "./review/freestyle-review-hub";
 
 export type FreestyleSessionConfig = {
@@ -25,6 +24,11 @@ export default function FreestyleWrapper({
 }: any) {
   const [activeSession, setActiveSession] =
     useState<FreestyleSessionConfig | null>(null);
+  const [livekitData, setLivekitData] = useState<{
+    token: string;
+    wsUrl: string;
+  } | null>(null);
+
   const [pendingReviewId, setPendingReviewId] = useState<string | null>(null);
   const [reviewSessionId, setReviewSessionId] = useState<string | null>(null);
 
@@ -44,17 +48,44 @@ export default function FreestyleWrapper({
     config: Omit<FreestyleSessionConfig, "id" | "aiAvatarUrl">
   ) => {
     const seed = config.voiceGender === "female" ? "Camille" : "Laurent";
-    // Valid Dicebear v7 URL (no broken `top=` param)
     const aiAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
 
-    const res = await fetch("/api/freestyle/create", {
-      method: "POST",
-      body: JSON.stringify({ ...config, aiAvatarUrl }),
+    // 1. Create DB Session & Mint LiveKit Token in parallel!
+    const [createRes, tokenRes] = await Promise.all([
+      fetch("/api/freestyle/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...config, aiAvatarUrl }),
+      }),
+      fetch("/api/livekit/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nativeLanguage: config.nativeLanguage,
+          targetLanguage: config.targetLanguage,
+          freestyleData: {
+            topic: config.topic || "Daily Speaking Practice",
+            persona: `${config.voiceGender === "female" ? "Female" : "Male"} conversational partner`,
+            openingLine: "Talk freely about your day, travel, or anything on your mind.",
+          },
+        }),
+      }),
+    ]);
+
+    const sessionData = await createRes.json();
+    const lkData = await tokenRes.json();
+
+    if (!tokenRes.ok || !lkData.token) {
+      throw new Error(lkData.error || "Failed to initialize LiveKit room");
+    }
+
+    setLivekitData({
+      token: lkData.token,
+      wsUrl: lkData.wsUrl,
     });
-    const data = await res.json();
 
     setActiveSession({
-      id: data.sessionId,
+      id: sessionData.sessionId,
       ...config,
       aiAvatarUrl,
     });
@@ -63,6 +94,7 @@ export default function FreestyleWrapper({
   const handleEndSession = () => {
     const endedSessionId = activeSession?.id || null;
     setActiveSession(null);
+    setLivekitData(null);
 
     if (endedSessionId) {
       setPendingReviewId(endedSessionId);
@@ -94,8 +126,8 @@ export default function FreestyleWrapper({
           </motion.div>
         )}
 
-        {/* 2. CHAT SCREEN */}
-        {activeSession && (
+        {/* 2. LIVEKIT CHAT SCREEN */}
+        {activeSession && livekitData && (
           <motion.div
             key="chat"
             initial={{ opacity: 0 }}
@@ -104,9 +136,12 @@ export default function FreestyleWrapper({
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="flex h-screen w-full flex-col"
           >
-            <FreestyleProvider session={activeSession} onEnd={handleEndSession}>
-              <FreestyleChat />
-            </FreestyleProvider>
+            <FreestyleChat
+              session={activeSession}
+              livekitToken={livekitData.token}
+              livekitUrl={livekitData.wsUrl}
+              onEnd={handleEndSession}
+            />
           </motion.div>
         )}
 

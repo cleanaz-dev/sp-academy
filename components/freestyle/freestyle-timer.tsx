@@ -1,15 +1,21 @@
+// components/freestyle/freestyle-timer.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { Clock } from "lucide-react";
-import { useFreestyle } from "@/context/freestyle-context";
 
-export function FreestyleTimer({ initialTime = 300 }: { initialTime?: number }) {
+interface FreestyleTimerProps {
+  initialTime?: number;
+  onTimeUp?: () => void;
+}
+
+export function FreestyleTimer({
+  initialTime = 300,
+  onTimeUp,
+}: FreestyleTimerProps) {
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasEndedRef = useRef(false); // 1. Add this ref
-  
-  const { handleEndSession } = useFreestyle();
+  const hasEndedRef = useRef(false);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -17,18 +23,21 @@ export function FreestyleTimer({ initialTime = 300 }: { initialTime?: number }) 
         setTimeLeft((prev) => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && !hasEndedRef.current) {
-      // 2. Lock it so this block can NEVER run twice
       hasEndedRef.current = true;
-      handleEndSession();
+      if (onTimeUp) {
+        onTimeUp();
+      }
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timeLeft, handleEndSession]);
+  }, [timeLeft, onTimeUp]);
 
   const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -37,7 +46,7 @@ export function FreestyleTimer({ initialTime = 300 }: { initialTime?: number }) 
     <div
       className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium tracking-wide transition-colors ${
         timeLeft < 30
-          ? "animate-pulse bg-red-50 text-red-600"
+          ? "animate-pulse bg-red-50 text-red-600 font-bold"
           : "bg-slate-100 text-slate-700"
       }`}
     >
