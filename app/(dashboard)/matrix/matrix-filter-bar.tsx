@@ -112,9 +112,9 @@ export function MatrixFilterBar({
       </div>
 
       {/* Category Chips + Status & Sort Controls */}
-      {viewMode !== "FAMILIES" && (
+     {viewMode !== "FAMILIES" && (
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { key: "ALL", label: "All Categories" },
               { key: "GREETING", label: "👋 Greetings & Social" },
