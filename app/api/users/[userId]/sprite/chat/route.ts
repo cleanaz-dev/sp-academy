@@ -10,7 +10,9 @@ const client = new OpenAI({
 
 const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 1000;
-const MAX_REPLY_TOKENS = 150;
+const MAX_REPLY_TOKENS = 2000;
+
+const GROQ_LLM = "openai/gpt-oss-20b"
 
 function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== 'string') return fallback;
@@ -93,7 +95,7 @@ export async function POST(
   try {
     const completion = await client.chat.completions.create(
       {
-        model: 'llama-3.3-70b-versatile',
+        model: GROQ_LLM,
         stream: true,
         max_tokens: MAX_REPLY_TOKENS,
         messages: [{ role: 'system', content: systemPrompt }, ...history],
