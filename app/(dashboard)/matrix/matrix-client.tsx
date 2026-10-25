@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Database } from "lucide-react";
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useMatrix } from "@/context/matrix-context";
 import { useSpeak } from "@/hooks/use-speak";
@@ -24,6 +24,7 @@ import { MatrixFilterBar } from "./matrix-filter-bar";
 import { MatrixWordCard } from "./matrix-word-card";
 import { MatrixFamiliesView } from "./matrix-families-view";
 import { MatrixDojoModal } from "./matrix-dojo-modal";
+import { MatrixStudioTab } from "./matrix-studio-tab";
 
 export * from "./matrix-types";
 
@@ -44,6 +45,9 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
   useEffect(() => {
     setLocalProfiles(matrix?.languageProfiles || []);
   }, [matrix]);
+
+  // Top-level Tab: Tab 1 = "STUDIO" (Gamified Learner View) | Tab 2 = "VAULT" (Raw Data Explorer)
+  const [mainTab, setMainTab] = useState<"STUDIO" | "VAULT">("STUDIO");
 
   const [viewMode, setViewMode] = useState<ViewMode>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("GREETING");
@@ -254,6 +258,20 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
     if (userId) syncCart(userId, selectedLang);
   };
 
+  const handleTapQuizResult = (wordStat: WordStat, isCorrect: boolean) => {
+    updateLocalWordStat(wordStat.id, (prev) => ({
+      ...prev,
+      tappedCorrect: prev.tappedCorrect + (isCorrect ? 1 : 0),
+      tappedWrong: prev.tappedWrong + (isCorrect ? 0 : 1),
+    }));
+
+    trackInteraction(wordStat.word, {
+      tappedCorrect: isCorrect ? 1 : 0,
+      tappedWrong: isCorrect ? 0 : 1,
+    });
+    if (userId) syncCart(userId, selectedLang);
+  };
+
   const handlePronunciationTest = async (wordStat: WordStat) => {
     if (activeMicWordId === wordStat.id && status === "listening") {
       stopRecording();
@@ -386,55 +404,106 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
       />
 
       <main className="mx-auto max-w-7xl px-6 pt-8 lg:px-8">
-        <MatrixFilterBar
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          statsSummary={statsSummary}
-          familiesCount={wordFamilies.groups.length}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          categoryFilter={categoryFilter}
-          onCategoryChange={setCategoryFilter}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-        />
+        {/* TOP 2-TAB MODE SWITCHER: Learning Studio vs. Full Matrix Vault */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <button
+              type="button"
+              onClick={() => setMainTab("STUDIO")}
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black transition-all ${
+                mainTab === "STUDIO"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>Learning Studio</span>
+            </button>
 
-        {viewMode === "FAMILIES" ? (
-          <MatrixFamiliesView
-            groups={wordFamilies.groups}
+            <button
+              type="button"
+              onClick={() => setMainTab("VAULT")}
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-black transition-all ${
+                mainTab === "VAULT"
+                  ? "bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-900"
+                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              }`}
+            >
+              <Database className="h-4 w-4" />
+              <span>Full Matrix Vault ({statsSummary.total})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* TAB 1: GAMIFIED LEARNING STUDIO */}
+        {mainTab === "STUDIO" ? (
+          <MatrixStudioTab
+            enrichedWords={enrichedWords}
+            activeMicWordId={activeMicWordId}
+            status={status}
+            activeTtsKey={activeTtsKey}
+            isTtsPlaying={isTtsPlaying}
+            isTtsLoading={isTtsLoading}
+            sessionScores={sessionScores}
             onListen={handleListen}
             onPronunciationTest={handlePronunciationTest}
+            onTapQuizResult={handleTapQuizResult}
+            onStartDojo={startDojo}
           />
-        ) : filteredWords.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center">
-            <p className="text-slate-500 dark:text-slate-400">
-              No words or phrases match your current filter.
-            </p>
-          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredWords.map((wordStat) => (
-              <MatrixWordCard
-                key={wordStat.id}
-                wordStat={wordStat}
-                activeMicWordId={activeMicWordId}
-                status={status}
-                error={error}
-                activeTtsKey={activeTtsKey}
-                isTtsPlaying={isTtsPlaying}
-                isTtsLoading={isTtsLoading}
-                sessionResult={sessionScores[wordStat.id]}
+          /* TAB 2: FULL MATRIX VAULT (Raw Data & Filters) */
+          <>
+            <MatrixFilterBar
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              statsSummary={statsSummary}
+              familiesCount={wordFamilies.groups.length}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              categoryFilter={categoryFilter}
+              onCategoryChange={setCategoryFilter}
+              statusFilter={statusFilter}
+              onStatusChange={setStatusFilter}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+
+            {viewMode === "FAMILIES" ? (
+              <MatrixFamiliesView
+                groups={wordFamilies.groups}
                 onListen={handleListen}
                 onPronunciationTest={handlePronunciationTest}
-                onSelectRelatedWord={(relId) => {
-                  const found = enrichedWords.find((e) => e.id === relId);
-                  if (found) startDojo([found]);
-                }}
               />
-            ))}
-          </div>
+            ) : filteredWords.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center">
+                <p className="text-slate-500 dark:text-slate-400">
+                  No words or phrases match your current filter.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredWords.map((wordStat) => (
+                  <MatrixWordCard
+                    key={wordStat.id}
+                    wordStat={wordStat}
+                    activeMicWordId={activeMicWordId}
+                    status={status}
+                    error={error}
+                    activeTtsKey={activeTtsKey}
+                    isTtsPlaying={isTtsPlaying}
+                    isTtsLoading={isTtsLoading}
+                    sessionResult={sessionScores[wordStat.id]}
+                    onListen={handleListen}
+                    onPronunciationTest={handlePronunciationTest}
+                    onSelectRelatedWord={(relId) => {
+                      const found = enrichedWords.find((e) => e.id === relId);
+                      if (found) startDojo([found]);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
