@@ -271,8 +271,22 @@ export default function FoundationHubPage({
         <AiTutorCard />
       </main>
 
-      {/*  NEW */}
-      {user?.id && <SpriteChat userId={user.id} />}
+     {user?.id && (
+        <SpriteChat 
+          userId={user.id} 
+          initialContext={{
+            userName: user?.firstName || user?.username || "Student",
+            nativeLang: path?.nativeLanguage || "English",
+            targetLang: path?.targetLanguage || "French",
+            currentLessonTitle: (currentFocus?.data as any)?.title || `Spoon ${(currentFocus?.data as any)?.orderIndex || 1}`,
+            // Pass the FULL objects so the UI can show translations & scores
+            topWord: path?.matrixStats?.topWord || null,
+            topPhrase: path?.matrixStats?.topPhrase || null,
+            recentWords: path?.matrixStats?.recentWords || [],
+            avgPronunciation: path?.matrixStats?.avgPronunciation || 0,
+          }}
+        />
+      )}
     </div>
   );
 }
