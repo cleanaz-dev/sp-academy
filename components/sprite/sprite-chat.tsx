@@ -6,21 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, X, MessageSquare, Mic, Sparkles } from "lucide-react";
 import { useSprite } from "@/context/sprite-context";
 
-// 1. We define the exact "Dossier" of data the AI gets to know about the user.
-export interface ChatDossier {
-  userName: string;
-  nativeLang: string;
-  targetLang: string;
-  currentLessonTitle: string;
-  topWord: string;
-  recentWords: string;
-  avgPronunciation: number;
-  avgMastery: number;
-}
-
 interface SpriteChatProps {
   userId: string;
-  dossier: ChatDossier;
 }
 
 type ChatMessage = {
@@ -29,7 +16,7 @@ type ChatMessage = {
   content: string;
 };
 
-export function SpriteChat({ userId, dossier }: SpriteChatProps) {
+export function SpriteChat({ userId }: SpriteChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -39,10 +26,22 @@ export function SpriteChat({ userId, dossier }: SpriteChatProps) {
   const abortRef = useRef<AbortController | null>(null);
   const lastSummonedId = useRef<string | null>(null);
 
-  // Grab the profile from your existing context so we don't hit the DB
+  // Grab the profile from your existing global context!
   const { summonSprite, profile } = useSprite();
 
   const spriteName = profile?.sprite?.name || "Vox";
+
+  // The AI Brain: Use the pre-computed JSON from the database, or safe defaults
+  const aiBrain = profile?.context || {
+    userName: "Student",
+    nativeLang: "English",
+    targetLang: profile?.targetLanguage || "French",
+    currentLessonTitle: "Basics",
+    topWord: "",
+    recentWords: "",
+    avgPronunciation: 0,
+    avgMastery: 0,
+  };
 
   useEffect(() => {
     return () => abortRef.current?.abort();
@@ -68,14 +67,14 @@ export function SpriteChat({ userId, dossier }: SpriteChatProps) {
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content } : m)));
 
     try {
-      // 2. We pass the ENTIRE dossier straight to the backend
+      // Send the history + the globally fetched AI Brain directly to the backend
       const res = await fetch(`/api/users/${userId}/sprite/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: history.map(({ role, content }) => ({ role, content })),
           spriteName,
-          dossier,
+          dossier: aiBrain, // <--- Passing the brain here
         }),
         signal: controller.signal,
       });
@@ -237,7 +236,7 @@ export function SpriteChat({ userId, dossier }: SpriteChatProps) {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={`Type in ${dossier.targetLang}...`}
+                  placeholder={`Type in ${aiBrain.targetLang}...`}
                   disabled={isLoading}
                   maxLength={1000}
                   className="max-h-32 w-full bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-slate-500"
