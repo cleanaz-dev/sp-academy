@@ -193,43 +193,6 @@ function FoundationContent({ foundation }: FoundationContentProps) {
             }}
           />
         );
-        return (
-          <OutroStep
-            data={foundation as any}
-            targetLang={targetLang}
-            userId={userId}
-            onFinish={async (feedback) => {
-              await syncCart(userId, targetLang);
-
-              // 1. Mark current Spoon completed
-              await completeLesson({
-                courseId,
-                orderIndex: currentSpoon,
-                feedback,
-              });
-
-              // 2. Only queue the next Spoon if this is NOT a Boss milestone boundary (Spoon 1 & 2, 4 & 5, etc.)
-              // On Spoon 3, 6, 9, the Boss Review route queues Spoon 4, 7, 10 after the Boss is defeated!
-              if (currentSpoon % 3 !== 0) {
-                const res = await invokeEduBuilder({
-                  ...profileData,
-                  spoon: currentSpoon + 1,
-                  isOnboarding: false,
-                  foundationCourseId: courseId,
-                  previous_lessons: [{ ...lessonHandoff, feedback }],
-                });
-
-                if (!res.ok) {
-                  console.error("Failed to queue next spoon:", res.error);
-                }
-              }
-
-              // 3. Return user to the hub
-              router.push("/learning-hub");
-              router.refresh();
-            }}
-          />
-        );
       default:
         return (
           <div className="p-8 text-center text-slate-500">Unknown Step</div>
