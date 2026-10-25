@@ -19,6 +19,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { getPresignedUrls } from "@/app/actions/s3";
+import type { SpriteAIContext } from "@/app/actions/compute-sprite-context";
 
 export type SpriteType = "vox" | "vivi";
 
@@ -48,6 +49,7 @@ export type SpriteProfileData = {
   targetLanguage: string;
   nativeVoiceId: string;
   targetVoiceId: string;
+  context: SpriteAIContext | null; // <--- ADD THIS
   sprite: {
     slug: string;
     name: string;

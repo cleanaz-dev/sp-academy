@@ -65,7 +65,7 @@ export async function getLearningPath(userId: string) {
           createdAt: true,
         },
       },
-      user: { select: { firstName: true, username: true } },
+      user: { select: { firstName: true, username: true, id: true } },
     },
   });
 
