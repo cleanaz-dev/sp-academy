@@ -1,6 +1,10 @@
 // app/api/livekit/token/route.ts
 import { NextResponse } from "next/server";
-import { AccessToken } from "livekit-server-sdk";
+import {
+  AccessToken,
+  RoomAgentDispatch,
+  RoomConfiguration,
+} from "livekit-server-sdk";
 import { requireUser } from "@/lib/auth-guard";
 
 export async function POST(req: Request) {
@@ -30,7 +34,6 @@ export async function POST(req: Request) {
 
     const roomName = `freestyle-${user.id}-${lessonId || Date.now()}`;
 
-    // Matches the exact keys read by src/agent.py!
     const metadata = JSON.stringify({
       userId: user.id,
       firstName: user.firstName || "Learner",
@@ -56,7 +59,7 @@ export async function POST(req: Request) {
     const at = new AccessToken(apiKey, apiSecret, {
       identity: user.id,
       name: user.firstName || "Learner",
-      ttl: "6m", // 5-minute sprint + 1m buffer
+      ttl: "6m",
       metadata,
     });
 
@@ -66,6 +69,15 @@ export async function POST(req: Request) {
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
+    });
+
+    // Explicitly dispatch "my-agent" into this room when the user joins
+    at.roomConfig = new RoomConfiguration({
+      agents: [
+        new RoomAgentDispatch({
+          agentName: "my-agent",
+        }),
+      ],
     });
 
     const token = await at.toJwt();
