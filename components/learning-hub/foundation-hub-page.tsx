@@ -48,8 +48,7 @@ export default function FoundationHubPage({
     currentFocus?.type === "BRIDGE" ? currentFocus.data : undefined;
   const nextLesson =
     currentFocus?.type === "SPOON" ? currentFocus.data : undefined;
-  const bossDue =
-    currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
+  const bossDue = currentFocus?.type === "BOSS" ? currentFocus.data : undefined;
 
   // A Spoon row is created immediately in DB, so if title & imageUrl are still empty, Lambda is still baking it
   const waitingOnSpoon =
@@ -64,7 +63,7 @@ export default function FoundationHubPage({
 
   const bossStageObj =
     currentFocus?.type === "BOSS"
-      ? (currentFocus.data as any)?.bossStage ?? currentFocus.data
+      ? ((currentFocus.data as any)?.bossStage ?? currentFocus.data)
       : null;
 
   const waitingOnBoss =
@@ -74,7 +73,7 @@ export default function FoundationHubPage({
   const isGenerating = waitingOnSpoon || waitingOnVocab || waitingOnBoss;
 
   const completedLessonsCount = lessons.filter((l) =>
-    Boolean(l.completedAt)
+    Boolean(l.completedAt),
   ).length;
 
   const totalWordsLearned = lessons.reduce((acc, l) => {
@@ -88,7 +87,8 @@ export default function FoundationHubPage({
     .filter((l) => l.completedAt && l.bridge?.vocabMoment)
     .flatMap(
       (l) =>
-        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ?? []
+        (l.bridge?.vocabMoment as Array<{ word: string; gloss?: string }>) ??
+        [],
     )
     .reverse();
 
@@ -125,8 +125,7 @@ export default function FoundationHubPage({
 
     // 2. VOCAB BRIDGE FOCUS
     else if (currentFocus?.type === "BRIDGE" && vocabDue && !waitingOnVocab) {
-      const spoonNum =
-        (vocabDue as any)?.orderIndex ?? completedLessonsCount;
+      const spoonNum = (vocabDue as any)?.orderIndex ?? completedLessonsCount;
 
       // Bridge 1 -> 2, Bridge 2 -> 4, Bridge 3 -> 6 | Bridge 4 -> 9...
       orderIndex = getBridgeSpriteOrderIndex(spoonNum);
@@ -167,7 +166,7 @@ export default function FoundationHubPage({
     async function triggerSprite(
       idx: number,
       href: string,
-      fallbackLabel: string
+      fallbackLabel: string,
     ) {
       const node = await getSpriteNode(
         {
@@ -175,7 +174,7 @@ export default function FoundationHubPage({
           nativeVoiceId: profile!.nativeVoiceId,
           targetVoiceId: profile!.targetVoiceId,
         },
-        idx
+        idx,
       );
 
       if (cancelled || !node) return;
@@ -218,20 +217,6 @@ export default function FoundationHubPage({
     router,
     summonSprite,
   ]);
-
-  
-
-  // 1. Build the "AI Brain" dossier instantly from the data you already fetched!
-  const chatDossier = {
-    userName: user?.firstName || user?.username || generationData?.firstName || "Student",
-    nativeLang: path?.nativeLanguage || "English",
-    targetLang: path?.targetLanguage || "French",
-    currentLessonTitle: (currentFocus?.data as any)?.title || "Basics",
-    topWord: path?.matrixStats?.topWord?.word || "",
-    recentWords: path?.matrixStats?.recentWords?.map((w) => w.word).join(", ") || "",
-    avgPronunciation: path?.matrixStats?.avgPronunciation || 0,
-    avgMastery: path?.matrixStats?.avgMastery || 0,
-  };
 
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
@@ -286,10 +271,8 @@ export default function FoundationHubPage({
         <AiTutorCard />
       </main>
 
-      {/* 2. Drop the Chat widget here! */}
-      {user?.id && (
-        <SpriteChat userId={user.id} dossier={chatDossier} />
-      )}
+      {/*  NEW */}
+      {user?.id && <SpriteChat userId={user.id} />}
     </div>
   );
 }
