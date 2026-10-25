@@ -46,7 +46,7 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
   }, [matrix]);
 
   const [viewMode, setViewMode] = useState<ViewMode>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("GREETING");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortByOption>("recent");

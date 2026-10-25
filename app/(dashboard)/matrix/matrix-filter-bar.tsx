@@ -48,7 +48,7 @@ export function MatrixFilterBar({
   return (
     <>
       {/* Structural View Mode Tabs + Search */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4 mb-5">
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => onViewModeChange("ALL")}
@@ -111,26 +111,26 @@ export function MatrixFilterBar({
         </div>
       </div>
 
-      {/* Category Chips + Status & Sort Controls */}
-     {viewMode !== "FAMILIES" && (
+      {/* Category Chips (Greetings first, All Categories last) + Status & Sort Controls */}
+      {viewMode !== "FAMILIES" && (
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { key: "ALL", label: "All Categories" },
               { key: "GREETING", label: "👋 Greetings & Social" },
               { key: "PRONOUN", label: "👤 Pronouns" },
               { key: "VERB", label: "⚡ Verbs & Actions" },
               { key: "NOUN_PEOPLE", label: "🧑 People & Titles" },
               { key: "EXPRESSION", label: "💬 Expressions" },
               { key: "VOCABULARY", label: "🧱 Core Vocab" },
+              { key: "ALL", label: "All Categories" },
             ].map((cat) => (
               <button
                 key={cat.key}
                 onClick={() => onCategoryChange(cat.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
                   categoryFilter === cat.key
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-indigo-300 hover:text-slate-900"
                 }`}
               >
                 {cat.label}
@@ -139,8 +139,8 @@ export function MatrixFilterBar({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
-            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 rounded-xl text-xs font-medium">
-              {["ALL", "NEW", "LEARNING", "MASTERED"].map((st) => (
+            <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
+              {["ALL", "NEW", "LEARNING", "FAMILIAR", "MASTERED"].map((st) => (
                 <button
                   key={st}
                   onClick={() => onStatusChange(st)}
@@ -155,7 +155,7 @@ export function MatrixFilterBar({
               ))}
             </div>
 
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl text-xs font-medium">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-xl text-xs font-semibold">
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={sortBy}
