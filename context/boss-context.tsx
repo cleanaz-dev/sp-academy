@@ -435,15 +435,15 @@ function BossLiveKitInnerProvider({
     [boss?.coverUrl, resolveAssetUrl],
   );
 
-  const handleStartRecording = useCallback(() => {
+const handleStartRecording = useCallback(() => {
     if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
-    setTranscript("");
+    updateTranscript("");
     latestPronunciationRef.current = null;
     setIsRecording(true);
     localParticipant?.setMicrophoneEnabled(true);
-  }, [localParticipant]);
+  }, [localParticipant, updateTranscript]);
 
   const handleStopRecording = useCallback(async () => {
     setIsRecording(false);
@@ -451,11 +451,11 @@ function BossLiveKitInnerProvider({
   }, [localParticipant]);
 
   const handleResetRecording = useCallback(() => {
-    setTranscript("");
+    updateTranscript("");
     latestPronunciationRef.current = null;
     setIsRecording(false);
     localParticipant?.setMicrophoneEnabled(false);
-  }, [localParticipant]);
+  }, [localParticipant, updateTranscript]);
 
   const playNativeAudioUntilSettled = useCallback(
     async (url: string): Promise<void> => {
@@ -805,7 +805,7 @@ function BossLiveKitInnerProvider({
   );
 
   // Voice Exercise Submission (Uses LiveKit STT + Azure Pronunciation Assessment!)
-  const submitTurn = useCallback(async () => {
+const submitTurn = useCallback(async () => {
     if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
@@ -816,13 +816,12 @@ function BossLiveKitInnerProvider({
     await handleStopRecording();
 
     let attempts = 0;
-    while (!transcriptRef.current.trim() && attempts < 9) {
+    while (!transcriptRef.current.trim() && attempts < 25) {
       await wait(100);
       attempts++;
     }
 
     const userText = transcriptRef.current.trim();
-
     const pronData = latestPronunciationRef.current;
 
     setMessages((previous) => [
@@ -835,7 +834,7 @@ function BossLiveKitInnerProvider({
       },
     ]);
 
-    setTranscript("");
+    updateTranscript("");
     latestPronunciationRef.current = null;
 
     const cleanTarget = (currentItem.targetText || "")
@@ -852,7 +851,7 @@ function BossLiveKitInnerProvider({
     const finalIsCorrect = azurePassed || textPassed || !cleanTarget;
 
     await processResult(finalIsCorrect, userText, currentItem);
-  }, [handleStopRecording, playlist, processResult, transcript]);
+  }, [handleStopRecording, playlist, processResult, updateTranscript]);
 
   const handleTimeOut = useCallback(() => {
     if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
@@ -1005,7 +1004,7 @@ export function BossFoundationProvider({
       serverUrl={lkCredentials.wsUrl}
       token={lkCredentials.token}
       connect={true}
-      audio={true}
+      audio={false}
       video={false}
     >
       <BossLiveKitInnerProvider
