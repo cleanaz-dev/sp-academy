@@ -1,9 +1,8 @@
-// sprite-coach-pop.tsx
+// components/foundation/sprite-coach-pop.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, X } from "lucide-react";
+import { useEffect } from "react";
+import { useSprite } from "@/context/sprite-context";
 
 const STEP_LINES: Record<
   number,
@@ -86,83 +85,34 @@ export function SpriteCoachPop({
   sprite?: string;
   spriteUrl?: string;
 }) {
-  const [visible, setVisible] = useState(false);
-  const [line, setLine] = useState("");
-  const [badge, setBadge] = useState("");
-
-const isVivi = sprite === "vivi";
-const spriteName = isVivi ? "Vivi" : "Vox";
-const avatarSrc = spriteUrl || (isVivi ? "/sprite-f.png" : "/sprite-m.png");
-
+  const { summonSprite, profile, activeSprite } = useSprite();
 
   useEffect(() => {
     const config = STEP_LINES[step];
-    if (!config) {
-      setVisible(false);
-      return;
-    }
+    if (!config) return; // If there are no lines for this step, do nothing
 
+    // 1. Figure out which sprite we are using (Fallback: Prop -> Profile -> Default Active)
+    const resolvedSprite = sprite || profile?.sprite?.slug || activeSprite;
+    const isVivi = resolvedSprite === "vivi";
+
+    // 2. Pick a random line from the correct character's pool
     const pool = isVivi ? config.vivi : config.vox;
-    setLine(pool[Math.floor(Math.random() * pool.length)]);
-    setBadge(config.badge);
-    setVisible(true);
+    const randomLine = pool[Math.floor(Math.random() * pool.length)];
 
-    const timer = setTimeout(() => {
-      setVisible(false);
-    }, 4200);
+    // 3. Send the message directly to the global floating SpriteContext
+    summonSprite({
+      id: `coach-pop-${step}`, // Unique ID prevents duplicate animations
+      badge: config.badge,
+      text: randomLine,
+      duration: 4200,          // Auto-dismisses after 4.2 seconds
+      position: "bottom-left", // Matches your original UI location
+      sprite: resolvedSprite as "vox" | "vivi",
+      spriteUrl: spriteUrl || profile?.sprite?.avatarUrl,
+    });
 
-    return () => clearTimeout(timer);
-  }, [step, isVivi]);
+  }, [step, sprite, spriteUrl, profile, activeSprite, summonSprite]);
 
-  return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          key={`coach-pop-${step}`}
-          initial={{ opacity: 0, y: 20, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 12, scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 360, damping: 26 }}
-          className="fixed bottom-6 left-6 z-50 flex max-w-xs sm:max-w-sm items-center gap-3.5 rounded-3xl border border-indigo-500/30 bg-slate-950/95 p-3.5 text-white shadow-2xl shadow-indigo-950/40 backdrop-blur-xl"
-        >
-          {/* Sprite Avatar with Glow */}
-          <div className="relative shrink-0">
-            <span className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-teal-400 via-indigo-500 to-fuchsia-500 opacity-60 blur-xs" />
-            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-white/20 bg-slate-900">
-              <img
-                src={avatarSrc}
-                alt={spriteName}
-                className="h-full w-full object-cover object-top"
-              />
-            </div>
-          </div>
-
-          {/* Speech Content */}
-          <div className="flex-1 pr-1">
-            <div className="mb-1 flex items-center gap-1.5">
-              <span className="rounded-full bg-teal-400/20 px-2 py-0.5 text-[10px] font-black tracking-wider text-teal-300 uppercase">
-                {spriteName}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-wide text-indigo-300 uppercase">
-                <Sparkles className="h-2.5 w-2.5" />
-                {badge}
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed font-semibold text-slate-100">
-              &ldquo;{line}&rdquo;
-            </p>
-          </div>
-
-          {/* Dismiss X */}
-          <button
-            type="button"
-            onClick={() => setVisible(false)}
-            className="self-start rounded-full p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  // We return null because the global SpriteContext (in your layout) 
+  // is now handling the actual UI rendering and Framer Motion animations.
+  return null;
 }

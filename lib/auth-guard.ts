@@ -58,3 +58,10 @@ export async function hasActiveAccess(userId: string) {
 
   return user.BillingInformation?.isActive === true;
 }
+
+export async function isUser(userId:string) {
+  const user = await prisma.user.findUnique({
+    where: {id: userId}
+  })
+  return user!
+}
