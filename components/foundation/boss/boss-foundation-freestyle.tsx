@@ -26,6 +26,7 @@ interface Props {
 }
 
 export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
+  // Inside BossFoundationFreestyle:
   const {
     boss,
     messages,
@@ -50,6 +51,7 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
     playExerciseAudio,
     resolveAssetUrl,
     resetRecording,
+    handleReplay, // <-- add this
   } = useBossFoundation();
 
   const { playWord, stopAudio: stopWordAudio } = useWordAudio();
@@ -178,6 +180,7 @@ export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
                     key={message.id}
                     message={message}
                     aiAvatarUrl={getBossAvatarUrl(message.mood || "default")}
+                    onReplay={handleReplay}
                     ttsStatus="idle"
                   />
                 );
