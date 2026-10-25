@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { isUser } from '@/lib/auth-guard';
 import OpenAI from 'openai';
 
-// OpenAI SDK pointed at Groq
 const client = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: 'https://api.groq.com/openai/v1',
@@ -13,27 +12,27 @@ const MAX_MESSAGES = 20;
 const MAX_MESSAGE_CHARS = 1000;
 const MAX_REPLY_TOKENS = 150;
 
-// Client-supplied values go into the system prompt, so strip newlines/quotes and cap length
-function clean(value: unknown, fallback: string, max = 40) {
+function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== 'string') return fallback;
   return value.replace(/[\r\n"]/g, ' ').trim().slice(0, max) || fallback;
 }
 
+function cleanNumber(value: unknown, fallback: number) {
+  if (typeof value !== 'number') return fallback;
+  return value;
+}
+
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ userId: string }> } // Next.js 15+ format
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const { userId } = await params;
 
-  // 1. Auth
-  // TODO(auth): also verify the logged-in session's user id === userId.
-  // isUser() below only checks that this id exists in the DB, not who is calling.
   const user = await isUser(userId);
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  // 2. Parse body
   let body: any;
   try {
     body = await req.json();
@@ -41,11 +40,19 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const targetLang = clean(body.targetLang, 'French');
   const spriteName = clean(body.spriteName, 'Vox');
-  const topWord = clean(body.topWord, 'bonjour');
+  const d = body.dossier || {};
+  
+  // Extract the user's specific context from the payload
+  const userName = clean(d.userName, 'Student');
+  const nativeLang = clean(d.nativeLang, 'English');
+  const targetLang = clean(d.targetLang, 'French');
+  const currentLessonTitle = clean(d.currentLessonTitle, 'Basics');
+  const topWord = clean(d.topWord, '');
+  const recentWords = clean(d.recentWords, '');
+  const avgPronunciation = cleanNumber(d.avgPronunciation, 0);
+  const avgMastery = cleanNumber(d.avgMastery, 0);
 
-  // Only allow user/assistant messages (no client-injected "system"), capped in count and size
   const history: { role: 'user' | 'assistant'; content: string }[] = (
     Array.isArray(body.messages) ? body.messages : []
   )
@@ -56,16 +63,33 @@ export async function POST(
     .slice(-MAX_MESSAGES)
     .map((m: any) => ({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_CHARS) }));
 
-  // 3. Build the hidden "System Prompt" on the server
+  // --- THE GOD-TIER PROMPT ---
+  // This uses everything from your DB schema to make the AI incredibly smart
+  const adaptiveInstruction = avgPronunciation > 80 
+    ? `They are doing great (Pronunciation: ${avgPronunciation}%). Use slightly more advanced vocabulary to challenge them.`
+    : `They are struggling (Pronunciation: ${avgPronunciation}%). Be highly encouraging, use very simple words, and praise their effort.`;
+
   const systemPrompt = `
-    You are an AI language tutor named ${spriteName}.
-    The user is learning ${targetLang}.
-    Their current focus word from the Word Matrix is "${topWord}".
-    If they are just starting the chat, casually mention their focus word.
-    Keep responses to 1-2 short sentences. Do not use markdown formatting.
+    You are an AI language tutor named ${spriteName}. 
+    You are talking to your student, ${userName}. 
+    ${userName} speaks native ${nativeLang} and is learning ${targetLang}.
+    
+    CURRENT CONTEXT:
+    - They are currently working on a lesson called: "${currentLessonTitle}".
+    - ${adaptiveInstruction}
+    - Their overall mastery score is ${avgMastery}%.
+    
+    VOCABULARY FOCUS:
+    ${topWord ? `- They are struggling with the word: "${topWord}". Try to naturally weave this word into your response to test them.` : ''}
+    ${recentWords ? `- They recently learned these words: ${recentWords}. Use them if appropriate.` : ''}
+
+    RULES:
+    1. Respond primarily in ${targetLang}. 
+    2. Keep responses extremely concise (1 to 2 short sentences max).
+    3. Do NOT use markdown formatting, asterisks, or emojis (this breaks the text-to-speech engine).
+    4. Act like a real human tutor. Greet them by name if this is the first message.
   `;
 
-  // 4. Call Groq and stream plain text back
   try {
     const completion = await client.chat.completions.create(
       {
@@ -74,7 +98,7 @@ export async function POST(
         max_tokens: MAX_REPLY_TOKENS,
         messages: [{ role: 'system', content: systemPrompt }, ...history],
       },
-      { signal: req.signal } // stop the Groq call if the user disconnects
+      { signal: req.signal }
     );
 
     const encoder = new TextEncoder();
