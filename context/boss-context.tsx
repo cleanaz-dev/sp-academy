@@ -241,7 +241,6 @@ function BossLiveKitInnerProvider({
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [bossMood, setBossMood] = useState<BossMood>("default");
 
-  // LiveKit Mic & Transcript state for Voice Exercises (PRONUNCIATION / CONVERSATION)
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
   const latestPronunciationRef = useRef<any>(null);
@@ -260,9 +259,13 @@ function BossLiveKitInnerProvider({
   const scoreRef = useRef(0);
   const stageStatusRef = useRef<StageStatus>("PLAYING");
 
-  // Pending reaction resolver when waiting on LiveKit Boss to finish speaking reaction
+  // Refs to avoid stale closures inside useDataChannel
+  const bossMoodRef = useRef<BossMood>("default");
+  const lastGradeStatusRef = useRef<"correct" | "incorrect" | undefined>(
+    undefined,
+  );
+  const reactionAppendedRef = useRef(false);
   const reactionResolverRef = useRef<(() => void) | null>(null);
-
   const transcriptRef = useRef("");
 
   const updateTranscript = useCallback((val: string) => {
@@ -285,6 +288,9 @@ function BossLiveKitInnerProvider({
   useEffect(() => {
     stageStatusRef.current = stageStatus;
   }, [stageStatus]);
+  useEffect(() => {
+    bossMoodRef.current = bossMood;
+  }, [bossMood]);
 
   const {
     speak,
@@ -318,31 +324,41 @@ function BossLiveKitInnerProvider({
     session?.introMessage ||
     "Let's begin your milestone challenge.";
 
-  // Keep mic muted by default until user clicks "Record" on a voice exercise!
-  useEffect(() => {
-    localParticipant?.setMicrophoneEnabled(false);
-  }, [localParticipant]);
-
   // Listen for LiveKit Agent events over "spoon-meta"
   useDataChannel("spoon-meta", (msg) => {
     try {
       const payload = JSON.parse(new TextDecoder().decode(msg.payload));
 
-      // 1. LiveKit Agent spoke a reaction line
-      if (payload.type === "AGENT_TURN" && hasStartedExercises) {
+      // 1. LiveKit Agent spoke a reaction line during exercises
+      if (payload.type === "AGENT_TURN" && startExercisesRef.current) {
+        reactionAppendedRef.current = true;
         setMessages((prev) => [
           ...prev,
           {
-            id: `lk-reaction-${Date.now()}`,
+            id: `lk-reaction-${Date.now()}-${Math.random()}`,
             role: "assistant",
             text: payload.text,
-            mood: bossMood,
+            mood: bossMoodRef.current,
+            status: lastGradeStatusRef.current,
           },
         ]);
       }
 
       // 2. LiveKit Agent finished speaking the exercise reaction
       if (payload.type === "BOSS_REACTION_DONE") {
+        if (!reactionAppendedRef.current && payload.text) {
+          reactionAppendedRef.current = true;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `lk-reaction-${Date.now()}-${Math.random()}`,
+              role: "assistant",
+              text: payload.text,
+              mood: bossMoodRef.current,
+              status: lastGradeStatusRef.current,
+            },
+          ]);
+        }
         if (reactionResolverRef.current) {
           reactionResolverRef.current();
           reactionResolverRef.current = null;
@@ -435,7 +451,7 @@ function BossLiveKitInnerProvider({
     [boss?.coverUrl, resolveAssetUrl],
   );
 
-const handleStartRecording = useCallback(() => {
+  const handleStartRecording = useCallback(() => {
     if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
@@ -510,7 +526,6 @@ const handleStartRecording = useCallback(() => {
       const speechText = fallbackText ? forSpeech(fallbackText) : "";
       if (!speechText) return;
 
-      // Tell LiveKit Agent to speak the fallback text!
       try {
         await sendBossCmd(
           new TextEncoder().encode(
@@ -681,6 +696,9 @@ const handleStartRecording = useCallback(() => {
         : chancesRef.current - 1 <= 1
           ? "angry"
           : "sad";
+      bossMoodRef.current = nextMood;
+      lastGradeStatusRef.current = isCorrect ? "correct" : "incorrect";
+      reactionAppendedRef.current = false;
       setBossMood(nextMood);
 
       try {
@@ -695,7 +713,7 @@ const handleStartRecording = useCallback(() => {
           ),
         );
 
-        // Trigger LiveKit Boss Agent reaction over WebRTC data channel (with 4s timeout fallback)
+        // Trigger LiveKit Boss Agent reaction over WebRTC data channel
         await new Promise<void>((resolve) => {
           reactionResolverRef.current = resolve;
           const timeout = setTimeout(() => {
@@ -724,6 +742,21 @@ const handleStartRecording = useCallback(() => {
             resolve();
           });
         });
+
+        // Fallback reaction card if network/LLM timed out
+        if (!reactionAppendedRef.current) {
+          reactionAppendedRef.current = true;
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `lk-reaction-fallback-${Date.now()}`,
+              role: "assistant",
+              text: isCorrect ? "Très bien !" : "Pas tout à fait...",
+              mood: nextMood,
+              status: isCorrect ? "correct" : "incorrect",
+            },
+          ]);
+        }
 
         if (
           !mountedRef.current ||
@@ -779,7 +812,6 @@ const handleStartRecording = useCallback(() => {
     [handleEndSession, presentNextPlaylistItem, sendBossCmd],
   );
 
-  // Deterministic Exercise Submission (0ms local evaluation + LiveKit Boss voice reaction!)
   const submitExerciseAnswer = useCallback(
     async (userAnswer: any) => {
       if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
@@ -804,8 +836,7 @@ const handleStartRecording = useCallback(() => {
     [handleStopRecording, isRecording, playlist, processResult],
   );
 
-  // Voice Exercise Submission (Uses LiveKit STT + Azure Pronunciation Assessment!)
-const submitTurn = useCallback(async () => {
+  const submitTurn = useCallback(async () => {
     if (resultPipelineRef.current || stageStatusRef.current !== "PLAYING") {
       return;
     }
