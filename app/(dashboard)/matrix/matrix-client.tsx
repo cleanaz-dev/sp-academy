@@ -86,18 +86,31 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
     [localProfiles, selectedLang]
   );
 
-  const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
+const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     const rawList = currentProfile?.wordStats || [];
 
     const baseItems = rawList.map((item) => {
       const cleanWord = item.word.trim();
-      const tokens = cleanWord
-        .toLowerCase()
-        .split(/[\s']+/)
-        .filter(Boolean);
+      const tokens =
+        item.componentWords && item.componentWords.length > 0
+          ? item.componentWords.map((t) => t.toLowerCase())
+          : cleanWord
+              .toLowerCase()
+              .split(/[\s']+/)
+              .filter(Boolean);
+
       const structuralType: StructuralType =
-        cleanWord.includes(" ") || cleanWord.includes("'") ? "PHRASE" : "WORD";
-      const category = classifyWord(cleanWord, item.partOfSpeech);
+        item.wordType === "PHRASE" ||
+        cleanWord.includes(" ") ||
+        cleanWord.includes("'")
+          ? "PHRASE"
+          : "WORD";
+
+      const category = classifyWord(
+        cleanWord,
+        item.partOfSpeech,
+        structuralType
+      );
 
       return {
         ...item,
@@ -110,23 +123,48 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
     });
 
     return baseItems.map((item) => {
+      const lowerWord = item.cleanWord.toLowerCase();
+      const lowerLemma = item.lemma?.toLowerCase();
+
+      // Words sharing the same root lemma (e.g., "suis", "es", "êtes" -> lemma "être")
+      const sameLemmaWords = lowerLemma
+        ? baseItems.filter(
+            (other) =>
+              other.id !== item.id &&
+              other.lemma?.toLowerCase() === lowerLemma
+          )
+        : [];
+
       if (item.structuralType === "WORD") {
-        const lowerWord = item.cleanWord.toLowerCase();
         const relatedPhrases = baseItems.filter(
           (other) =>
             other.id !== item.id &&
             other.structuralType === "PHRASE" &&
-            other.tokens.includes(lowerWord)
+            (other.tokens.includes(lowerWord) ||
+              (lowerLemma ? other.tokens.includes(lowerLemma) : false))
         );
-        return { ...item, relatedPhrases, componentWords: [] };
+        return {
+          ...item,
+          relatedPhrases,
+          linkedComponentWords: [],
+          sameLemmaWords,
+        };
       } else {
-        const componentWords = baseItems.filter(
+        const linkedComponentWords = baseItems.filter(
           (other) =>
             other.id !== item.id &&
             other.structuralType === "WORD" &&
-            item.tokens.includes(other.cleanWord.toLowerCase())
+            (item.tokens.includes(other.cleanWord.toLowerCase()) ||
+              (other.lemma
+                ? item.tokens.includes(other.lemma.toLowerCase())
+                : false))
         );
-        return { ...item, relatedPhrases: [], componentWords };
+        return {
+          ...item,
+          relatedPhrases: [],
+          linkedComponentWords,
+          sameLemmaWords,
+        };
       }
     });
   }, [currentProfile]);

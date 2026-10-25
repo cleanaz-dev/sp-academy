@@ -16,12 +16,9 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  GitCommitHorizontal,
 } from "lucide-react";
-import {
-  EnrichedWordStat,
-  SessionScore,
-  WordStat,
-} from "./matrix-types";
+import { EnrichedWordStat, SessionScore, WordStat } from "./matrix-types";
 
 interface MatrixWordCardProps {
   wordStat: EnrichedWordStat;
@@ -37,10 +34,7 @@ interface MatrixWordCardProps {
   onSelectRelatedWord: (wordId: string) => void;
 }
 
-const STATUS_BADGE: Record<
-  string,
-  { label: string; className: string }
-> = {
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   MASTERED: {
     label: "Mastered",
     className:
@@ -91,17 +85,20 @@ export function MatrixWordCard({
   const isPlayingSlow =
     activeTtsKey === `${wordStat.id}-0.6` && (isTtsPlaying || isTtsLoading);
 
-  const linkedItems =
-    wordStat.relatedPhrases.length > 0
-      ? wordStat.relatedPhrases
-      : wordStat.componentWords;
-  const linkedLabel =
-    wordStat.relatedPhrases.length > 0
-      ? `${wordStat.relatedPhrases.length} phrase${wordStat.relatedPhrases.length > 1 ? "s" : ""}`
-      : `${wordStat.componentWords.length} root${wordStat.componentWords.length > 1 ? "s" : ""}`;
+  const linkedItems = [
+    ...wordStat.relatedPhrases,
+    ...wordStat.linkedComponentWords,
+    ...wordStat.sameLemmaWords,
+  ].filter(
+    (item, idx, arr) => arr.findIndex((x) => x.id === item.id) === idx
+  );
 
   const statusMeta = STATUS_BADGE[wordStat.status] || STATUS_BADGE.NEW;
   const totalTaps = (wordStat.tappedCorrect || 0) + (wordStat.tappedWrong || 0);
+
+  const showDistinctLemma =
+    wordStat.lemma &&
+    wordStat.lemma.toLowerCase() !== wordStat.cleanWord.toLowerCase();
 
   return (
     <div
@@ -113,13 +110,32 @@ export function MatrixWordCard({
             : "border-slate-200/90 dark:border-slate-800 hover:border-indigo-400/60 hover:shadow-md"
       }`}
     >
-      {/* Row 1: Word & Translation on Left | Play + Slow + Speak Action on Right */}
+      {/* Row 1: Word, Gender Badge, Status Badge & Translation/Lemma */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <h3 className="truncate text-xl font-black tracking-tight text-slate-900 dark:text-white">
               {wordStat.cleanWord}
             </h3>
+
+            {/* Grammatical Gender Badge (M / F) */}
+            {wordStat.grammaticalGender === "M" && (
+              <span
+                title="Masculine Noun/Adjective"
+                className="shrink-0 rounded-md bg-sky-500/15 border border-sky-500/30 px-1.5 py-0.5 text-[10px] font-black text-sky-700 dark:text-sky-300"
+              >
+                ♂ M
+              </span>
+            )}
+            {wordStat.grammaticalGender === "F" && (
+              <span
+                title="Feminine Noun/Adjective"
+                className="shrink-0 rounded-md bg-pink-500/15 border border-pink-500/30 px-1.5 py-0.5 text-[10px] font-black text-pink-700 dark:text-pink-300"
+              >
+                ♀ F
+              </span>
+            )}
+
             <span
               className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${statusMeta.className}`}
             >
@@ -127,13 +143,18 @@ export function MatrixWordCard({
             </span>
           </div>
 
-          <div className="mt-0.5 flex items-center gap-2">
-            <p className="truncate text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {wordStat.translation ||
-                (wordStat.structuralType === "PHRASE"
-                  ? `${wordStat.tokens.length}-word expression`
-                  : wordStat.categoryLabel)}
+          {/* Translation + Root Lemma + Linked Words Toggle */}
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="truncate text-xs font-bold text-slate-500 dark:text-slate-400">
+              {wordStat.translation || wordStat.categoryLabel}
             </p>
+
+            {showDistinctLemma && (
+              <span className="inline-flex items-center gap-0.5 rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-violet-700 dark:text-violet-300">
+                <GitCommitHorizontal className="h-3 w-3" />
+                Root: {wordStat.lemma}
+              </span>
+            )}
 
             {linkedItems.length > 0 && (
               <button
@@ -141,7 +162,7 @@ export function MatrixWordCard({
                 onClick={() => setShowLinks((prev) => !prev)}
                 className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-300 transition"
               >
-                <span>{linkedLabel}</span>
+                <span>{linkedItems.length} linked</span>
                 {showLinks ? (
                   <ChevronUp className="w-3 h-3" />
                 ) : (
@@ -305,7 +326,7 @@ export function MatrixWordCard({
         </div>
       )}
 
-      {/* Collapsible Phrases Drawer */}
+      {/* Collapsible Phrases & Lemma Family Drawer */}
       {showLinks && linkedItems.length > 0 && (
         <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800 animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex flex-wrap gap-1.5">
@@ -317,6 +338,9 @@ export function MatrixWordCard({
                 className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 transition"
               >
                 <span>{rel.word}</span>
+                {rel.translation && (
+                  <span className="opacity-65">({rel.translation})</span>
+                )}
                 <ArrowUpRight className="w-3 h-3" />
               </button>
             ))}

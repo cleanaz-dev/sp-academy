@@ -1,4 +1,4 @@
-//api/users/[userId]/matrix/[targetLang]sync/route.ts
+// app/api/users/[userId]/matrix/[targetLang]sync/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -11,10 +11,13 @@ export const InteractionSchema = z.object({
   tappedWrong: z.number().int().nonnegative().default(0),
   spokenAttempt: z.boolean().default(false),
   spokenScore: z.number().min(0).max(100).optional(),
-  // Optional metadata if passed from client
   translation: z.string().optional(),
   partOfSpeech: z.string().optional(),
   wordType: z.enum(["WORD", "PHRASE"]).optional(),
+  lemma: z.string().optional(),
+  grammaticalGender: z.enum(["M", "F"]).nullable().optional(),
+  audioMaleKey: z.string().optional(),
+  audioFemaleKey: z.string().optional(),
 });
 
 export const MatrixSyncPayloadSchema = z.object({
@@ -25,7 +28,49 @@ interface Params {
   params: Promise<{ userId: string; targetLang: string }>;
 }
 
-function computeStatus(masteryScore: number, avgSpokenScore: number | null): string {
+function cleanCanonicalWord(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[.,!?;:"]+$/g, "")
+    .replace(/^[.,!?;:"]+/g, "")
+    .trim();
+}
+
+function normalizeSlug(word: string): string {
+  return word
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "_");
+}
+
+function inferDefaults(cleanWord: string) {
+  if (cleanWord.startsWith("le ") || cleanWord.startsWith("un ")) {
+    return {
+      gender: "M",
+      lemma: cleanWord.replace(/^(le|un)\s+/, ""),
+      pos: "NOUN",
+    };
+  }
+  if (cleanWord.startsWith("la ") || cleanWord.startsWith("une ")) {
+    return {
+      gender: "F",
+      lemma: cleanWord.replace(/^(la|une)\s+/, ""),
+      pos: "NOUN",
+    };
+  }
+  return {
+    gender: null,
+    lemma: cleanWord,
+    pos: cleanWord.includes(" ") ? "EXPRESSION" : "VOCABULARY",
+  };
+}
+
+function computeStatus(
+  masteryScore: number,
+  avgSpokenScore: number | null
+): string {
   if (masteryScore >= 15 && (avgSpokenScore ?? 0) >= 80) return "MASTERED";
   if (masteryScore >= 8) return "FAMILIAR";
   if (masteryScore >= 2) return "LEARNING";
@@ -47,7 +92,6 @@ export async function POST(req: Request, { params }: Params) {
 
     const { interactions } = parsedBody.data;
 
-    // 1. Find or create the Language Profile for this user
     const profile = await prisma.languageProfile.upsert({
       where: {
         userId_languageCode: { userId, languageCode: targetLang },
@@ -59,10 +103,9 @@ export async function POST(req: Request, { params }: Params) {
       },
     });
 
-    // 2. Fetch existing WordStats for these words so we can calculate accurate rolling averages & status
-    const normalizedWords = interactions.map((i) =>
-      i.word.trim().toLowerCase().replace(/[.,!?;:"']/g, "").trim()
-    );
+    const normalizedWords = interactions
+      .map((i) => cleanCanonicalWord(i.word))
+      .filter(Boolean);
 
     const existingStats = await prisma.wordStat.findMany({
       where: {
@@ -73,17 +116,17 @@ export async function POST(req: Request, { params }: Params) {
 
     const existingMap = new Map(existingStats.map((s) => [s.word, s]));
 
-    // 3. Upsert each WordStat with true rolling average & automatic status progression
     const upsertPromises = interactions
       .map((interaction) => {
-        const cleanWord = interaction.word
-          .trim()
-          .toLowerCase()
-          .replace(/[.,!?;:"]/g, "")
-          .trim();
+        const cleanWord = cleanCanonicalWord(interaction.word);
         if (!cleanWord) return null;
 
+        // Ignore accidental English lesson/grammar titles containing parentheses
+        if (cleanWord.includes("(") && cleanWord.includes(")")) return null;
+
         const existing = existingMap.get(cleanWord);
+        const defaults = inferDefaults(cleanWord);
+        const slug = normalizeSlug(cleanWord);
 
         const interactionMasteryBump =
           interaction.tappedCorrect * 1 +
@@ -95,7 +138,6 @@ export async function POST(req: Request, { params }: Params) {
         const newMasteryScore =
           (existing?.masteryScore ?? 0) + interactionMasteryBump;
 
-        // Calculate true rolling average for spoken pronunciation
         let newAvgSpoken = existing?.avgSpokenScore ?? null;
         if (interaction.spokenAttempt && interaction.spokenScore !== undefined) {
           const prevAttempts = existing?.spokenAttempts ?? 0;
@@ -113,7 +155,13 @@ export async function POST(req: Request, { params }: Params) {
         const newStatus = computeStatus(newMasteryScore, newAvgSpoken);
         const inferredWordType =
           interaction.wordType ??
-          (cleanWord.includes(" ") || cleanWord.includes("'") ? "PHRASE" : "WORD");
+          (cleanWord.includes(" ") || cleanWord.includes("'")
+            ? "PHRASE"
+            : "WORD");
+        const componentWords =
+          inferredWordType === "PHRASE"
+            ? cleanWord.split(/[\s']+/).filter(Boolean)
+            : [];
 
         return prisma.wordStat.upsert({
           where: {
@@ -137,15 +185,33 @@ export async function POST(req: Request, { params }: Params) {
             ...(interaction.spokenAttempt ? { lastSpokenAt: new Date() } : {}),
             masteryScore: newMasteryScore,
             status: newStatus,
-            ...(interaction.translation ? { translation: interaction.translation } : {}),
-            ...(interaction.partOfSpeech ? { partOfSpeech: interaction.partOfSpeech } : {}),
+            ...(interaction.translation
+              ? { translation: interaction.translation }
+              : {}),
+            ...(interaction.partOfSpeech
+              ? { partOfSpeech: interaction.partOfSpeech }
+              : {}),
+            ...(interaction.lemma ? { lemma: interaction.lemma } : {}),
+            ...(interaction.grammaticalGender !== undefined
+              ? { grammaticalGender: interaction.grammaticalGender }
+              : {}),
           },
           create: {
             languageProfileId: profile.id,
             word: cleanWord,
             wordType: inferredWordType,
-            partOfSpeech: interaction.partOfSpeech || "OTHER",
+            partOfSpeech: interaction.partOfSpeech || defaults.pos,
             translation: interaction.translation || null,
+            lemma: interaction.lemma || defaults.lemma,
+            grammaticalGender:
+              interaction.grammaticalGender ?? defaults.gender,
+            componentWords,
+            audioMaleKey:
+              interaction.audioMaleKey ||
+              `foundation/words/${targetLang}/m/${slug}.mp3`,
+            audioFemaleKey:
+              interaction.audioFemaleKey ||
+              `foundation/words/${targetLang}/f/${slug}.mp3`,
             seenCount: interaction.seen || 1,
             heardCount: interaction.heard || 0,
             tappedCorrect: interaction.tappedCorrect || 0,

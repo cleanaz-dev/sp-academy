@@ -4,22 +4,38 @@ export interface WordStat {
   id: string;
   languageProfileId: string;
   word: string;
+
+  // Linguistic Metadata (From Prisma WordStat)
+  wordType?: "WORD" | "PHRASE" | string;
+  partOfSpeech?: string | null;
+  translation?: string | null;
+  lemma?: string | null;
+  grammaticalGender?: "M" | "F" | string | null;
+  componentWords?: string[];
+  audioMaleKey?: string | null;
+  audioFemaleKey?: string | null;
+
+  // Passive Metrics
   seenCount: number;
   firstSeenAt: Date | string;
   lastSeenAt: Date | string;
   heardCount: number;
   lastHeardAt: Date | string | null;
+
+  // Active Metrics
   tappedCorrect: number;
   tappedWrong: number;
   lastTappedAt: Date | string | null;
+
+  // Production Metrics
   spokenAttempts: number;
   avgSpokenScore: number | null;
   lastSpokenAt: Date | string | null;
+
+  // SRS / Status
   masteryScore: number;
-  status: "NEW" | "LEARNING" | "REVIEW" | "MASTERED" | string;
+  status: "NEW" | "LEARNING" | "FAMILIAR" | "MASTERED" | string;
   nextReviewDate: Date | string | null;
-  partOfSpeech?: string | null;
-  translation?: string | null;
 }
 
 export interface LanguageProfile {
@@ -50,7 +66,8 @@ export interface EnrichedWordStat extends WordStat {
   category: LexicalCategory;
   categoryLabel: string;
   relatedPhrases: WordStat[];
-  componentWords: WordStat[];
+  linkedComponentWords: WordStat[];
+  sameLemmaWords: WordStat[];
 }
 
 export interface SessionScore {
@@ -97,17 +114,54 @@ export const CATEGORY_META: Record<
 
 export function classifyWord(
   word: string,
-  dbPos?: string | null
+  dbPos?: string | null,
+  dbWordType?: string | null
 ): LexicalCategory {
-  if (dbPos) {
+  const w = word.toLowerCase().trim();
+
+  const people = new Set([
+    "madame",
+    "monsieur",
+    "mademoiselle",
+    "homme",
+    "femme",
+    "garçon",
+    "fille",
+    "ami",
+    "amie",
+    "voisin",
+    "voisine",
+    "le voisin",
+    "la voisine",
+    "la serveuse",
+    "locataire",
+    "señor",
+    "señora",
+    "señorita",
+    "hombre",
+    "mujer",
+  ]);
+  if (people.has(w)) return "NOUN_PEOPLE";
+
+  if (dbPos && dbPos !== "OTHER") {
     const upper = dbPos.toUpperCase();
-    if (upper.includes("PRON")) return "PRONOUN";
-    if (upper.includes("VERB")) return "VERB";
-    if (upper.includes("GREET")) return "GREETING";
+    if (upper.includes("GREET") || upper.includes("INTERJ")) return "GREETING";
+    if (upper.includes("PRON") || upper.includes("DET")) return "PRONOUN";
+    if (upper.includes("VERB") || upper.includes("AUX")) return "VERB";
     if (upper.includes("PHRASE") || upper.includes("EXPR")) return "EXPRESSION";
+    if (
+      upper.includes("NOUN") ||
+      upper.includes("ADJ") ||
+      upper.includes("ADV") ||
+      upper.includes("PREP") ||
+      upper.includes("CONJ")
+    ) {
+      return dbWordType === "PHRASE" && w.split(/\s+/).length > 2
+        ? "EXPRESSION"
+        : "VOCABULARY";
+    }
   }
 
-  const w = word.toLowerCase().trim();
   const tokens = w.split(/\s+/);
 
   const greetings = new Set([
@@ -121,20 +175,12 @@ export function classifyWord(
     "s'il te plaît",
     "enchanté",
     "enchantée",
+    "excuses-moi",
+    "excusez-moi",
     "bienvenue",
     "à bientôt",
     "bonne journée",
     "bonne nuit",
-    "hola",
-    "adiós",
-    "gracias",
-    "por favor",
-    "buenos días",
-    "buenas tardes",
-    "hello",
-    "goodbye",
-    "please",
-    "thank you",
   ]);
   if (greetings.has(w)) return "GREETING";
 
@@ -151,38 +197,9 @@ export function classifyWord(
     "elles",
     "moi",
     "toi",
-    "yo",
-    "tú",
-    "él",
-    "ella",
-    "nosotros",
-    "ellos",
-    "i",
-    "you",
-    "he",
-    "she",
-    "we",
-    "they",
+    "tes",
   ]);
   if (pronouns.has(w)) return "PRONOUN";
-
-  const people = new Set([
-    "madame",
-    "monsieur",
-    "mademoiselle",
-    "homme",
-    "femme",
-    "garçon",
-    "fille",
-    "ami",
-    "amie",
-    "señor",
-    "señora",
-    "señorita",
-    "hombre",
-    "mujer",
-  ]);
-  if (people.has(w)) return "NOUN_PEOPLE";
 
   const verbs = new Set([
     "suis",
@@ -212,13 +229,8 @@ export function classifyWord(
     "comprends",
     "appelle",
     "m'appelle",
-    "soy",
-    "eres",
-    "es",
-    "estoy",
-    "tengo",
-    "quiero",
-    "hablo",
+    "sers",
+    "combine",
   ]);
   if (
     verbs.has(w) ||
@@ -227,7 +239,7 @@ export function classifyWord(
     return "VERB";
   }
 
-  if (tokens.length > 1 || w.includes("'")) {
+  if (dbWordType === "PHRASE" || tokens.length > 1 || w.includes("'")) {
     return "EXPRESSION";
   }
 
