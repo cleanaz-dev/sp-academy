@@ -52,46 +52,55 @@ export function MatrixStudioTab({
   // ============================================================================
   // 1. TOP 3 PODIUM LISTS (1st Champion + 2nd & 3rd Runner-Ups)
   // ============================================================================
-  const mostSeenTop3 = useMemo(
-    () =>
-      [...enrichedWords]
-        .filter((w) => w.seenCount > 0)
-        .sort((a, b) => b.seenCount - a.seenCount)
-        .slice(0, 3),
-    [enrichedWords]
-  );
+  // Deduplicate #1 Champions across the 4 Podium Cards so all 4 cards showcase different words!
+  const { mostSeenTop3, mostHeardTop3, mostTappedTop3, mostSpokenTop3 } =
+    useMemo(() => {
+      const usedChampions = new Set<string>();
 
-  const mostHeardTop3 = useMemo(
-    () =>
-      [...enrichedWords]
-        .filter((w) => w.heardCount > 0)
-        .sort((a, b) => b.heardCount - a.heardCount)
-        .slice(0, 3),
-    [enrichedWords]
-  );
+      const pickTop3 = (
+        list: EnrichedWordStat[],
+        sortFn: (a: EnrichedWordStat, b: EnrichedWordStat) => number
+      ) => {
+        const sorted = [...list].sort(sortFn);
+        if (sorted.length === 0) return [];
+        // Pick highest-ranked word that hasn't already been crowned #1 on an earlier card
+        const champIdx = sorted.findIndex((w) => !usedChampions.has(w.id));
+        const champ = sorted[champIdx !== -1 ? champIdx : 0];
+        usedChampions.add(champ.id);
+        const others = sorted.filter((w) => w.id !== champ.id).slice(0, 2);
+        return [champ, ...others];
+      };
 
-  const mostTappedTop3 = useMemo(
-    () =>
-      [...enrichedWords]
-        .filter((w) => w.tappedCorrect + w.tappedWrong > 0)
-        .sort((a, b) => b.tappedCorrect - a.tappedCorrect)
-        .slice(0, 3),
-    [enrichedWords]
-  );
+      const seen = pickTop3(
+        enrichedWords.filter((w) => w.seenCount > 0),
+        (a, b) => b.seenCount - a.seenCount
+      );
 
-  const mostSpokenTop3 = useMemo(
-    () =>
-      [...enrichedWords]
-        .filter((w) => w.spokenAttempts > 0)
-        .sort((a, b) => {
-          if (b.spokenAttempts !== a.spokenAttempts) {
-            return b.spokenAttempts - a.spokenAttempts;
-          }
-          return (b.avgSpokenScore ?? 0) - (a.avgSpokenScore ?? 0);
-        })
-        .slice(0, 3),
-    [enrichedWords]
-  );
+      const heard = pickTop3(
+        enrichedWords.filter((w) => w.heardCount > 0),
+        (a, b) => b.heardCount - a.heardCount
+      );
+
+      const tapped = pickTop3(
+        enrichedWords.filter((w) => w.tappedCorrect + w.tappedWrong > 0),
+        (a, b) => b.tappedCorrect - a.tappedCorrect
+      );
+
+      const spoken = pickTop3(
+        enrichedWords.filter((w) => w.spokenAttempts > 0),
+        (a, b) =>
+          (b.avgSpokenScore ?? 0) !== (a.avgSpokenScore ?? 0)
+            ? (b.avgSpokenScore ?? 0) - (a.avgSpokenScore ?? 0)
+            : b.spokenAttempts - a.spokenAttempts
+      );
+
+      return {
+        mostSeenTop3: seen,
+        mostHeardTop3: heard,
+        mostTappedTop3: tapped,
+        mostSpokenTop3: spoken,
+      };
+    }, [enrichedWords]);
 
   // ============================================================================
   // 2. ACTION DECK: "0 SPOKEN / LOW LISTEN" GAPS
