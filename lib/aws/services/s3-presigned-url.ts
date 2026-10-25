@@ -1,50 +1,51 @@
-import { redis } from "@/lib/upstash";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3Client } from "../client";
+import { redis } from "@/lib/upstash";
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+// Default S3 URL validity: 24 hours (86400s)
+// Redis cache TTL: 23 hours (82800s) to guarantee zero expired 403 errors
+const DEFAULT_URL_EXPIRY_SECONDS = 86400;
 
-// Cache for 23 hours in Redis (S3 link valid for 24 hours)
-const URL_EXPIRY_SECONDS = 86400; // 24h
-const REDIS_TTL_SECONDS = 82800;  // 23h
+export async function getPresignedImageUrl(
+  s3Key: string,
+  expiresInSeconds: number = DEFAULT_URL_EXPIRY_SECONDS
+): Promise<string> {
+  if (!s3Key) throw new Error("No S3 key provided");
 
-export async function safePresign(key?: string | null): Promise<string | null> {
-  if (!key) return null;
-  if (key.startsWith("http://") || key.startsWith("https://")) return key;
-
-  const redisKey = `presigned_img:${key}`;
+  // Keep Redis TTL slightly shorter than S3 expiration
+  const redisTtl = Math.max(60, expiresInSeconds - 3600);
+  const cacheKey = `presigned_img:${s3Key}`;
 
   try {
-    // 1. Check Redis Cache
-    const cachedUrl = await redis.get<string>(redisKey);
+    // 1. Check Redis cache first
+    const cachedUrl = await redis.get<string>(cacheKey);
     if (cachedUrl) {
       return cachedUrl;
     }
-
-    // 2. Cache Miss: Generate URL with ResponseCacheControl header!
-    // This forces the browser to store the image in its local disk cache.
-    const command = new GetObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET_NAME || process.env.S3_BUCKET!,
-      Key: key,
-      ResponseCacheControl: "public, max-age=86400, immutable", // <-- CRITICAL for browser caching
-    });
-
-    const freshUrl = await getSignedUrl(s3, command, {
-      expiresIn: URL_EXPIRY_SECONDS,
-    });
-
-    // 3. Store in Redis
-    await redis.set(redisKey, freshUrl, { ex: REDIS_TTL_SECONDS });
-
-    return freshUrl;
   } catch (err) {
-    console.error("[PRESIGN_REDIS_ERROR]", err);
-    return null;
+    console.warn(`[REDIS_PRESIGN_READ_ERROR] ${s3Key}:`, err);
+    // Continue to S3 if Redis has a hiccup
   }
+
+  // 2. Cache miss: generate presigned URL
+  // ResponseCacheControl tells S3 to send browser-cache headers with the image download
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: s3Key,
+    ResponseCacheControl: `public, max-age=${expiresInSeconds}, immutable`,
+  });
+
+  const presignedUrl = await getSignedUrl(s3Client, command, {
+    expiresIn: expiresInSeconds,
+  });
+
+  // 3. Store in Redis
+  try {
+    await redis.set(cacheKey, presignedUrl, { ex: redisTtl });
+  } catch (err) {
+    console.warn(`[REDIS_PRESIGN_WRITE_ERROR] ${s3Key}:`, err);
+  }
+
+  return presignedUrl;
 }
