@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Sparkles, Database } from "lucide-react";
+import { Sparkles, Database, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePronunciation } from "@/context/pronunciation-context";
 import { useMatrix } from "@/context/matrix-context";
 import { useSpeak } from "@/hooks/use-speak";
@@ -25,6 +25,7 @@ import { MatrixWordCard } from "./matrix-word-card";
 import { MatrixFamiliesView } from "./matrix-families-view";
 import { MatrixDojoModal } from "./matrix-dojo-modal";
 import { MatrixStudioTab } from "./matrix-studio-tab";
+import { MatrixWordDetailModal } from "./matrix-word-detail-modal";
 
 export * from "./matrix-types";
 
@@ -32,6 +33,8 @@ interface MatrixClientProps {
   matrix: MatrixData | null;
   userId?: string;
 }
+
+const ITEMS_PER_PAGE = 18;
 
 export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
   const profiles = matrix?.languageProfiles || [];
@@ -46,14 +49,17 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
     setLocalProfiles(matrix?.languageProfiles || []);
   }, [matrix]);
 
-  // Top-level Tab: Tab 1 = "STUDIO" (Gamified Learner View) | Tab 2 = "VAULT" (Raw Data Explorer)
   const [mainTab, setMainTab] = useState<"STUDIO" | "VAULT">("STUDIO");
 
   const [viewMode, setViewMode] = useState<ViewMode>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("GREETING");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortByOption>("recent");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Selected word for the full X-Ray Detail Modal
+  const [detailWordId, setDetailWordId] = useState<string | null>(null);
 
   const [activeMicWordId, setActiveMicWordId] = useState<string | null>(null);
   const [activeTtsKey, setActiveTtsKey] = useState<string | null>(null);
@@ -86,7 +92,7 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
     [localProfiles, selectedLang]
   );
 
-const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
+  const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     const rawList = currentProfile?.wordStats || [];
 
     const baseItems = rawList.map((item) => {
@@ -126,7 +132,6 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
       const lowerWord = item.cleanWord.toLowerCase();
       const lowerLemma = item.lemma?.toLowerCase();
 
-      // Words sharing the same root lemma (e.g., "suis", "es", "êtes" -> lemma "être")
       const sameLemmaWords = lowerLemma
         ? baseItems.filter(
             (other) =>
@@ -206,7 +211,10 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
 
         if (searchQuery.trim() !== "") {
           const q = searchQuery.toLowerCase().trim();
-          return item.cleanWord.toLowerCase().includes(q);
+          return (
+            item.cleanWord.toLowerCase().includes(q) ||
+            (item.translation && item.translation.toLowerCase().includes(q))
+          );
         }
         return true;
       })
@@ -227,6 +235,17 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     searchQuery,
     sortBy,
   ]);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode, categoryFilter, statusFilter, searchQuery, sortBy, selectedLang]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredWords.length / ITEMS_PER_PAGE));
+  const paginatedWords = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredWords.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredWords, currentPage]);
 
   const statsSummary = useMemo(() => {
     const total = enrichedWords.length;
@@ -274,7 +293,7 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     );
   };
 
-const handleListen = async (
+  const handleListen = async (
     wordStat: WordStat,
     speed: number = 0.9,
     gender?: "m" | "f"
@@ -293,7 +312,6 @@ const handleListen = async (
 
     setActiveTtsKey(ttsKey);
 
-    // Use pre-generated S3 Fish Audio (audioMaleKey / audioFemaleKey) when available!
     const s3Key =
       gender === "f"
         ? wordStat.audioFemaleKey
@@ -332,6 +350,7 @@ const handleListen = async (
     updateLocalWordStat(wordStat.id, (prev) => ({
       ...prev,
       heardCount: prev.heardCount + 1,
+      lastHeardAt: new Date().toISOString(),
     }));
 
     trackInteraction(wordStat.word, { heard: 1 });
@@ -343,6 +362,7 @@ const handleListen = async (
       ...prev,
       tappedCorrect: prev.tappedCorrect + (isCorrect ? 1 : 0),
       tappedWrong: prev.tappedWrong + (isCorrect ? 0 : 1),
+      lastTappedAt: new Date().toISOString(),
     }));
 
     trackInteraction(wordStat.word, {
@@ -454,6 +474,11 @@ const handleListen = async (
     return enrichedWords.find((w) => w.id === target.id) || target;
   }, [dojoQueue, dojoIndex, enrichedWords]);
 
+  const activeDetailWord = useMemo(
+    () => enrichedWords.find((w) => w.id === detailWordId) || null,
+    [enrichedWords, detailWordId]
+  );
+
   if (!profiles.length) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center">
@@ -484,7 +509,7 @@ const handleListen = async (
       />
 
       <main className="mx-auto max-w-7xl px-6 pt-8 lg:px-8">
-        {/* TOP 2-TAB MODE SWITCHER: Learning Studio vs. Full Matrix Vault */}
+        {/* TOP 2-TAB MODE SWITCHER */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
             <button
@@ -515,7 +540,6 @@ const handleListen = async (
           </div>
         </div>
 
-        {/* TAB 1: GAMIFIED LEARNING STUDIO */}
         {mainTab === "STUDIO" ? (
           <MatrixStudioTab
             enrichedWords={enrichedWords}
@@ -531,7 +555,6 @@ const handleListen = async (
             onStartDojo={startDojo}
           />
         ) : (
-          /* TAB 2: FULL MATRIX VAULT (Raw Data & Filters) */
           <>
             <MatrixFilterBar
               viewMode={viewMode}
@@ -561,31 +584,99 @@ const handleListen = async (
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredWords.map((wordStat) => (
-                  <MatrixWordCard
-                    key={wordStat.id}
-                    wordStat={wordStat}
-                    activeMicWordId={activeMicWordId}
-                    status={status}
-                    error={error}
-                    activeTtsKey={activeTtsKey}
-                    isTtsPlaying={isTtsPlaying}
-                    isTtsLoading={isTtsLoading}
-                    sessionResult={sessionScores[wordStat.id]}
-                    onListen={handleListen}
-                    onPronunciationTest={handlePronunciationTest}
-                    onSelectRelatedWord={(relId) => {
-                      const found = enrichedWords.find((e) => e.id === relId);
-                      if (found) startDojo([found]);
-                    }}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {paginatedWords.map((wordStat, index) => (
+                    <MatrixWordCard
+                      key={wordStat.id}
+                      index={index}
+                      wordStat={wordStat}
+                      activeMicWordId={activeMicWordId}
+                      status={status}
+                      error={error}
+                      activeTtsKey={activeTtsKey}
+                      isTtsPlaying={isTtsPlaying}
+                      isTtsLoading={isTtsLoading}
+                      sessionResult={sessionScores[wordStat.id]}
+                      onListen={handleListen}
+                      onPronunciationTest={handlePronunciationTest}
+                      onSelectRelatedWord={(relId) => setDetailWordId(relId)}
+                      onOpenDetail={(w) => setDetailWordId(w.id)}
+                    />
+                  ))}
+                </div>
+
+                {/* PAGINATION FOOTER (Fixes the endless 340-card scroll) */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                    <span className="text-xs font-bold text-slate-500">
+                      Showing{" "}
+                      <strong className="text-slate-900 dark:text-white">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                        {Math.min(
+                          currentPage * ITEMS_PER_PAGE,
+                          filteredWords.length
+                        )}
+                      </strong>{" "}
+                      of{" "}
+                      <strong className="text-slate-900 dark:text-white">
+                        {filteredWords.length}
+                      </strong>{" "}
+                      items
+                    </span>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        Prev
+                      </button>
+
+                      <span className="px-3 text-xs font-black text-slate-700 dark:text-slate-200">
+                        Page {currentPage} of {totalPages}
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={currentPage === totalPages}
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(totalPages, p + 1))
+                        }
+                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-extrabold text-slate-700 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                      >
+                        Next
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
       </main>
+
+      {/* FULL WORD X-RAY DETAIL MODAL */}
+      <MatrixWordDetailModal
+        wordStat={activeDetailWord}
+        activeMicWordId={activeMicWordId}
+        status={status}
+        activeTtsKey={activeTtsKey}
+        isTtsPlaying={isTtsPlaying}
+        isTtsLoading={isTtsLoading}
+        sessionResult={
+          activeDetailWord ? sessionScores[activeDetailWord.id] : undefined
+        }
+        onClose={() => setDetailWordId(null)}
+        onListen={handleListen}
+        onPronunciationTest={handlePronunciationTest}
+        onSelectWord={(w) => setDetailWordId(w.id)}
+        allEnrichedWords={enrichedWords}
+      />
 
       <MatrixDojoModal
         isOpen={isDojoOpen}
