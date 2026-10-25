@@ -4,35 +4,25 @@ export interface WordStat {
   id: string;
   languageProfileId: string;
   word: string;
-
-  // Linguistic Metadata (From Prisma WordStat)
-  wordType?: "WORD" | "PHRASE" | string;
-  partOfSpeech?: string | null;
-  translation?: string | null;
-  lemma?: string | null;
-  grammaticalGender?: "M" | "F" | string | null;
-  componentWords?: string[];
-  audioMaleKey?: string | null;
-  audioFemaleKey?: string | null;
-
-  // Passive Metrics
+  wordType: "WORD" | "PHRASE" | string;
+  partOfSpeech: string;
+  translation: string | null;
+  lemma: string | null;
+  grammaticalGender: "M" | "F" | string | null;
+  componentWords: string[];
+  audioMaleKey: string | null;
+  audioFemaleKey: string | null;
   seenCount: number;
   firstSeenAt: Date | string;
   lastSeenAt: Date | string;
   heardCount: number;
   lastHeardAt: Date | string | null;
-
-  // Active Metrics
   tappedCorrect: number;
   tappedWrong: number;
   lastTappedAt: Date | string | null;
-
-  // Production Metrics
   spokenAttempts: number;
   avgSpokenScore: number | null;
   lastSpokenAt: Date | string | null;
-
-  // SRS / Status
   masteryScore: number;
   status: "NEW" | "LEARNING" | "FAMILIAR" | "MASTERED" | string;
   nextReviewDate: Date | string | null;
@@ -55,7 +45,8 @@ export type LexicalCategory =
   | "GREETING"
   | "PRONOUN"
   | "VERB"
-  | "NOUN_PEOPLE"
+  | "NOUN"
+  | "ADJECTIVE"
   | "EXPRESSION"
   | "VOCABULARY";
 
@@ -95,10 +86,15 @@ export const CATEGORY_META: Record<
     badgeClass:
       "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
   },
-  NOUN_PEOPLE: {
-    label: "🧑 People & Title",
+  NOUN: {
+    label: "🏷️ Noun",
     badgeClass:
       "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+  },
+  ADJECTIVE: {
+    label: "🎨 Adjective",
+    badgeClass:
+      "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
   },
   EXPRESSION: {
     label: "💬 Phrase / Chunk",
@@ -112,134 +108,27 @@ export const CATEGORY_META: Record<
   },
 };
 
+/**
+ * Pure DB-driven mapper: reads `partOfSpeech` and `wordType` directly from Prisma.
+ * Zero hardcoded language word lists!
+ */
 export function classifyWord(
-  word: string,
+  _word: string,
   dbPos?: string | null,
   dbWordType?: string | null
 ): LexicalCategory {
-  const w = word.toLowerCase().trim();
+  const upper = (dbPos || "").toUpperCase();
 
-  const people = new Set([
-    "madame",
-    "monsieur",
-    "mademoiselle",
-    "homme",
-    "femme",
-    "garçon",
-    "fille",
-    "ami",
-    "amie",
-    "voisin",
-    "voisine",
-    "le voisin",
-    "la voisine",
-    "la serveuse",
-    "locataire",
-    "señor",
-    "señora",
-    "señorita",
-    "hombre",
-    "mujer",
-  ]);
-  if (people.has(w)) return "NOUN_PEOPLE";
-
-  if (dbPos && dbPos !== "OTHER") {
-    const upper = dbPos.toUpperCase();
-    if (upper.includes("GREET") || upper.includes("INTERJ")) return "GREETING";
-    if (upper.includes("PRON") || upper.includes("DET")) return "PRONOUN";
-    if (upper.includes("VERB") || upper.includes("AUX")) return "VERB";
-    if (upper.includes("PHRASE") || upper.includes("EXPR")) return "EXPRESSION";
-    if (
-      upper.includes("NOUN") ||
-      upper.includes("ADJ") ||
-      upper.includes("ADV") ||
-      upper.includes("PREP") ||
-      upper.includes("CONJ")
-    ) {
-      return dbWordType === "PHRASE" && w.split(/\s+/).length > 2
-        ? "EXPRESSION"
-        : "VOCABULARY";
-    }
-  }
-
-  const tokens = w.split(/\s+/);
-
-  const greetings = new Set([
-    "bonjour",
-    "bonsoir",
-    "salut",
-    "au revoir",
-    "merci",
-    "merci beaucoup",
-    "s'il vous plaît",
-    "s'il te plaît",
-    "enchanté",
-    "enchantée",
-    "excuses-moi",
-    "excusez-moi",
-    "bienvenue",
-    "à bientôt",
-    "bonne journée",
-    "bonne nuit",
-  ]);
-  if (greetings.has(w)) return "GREETING";
-
-  const pronouns = new Set([
-    "je",
-    "j'",
-    "tu",
-    "il",
-    "elle",
-    "on",
-    "nous",
-    "vous",
-    "ils",
-    "elles",
-    "moi",
-    "toi",
-    "tes",
-  ]);
-  if (pronouns.has(w)) return "PRONOUN";
-
-  const verbs = new Set([
-    "suis",
-    "es",
-    "est",
-    "sommes",
-    "êtes",
-    "sont",
-    "être",
-    "ai",
-    "as",
-    "a",
-    "avons",
-    "avez",
-    "ont",
-    "avoir",
-    "vais",
-    "vas",
-    "va",
-    "aller",
-    "veux",
-    "voudrais",
-    "peux",
-    "parle",
-    "mange",
-    "bois",
-    "comprends",
-    "appelle",
-    "m'appelle",
-    "sers",
-    "combine",
-  ]);
+  if (upper.includes("GREET") || upper.includes("INTERJ")) return "GREETING";
+  if (upper.includes("PRON") || upper.includes("DET")) return "PRONOUN";
+  if (upper.includes("VERB") || upper.includes("AUX")) return "VERB";
+  if (upper.includes("NOUN") || upper.includes("PROPN")) return "NOUN";
+  if (upper.includes("ADJ")) return "ADJECTIVE";
   if (
-    verbs.has(w) ||
-    (tokens.length === 2 && pronouns.has(tokens[0]) && verbs.has(tokens[1]))
+    upper.includes("EXPR") ||
+    upper.includes("PHRASE") ||
+    dbWordType === "PHRASE"
   ) {
-    return "VERB";
-  }
-
-  if (dbWordType === "PHRASE" || tokens.length > 1 || w.includes("'")) {
     return "EXPRESSION";
   }
 

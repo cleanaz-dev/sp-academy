@@ -50,7 +50,7 @@ export default function MatrixClient({ matrix, userId }: MatrixClientProps) {
   const [mainTab, setMainTab] = useState<"STUDIO" | "VAULT">("STUDIO");
 
   const [viewMode, setViewMode] = useState<ViewMode>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState<string>("GREETING");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortByOption>("recent");
@@ -274,10 +274,17 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     );
   };
 
-  const handleListen = async (wordStat: WordStat, speed: number = 0.9) => {
+const handleListen = async (
+    wordStat: WordStat,
+    speed: number = 0.9,
+    gender?: "m" | "f"
+  ) => {
     if (status !== "idle") return;
 
-    const ttsKey = `${wordStat.id}-${speed}`;
+    const ttsKey = gender
+      ? `${wordStat.id}-${speed}-${gender}`
+      : `${wordStat.id}-${speed}`;
+
     if (activeTtsKey === ttsKey && isTtsPlaying) {
       stopTts();
       setActiveTtsKey(null);
@@ -285,7 +292,42 @@ const enrichedWords = useMemo<EnrichedWordStat[]>(() => {
     }
 
     setActiveTtsKey(ttsKey);
-    await speak(wordStat.word, selectedLang, speed);
+
+    // Use pre-generated S3 Fish Audio (audioMaleKey / audioFemaleKey) when available!
+    const s3Key =
+      gender === "f"
+        ? wordStat.audioFemaleKey
+        : gender === "m"
+          ? wordStat.audioMaleKey
+          : null;
+
+    let playedS3 = false;
+    if (s3Key) {
+      try {
+        const baseUrl = (
+          process.env.NEXT_PUBLIC_S3_CDN_URL ||
+          process.env.NEXT_PUBLIC_ASSET_URL ||
+          ""
+        ).replace(/\/$/, "");
+        if (baseUrl) {
+          const audio = new Audio(`${baseUrl}/${s3Key}`);
+          audio.playbackRate = speed;
+          await audio.play();
+          playedS3 = true;
+        }
+      } catch {
+        playedS3 = false;
+      }
+    }
+
+    if (!playedS3) {
+      await speak(
+        wordStat.word,
+        selectedLang,
+        speed,
+        gender === "f" ? "female" : "male"
+      );
+    }
 
     updateLocalWordStat(wordStat.id, (prev) => ({
       ...prev,
