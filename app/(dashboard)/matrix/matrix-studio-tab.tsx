@@ -270,7 +270,7 @@ export function MatrixStudioTab({
                       onClick={() => onPronunciationTest(champion)}
                       disabled={status === "analyzing"}
                       title="Speak"
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-white shadow-xs transition ${
+                      className={`flex h-9 w-9 items-center bg-primary justify-center rounded-full text-white shadow-xs transition ${
                         activeMicWordId === champion.id &&
                         status === "listening"
                           ? "bg-rose-600 animate-pulse"
