@@ -19,6 +19,7 @@ import { GenerationCycleCard } from "./generation-cycle-card";
 import { LearningPathMiniCards } from "./learning-mini-path-cards";
 import { WordMatrixCard } from "./word-matrix-card";
 import { AiTutorCard } from "./ai-tutor-card";
+import { SpriteChat } from "@/components/sprite/sprite-chat";
 
 type Props = {
   path: LearningPath | null;
@@ -218,6 +219,20 @@ export default function FoundationHubPage({
     summonSprite,
   ]);
 
+  
+
+  // 1. Build the "AI Brain" dossier instantly from the data you already fetched!
+  const chatDossier = {
+    userName: user?.firstName || user?.username || generationData?.firstName || "Student",
+    nativeLang: path?.nativeLanguage || "English",
+    targetLang: path?.targetLanguage || "French",
+    currentLessonTitle: (currentFocus?.data as any)?.title || "Basics",
+    topWord: path?.matrixStats?.topWord?.word || "",
+    recentWords: path?.matrixStats?.recentWords?.map((w) => w.word).join(", ") || "",
+    avgPronunciation: path?.matrixStats?.avgPronunciation || 0,
+    avgMastery: path?.matrixStats?.avgMastery || 0,
+  };
+
   return (
     <div className="min-h-screen bg-slate-100/80 font-sans text-slate-900 selection:bg-indigo-100">
       <DashboardHeader
@@ -270,6 +285,11 @@ export default function FoundationHubPage({
         {/* BOTTOM SANDBOX BAR */}
         <AiTutorCard />
       </main>
+
+      {/* 2. Drop the Chat widget here! */}
+      {user?.id && (
+        <SpriteChat userId={user.id} dossier={chatDossier} />
+      )}
     </div>
   );
 }
