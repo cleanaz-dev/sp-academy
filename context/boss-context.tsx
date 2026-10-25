@@ -329,8 +329,8 @@ function BossLiveKitInnerProvider({
     try {
       const payload = JSON.parse(new TextDecoder().decode(msg.payload));
 
-      // 1. LiveKit Agent spoke a reaction line during exercises
-      if (payload.type === "AGENT_TURN" && startExercisesRef.current) {
+      // 1. LiveKit Agent sent the controlled exercise grade reaction
+      if (payload.type === "BOSS_REACTION" && startExercisesRef.current) {
         reactionAppendedRef.current = true;
         setMessages((prev) => [
           ...prev,
@@ -346,19 +346,6 @@ function BossLiveKitInnerProvider({
 
       // 2. LiveKit Agent finished speaking the exercise reaction
       if (payload.type === "BOSS_REACTION_DONE") {
-        if (!reactionAppendedRef.current && payload.text) {
-          reactionAppendedRef.current = true;
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `lk-reaction-${Date.now()}-${Math.random()}`,
-              role: "assistant",
-              text: payload.text,
-              mood: bossMoodRef.current,
-              status: lastGradeStatusRef.current,
-            },
-          ]);
-        }
         if (reactionResolverRef.current) {
           reactionResolverRef.current();
           reactionResolverRef.current = null;
