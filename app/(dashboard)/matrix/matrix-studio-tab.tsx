@@ -195,13 +195,14 @@ export function MatrixStudioTab({
   // ============================================================================
   // HELPER TO RENDER EACH OF THE 4 PODIUM CARDS
   // ============================================================================
-  const renderPodiumCard = (config: {
+const renderPodiumCard = (config: {
     title: string;
     subtitle: string;
     icon: React.ReactNode;
     items: EnrichedWordStat[];
     headerGradient: string;
     badgeColor: string;
+    micBtnColor: string; // <-- 1. Add this
     formatMetric: (w: EnrichedWordStat) => string;
   }) => {
     const champion = config.items[0];
@@ -269,14 +270,15 @@ export function MatrixStudioTab({
                       type="button"
                       onClick={() => onPronunciationTest(champion)}
                       disabled={status === "analyzing"}
-                      title="Speak"
-                      className={`flex h-9 w-9 items-center bg-primary justify-center rounded-full text-white shadow-xs transition ${
+                      title="Try"
+                      className={`flex h-9 w-9 items-center justify-center rounded-full text-white shadow-xs transition active:scale-95 ${
                         activeMicWordId === champion.id &&
                         status === "listening"
                           ? "bg-rose-600 animate-pulse"
-                          : "bg-slate-900 hover:bg-indigo-600 dark:bg-indigo-600"
+                          : config.micBtnColor
                       }`}
                     >
+
                       {activeMicWordId === champion.id &&
                       status === "listening" ? (
                         <Square className="h-3.5 w-3.5 fill-current" />
@@ -335,15 +337,15 @@ export function MatrixStudioTab({
       {/* ====================================================================
           ROW 1: THE 4 HALL OF FAME PODIUM CARDS (1st, 2nd, 3rd)
       ==================================================================== */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {renderPodiumCard({
           title: "Most Seen",
           subtitle: "Visual Exposure",
           icon: <Eye className="h-5 w-5 text-white" />,
           items: mostSeenTop3,
           headerGradient: "bg-gradient-to-br from-sky-500 to-blue-600",
-          badgeColor:
-            "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+          badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+          micBtnColor: "bg-gradient-to-br from-sky-500 to-blue-600 hover:opacity-90",
           formatMetric: (w) => `${w.seenCount}x seen`,
         })}
 
@@ -353,8 +355,8 @@ export function MatrixStudioTab({
           icon: <Ear className="h-5 w-5 text-white" />,
           items: mostHeardTop3,
           headerGradient: "bg-gradient-to-br from-indigo-500 to-violet-600",
-          badgeColor:
-            "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+          badgeColor: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+          micBtnColor: "bg-gradient-to-br from-indigo-500 to-violet-600 hover:opacity-90",
           formatMetric: (w) => `${w.heardCount}x heard`,
         })}
 
@@ -364,8 +366,8 @@ export function MatrixStudioTab({
           icon: <MousePointerClick className="h-5 w-5 text-white" />,
           items: mostTappedTop3,
           headerGradient: "bg-gradient-to-br from-amber-500 to-orange-500",
-          badgeColor:
-            "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+          micBtnColor: "bg-gradient-to-br from-amber-500 to-orange-500 hover:opacity-90",
           formatMetric: (w) =>
             `${w.tappedCorrect}/${w.tappedCorrect + w.tappedWrong} taps`,
         })}
@@ -376,8 +378,8 @@ export function MatrixStudioTab({
           icon: <Mic className="h-5 w-5 text-white" />,
           items: mostSpokenTop3,
           headerGradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
-          badgeColor:
-            "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+          badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+          micBtnColor: "bg-gradient-to-br from-emerald-500 to-teal-600 hover:opacity-90",
           formatMetric: (w) => {
             const sc = sessionScores[w.id]?.overall ?? w.avgSpokenScore;
             return sc !== null ? `${sc}% (${w.spokenAttempts}x)` : `${w.spokenAttempts}x`;

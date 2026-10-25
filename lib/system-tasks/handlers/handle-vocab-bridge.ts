@@ -8,6 +8,36 @@ import { triggerMilestoneBossAndNextSpoon } from "@/lib/foundation/trigger-miles
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
+function normalizeSlug(word: string): string {
+  return word
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "_");
+}
+
+function inferNounMeta(cleanWord: string) {
+  if (cleanWord.startsWith("le ") || cleanWord.startsWith("un ")) {
+    return {
+      gender: "M",
+      lemma: cleanWord.replace(/^(le|un)\s+/, ""),
+      pos: "NOUN",
+    };
+  }
+  if (cleanWord.startsWith("la ") || cleanWord.startsWith("une ")) {
+    return {
+      gender: "F",
+      lemma: cleanWord.replace(/^(la|une)\s+/, ""),
+      pos: "NOUN",
+    };
+  }
+  return {
+    gender: null,
+    lemma: cleanWord,
+    pos: cleanWord.includes(" ") ? "EXPRESSION" : "NOUN",
+  };
+}
+
 export async function handleVocabBridgeGeneration(
   task: SystemTask,
   body: unknown,
@@ -91,6 +121,97 @@ export async function handleVocabBridgeGeneration(
     update: content,
     select: { id: true },
   });
+
+  // 4.5. Pre-populate WordStat with all vocabMoment items + S3 wordAudio so Matrix is 100% enriched!
+  try {
+    const rawLang = data.meta.targetLanguage || "fr-FR";
+    const targetLang =
+      rawLang === "fr"
+        ? "fr-FR"
+        : rawLang === "es"
+          ? "es-ES"
+          : rawLang;
+
+    const profile = await prisma.languageProfile.upsert({
+      where: {
+        userId_languageCode: {
+          userId,
+          languageCode: targetLang,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        languageCode: targetLang,
+      },
+    });
+
+    const audioMap = (data.wordAudio ?? {}) as Record<
+      string,
+      { m?: string; f?: string }
+    >;
+
+    for (const item of data.vocabMoment ?? []) {
+      const cleanWord = item.word
+        .trim()
+        .toLowerCase()
+        .replace(/[.,!?;:"]+$/g, "")
+        .trim();
+      if (!cleanWord) continue;
+
+      const slug = normalizeSlug(cleanWord);
+      const inferred = inferNounMeta(cleanWord);
+      const wordType =
+        cleanWord.includes(" ") || cleanWord.includes("'") ? "PHRASE" : "WORD";
+      const componentWords =
+        wordType === "PHRASE"
+          ? cleanWord.split(/[\s']+/).filter(Boolean)
+          : [];
+
+      const audioEntry = audioMap[slug] || {};
+      const audioMaleKey =
+        audioEntry.m || `foundation/words/${targetLang}/m/${slug}.mp3`;
+      const audioFemaleKey =
+        audioEntry.f ||
+        item.audioS3Key ||
+        `foundation/words/${targetLang}/f/${slug}.mp3`;
+
+      await prisma.wordStat.upsert({
+        where: {
+          languageProfileId_word: {
+            languageProfileId: profile.id,
+            word: cleanWord,
+          },
+        },
+        update: {
+          translation: item.gloss,
+          partOfSpeech: inferred.pos,
+          lemma: inferred.lemma,
+          ...(inferred.gender ? { grammaticalGender: inferred.gender } : {}),
+          audioMaleKey,
+          audioFemaleKey,
+        },
+        create: {
+          languageProfileId: profile.id,
+          word: cleanWord,
+          wordType,
+          partOfSpeech: inferred.pos,
+          translation: item.gloss,
+          lemma: inferred.lemma,
+          grammaticalGender: inferred.gender,
+          componentWords,
+          audioMaleKey,
+          audioFemaleKey,
+          seenCount: 0,
+          heardCount: 0,
+          masteryScore: 0,
+          status: "NEW",
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[vocab-bridge] failed to pre-seed WordStat:", err);
+  }
 
   // 5. Notify the client (a Pusher failure must not fail the webhook)
   try {
