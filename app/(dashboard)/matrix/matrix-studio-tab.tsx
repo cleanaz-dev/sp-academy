@@ -59,7 +59,7 @@ export function MatrixStudioTab({
 
       const pickTop3 = (
         list: EnrichedWordStat[],
-        sortFn: (a: EnrichedWordStat, b: EnrichedWordStat) => number
+        sortFn: (a: EnrichedWordStat, b: EnrichedWordStat) => number,
       ) => {
         const sorted = [...list].sort(sortFn);
         if (sorted.length === 0) return [];
@@ -73,17 +73,17 @@ export function MatrixStudioTab({
 
       const seen = pickTop3(
         enrichedWords.filter((w) => w.seenCount > 0),
-        (a, b) => b.seenCount - a.seenCount
+        (a, b) => b.seenCount - a.seenCount,
       );
 
       const heard = pickTop3(
         enrichedWords.filter((w) => w.heardCount > 0),
-        (a, b) => b.heardCount - a.heardCount
+        (a, b) => b.heardCount - a.heardCount,
       );
 
       const tapped = pickTop3(
         enrichedWords.filter((w) => w.tappedCorrect + w.tappedWrong > 0),
-        (a, b) => b.tappedCorrect - a.tappedCorrect
+        (a, b) => b.tappedCorrect - a.tappedCorrect,
       );
 
       const spoken = pickTop3(
@@ -91,7 +91,7 @@ export function MatrixStudioTab({
         (a, b) =>
           (b.avgSpokenScore ?? 0) !== (a.avgSpokenScore ?? 0)
             ? (b.avgSpokenScore ?? 0) - (a.avgSpokenScore ?? 0)
-            : b.spokenAttempts - a.spokenAttempts
+            : b.spokenAttempts - a.spokenAttempts,
       );
 
       return {
@@ -108,26 +108,33 @@ export function MatrixStudioTab({
   const zeroSpokenHighSeen = useMemo(
     () =>
       [...enrichedWords]
-        .filter((w) => w.spokenAttempts === 0 && (w.seenCount > 0 || w.tappedCorrect > 0))
+        .filter(
+          (w) =>
+            w.spokenAttempts === 0 && (w.seenCount > 0 || w.tappedCorrect > 0),
+        )
         .sort(
           (a, b) =>
-            b.seenCount + b.tappedCorrect * 2 - (a.seenCount + a.tappedCorrect * 2)
+            b.seenCount +
+            b.tappedCorrect * 2 -
+            (a.seenCount + a.tappedCorrect * 2),
         )
         .slice(0, 6),
-    [enrichedWords]
+    [enrichedWords],
   );
 
   const lowListenWords = useMemo(
     () =>
       [...enrichedWords]
         .filter((w) => w.heardCount <= 1)
-        .sort((a, b) => a.heardCount - b.heardCount || b.seenCount - a.seenCount)
+        .sort(
+          (a, b) => a.heardCount - b.heardCount || b.seenCount - a.seenCount,
+        )
         .slice(0, 6),
-    [enrichedWords]
+    [enrichedWords],
   );
 
   const [gapTab, setGapTab] = useState<"ZERO_SPOKEN" | "LOW_LISTEN">(
-    "ZERO_SPOKEN"
+    "ZERO_SPOKEN",
   );
   const activeGapList =
     gapTab === "ZERO_SPOKEN" ? zeroSpokenHighSeen : lowListenWords;
@@ -147,9 +154,12 @@ export function MatrixStudioTab({
       // Prioritize low-heard or missed-tap words so the quiz actually helps weak spots
       const pool = [...enrichedWords].sort(
         (a, b) =>
-          a.heardCount + a.tappedCorrect - (b.heardCount + b.tappedCorrect)
+          a.heardCount + a.tappedCorrect - (b.heardCount + b.tappedCorrect),
       );
-      const candidatePool = pool.slice(0, Math.max(6, Math.floor(pool.length * 0.4)));
+      const candidatePool = pool.slice(
+        0,
+        Math.max(6, Math.floor(pool.length * 0.4)),
+      );
       const target =
         candidatePool[Math.floor(Math.random() * candidatePool.length)] ||
         enrichedWords[0];
@@ -169,7 +179,7 @@ export function MatrixStudioTab({
         onListen(target, 0.9);
       }
     },
-    [enrichedWords, onListen]
+    [enrichedWords, onListen],
   );
 
   useEffect(() => {
@@ -195,7 +205,7 @@ export function MatrixStudioTab({
   // ============================================================================
   // HELPER TO RENDER EACH OF THE 4 PODIUM CARDS
   // ============================================================================
-const renderPodiumCard = (config: {
+  const renderPodiumCard = (config: {
     title: string;
     subtitle: string;
     icon: React.ReactNode;
@@ -213,16 +223,13 @@ const renderPodiumCard = (config: {
         {/* Top Colored Banner */}
         <div className={`px-5 py-4 text-white ${config.headerGradient}`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-widest opacity-90">
-              {config.subtitle}
-            </span>
+            <h3 className="mt-1 text-lg font-black tracking-tight">
+              {config.title}
+            </h3>
             <div className="rounded-xl bg-white/20 p-2 backdrop-blur-sm">
               {config.icon}
             </div>
           </div>
-          <h3 className="mt-1 text-lg font-black tracking-tight">
-            {config.title}
-          </h3>
         </div>
 
         {/* Body: #1 Champion + #2 & #3 Runner-Ups */}
@@ -278,7 +285,6 @@ const renderPodiumCard = (config: {
                           : config.micBtnColor
                       }`}
                     >
-
                       {activeMicWordId === champion.id &&
                       status === "listening" ? (
                         <Square className="h-3.5 w-3.5 fill-current" />
@@ -337,7 +343,7 @@ const renderPodiumCard = (config: {
       {/* ====================================================================
           ROW 1: THE 4 HALL OF FAME PODIUM CARDS (1st, 2nd, 3rd)
       ==================================================================== */}
-<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {renderPodiumCard({
           title: "Most Seen",
           subtitle: "Visual Exposure",
@@ -345,7 +351,8 @@ const renderPodiumCard = (config: {
           items: mostSeenTop3,
           headerGradient: "bg-gradient-to-br from-sky-500 to-blue-600",
           badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-          micBtnColor: "bg-gradient-to-br from-sky-500 to-blue-600 hover:opacity-90",
+          micBtnColor:
+            "bg-gradient-to-br from-sky-500 to-blue-600 hover:opacity-90",
           formatMetric: (w) => `${w.seenCount}x seen`,
         })}
 
@@ -356,7 +363,8 @@ const renderPodiumCard = (config: {
           items: mostHeardTop3,
           headerGradient: "bg-gradient-to-br from-indigo-500 to-violet-600",
           badgeColor: "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
-          micBtnColor: "bg-gradient-to-br from-indigo-500 to-violet-600 hover:opacity-90",
+          micBtnColor:
+            "bg-gradient-to-br from-indigo-500 to-violet-600 hover:opacity-90",
           formatMetric: (w) => `${w.heardCount}x heard`,
         })}
 
@@ -367,7 +375,8 @@ const renderPodiumCard = (config: {
           items: mostTappedTop3,
           headerGradient: "bg-gradient-to-br from-amber-500 to-orange-500",
           badgeColor: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-          micBtnColor: "bg-gradient-to-br from-amber-500 to-orange-500 hover:opacity-90",
+          micBtnColor:
+            "bg-gradient-to-br from-amber-500 to-orange-500 hover:opacity-90",
           formatMetric: (w) =>
             `${w.tappedCorrect}/${w.tappedCorrect + w.tappedWrong} taps`,
         })}
@@ -378,11 +387,15 @@ const renderPodiumCard = (config: {
           icon: <Mic className="h-5 w-5 text-white" />,
           items: mostSpokenTop3,
           headerGradient: "bg-gradient-to-br from-emerald-500 to-teal-600",
-          badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-          micBtnColor: "bg-gradient-to-br from-emerald-500 to-teal-600 hover:opacity-90",
+          badgeColor:
+            "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+          micBtnColor:
+            "bg-gradient-to-br from-emerald-500 to-teal-600 hover:opacity-90",
           formatMetric: (w) => {
             const sc = sessionScores[w.id]?.overall ?? w.avgSpokenScore;
-            return sc !== null ? `${sc}% (${w.spokenAttempts}x)` : `${w.spokenAttempts}x`;
+            return sc !== null
+              ? `${sc}% (${w.spokenAttempts}x)`
+              : `${w.spokenAttempts}x`;
           },
         })}
       </div>
@@ -591,7 +604,8 @@ const renderPodiumCard = (config: {
                   </div>
 
                   <p className="mt-2.5 text-xs font-semibold text-slate-500">
-                    Listen closely and tap the word you heard (+1 Heard & +1 Tap)
+                    Listen closely and tap the word you heard (+1 Heard & +1
+                    Tap)
                   </p>
                 </div>
 
