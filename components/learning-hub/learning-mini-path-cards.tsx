@@ -52,7 +52,7 @@ export function LearningPathMiniCards({
         </span>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section className="flex flex-col gap-3">
         <ActiveStepTile
           focus={currentFocus}
           resolveLessonHref={resolveLessonHref}
@@ -122,13 +122,13 @@ function ActiveStepTile({
       onClick={(e) => {
         if (isBuilding) e.preventDefault();
       }}
-      className={`group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-3.5 shadow-xs backdrop-blur-md transition-all ${
+      className={`group relative flex items-center gap-5 overflow-hidden rounded-2xl border p-5 shadow-sm backdrop-blur-md transition-all ${
         isBuilding
           ? "cursor-wait border-indigo-100 bg-white/75"
           : "border-indigo-200/80 bg-white/90 hover:border-indigo-300 hover:bg-white hover:shadow-md"
       }`}
     >
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-900">
+      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-900 shadow-sm">
         {thumbUrl ? (
           <img
             src={thumbUrl}
@@ -153,7 +153,7 @@ function ActiveStepTile({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span
-            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide ${
               type === "BOSS"
                 ? "bg-fuchsia-100 text-fuchsia-700"
                 : type === "BRIDGE"
@@ -164,7 +164,7 @@ function ActiveStepTile({
             {badgeLabel}
           </span>
           <span
-            className={`text-[11px] font-bold ${
+            className={`text-xs font-bold ${
               isBuilding ? "text-indigo-500" : "text-emerald-600"
             }`}
           >
@@ -172,7 +172,7 @@ function ActiveStepTile({
           </span>
         </div>
 
-        <h4 className="mt-1 truncate text-sm font-black text-slate-900 group-hover:text-indigo-600">
+        <h4 className="mt-1.5 truncate text-base font-black text-slate-900 group-hover:text-indigo-600">
           {title}
         </h4>
 
@@ -189,7 +189,7 @@ function ActiveStepTile({
             ))}
           </div>
         ) : (
-          <p className="mt-0.5 truncate text-xs text-slate-500">
+          <p className="mt-0.5 truncate text-sm text-slate-500">
             {isBuilding
               ? "Preparing audio & visual assets..."
               : "Continue active step"}
@@ -197,11 +197,11 @@ function ActiveStepTile({
         )}
       </div>
 
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
         {isBuilding ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-5 w-5" />
         )}
       </div>
     </Link>
@@ -240,8 +240,8 @@ function UpNextCompactTile({
       : lesson.imageUrl;
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-200/45 p-3.5">
-      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-200/45 p-3">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-200">
         {thumbUrl ? (
           <img
             src={thumbUrl}
@@ -256,14 +256,14 @@ function UpNextCompactTile({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="rounded-md bg-slate-200/90 px-2 py-0.5 text-[10px] font-extrabold text-slate-600 uppercase">
+          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
             Locked • {badge}
           </span>
         </div>
-        <h4 className="mt-1 truncate text-sm font-bold text-slate-600">
+        <h4 className="mt-0.5 truncate text-sm font-bold text-slate-600">
           {title}
         </h4>
-        <p className="mt-0.5 truncate text-xs text-slate-400">
+        <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
           Unlocks automatically after current step
         </p>
       </div>
