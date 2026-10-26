@@ -1,17 +1,6 @@
 // lib/schema/sprite-schema.ts
 import { z } from "zod";
 
-// 1. Pre-computed AI Brain Context (Stored on SpriteProfile.context)
-export const SpriteContextSchema = z.object({
-  userName: z.string().default("Student"),
-  currentLessonTitle: z.string().default("Basics"),
-  topWord: z.string().nullable(),
-  recentWords: z.array(z.string()).default([]),
-  avgPronunciation: z.number().min(0).max(100).default(0),
-  avgMastery: z.number().min(0).max(100).default(0),
-  lastUpdated: z.string().datetime(),
-});
-
 // 2. Context Card Schema (Rendered inside a 1-to-1 turn)
 export const ContextCardSchema = z.object({
   title: z.string(),
@@ -64,6 +53,56 @@ export const SpriteSessionSchema = z.object({
   updatedAt: z.string().or(z.date()),
 });
 
+export const SpriteFocusWordSchema = z.object({
+  word: z.string(),
+  translation: z.string().nullable(),
+
+  reason: z.enum([
+    "due_review",
+    "weak_pronunciation",
+    "low_recognition",
+    "low_mastery",
+  ]),
+
+  masteryScore: z.number().min(0).max(100),
+
+  // Percentages; null means insufficient evidence.
+  recognitionAccuracy: z.number().int().min(0).max(100).nullable(),
+  pronunciationAverage: z.number().int().min(0).max(100).nullable(),
+
+  spokenAttempts: z.number().int().nonnegative(),
+});
+
+export const SpriteContextSchema = z.object({
+  version: z.literal(2),
+
+  userName: z.string(),
+  nativeLang: z.string(),
+  targetLang: z.string(),
+
+  courseId: z.string().nullable(),
+  currentLessonId: z.string().nullable(),
+  currentLessonTitle: z.string().nullable(),
+
+  // Null means unknown—not zero ability.
+  avgPronunciation: z.number().int().min(0).max(100).nullable(),
+  pronunciationWordCount: z.number().int().nonnegative(),
+  pronunciationAttemptCount: z.number().int().nonnegative(),
+
+  avgMastery: z.number().int().min(0).max(100).nullable(),
+  masteryWordCount: z.number().int().nonnegative(),
+
+  focusWords: z.array(SpriteFocusWordSchema),
+
+  // Recently active across the language profile, not necessarily this lesson.
+  recentWords: z.array(z.string()),
+
+  lastUpdated: z.string().datetime(),
+});
+
+export type SpriteFocusWord = z.infer<typeof SpriteFocusWordSchema>;
+
+
 // Export inferred TypeScript types
 export type SpriteAIContext = z.infer<typeof SpriteContextSchema>;
 export type ContextCardData = z.infer<typeof ContextCardSchema>;
@@ -71,3 +110,4 @@ export type ProgressReportResult = z.infer<typeof ProgressReportResultSchema>;
 export type SpriteAction = z.infer<typeof SpriteActionSchema>;
 export type SpriteTurn = z.infer<typeof SpriteTurnSchema>;
 export type SpriteSessionData = z.infer<typeof SpriteSessionSchema>;
+

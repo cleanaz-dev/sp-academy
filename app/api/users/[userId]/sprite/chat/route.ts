@@ -11,6 +11,8 @@ import {
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
+// NOTE: adjust this import path to wherever SpriteContextSchema lives
+import { SpriteContextSchema } from "@/lib/sprite-context";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -21,11 +23,6 @@ const GROQ_LLM = "qwen/qwen3.8-27b";
 function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== "string") return fallback;
   return value.replace(/[\r\n"]/g, " ").trim().slice(0, max) || fallback;
-}
-
-function cleanNumber(value: unknown, fallback: number) {
-  if (typeof value !== "number" || Number.isNaN(value)) return fallback;
-  return value;
 }
 
 function stripArtifacts(str: string): string {
@@ -40,7 +37,9 @@ function getLastUserText(messages: UIMessage[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].role === "user") {
       return messages[i].parts
-        .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
+        .filter(
+          (p): p is Extract<typeof p, { type: "text" }> => p.type === "text"
+        )
         .map((p) => p.text)
         .join("");
     }
@@ -67,9 +66,14 @@ export async function POST(
   }
 
   if (!Array.isArray(body.messages)) {
-    return NextResponse.json({ error: "messages must be an array" }, { status: 400 });
+    return NextResponse.json(
+      { error: "messages must be an array" },
+      { status: 400 }
+    );
   }
+
   const messages: UIMessage[] = body.messages;
+
   const sessionId =
     typeof body.sessionId === "string" && body.sessionId.trim()
       ? body.sessionId.trim()
@@ -77,36 +81,83 @@ export async function POST(
 
   const rawSpriteName = clean(body.spriteName, "Vox");
   const spriteName =
-    rawSpriteName.charAt(0).toUpperCase() + rawSpriteName.slice(1).toLowerCase();
+    rawSpriteName.charAt(0).toUpperCase() +
+    rawSpriteName.slice(1).toLowerCase();
 
-  const d = body.dossier || {};
+  // Validate the dossier instead of trusting it blindly
+  const contextResult = SpriteContextSchema.safeParse(body.dossier);
+  if (!contextResult.success) {
+    return NextResponse.json(
+      {
+        error:
+          "Sprite context is missing or outdated. Recompute it before chatting.",
+        code: "SPRITE_CONTEXT_REFRESH_REQUIRED",
+      },
+      { status: 409 }
+    );
+  }
+
+  const d = contextResult.data;
 
   const userName = clean(d.userName, "Student");
   const nativeLang = clean(d.nativeLang, "English");
   const targetLang = clean(d.targetLang, "French");
-  const currentLessonTitle = clean(d.currentLessonTitle, "Basics");
-  const topWord = clean(d.topWord, "");
-  const recentWords = clean(d.recentWords, "");
-  const avgPronunciation = cleanNumber(d.avgPronunciation, 0);
-  const avgMastery = cleanNumber(d.avgMastery, 0);
+  const currentLessonTitle = d.currentLessonTitle ?? "General practice";
 
-  const adaptiveInstruction =
-    avgPronunciation > 80
-      ? `They are doing great (Pronunciation: ${avgPronunciation}%). Use slightly more advanced vocabulary to challenge them.`
-      : `They are struggling (Pronunciation: ${avgPronunciation}%). Be highly encouraging, use very simple words, and praise their effort.`;
+  const learningContextPrompt = `
+CURRENT LEARNING:
+- Current lesson: ${d.currentLessonTitle ?? "No active lesson"}
+- If there is no active lesson, do not invent one or claim that the learner is currently studying a particular lesson.
+
+LEARNER EVIDENCE:
+The following averages cover introduced words across the learner's language profile. They are NOT current-lesson-only scores.
+
+${JSON.stringify(
+  {
+    pronunciation: {
+      average: d.avgPronunciation,
+      assessedWords: d.pronunciationWordCount,
+      scoredAttempts: d.pronunciationAttemptCount,
+    },
+    mastery: {
+      average: d.avgMastery,
+      introducedWords: d.masteryWordCount,
+    },
+    focusWords: d.focusWords,
+    recentlyActiveWords: d.recentWords,
+  },
+  null,
+  2
+)}
+
+INTERPRETING THE EVIDENCE:
+- A null average means there is not enough evidence. It does NOT mean zero ability.
+- A low evidence count means the average is uncertain.
+- Do not diagnose the learner from one overall average.
+- A focus word's "reason" explains why it was selected. Do not describe every focus word as generally difficult.
+- "due_review" means the word is due for review.
+- "weak_pronunciation" means speaking practice may be useful; it does not necessarily indicate weak vocabulary, recognition, or grammar.
+- "low_recognition" means the learner may need more recognition support, examples, or scaffolding.
+- "low_mastery" means the word may benefit from additional retrieval practice.
+- Recently active words are background information. They are not necessarily part of the current lesson.
+- Never force lesson vocabulary, focus words, or performance metrics into greetings or unrelated casual conversation.
+
+TEACHING POLICY:
+- Use recognition and mastery evidence to decide how much scaffolding to provide.
+- Use pronunciation evidence to decide whether pronunciation practice is useful.
+- Weak pronunciation alone does NOT mean the learner needs simpler vocabulary or grammar.
+- When evidence is limited, teach at the current activity's level and gather evidence naturally rather than declaring that the learner is struggling.
+- When evidence is strong, reduce hints and encourage more learner production.
+- Do not introduce unrelated advanced vocabulary merely because the learner's pronunciation average is high.
+- When teaching or practicing, prefer relevant focus words according to their selection reasons, but do not force them into every response.
+`;
 
   const systemPrompt = `
 You are ${spriteName}, a concise, human-like language tutor.
 You are helping ${userName}, whose native language is ${nativeLang}
 and who is learning ${targetLang}.
 
-LESSON & VOCABULARY CONTEXT (BACKGROUND ONLY):
-- Current lesson: ${currentLessonTitle}
-- Mastery score: ${avgMastery}%
-- When teaching or practicing: ${adaptiveInstruction}
-${topWord ? `- Difficult word: ${topWord}` : ""}
-${recentWords ? `- Recently learned words: ${recentWords}` : ""}
-This context is background information ONLY. Do NOT automatically force it into greetings or casual messages. If the learner says "Hello", just greet them naturally.
+${learningContextPrompt}
 
 RESPONSE FORMAT:
 1. Respond ONLY to the learner's latest message and its intent.
@@ -150,20 +201,27 @@ The examples show structure only. Never copy their placeholder text.
         },
       },
       maxOutputTokens: 4096,
-      onFinish: async ({ text }) => {
-        // TEMP: remove once you've confirmed the model returns a translation
-        console.log("[sprite chat raw output]\n", text);
 
+      onFinish: async ({ text }) => {
         if (!sessionId) return;
+
         try {
           const [spokenPart, rawJson] = text.split("---JSON---");
           const assistantReply = stripArtifacts(spokenPart || "");
 
           let parsedJson: any = {};
+
           if (rawJson) {
             try {
-              const cleaned = rawJson.replace(/```json/gi, "").replace(/```/g, "").trim();
-              parsedJson = JSON.parse(cleaned);
+              const cleanedJson = rawJson
+                .replace(/```json/gi, "")
+                .replace(/```/g, "")
+                .trim();
+
+              const parsed = JSON.parse(cleanedJson);
+
+              parsedJson =
+                parsed && typeof parsed === "object" ? parsed : {};
             } catch {
               parsedJson = {};
             }
@@ -173,12 +231,14 @@ The examples show structure only. Never copy their placeholder text.
           const translation = parsedJson.translation
             ? stripArtifacts(String(parsedJson.translation))
             : null;
+
           const isTranslationRequired = Boolean(translation);
 
           const newTurn = {
             id: crypto.randomUUID(),
             userPrompt: stripArtifacts(userPrompt),
-            assistantReply: assistantReply || "Let's continue practicing.",
+            assistantReply:
+              assistantReply || "Let's continue practicing.",
             isTranslationRequired,
             translation,
             contextCard: parsedJson.contextCard ?? null,
@@ -187,6 +247,7 @@ The examples show structure only. Never copy their placeholder text.
           };
 
           const profileId = await getOrCreateProfileId(userId);
+
           const existingSession = await prisma.spriteSession.findUnique({
             where: { id: sessionId },
           });
@@ -196,35 +257,36 @@ The examples show structure only. Never copy their placeholder text.
             : [];
 
           const alreadySaved = existingTurns.some(
-            (t: any) =>
-              t.userPrompt === newTurn.userPrompt &&
-              t.assistantReply === newTurn.assistantReply
+            (turn: any) =>
+              turn.userPrompt === newTurn.userPrompt &&
+              turn.assistantReply === newTurn.assistantReply
           );
 
-          if (!alreadySaved) {
-            const updatedTurns = [...existingTurns, newTurn];
-            const autoTitle =
-              existingSession?.title && existingSession.title !== "New Session"
-                ? existingSession.title
-                : String(userPrompt || currentLessonTitle).slice(0, 48);
+          if (alreadySaved) return;
 
-            await prisma.spriteSession.upsert({
-              where: { id: sessionId },
-              create: {
-                id: sessionId,
-                spriteProfileId: profileId,
-                title: autoTitle,
-                lessonTitle: currentLessonTitle,
-                turns: updatedTurns,
-              },
-              update: {
-                title: autoTitle,
-                turns: updatedTurns,
-              },
-            });
-          }
-        } catch (err) {
-          console.error("[Chat onFinish Save Error]:", err);
+          const updatedTurns = [...existingTurns, newTurn];
+
+          const autoTitle =
+            existingSession?.title && existingSession.title !== "New Session"
+              ? existingSession.title
+              : String(userPrompt || currentLessonTitle).slice(0, 48);
+
+          await prisma.spriteSession.upsert({
+            where: { id: sessionId },
+            create: {
+              id: sessionId,
+              spriteProfileId: profileId,
+              title: autoTitle,
+              lessonTitle: currentLessonTitle,
+              turns: updatedTurns,
+            },
+            update: {
+              title: autoTitle,
+              turns: updatedTurns,
+            },
+          });
+        } catch (error) {
+          console.error("[Chat onFinish Save Error]:", error);
         }
       },
     });
@@ -232,8 +294,9 @@ The examples show structure only. Never copy their placeholder text.
     return createUIMessageStreamResponse({
       stream: toUIMessageStream({ stream: result.stream }),
     });
-  } catch (err) {
-    console.error("Groq chat error:", err);
+  } catch (error) {
+    console.error("Groq chat error:", error);
+
     return NextResponse.json({ error: "AI service error" }, { status: 502 });
   }
 }
