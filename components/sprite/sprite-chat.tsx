@@ -10,6 +10,8 @@ import { SpriteChatHeader } from "./sprite-chat-header";
 import { SpriteChatMessages } from "./sprite-chat-messages";
 import { SpriteChatControls } from "./sprite-chat-controls";
 import {
+  cleanDisplayString,
+  getRawText,
   parseMessagePayload,
   turnsToUIMessages,
   groupUIMessagesIntoTurns,
@@ -27,12 +29,15 @@ interface SpriteChatProps {
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ActiveTab>("briefing");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("session");
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
   const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(null);
   const [input, setInput] = useState("");
+
+  // Track the latest user prompt so we can persist the turn deterministically on finish
+  const lastUserPromptRef = useRef<string>("");
 
   const { summonSprite, profile } = useSprite();
   const lastSummonedId = useRef<string | null>(null);
@@ -56,8 +61,18 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     recentWords: aiBrain.recentWords?.map((w) => w.word).join(", ") || "",
   };
 
-  const bodyRef = useRef({ sessionId, spriteName, dossier: apiDossier });
-  bodyRef.current = { sessionId, spriteName, dossier: apiDossier };
+  const sessionRef = useRef({
+    sessionId,
+    lessonTitle: aiBrain.currentLessonTitle,
+    spriteName,
+    dossier: apiDossier,
+  });
+  sessionRef.current = {
+    sessionId,
+    lessonTitle: aiBrain.currentLessonTitle,
+    spriteName,
+    dossier: apiDossier,
+  };
 
   const transport = useMemo(
     () =>
@@ -67,13 +82,59 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [userId]
   );
 
-  const { messages, setMessages, sendMessage, status, error } = useChat({ transport });
+  // Deterministically save each completed assistant turn to Prisma & update sessionsList
+  const { messages, setMessages, sendMessage, status, error } = useChat({
+    transport,
+    onFinish: async ({ message }) => {
+      if (message.role !== "assistant") return;
+      const parsed = parseMessagePayload(message);
+      const turnPayload = {
+        id: message.id || crypto.randomUUID(),
+        userPrompt: cleanDisplayString(lastUserPromptRef.current || "Practice"),
+        assistantReply: parsed.spokenText || "Let's continue practicing.",
+        translation: parsed.translation ?? null,
+        contextCard: parsed.contextCard ?? null,
+        action: parsed.action ?? null,
+        createdAt: new Date().toISOString(),
+      };
+
+      try {
+        const res = await fetch(`/api/users/${userId}/sprite/sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId: sessionRef.current.sessionId,
+            lessonTitle: sessionRef.current.lessonTitle,
+            turn: turnPayload,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.sessions)) {
+            setSessionsList(data.sessions);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to persist turn:", err);
+      }
+    },
+  });
+
   const isLoading = status === "submitted" || status === "streaming";
 
-  // Helper that guarantees sessionId & dossier are passed on every request
   const sendWithSessionBody = useCallback(
     (text: string) => {
-      sendMessage({ text }, { body: bodyRef.current });
+      lastUserPromptRef.current = text;
+      sendMessage(
+        { text },
+        {
+          body: {
+            sessionId: sessionRef.current.sessionId,
+            spriteName: sessionRef.current.spriteName,
+            dossier: sessionRef.current.dossier,
+          },
+        }
+      );
     },
     [sendMessage]
   );
@@ -92,13 +153,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     () => parseMessagePayload(activeTurn?.assistantMessage),
     [activeTurn?.assistantMessage]
   );
-
-  const effectiveTab: ActiveTab =
-    viewMode === "sessions"
-      ? "sessions"
-      : viewMode === "stage" && hasActiveTurns
-      ? "stage"
-      : "briefing";
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -119,18 +173,12 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     }
   }, [isOpen, fetchSessions]);
 
-  useEffect(() => {
-    if (!isLoading && messages.length > 0 && isOpen) {
-      const timer = setTimeout(() => fetchSessions(), 450);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, messages.length, isOpen, fetchSessions]);
-
+  // Clicking "+ New Session" stays inside the "session" tab on a clean New Session stage
   const startNewSession = () => {
     setSessionId(crypto.randomUUID());
     setMessages([]);
     setSelectedTurnIndex(null);
-    setViewMode("briefing");
+    setActiveTab("session");
   };
 
   const selectSession = (session: SpriteSessionData) => {
@@ -138,7 +186,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     const loadedMessages = turnsToUIMessages(session.turns || []);
     setMessages(loadedMessages);
     setSelectedTurnIndex(null);
-    setViewMode("stage");
+    setActiveTab("session");
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -146,7 +194,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     const text = input.trim();
     if (!text || isLoading) return;
     setSelectedTurnIndex(null);
-    setViewMode("stage");
+    setActiveTab("session");
     sendWithSessionBody(text);
     setInput("");
   };
@@ -154,14 +202,14 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const triggerPractice = (word: string) => {
     if (isLoading) return;
     setSelectedTurnIndex(null);
-    setViewMode("stage");
+    setActiveTab("session");
     sendWithSessionBody(`Help me practice how to use "${word}"`);
   };
 
   const handleQuickPrompt = (promptText: string) => {
     if (isLoading) return;
     setSelectedTurnIndex(null);
-    setViewMode("stage");
+    setActiveTab("session");
     sendWithSessionBody(promptText);
   };
 
@@ -277,18 +325,18 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 spriteName={spriteName}
                 avatarSrc={avatarSrc}
                 currentLessonTitle={aiBrain.currentLessonTitle}
-                effectiveTab={effectiveTab}
+                activeTab={activeTab}
                 hasActiveTurns={hasActiveTurns}
                 sessionsCount={sessionsList.length}
-                onSelectTab={setViewMode}
+                onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
                 onTriggerReport={() => handleQuickPrompt("Generate my progress report")}
                 onClose={() => setIsOpen(false)}
               />
 
-              {/* PART 2: MESSAGES & STAGE */}
+              {/* PART 2: MESSAGES / STAGE / BRIEFING / HISTORY */}
               <SpriteChatMessages
-                effectiveTab={effectiveTab}
+                activeTab={activeTab}
                 spriteName={spriteName}
                 avatarSrc={avatarSrc}
                 aiBrain={aiBrain}
@@ -301,21 +349,23 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 isLoading={isLoading}
                 error={error}
                 onSelectSession={selectSession}
-                onSelectTab={setViewMode}
+                onStartNewSession={startNewSession}
                 onSelectTurnIndex={setSelectedTurnIndex}
                 onTriggerPractice={triggerPractice}
                 onQuickPrompt={handleQuickPrompt}
               />
 
-              {/* PART 3: CONTROLS / INPUT */}
-              <SpriteChatControls
-                input={input}
-                isLoading={isLoading}
-                spriteName={spriteName}
-                targetLang={aiBrain.targetLang}
-                onInputChange={setInput}
-                onSubmit={handleSubmit}
-              />
+              {/* PART 3: CONTROLS / INPUT (ONLY RENDERED INSIDE THE SESSION TAB) */}
+              {activeTab === "session" && (
+                <SpriteChatControls
+                  input={input}
+                  isLoading={isLoading}
+                  spriteName={spriteName}
+                  targetLang={aiBrain.targetLang}
+                  onInputChange={setInput}
+                  onSubmit={handleSubmit}
+                />
+              )}
             </motion.div>
           </>
         )}

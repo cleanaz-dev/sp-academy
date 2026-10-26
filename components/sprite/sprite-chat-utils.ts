@@ -6,7 +6,7 @@ import type {
   SpriteAction,
 } from "@/lib/schema/sprite-schema";
 
-export type ActiveTab = "stage" | "briefing" | "sessions";
+export type ActiveTab = "session" | "briefing" | "history";
 
 export interface ChatContextData {
   userName: string;
@@ -34,6 +34,7 @@ export interface UIMessageTurn {
 
 export function cleanDisplayString(str: string): string {
   return str
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/[«»]/g, '"')
     .replace(/""+/g, '"')
     .trim();
@@ -45,6 +46,10 @@ export function getRawText(m?: UIMessage): string {
     .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
     .map((p) => p.text)
     .join("");
+}
+
+function normalizeForComparison(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 export function parseMessagePayload(m?: UIMessage): ParsedPayload {
@@ -59,8 +64,26 @@ export function parseMessagePayload(m?: UIMessage): ParsedPayload {
   }
 
   try {
-    const parsed = JSON.parse(jsonPart.trim());
-    const translation = parsed.translation ? cleanDisplayString(String(parsed.translation)) : null;
+    const cleanedJson = jsonPart
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
+    const parsed = JSON.parse(cleanedJson);
+
+    let translation =
+      parsed.translation && parsed.translation !== "null"
+        ? cleanDisplayString(String(parsed.translation))
+        : null;
+
+    // Never show translation if it's identical/redundant to spokenText
+    if (
+      translation &&
+      spokenText &&
+      normalizeForComparison(translation) === normalizeForComparison(spokenText)
+    ) {
+      translation = null;
+    }
+
     return {
       spokenText: spokenText || translation || "",
       translation: spokenText ? translation : null,

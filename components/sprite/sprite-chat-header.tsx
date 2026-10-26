@@ -8,7 +8,7 @@ import {
   Dumbbell,
   FileBarChart,
   Plus,
-  Layers,
+  MessageSquare,
 } from "lucide-react";
 import type { ActiveTab } from "./sprite-chat-utils";
 
@@ -16,7 +16,7 @@ interface SpriteChatHeaderProps {
   spriteName: string;
   avatarSrc: string;
   currentLessonTitle: string;
-  effectiveTab: ActiveTab;
+  activeTab: ActiveTab;
   hasActiveTurns: boolean;
   sessionsCount: number;
   onSelectTab: (tab: ActiveTab) => void;
@@ -29,7 +29,7 @@ export function SpriteChatHeader({
   spriteName,
   avatarSrc,
   currentLessonTitle,
-  effectiveTab,
+  activeTab,
   hasActiveTurns,
   sessionsCount,
   onSelectTab,
@@ -74,27 +74,25 @@ export function SpriteChatHeader({
         </button>
       </div>
 
-      {/* Row 2: View Switcher Tabs & + New Session Button */}
+      {/* Row 2: Permanent 3-Tab Navigation Bar (Never mutates) */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/10">
         <div className="flex items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
-          {hasActiveTurns && (
-            <button
-              onClick={() => onSelectTab("stage")}
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                effectiveTab === "stage"
-                  ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span>Stage</span>
-            </button>
-          )}
+          <button
+            onClick={() => onSelectTab("session")}
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+              activeTab === "session"
+                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Session</span>
+          </button>
 
           <button
             onClick={() => onSelectTab("briefing")}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              effectiveTab === "briefing"
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+              activeTab === "briefing"
                 ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
                 : "text-slate-400 hover:text-white"
             }`}
@@ -104,18 +102,19 @@ export function SpriteChatHeader({
           </button>
 
           <button
-            onClick={() => onSelectTab("sessions")}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              effectiveTab === "sessions"
+            onClick={() => onSelectTab("history")}
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+              activeTab === "history"
                 ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
                 : "text-slate-400 hover:text-white"
             }`}
           >
             <History className="h-3.5 w-3.5" />
-            <span>Sessions ({sessionsCount})</span>
+            <span>History ({sessionsCount})</span>
           </button>
         </div>
 
+        {/* + New Session ONLY shows when there are turns in the current session */}
         {hasActiveTurns && (
           <button
             onClick={onStartNewSession}

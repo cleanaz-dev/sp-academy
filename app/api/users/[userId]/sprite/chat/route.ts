@@ -1,7 +1,6 @@
 // app/api/users/[userId]/sprite/chat/route.ts
 import { NextResponse } from "next/server";
 import { isUser } from "@/lib/auth-guard";
-import { prisma } from "@/lib/prisma";
 import {
   streamText,
   convertToModelMessages,
@@ -10,7 +9,6 @@ import {
   type UIMessage,
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
-import { SpriteSessionTurnsSchema } from "@/lib/schema/sprite-schema";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -26,61 +24,6 @@ function clean(value: unknown, fallback: string, max = 100) {
 function cleanNumber(value: unknown, fallback: number) {
   if (typeof value !== "number" || Number.isNaN(value)) return fallback;
   return value;
-}
-
-function stripGuillemets(str: string): string {
-  return str
-    .replace(/<think>[\s\S]*?<\/think>/gi, "")
-    .replace(/[«»]/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function getLastUserText(messages: UIMessage[]): string {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "user") {
-      return messages[i].parts
-        .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
-        .map((p) => p.text)
-        .join("");
-    }
-  }
-  return "";
-}
-
-async function getOrCreateSpriteProfile(userId: string) {
-  const existing = await prisma.spriteProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
-  if (existing) return existing;
-
-  let defaultSprite = await prisma.sprite.findFirst({
-    where: { slug: "vox" },
-  });
-
-  if (!defaultSprite) {
-    defaultSprite = await prisma.sprite.create({
-      data: {
-        slug: "vox",
-        name: "Vox",
-        avatarUrl: "/sprite-m.png",
-        moodUrls: [],
-      },
-    });
-  }
-
-  return prisma.spriteProfile.create({
-    data: {
-      userId,
-      spriteId: defaultSprite.id,
-      nativeLanguage: "en-US",
-      targetLanguage: "fr-FR",
-      nativeVoiceId: "en-US-boy-01",
-      targetVoiceId: "fr-FR-boy-01",
-    },
-    select: { id: true },
-  });
 }
 
 export async function POST(
@@ -105,10 +48,6 @@ export async function POST(
     return NextResponse.json({ error: "messages must be an array" }, { status: 400 });
   }
   const messages: UIMessage[] = body.messages;
-  const sessionId =
-    typeof body.sessionId === "string" && body.sessionId.trim()
-      ? body.sessionId.trim()
-      : crypto.randomUUID();
 
   const rawSpriteName = clean(body.spriteName, "Vox");
   const spriteName =
@@ -146,17 +85,18 @@ ${recentWords ? `- Recently learned words: ${recentWords}` : ""}
 
 STRICT FORMATTING & RESPONSE RULES:
 1. NEVER leave your response blank. Always write 1 to 2 short spoken sentences first.
-2. NEVER use French guillemets (« or »). Use standard single quotes (') or double quotes (") if quoting a word.
-3. No markdown, asterisks, bullet points, or emojis in the spoken sentences.
-4. Immediately after your 1-2 spoken sentences, ALWAYS output ---JSON--- on a new line followed by a valid JSON object containing the ${nativeLang} translation of what you said, and optionally a contextCard or action:
+2. Always model 100% grammatically correct ${targetLang}. Never tell the learner to say a grammatically incorrect phrase.
+3. NEVER use French guillemets (« or »). Use standard single quotes (') or double quotes (").
+4. No markdown, asterisks, bullet points, or emojis in the spoken sentences.
+5. After your spoken response, if AND ONLY IF you spoke in ${targetLang} (requiring a translation), OR if you need to show a grammar card / trigger an action, output ---JSON--- on a new line followed by a valid JSON object:
 ---JSON---
 {
-  "translation": "Complete ${nativeLang} translation of your spoken response above",
+  "translation": "ONLY include this if your spoken response above was in ${targetLang}. If your spoken response was already in ${nativeLang}, set this to null!",
   "contextCard": {
     "title": "Short rule or word title",
     "grammarRule": "Simple 1-sentence explanation in ${nativeLang}",
     "examples": [
-      { "french": "Example in ${targetLang}", "english": "Translation in ${nativeLang}" }
+      { "french": "Correct example in ${targetLang}", "english": "Translation in ${nativeLang}" }
     ]
   },
   "action": {
@@ -164,12 +104,11 @@ STRICT FORMATTING & RESPONSE RULES:
     "targetWord": "word being practiced"
   }
 }
-5. Always include "translation" inside the JSON. Only include "contextCard" when teaching a grammar rule or giving examples. Only include "action" (type must be "START_DRILL", "PROGRESS_REPORT", or "BOOKMARK_WORD") when starting a drill or action.
+6. CRITICAL TRANSLATION RULE: If your spoken response is already in ${nativeLang} (even if it quotes 1 or 2 ${targetLang} words), set "translation": null. Only provide a "translation" string when your spoken response is written in ${targetLang}.
+7. Only include "contextCard" when teaching a grammar rule or giving examples. Only include "action" (type must be "START_DRILL", "PROGRESS_REPORT", or "BOOKMARK_WORD") when starting a drill or action.
 `;
 
   try {
-    const userPrompt = getLastUserText(messages);
-
     const result = streamText({
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
@@ -180,81 +119,6 @@ STRICT FORMATTING & RESPONSE RULES:
         },
       },
       maxOutputTokens: 4096,
-      onFinish: async ({ text }) => {
-        try {
-          const [spokenPart, rawJson] = text.split("---JSON---");
-          const assistantReply = stripGuillemets(spokenPart || "");
-
-          let parsedJson: any = {};
-          if (rawJson) {
-            try {
-              const cleanedJson = rawJson
-                .replace(/```json/gi, "")
-                .replace(/```/g, "")
-                .trim();
-              parsedJson = JSON.parse(cleanedJson);
-            } catch {
-              parsedJson = {};
-            }
-          }
-
-          const validActionTypes = ["START_DRILL", "PROGRESS_REPORT", "BOOKMARK_WORD"];
-          const sanitizedAction =
-            parsedJson.action && validActionTypes.includes(parsedJson.action.type)
-              ? {
-                  type: parsedJson.action.type,
-                  targetWord: parsedJson.action.targetWord || undefined,
-                }
-              : null;
-
-          const newTurn = {
-            id: crypto.randomUUID(),
-            userPrompt: stripGuillemets(userPrompt),
-            assistantReply:
-              assistantReply ||
-              stripGuillemets(parsedJson.translation || "Let's continue practicing."),
-            translation: parsedJson.translation
-              ? stripGuillemets(String(parsedJson.translation))
-              : null,
-            contextCard: parsedJson.contextCard ?? null,
-            action: sanitizedAction,
-            createdAt: new Date().toISOString(),
-          };
-
-          const profile = await getOrCreateSpriteProfile(userId);
-
-          const existingSession = await prisma.spriteSession.findUnique({
-            where: { id: sessionId },
-          });
-
-          const existingTurns = existingSession
-            ? SpriteSessionTurnsSchema.catch([]).parse(existingSession.turns)
-            : [];
-
-          const updatedTurns = [...existingTurns, newTurn];
-          const autoTitle =
-            existingSession?.title && existingSession.title !== "New Session"
-              ? existingSession.title
-              : userPrompt.slice(0, 48) || currentLessonTitle;
-
-          await prisma.spriteSession.upsert({
-            where: { id: sessionId },
-            create: {
-              id: sessionId,
-              spriteProfileId: profile.id,
-              title: autoTitle,
-              lessonTitle: currentLessonTitle,
-              turns: updatedTurns as any,
-            },
-            update: {
-              title: autoTitle,
-              turns: updatedTurns as any,
-            },
-          });
-        } catch (dbErr) {
-          console.error("[SpriteSession] Failed to save turn:", dbErr);
-        }
-      },
     });
 
     return createUIMessageStreamResponse({
