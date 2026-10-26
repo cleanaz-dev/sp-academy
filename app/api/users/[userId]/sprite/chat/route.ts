@@ -6,19 +6,14 @@ import {
   convertToModelMessages,
   toUIMessageStream,
   createUIMessageStreamResponse,
-  tool,
-  stepCountIs,
   type UIMessage,
 } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
-import { z } from 'zod';
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-// Note: Ensure the model you use on Groq supports tool calling 
-// (e.g., 'llama-3.3-70b-versatile' or 'openai/gpt-oss-20b')
 const GROQ_LLM = 'openai/gpt-oss-20b';
 
 function clean(value: unknown, fallback: string, max = 100) {
@@ -85,10 +80,24 @@ VOCABULARY CONTEXT:
 ${topWord ? `- Difficult word: ${topWord}` : ''}
 ${recentWords ? `- Recently learned words: ${recentWords}` : ''}
 
-TOOL & COMPONENT RULES:
-1. When the learner asks how to use a word, asks for examples, or needs a grammar breakdown, call the "showGrammarCard" tool to display a visual card, accompanied by a 1-sentence spoken intro.
-2. When the learner requests to start a drill, bookmark a word, or log an action, call "triggerBackendAction".
-3. Keep spoken text responses to 1 to 2 short plain-text sentences suitable for text-to-speech (no markdown or emojis).
+RESPONSE RULES:
+1. Write 1 to 2 short plain-text sentences suitable for text-to-speech (no markdown, asterisks, or emojis).
+2. If the user asks how to use a word, asks for grammar help, examples, or triggers a practice/action, first write your 1-2 sentence spoken response, then on a new line output ---JSON--- followed by a valid JSON object matching this exact structure:
+---JSON---
+{
+  "contextCard": {
+    "title": "Short rule or word title",
+    "grammarRule": "Simple 1-sentence explanation",
+    "examples": [
+      { "french": "Example in ${targetLang}", "english": "Translation in ${nativeLang}" }
+    ]
+  },
+  "action": {
+    "type": "START_DRILL",
+    "targetWord": "word being practiced"
+  }
+}
+Only include "contextCard" if examples/grammar are helpful. Only include "action" if an action/drill should be triggered. If neither is needed, do not output ---JSON---.
 `;
 
   try {
@@ -97,65 +106,32 @@ TOOL & COMPONENT RULES:
       instructions: systemPrompt,
       messages: await convertToModelMessages(messages),
       maxOutputTokens: 2048,
-      // Allows the model to call a tool AND speak a response in the same turn
-      stopWhen: stepCountIs(2), 
-      tools: {
-        // 1. UI Component Tool: Renders <ContextCard /> in the assistant stage
-        showGrammarCard: tool({
-          description: 'Display a structured grammar or vocabulary breakdown card with examples to the student.',
-          inputSchema: z.object({
-            title: z.string().describe('Short title of the grammar rule or word'),
-            grammarRule: z.string().describe('Clear, concise explanation of the rule or usage'),
-            examples: z.array(
-              z.object({
-                french: z.string().describe(`The example phrase in ${targetLang}`),
-                english: z.string().describe(`The translation in ${nativeLang}`),
-              })
-            ).min(1).max(3),
-          }),
-          execute: async (cardData) => {
-            // Returning the data sends it straight to message.parts on the client!
-            return cardData;
-          },
-        }),
+      onFinish: async ({ text }) => {
+        // Check if the LLM returned an action payload
+        if (!text.includes('---JSON---')) return;
 
-        // 2. Action / Lambda Tool: Invokes your Lambda or external service
-        triggerBackendAction: tool({
-          description: 'Trigger a backend Lambda action such as starting a pronunciation drill, saving a word to the bank, or logging mastery.',
-          inputSchema: z.object({
-            actionType: z.enum(['START_DRILL', 'BOOKMARK_WORD', 'LOG_STRUGGLE']),
-            targetWord: z.string().describe('The word or phrase associated with the action'),
-            metadata: z.string().optional().describe('Any extra context for the payload'),
-          }),
-          execute: async ({ actionType, targetWord, metadata }) => {
-            // --- INVOKE YOUR LAMBDA / WEBHOOK HERE ---
-            const payload = {
-              userId,
-              actionType,
-              targetWord,
-              lesson: currentLessonTitle,
-              metadata,
-              timestamp: new Date().toISOString(),
-            };
+        const [, rawJson] = text.split('---JSON---');
+        if (!rawJson) return;
 
-            if (process.env.ACTION_LAMBDA_URL) {
-              await fetch(process.env.ACTION_LAMBDA_URL, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${process.env.LAMBDA_SECRET_KEY}`,
-                },
-                body: JSON.stringify(payload),
-              });
-            }
+        try {
+          const parsed = JSON.parse(rawJson.trim());
 
-            // Return the payload so the UI can also render an Action Pill / Component
-            return {
-              status: 'executed',
-              ...payload,
-            };
-          },
-        }),
+          // If an action is present in the JSON payload, invoke your Lambda!
+          if (parsed?.action && process.env.ACTION_LAMBDA_URL) {
+            await fetch(process.env.ACTION_LAMBDA_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId,
+                lesson: currentLessonTitle,
+                action: parsed.action,
+                timestamp: new Date().toISOString(),
+              }),
+            });
+          }
+        } catch (e) {
+          console.error('Failed to parse action JSON:', e);
+        }
       },
     });
 
