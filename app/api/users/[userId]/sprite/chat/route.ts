@@ -12,7 +12,6 @@ import {
 import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
 
-
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
@@ -109,24 +108,32 @@ ${topWord ? `- Difficult word: ${topWord}` : ""}
 ${recentWords ? `- Recently learned words: ${recentWords}` : ""}
 This context is background information ONLY. Do NOT automatically force it into greetings or casual messages. If the learner says "Hello", just greet them naturally.
 
-RESPONSE RULES:
+RESPONSE FORMAT:
 1. Respond ONLY to the learner's latest message and its intent.
-2. Normal responses must be 1 to 2 short plain-text sentences suitable for text-to-speech. Never use markdown, asterisks, bullet points, or French guillemets (« »).
+2. Write 1 to 2 short plain-text sentences suitable for text-to-speech. Never use markdown, asterisks, bullet points, or French guillemets (« »).
 3. Always model 100% grammatically correct ${targetLang}.
-4. After your 1-2 spoken sentences, ALWAYS output ---JSON--- on a new line followed by this exact JSON structure:
----JSON---
-{
-  "isTranslationRequired": false,
-  "translation": null,
-  "contextCard": null,
-  "action": null
-}
+4. Then output ---JSON--- on a new line, followed by ONE JSON object with exactly these keys: "isTranslationRequired", "translation", "contextCard", "action".
 
-JSON FIELD RULES:
-- "isTranslationRequired": boolean. Set to TRUE ONLY if your spoken sentences above are written primarily in ${targetLang}. If your spoken sentences are already in ${nativeLang} (even if you quoted a ${targetLang} phrase), you MUST set "isTranslationRequired": false and "translation": null.
-- "translation": string | null. Only provide the ${nativeLang} translation if "isTranslationRequired" is true. Otherwise must be null.
+TRANSLATION RULE (decide this before writing the JSON):
+- If your spoken sentences are written in ${targetLang} (mostly or entirely), you MUST set "translation" to a natural ${nativeLang} translation of everything you said, and set "isTranslationRequired" to true.
+- If your spoken sentences are entirely in ${nativeLang} (even if they quote a ${targetLang} word or phrase), set "translation" to null and "isTranslationRequired" to false.
+- Never leave "translation" null when your spoken sentences are in ${targetLang}.
+
+OTHER JSON FIELDS:
 - "contextCard": null, OR if teaching a rule/examples: { "title": "Rule Title", "grammarRule": "1-sentence explanation", "examples": [{ "french": "${targetLang} example", "english": "${nativeLang} translation" }] }
 - "action": null, OR if starting a drill: { "type": "START_DRILL", "targetWord": "word" }
+
+EXAMPLE A (you spoke ${targetLang}):
+[1-2 sentences in ${targetLang}]
+---JSON---
+{"isTranslationRequired": true, "translation": "[the same sentences in ${nativeLang}]", "contextCard": null, "action": null}
+
+EXAMPLE B (you spoke ${nativeLang}):
+[1-2 sentences in ${nativeLang}, optionally quoting a ${targetLang} word]
+---JSON---
+{"isTranslationRequired": false, "translation": null, "contextCard": null, "action": null}
+
+The examples show structure only. Never copy their placeholder text.
 `;
 
   try {
@@ -135,6 +142,7 @@ JSON FIELD RULES:
     const result = streamText({
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
+      reasoning: "low",
       messages: await convertToModelMessages(messages),
       providerOptions: {
         groq: {
@@ -143,6 +151,9 @@ JSON FIELD RULES:
       },
       maxOutputTokens: 4096,
       onFinish: async ({ text }) => {
+        // TEMP: remove once you've confirmed the model returns a translation
+        console.log("[sprite chat raw output]\n", text);
+
         if (!sessionId) return;
         try {
           const [spokenPart, rawJson] = text.split("---JSON---");
@@ -158,11 +169,11 @@ JSON FIELD RULES:
             }
           }
 
-          const isTranslationRequired = Boolean(parsedJson.isTranslationRequired);
-          const translation =
-            isTranslationRequired && parsedJson.translation
-              ? stripArtifacts(String(parsedJson.translation))
-              : null;
+          // A non-empty translation IS the signal; don't depend on the model's boolean
+          const translation = parsedJson.translation
+            ? stripArtifacts(String(parsedJson.translation))
+            : null;
+          const isTranslationRequired = Boolean(translation);
 
           const newTurn = {
             id: crypto.randomUUID(),

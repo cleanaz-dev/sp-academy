@@ -390,8 +390,7 @@ export function SpriteChatMessages({
                   )}
 
                   {/* Strict Boolean Check: Only show translation when isTranslationRequired === true */}
-                  {activeAssistantPayload.isTranslationRequired &&
-                    activeAssistantPayload.translation && (
+                  {activeAssistantPayload.translation && (
                       <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
                         <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
                         <p className="text-xs font-medium text-indigo-200 leading-relaxed">
