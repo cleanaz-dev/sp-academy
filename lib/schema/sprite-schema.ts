@@ -45,12 +45,12 @@ export const SpriteTurnSchema = z.object({
   id: z.string(),
   userPrompt: z.string(),
   assistantReply: z.string(),
+  translation: z.string().nullable().optional(), // <-- add this line
   contextCard: ContextCardSchema.nullable().optional(),
   progressReport: ProgressReportResultSchema.nullable().optional(),
   action: SpriteActionSchema.nullable().optional(),
   createdAt: z.string(),
 });
-
 export const SpriteSessionTurnsSchema = z.array(SpriteTurnSchema);
 
 // 6. Full SpriteSession Payload Schema (For API responses / History list)

@@ -10,16 +10,13 @@ import {
   type UIMessage,
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
-import {
-  SpriteTurnSchema,
-  SpriteSessionTurnsSchema,
-} from "@/lib/schema/sprite-schema";
+import { SpriteSessionTurnsSchema } from "@/lib/schema/sprite-schema";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const GROQ_LLM = "openai/gpt-oss-20b";
+const GROQ_LLM = "qwen/qwen3.8-27b";
 
 function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== "string") return fallback;
@@ -29,6 +26,10 @@ function clean(value: unknown, fallback: string, max = 100) {
 function cleanNumber(value: unknown, fallback: number) {
   if (typeof value !== "number" || Number.isNaN(value)) return fallback;
   return value;
+}
+
+function stripGuillemets(str: string): string {
+  return str.replace(/[«»]/g, '"').replace(/\s+/g, " ").trim();
 }
 
 function getLastUserText(messages: UIMessage[]): string {
@@ -67,7 +68,10 @@ export async function POST(
   const messages: UIMessage[] = body.messages;
   const sessionId = typeof body.sessionId === "string" ? body.sessionId : undefined;
 
-  const spriteName = clean(body.spriteName, "Vox");
+  const rawSpriteName = clean(body.spriteName, "Vox");
+  const spriteName =
+    rawSpriteName.charAt(0).toUpperCase() + rawSpriteName.slice(1).toLowerCase();
+
   const d = body.dossier || {};
 
   const userName = clean(d.userName, "Student");
@@ -98,14 +102,17 @@ VOCABULARY CONTEXT:
 ${topWord ? `- Difficult word: ${topWord}` : ""}
 ${recentWords ? `- Recently learned words: ${recentWords}` : ""}
 
-RESPONSE RULES:
-1. Write 1 to 2 short plain-text sentences suitable for text-to-speech (no markdown, asterisks, or emojis).
-2. If the user asks how to use a word, asks for grammar help, examples, or triggers a practice/action, first write your 1-2 sentence spoken response, then on a new line output ---JSON--- followed by a valid JSON object matching this exact structure:
+STRICT FORMATTING & RESPONSE RULES:
+1. NEVER leave your response blank. Always write 1 to 2 short spoken sentences first.
+2. NEVER use French guillemets (« or »). Use standard single quotes (') or double quotes (") if quoting a word.
+3. No markdown, asterisks, bullet points, or emojis in the spoken sentences.
+4. Immediately after your 1-2 spoken sentences, ALWAYS output ---JSON--- on a new line followed by a valid JSON object containing the ${nativeLang} translation of what you said, and optionally a contextCard or action:
 ---JSON---
 {
+  "translation": "Complete ${nativeLang} translation of your spoken response above",
   "contextCard": {
     "title": "Short rule or word title",
-    "grammarRule": "Simple 1-sentence explanation",
+    "grammarRule": "Simple 1-sentence explanation in ${nativeLang}",
     "examples": [
       { "french": "Example in ${targetLang}", "english": "Translation in ${nativeLang}" }
     ]
@@ -115,7 +122,7 @@ RESPONSE RULES:
     "targetWord": "word being practiced"
   }
 }
-Only include "contextCard" if examples/grammar are helpful. Only include "action" if an action/drill should be triggered. If neither is needed, do not output ---JSON---.
+5. Always include "translation" inside the JSON. Only include "contextCard" when teaching a grammar rule or giving examples. Only include "action" (type must be "START_DRILL", "PROGRESS_REPORT", or "BOOKMARK_WORD") when starting a drill or action.
 `;
 
   try {
@@ -125,11 +132,11 @@ Only include "contextCard" if examples/grammar are helpful. Only include "action
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
       messages: await convertToModelMessages(messages),
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096, // Higher budget so reasoning tokens never starve output text
       onFinish: async ({ text }) => {
         try {
           const [spokenPart, rawJson] = text.split("---JSON---");
-          const assistantReply = spokenPart.trim();
+          const assistantReply = stripGuillemets(spokenPart || "");
 
           let parsedJson: any = {};
           if (rawJson) {
@@ -140,17 +147,29 @@ Only include "contextCard" if examples/grammar are helpful. Only include "action
             }
           }
 
-          // Validate the turn using your SpriteTurnSchema
-          const newTurn = SpriteTurnSchema.parse({
-            id: crypto.randomUUID(),
-            userPrompt,
-            assistantReply,
-            contextCard: parsedJson.contextCard ?? null,
-            action: parsedJson.action ?? null,
-            createdAt: new Date().toISOString(),
-          });
+          const validActionTypes = ["START_DRILL", "PROGRESS_REPORT", "BOOKMARK_WORD"];
+          const sanitizedAction =
+            parsedJson.action && validActionTypes.includes(parsedJson.action.type)
+              ? {
+                  type: parsedJson.action.type,
+                  targetWord: parsedJson.action.targetWord || undefined,
+                }
+              : null;
 
-          // Persist to Prisma SpriteSession if user has a SpriteProfile and sessionId
+          const newTurn = {
+            id: crypto.randomUUID(),
+            userPrompt: stripGuillemets(userPrompt),
+            assistantReply:
+              assistantReply ||
+              stripGuillemets(parsedJson.translation || "Let's continue practicing."),
+            translation: parsedJson.translation
+              ? stripGuillemets(String(parsedJson.translation))
+              : null,
+            contextCard: parsedJson.contextCard ?? null,
+            action: sanitizedAction,
+            createdAt: new Date().toISOString(),
+          };
+
           if (sessionId) {
             const profile = await prisma.spriteProfile.findUnique({
               where: { userId },
@@ -179,11 +198,11 @@ Only include "contextCard" if examples/grammar are helpful. Only include "action
                   spriteProfileId: profile.id,
                   title: autoTitle,
                   lessonTitle: currentLessonTitle,
-                  turns: updatedTurns,
+                  turns: updatedTurns as any,
                 },
                 update: {
                   title: autoTitle,
-                  turns: updatedTurns,
+                  turns: updatedTurns as any,
                 },
               });
             }

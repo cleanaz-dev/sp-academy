@@ -2,7 +2,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,12 +17,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
-  Grid,
   Dumbbell,
   FileBarChart,
   Plus,
   MessageSquare,
   Layers,
+  Languages,
 } from "lucide-react";
 import { useSprite } from "@/context/sprite-context";
 import { ContextCard } from "./context-card";
@@ -52,8 +51,17 @@ interface SpriteChatProps {
 
 interface ParsedPayload {
   spokenText: string;
+  translation?: string | null;
   contextCard?: ContextCardData | null;
   action?: SpriteAction | null;
+}
+
+// Always strip « and » and normalize spacing
+function cleanDisplayString(str: string): string {
+  return str
+    .replace(/[«»]/g, '"')
+    .replace(/""+/g, '"')
+    .trim();
 }
 
 function getRawText(m?: UIMessage): string {
@@ -69,7 +77,7 @@ function parseMessagePayload(m?: UIMessage): ParsedPayload {
   if (!raw) return { spokenText: "" };
 
   const [spokenPart, jsonPart] = raw.split("---JSON---");
-  const spokenText = spokenPart.trim();
+  const spokenText = cleanDisplayString(spokenPart || "");
 
   if (!jsonPart) {
     return { spokenText };
@@ -77,8 +85,11 @@ function parseMessagePayload(m?: UIMessage): ParsedPayload {
 
   try {
     const parsed = JSON.parse(jsonPart.trim());
+    const translation = parsed.translation ? cleanDisplayString(String(parsed.translation)) : null;
     return {
-      spokenText,
+      // Fallback if LLM put text inside translation instead of before ---JSON---
+      spokenText: spokenText || translation || "",
+      translation: spokenText ? translation : null,
       contextCard: parsed.contextCard || null,
       action: parsed.action || null,
     };
@@ -87,22 +98,23 @@ function parseMessagePayload(m?: UIMessage): ParsedPayload {
   }
 }
 
-function turnsToUIMessages(turns: SpriteTurn[]): UIMessage[] {
+function turnsToUIMessages(turns: (SpriteTurn & { translation?: string | null })[]): UIMessage[] {
   const msgs: UIMessage[] = [];
   for (const t of turns) {
     msgs.push({
       id: `${t.id}-user`,
       role: "user",
-      parts: [{ type: "text", text: t.userPrompt }],
+      parts: [{ type: "text", text: cleanDisplayString(t.userPrompt) }],
     });
 
-    const hasJson = t.contextCard || t.action;
+    const hasJson = t.translation || t.contextCard || t.action;
     const rawAssistantText = hasJson
-      ? `${t.assistantReply}\n---JSON---\n${JSON.stringify({
-          contextCard: t.contextCard,
-          action: t.action,
+      ? `${cleanDisplayString(t.assistantReply)}\n---JSON---\n${JSON.stringify({
+          translation: t.translation ?? null,
+          contextCard: t.contextCard ?? null,
+          action: t.action ?? null,
         })}`
-      : t.assistantReply;
+      : cleanDisplayString(t.assistantReply);
 
     msgs.push({
       id: `${t.id}-assistant`,
@@ -143,7 +155,9 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const lastSummonedId = useRef<string | null>(null);
 
   const isVivi = profile?.sprite?.slug === "vivi";
-  const spriteName = profile?.sprite?.name ?? (isVivi ? "Vivi" : "Vox");
+  const rawName = profile?.sprite?.name ?? (isVivi ? "Vivi" : "Vox");
+  // Guaranteed Capitalized Name ("Vox" or "Vivi")
+  const spriteName = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
   const avatarSrc = profile?.sprite?.avatarUrl || (isVivi ? "/sprite-f.png" : "/sprite-m.png");
 
   const aiBrain: ChatContextData = initialContext || {
@@ -172,10 +186,11 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [userId]
   );
 
-  const { messages, setMessages, sendMessage, status } = useChat({ transport });
+  const { messages, setMessages, sendMessage, status, error } = useChat({ transport });
   const isLoading = status === "submitted" || status === "streaming";
 
   const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
+  const hasActiveTurns = turns.length > 0;
 
   const currentTurnIdx =
     selectedTurnIndex !== null && turns[selectedTurnIndex]
@@ -188,6 +203,14 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     () => parseMessagePayload(activeTurn?.assistantMessage),
     [activeTurn?.assistantMessage]
   );
+
+  // Determine the true visual tab so "Stage" isn't highlighted when on an empty Briefing screen
+  const effectiveTab =
+    viewMode === "sessions"
+      ? "sessions"
+      : viewMode === "stage" && hasActiveTurns
+      ? "stage"
+      : "briefing";
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -210,7 +233,9 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
 
   useEffect(() => {
     if (!isLoading && messages.length > 0 && isOpen) {
-      fetchSessions();
+      // Slight delay so onFinish DB upsert completes before re-fetching
+      const timer = setTimeout(() => fetchSessions(), 350);
+      return () => clearTimeout(timer);
     }
   }, [isLoading, messages.length, isOpen, fetchSessions]);
 
@@ -278,7 +303,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
           >
             <div className="hidden sm:flex flex-col items-end rounded-2xl border border-teal-500/30 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md">
               <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">
-                {aiBrain.currentLessonTitle}
+                Current: {aiBrain.currentLessonTitle}
               </span>
               <span className="text-xs font-bold text-white">Open {spriteName} Assistant</span>
             </div>
@@ -307,39 +332,58 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               animate={{ opacity: 1, x: 0, y: 0 }}
               exit={{ opacity: 0, x: 40, y: 40 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 right-0 z-50 flex h-[94vh] w-full sm:w-[580px] md:w-[660px] flex-col overflow-hidden rounded-tl-[36px] border-t border-l border-teal-500/30 bg-[#080C16] shadow-[-24px_-24px_80px_rgba(0,0,0,0.8)]"
+              className="fixed bottom-0 right-0 z-50 flex h-[94vh] w-full sm:w-[580px] md:w-[660px] flex-col overflow-hidden rounded-tl-[36px] border-t border-l border-teal-500/30 bg-[#070B14] shadow-[-24px_-24px_80px_rgba(0,0,0,0.85)]"
             >
-              {/* BACKGROUND VECTOR SHAPES & COLOR MESH INSIDE THE WINDOW */}
+              {/* HIGH-VISIBILITY VECTOR ORBITS & GEOMETRIC SHAPES */}
               <svg
-                className="pointer-events-none absolute inset-0 h-full w-full opacity-25"
+                className="pointer-events-none absolute inset-0 h-full w-full opacity-55"
                 viewBox="0 0 660 900"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <defs>
-                  <linearGradient id="spoonGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.35" />
-                    <stop offset="50%" stopColor="#6366F1" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#A855F7" stopOpacity="0.05" />
+                  <linearGradient id="spoonGradWave" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.4" />
+                    <stop offset="55%" stopColor="#6366F1" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#A855F7" stopOpacity="0.08" />
                   </linearGradient>
-                  <linearGradient id="spoonRing" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#818CF8" stopOpacity="0.05" />
+                  <linearGradient id="spoonOrbitBright" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.65" />
+                    <stop offset="50%" stopColor="#818CF8" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#C084FC" stopOpacity="0.2" />
                   </linearGradient>
+                  <radialGradient id="spoonGlowOrb" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0" />
+                  </radialGradient>
                 </defs>
-                {/* Flowing Organic Wave Ribbon */}
+
+                {/* Top Flowing Wave Mesh */}
                 <path
-                  d="M-80 180 C 160 80, 420 280, 720 120 L 720 0 L -80 0 Z"
-                  fill="url(#spoonGrad1)"
+                  d="M-80 190 C 160 80, 420 290, 720 130 L 720 0 L -80 0 Z"
+                  fill="url(#spoonGradWave)"
                 />
-                {/* Geometric Orbital Rings */}
-                <circle cx="580" cy="140" r="180" stroke="url(#spoonRing)" strokeWidth="1.5" strokeDasharray="6 6" />
-                <circle cx="580" cy="140" r="120" stroke="url(#spoonRing)" strokeWidth="1" />
-                <circle cx="80" cy="760" r="220" stroke="url(#spoonRing)" strokeWidth="1" />
+
+                {/* Top-Right Orbital System */}
+                <circle cx="560" cy="240" r="210" stroke="url(#spoonOrbitBright)" strokeWidth="1.75" strokeDasharray="8 8" />
+                <circle cx="560" cy="240" r="145" stroke="url(#spoonOrbitBright)" strokeWidth="1.5" />
+                <circle cx="560" cy="240" r="85" stroke="url(#spoonOrbitBright)" strokeWidth="1" strokeDasharray="4 6" />
+                {/* Glowing Satellite Nodes on Top-Right Orbit */}
+                <circle cx="415" cy="240" r="5" fill="#2DD4BF" />
+                <circle cx="415" cy="240" r="16" fill="url(#spoonGlowOrb)" />
+                <circle cx="560" cy="385" r="4" fill="#818CF8" />
+
+                {/* Bottom-Left Orbital System inside the Stage */}
+                <circle cx="90" cy="680" r="240" stroke="url(#spoonOrbitBright)" strokeWidth="1.75" />
+                <circle cx="90" cy="680" r="165" stroke="url(#spoonOrbitBright)" strokeWidth="1.5" strokeDasharray="10 8" />
+                {/* Glowing Satellite Nodes on Bottom-Left Orbit */}
+                <circle cx="255" cy="680" r="5" fill="#2DD4BF" />
+                <circle cx="255" cy="680" r="18" fill="url(#spoonGlowOrb)" />
+                <circle cx="260" cy="510" r="4" fill="#A855F7" />
               </svg>
 
-              {/* 1. CLEAN HERO HEADER (Only Avatar, Full Lesson Title, and Close Button) */}
-              <div className="relative z-10 overflow-hidden border-b border-white/10 bg-gradient-to-r from-teal-950/80 via-indigo-950/80 to-slate-950/90 px-6 pt-5 pb-4 shrink-0">
+              {/* 1. HERO HEADER */}
+              <div className="relative z-10 overflow-hidden border-b border-white/10 bg-gradient-to-r from-teal-950/85 via-indigo-950/85 to-slate-950/90 px-6 pt-5 pb-4 shrink-0">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-lg shadow-teal-500/20">
@@ -355,7 +399,8 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                           AI Tutor
                         </span>
                       </div>
-                      <p className="text-xs font-semibold text-indigo-200/90 mt-0.5">
+                      <p className="text-xs font-semibold text-indigo-200/90 mt-1">
+                        <span className="text-teal-400 font-extrabold">Current:</span>{" "}
                         {aiBrain.currentLessonTitle}
                       </p>
                     </div>
@@ -369,26 +414,28 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                   </button>
                 </div>
 
-                {/* 2. NAVIGATION & ACTIONS BAR (Placed cleanly UNDER the header info) */}
+                {/* 2. NAVIGATION & ACTIONS BAR (Underneath header) */}
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/10">
                   {/* Left: Segmented View Switcher */}
                   <div className="flex items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
-                    <button
-                      onClick={() => setViewMode("stage")}
-                      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                        viewMode === "stage"
-                          ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                          : "text-slate-400 hover:text-white"
-                      }`}
-                    >
-                      <Layers className="h-3.5 w-3.5" />
-                      <span>Stage</span>
-                    </button>
+                    {hasActiveTurns && (
+                      <button
+                        onClick={() => setViewMode("stage")}
+                        className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                          effectiveTab === "stage"
+                            ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+                            : "text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <Layers className="h-3.5 w-3.5" />
+                        <span>Stage</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => setViewMode("briefing")}
                       className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                        viewMode === "briefing"
+                        effectiveTab === "briefing"
                           ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
                           : "text-slate-400 hover:text-white"
                       }`}
@@ -400,7 +447,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     <button
                       onClick={() => setViewMode("sessions")}
                       className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                        viewMode === "sessions"
+                        effectiveTab === "sessions"
                           ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
                           : "text-slate-400 hover:text-white"
                       }`}
@@ -410,18 +457,20 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     </button>
                   </div>
 
-                  {/* Right: + New Session Button */}
-                  <button
-                    onClick={startNewSession}
-                    className="flex items-center gap-1.5 rounded-xl border border-teal-400/40 bg-teal-500/15 px-3.5 py-2 text-xs font-extrabold text-teal-300 hover:bg-teal-500/25 transition shadow-sm"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>New Session</span>
-                  </button>
+                  {/* Right: + New Session Button ONLY when there is an active session with turns */}
+                  {hasActiveTurns && (
+                    <button
+                      onClick={startNewSession}
+                      className="flex items-center gap-1.5 rounded-xl border border-teal-400/40 bg-teal-500/15 px-3.5 py-2 text-xs font-extrabold text-teal-300 hover:bg-teal-500/25 transition shadow-sm"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>New Session</span>
+                    </button>
+                  )}
                 </div>
 
-                {/* 3. ASSISTANT TOOL PILLS (Underneath navigation) */}
-                <div className="mt-2.5 flex items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+                {/* 3. ASSISTANT TOOL PILLS (Progress Report & Sprite Exercise only) */}
+                <div className="mt-2.5 flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -433,15 +482,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     <FileBarChart className="h-3.5 w-3.5 text-indigo-300" />
                     <span>Progress Report</span>
                   </button>
-
-                  <Link
-                    href="/matrix"
-                    className="flex items-center gap-2 rounded-xl border border-teal-400/30 bg-teal-500/15 px-3.5 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-500/25 transition shrink-0"
-                  >
-                    <Grid className="h-3.5 w-3.5 text-teal-300" />
-                    <span>Word Matrix</span>
-                    <ArrowRight className="h-3 w-3 opacity-80" />
-                  </Link>
 
                   <button
                     type="button"
@@ -457,9 +497,9 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 </div>
               </div>
 
-              {/* 4. MAIN WORKSPACE STAGE (Hidden scrollbar for clean native look) */}
+              {/* 4. MAIN WORKSPACE STAGE */}
               <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {viewMode === "sessions" ? (
+                {effectiveTab === "sessions" ? (
                   /* ================= VIEW A: SAVED SESSIONS LIST ================= */
                   <div className="space-y-3">
                     <div className="flex items-center justify-between pb-2">
@@ -469,7 +509,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     </div>
 
                     {sessionsList.length === 0 ? (
-                      <div className="rounded-3xl border border-white/10 bg-slate-900/50 p-10 text-center my-auto">
+                      <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-10 text-center my-auto backdrop-blur-md">
                         <MessageSquare className="h-10 w-10 text-teal-400/60 mx-auto mb-3" />
                         <p className="text-base font-bold text-white">No saved sessions yet</p>
                         <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
@@ -486,16 +526,16 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                           <button
                             key={sess.id}
                             onClick={() => selectSession(sess)}
-                            className={`w-full text-left rounded-2xl border p-4 transition ${
+                            className={`w-full text-left rounded-2xl border p-4 transition backdrop-blur-md ${
                               isCurrentSession
-                                ? "border-teal-500/60 bg-gradient-to-r from-teal-950/40 to-indigo-950/40"
+                                ? "border-teal-500/60 bg-gradient-to-r from-teal-950/50 to-indigo-950/50"
                                 : "border-white/10 bg-slate-900/70 hover:border-indigo-500/40 hover:bg-slate-900"
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-extrabold text-white truncate max-w-[340px]">
-                                  {sess.title}
+                                  {cleanDisplayString(sess.title)}
                                 </span>
                                 {isCurrentSession && (
                                   <span className="rounded-md bg-teal-500/20 border border-teal-500/40 px-2 py-0.5 text-[9px] font-black uppercase text-teal-300">
@@ -510,13 +550,13 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
 
                             {sess.lessonTitle && (
                               <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
-                                {sess.lessonTitle}
+                                Current: {sess.lessonTitle}
                               </span>
                             )}
 
                             {lastTurn && (
                               <p className="text-xs text-slate-300 line-clamp-1">
-                                {spriteName}: {lastTurn.assistantReply}
+                                {spriteName}: {cleanDisplayString(lastTurn.assistantReply)}
                               </p>
                             )}
                           </button>
@@ -524,12 +564,11 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                       })
                     )}
                   </div>
-                ) : viewMode === "briefing" || !activeTurn ? (
+                ) : effectiveTab === "briefing" ? (
                   /* ================= VIEW B: BRIEFING & TARGETS STAGE ================= */
                   <div className="flex-1 flex flex-col justify-between gap-6">
                     <div className="space-y-4">
-                      {/* Decorative Briefing Banner */}
-                      <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/50 via-indigo-950/40 to-slate-900/80 p-5 shadow-lg">
+                      <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-5 shadow-lg backdrop-blur-md">
                         <div className="relative z-10 flex items-center justify-between">
                           <div>
                             <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 block mb-1">
@@ -539,12 +578,12 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                               {aiBrain.currentLessonTitle}
                             </h2>
                           </div>
-                          {activeTurn && (
+                          {hasActiveTurns && (
                             <button
                               onClick={() => setViewMode("stage")}
                               className="rounded-xl bg-teal-500/20 border border-teal-400/40 px-3.5 py-2 text-xs font-bold text-teal-200 hover:bg-teal-500/30 transition"
                             >
-                              View Active Turn →
+                              Return to Stage →
                             </button>
                           )}
                         </div>
@@ -559,7 +598,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             {aiBrain.topWord && (
                               <button
                                 onClick={() => triggerPractice(aiBrain.topWord!.word)}
-                                className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950/40 p-4 border border-indigo-500/30 hover:border-indigo-400 transition text-left shadow-md"
+                                className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-indigo-950/50 p-4 border border-indigo-500/30 hover:border-indigo-400 transition text-left shadow-md backdrop-blur-md"
                               >
                                 <div>
                                   <span className="font-extrabold text-white text-base block group-hover:text-indigo-300 transition">
@@ -584,7 +623,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             {aiBrain.topPhrase && (
                               <button
                                 onClick={() => triggerPractice(aiBrain.topPhrase!.word)}
-                                className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900 to-teal-950/40 p-4 border border-teal-500/30 hover:border-teal-400 transition text-left shadow-md"
+                                className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-teal-950/50 p-4 border border-teal-500/30 hover:border-teal-400 transition text-left shadow-md backdrop-blur-md"
                               >
                                 <div>
                                   <span className="font-extrabold text-white text-base block group-hover:text-teal-300 transition">
@@ -610,7 +649,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                       )}
                     </div>
 
-                    {/* Center Interactive Launchpad */}
                     <div className="my-auto flex flex-col items-center text-center max-w-md mx-auto py-6">
                       <div className="relative mb-4">
                         <div className="absolute -inset-2 rounded-3xl bg-gradient-to-r from-teal-500/30 to-indigo-500/30 blur-lg" />
@@ -662,13 +700,13 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                   >
                     {/* 1. User Prompt Bar + < Turn X / Y > Stepper */}
                     {activeTurn.userMessage && (
-                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-r from-indigo-950/60 via-slate-900/80 to-teal-950/40 px-5 py-3.5 shrink-0 shadow-md">
+                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-r from-indigo-950/70 via-slate-900/85 to-teal-950/50 px-5 py-3.5 shrink-0 shadow-md backdrop-blur-md">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="rounded-lg bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-200 shrink-0">
                             You
                           </span>
                           <p className="text-sm font-bold text-white truncate">
-                            &ldquo;{getRawText(activeTurn.userMessage)}&rdquo;
+                            &ldquo;{cleanDisplayString(getRawText(activeTurn.userMessage))}&rdquo;
                           </p>
                         </div>
 
@@ -701,14 +739,15 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     )}
 
                     {/* 2. Assistant 1-to-1 Main Stage Card */}
-                    <div className="flex-1 flex flex-col justify-between rounded-3xl border border-teal-500/25 bg-gradient-to-b from-slate-900/90 via-[#0B1020]/95 to-indigo-950/30 p-6 shadow-2xl">
-                      <div className="space-y-6">
+                    <div className="flex-1 flex flex-col rounded-3xl border border-teal-500/30 bg-gradient-to-b from-slate-900/80 via-[#0B1020]/85 to-indigo-950/40 p-6 shadow-2xl backdrop-blur-md">
+                      <div className="space-y-5">
                         <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-teal-400/40 bg-slate-800 shadow-lg">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-800 shadow-lg">
                             <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
                           </div>
-                          <div className="flex-1 pt-0.5">
-                            <span className="text-[11px] font-black uppercase tracking-wider text-teal-400 flex items-center gap-1.5 mb-1.5">
+                          <div className="flex-1 pt-0.5 space-y-3">
+                            {/* Capitalized Sprite Name ("Vox" / "Vivi") */}
+                            <span className="text-xs font-extrabold tracking-wide text-teal-400 flex items-center gap-1.5">
                               <Sparkles className="h-3.5 w-3.5" /> {spriteName}
                             </span>
 
@@ -722,10 +761,28 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-400 [animation-delay:-0.15s]" />
                                 <span className="h-2 w-2 animate-bounce rounded-full bg-teal-400" />
                                 <span className="text-xs font-medium text-slate-400 ml-1">
-                                  Thinking...
+                                  {spriteName} is thinking...
                                 </span>
                               </div>
-                            ) : null}
+                            ) : error ? (
+                              <p className="text-sm font-medium text-rose-400">
+                                {spriteName} couldn&apos;t respond right now. Please try asking again.
+                              </p>
+                            ) : (
+                              <p className="text-sm font-medium text-slate-300">
+                                Could you rephrase that? Let&apos;s keep practicing {aiBrain.currentLessonTitle}.
+                              </p>
+                            )}
+
+                            {/* English Translation Box */}
+                            {activeAssistantPayload.translation && (
+                              <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
+                                <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                                <p className="text-xs font-medium text-indigo-200 leading-relaxed">
+                                  {activeAssistantPayload.translation}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -736,9 +793,12 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             animate={{ opacity: 1, y: 0 }}
                           >
                             <ContextCard
-                              title={activeAssistantPayload.contextCard.title}
-                              grammarRule={activeAssistantPayload.contextCard.grammarRule}
-                              examples={activeAssistantPayload.contextCard.examples || []}
+                              title={cleanDisplayString(activeAssistantPayload.contextCard.title)}
+                              grammarRule={cleanDisplayString(activeAssistantPayload.contextCard.grammarRule)}
+                              examples={(activeAssistantPayload.contextCard.examples || []).map((ex) => ({
+                                french: cleanDisplayString(ex.french),
+                                english: cleanDisplayString(ex.english),
+                              }))}
                             />
                           </motion.div>
                         )}
@@ -751,7 +811,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                               <span>
                                 Action Triggered: {activeAssistantPayload.action.type}{" "}
                                 {activeAssistantPayload.action.targetWord
-                                  ? `(${activeAssistantPayload.action.targetWord})`
+                                  ? `(${cleanDisplayString(activeAssistantPayload.action.targetWord)})`
                                   : ""}
                               </span>
                             </div>
@@ -760,26 +820,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             </span>
                           </div>
                         )}
-                      </div>
-
-                      {/* Stage Footer */}
-                      <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-6">
-                        <button
-                          type="button"
-                          onClick={() => setViewMode("briefing")}
-                          className="text-xs font-bold text-slate-300 hover:text-teal-300 transition flex items-center gap-1.5"
-                        >
-                          <Target className="h-3.5 w-3.5 text-teal-400" />
-                          <span>Practice priority words</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={startNewSession}
-                          className="text-xs font-bold text-indigo-300 hover:text-white transition flex items-center gap-1"
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Start New Session
-                        </button>
                       </div>
                     </div>
                   </motion.div>
