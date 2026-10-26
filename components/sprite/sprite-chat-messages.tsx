@@ -11,7 +11,6 @@ import {
   Zap,
   MessageSquare,
   Languages,
-  Plus,
 } from "lucide-react";
 import { ContextCard } from "./context-card";
 import {
@@ -38,7 +37,6 @@ interface SpriteChatMessagesProps {
   isLoading: boolean;
   error?: Error;
   onSelectSession: (session: SpriteSessionData) => void;
-  onStartNewSession: () => void;
   onSelectTurnIndex: (idx: number) => void;
   onTriggerPractice: (word: string) => void;
   onQuickPrompt: (prompt: string) => void;
@@ -58,7 +56,6 @@ export function SpriteChatMessages({
   isLoading,
   error,
   onSelectSession,
-  onStartNewSession,
   onSelectTurnIndex,
   onTriggerPractice,
   onQuickPrompt,
@@ -72,12 +69,6 @@ export function SpriteChatMessages({
             <span className="text-xs font-black uppercase tracking-wider text-slate-400">
               Saved Sessions ({sessionsList.length})
             </span>
-            <button
-              onClick={onStartNewSession}
-              className="flex items-center gap-1.5 rounded-xl bg-teal-500/20 border border-teal-400/40 px-3 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-500/30 transition"
-            >
-              <Plus className="h-3.5 w-3.5" /> Start New Session
-            </button>
           </div>
 
           {sessionsList.length === 0 ? (
@@ -137,7 +128,7 @@ export function SpriteChatMessages({
           )}
         </div>
       ) : activeTab === "briefing" ? (
-        /* ================= TAB 2: LESSON BRIEFING & PRIORITY TARGETS ONLY ================= */
+        /* ================= TAB 2: LESSON BRIEFING & PRIORITY TARGETS ================= */
         <div className="space-y-6">
           <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-6 shadow-lg backdrop-blur-md">
             <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 block mb-1">
@@ -224,14 +215,11 @@ export function SpriteChatMessages({
             </div>
           </div>
 
-          <span className="rounded-full bg-teal-500/15 border border-teal-400/30 px-3 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-300 mb-2">
-            New Session
-          </span>
           <h3 className="text-lg font-extrabold text-white mb-1.5">
             Ready to practice, {aiBrain.userName}?
           </h3>
           <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-            Type a question below or pick a quick starter for{" "}
+            Type a message below or launch a guided activity for{" "}
             <span className="text-white font-semibold">{aiBrain.currentLessonTitle}</span>.
           </p>
 
@@ -343,15 +331,16 @@ export function SpriteChatMessages({
                     </p>
                   )}
 
-                  {/* Translation Box (ONLY renders when Vox spoke in Target Lang & translation exists) */}
-                  {activeAssistantPayload.translation && (
-                    <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
-                      <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
-                      <p className="text-xs font-medium text-indigo-200 leading-relaxed">
-                        {activeAssistantPayload.translation}
-                      </p>
-                    </div>
-                  )}
+                  {/* Strict Boolean Check: Only show translation when isTranslationRequired === true */}
+                  {activeAssistantPayload.isTranslationRequired &&
+                    activeAssistantPayload.translation && (
+                      <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
+                        <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                        <p className="text-xs font-medium text-indigo-200 leading-relaxed">
+                          {activeAssistantPayload.translation}
+                        </p>
+                      </div>
+                    )}
                 </div>
               </div>
 

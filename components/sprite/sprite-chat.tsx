@@ -11,7 +11,6 @@ import { SpriteChatMessages } from "./sprite-chat-messages";
 import { SpriteChatControls } from "./sprite-chat-controls";
 import {
   cleanDisplayString,
-  getRawText,
   parseMessagePayload,
   turnsToUIMessages,
   groupUIMessagesIntoTurns,
@@ -36,7 +35,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(null);
   const [input, setInput] = useState("");
 
-  // Track the latest user prompt so we can persist the turn deterministically on finish
   const lastUserPromptRef = useRef<string>("");
 
   const { summonSprite, profile } = useSprite();
@@ -74,6 +72,21 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     dossier: apiDossier,
   };
 
+  const fetchSessions = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/users/${userId}/sprite/sessions`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.sessions)) {
+        setSessionsList(data.sessions);
+      }
+    } catch (e) {
+      console.error("Failed to fetch sprite sessions:", e);
+    }
+  }, [userId]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -82,7 +95,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [userId]
   );
 
-  // Deterministically save each completed assistant turn to Prisma & update sessionsList
   const { messages, setMessages, sendMessage, status, error } = useChat({
     transport,
     onFinish: async ({ message }) => {
@@ -92,6 +104,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
         id: message.id || crypto.randomUUID(),
         userPrompt: cleanDisplayString(lastUserPromptRef.current || "Practice"),
         assistantReply: parsed.spokenText || "Let's continue practicing.",
+        isTranslationRequired: parsed.isTranslationRequired,
         translation: parsed.translation ?? null,
         contextCard: parsed.contextCard ?? null,
         action: parsed.action ?? null,
@@ -113,6 +126,8 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
           if (Array.isArray(data.sessions)) {
             setSessionsList(data.sessions);
           }
+        } else {
+          await fetchSessions();
         }
       } catch (err) {
         console.error("Failed to persist turn:", err);
@@ -140,7 +155,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   );
 
   const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
-  const hasActiveTurns = turns.length > 0;
 
   const currentTurnIdx =
     selectedTurnIndex !== null && turns[selectedTurnIndex]
@@ -154,26 +168,12 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [activeTurn?.assistantMessage]
   );
 
-  const fetchSessions = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/users/${userId}/sprite/sessions`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data.sessions)) {
-        setSessionsList(data.sessions);
-      }
-    } catch (e) {
-      console.error("Failed to fetch sprite sessions:", e);
-    }
-  }, [userId]);
-
   useEffect(() => {
     if (isOpen) {
       fetchSessions();
     }
   }, [isOpen, fetchSessions]);
 
-  // Clicking "+ New Session" stays inside the "session" tab on a clean New Session stage
   const startNewSession = () => {
     setSessionId(crypto.randomUUID());
     setMessages([]);
@@ -261,7 +261,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
         )}
       </AnimatePresence>
 
-      {/* 94VH DOCKED ASSISTANT DRAWER */}
+      {/* FULL HEIGHT (100VH) DOCKED ASSISTANT DRAWER */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -274,11 +274,11 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
             />
 
             <motion.div
-              initial={{ opacity: 0, x: 40, y: 40 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              exit={{ opacity: 0, x: 40, y: 40 }}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 right-0 z-50 flex h-[94vh] w-full sm:w-[580px] md:w-[660px] flex-col overflow-hidden rounded-tl-[36px] border-t border-l border-teal-500/30 bg-[#070B14] shadow-[-24px_-24px_80px_rgba(0,0,0,0.85)]"
+              className="fixed top-0 bottom-0 right-0 z-50 flex h-screen w-full sm:w-[580px] md:w-[660px] flex-col overflow-hidden border-l border-teal-500/30 bg-[#070B14] shadow-[-24px_0_80px_rgba(0,0,0,0.85)]"
             >
               {/* VECTOR ORBITS BACKGROUND */}
               <svg
@@ -326,7 +326,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 avatarSrc={avatarSrc}
                 currentLessonTitle={aiBrain.currentLessonTitle}
                 activeTab={activeTab}
-                hasActiveTurns={hasActiveTurns}
                 sessionsCount={sessionsList.length}
                 onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
@@ -349,7 +348,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 isLoading={isLoading}
                 error={error}
                 onSelectSession={selectSession}
-                onStartNewSession={startNewSession}
                 onSelectTurnIndex={setSelectedTurnIndex}
                 onTriggerPractice={triggerPractice}
                 onQuickPrompt={handleQuickPrompt}

@@ -17,7 +17,6 @@ interface SpriteChatHeaderProps {
   avatarSrc: string;
   currentLessonTitle: string;
   activeTab: ActiveTab;
-  hasActiveTurns: boolean;
   sessionsCount: number;
   onSelectTab: (tab: ActiveTab) => void;
   onStartNewSession: () => void;
@@ -30,7 +29,6 @@ export function SpriteChatHeader({
   avatarSrc,
   currentLessonTitle,
   activeTab,
-  hasActiveTurns,
   sessionsCount,
   onSelectTab,
   onStartNewSession,
@@ -39,17 +37,29 @@ export function SpriteChatHeader({
 }: SpriteChatHeaderProps) {
   return (
     <div className="relative z-10 overflow-hidden border-b border-white/10 bg-gradient-to-r from-teal-950/85 via-indigo-950/85 to-slate-950/90 px-6 pt-5 pb-4 shrink-0">
-      {/* Row 1: Avatar, Sprite Name, Current Lesson, Close */}
+      {/* Row 1: Avatar with + New Session Badge, Sprite Name, Current Lesson, Close */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-lg shadow-teal-500/20">
-            <img
-              src={avatarSrc}
-              alt={spriteName}
-              className="h-full w-full object-cover object-top"
-            />
-            <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full bg-teal-400 ring-2 ring-slate-950" />
+          <div className="relative h-14 w-14 shrink-0">
+            <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-lg shadow-teal-500/20">
+              <img
+                src={avatarSrc}
+                alt={spriteName}
+                className="h-full w-full object-cover object-top"
+              />
+            </div>
+
+            {/* + Icon Badge where the green dot was */}
+            <button
+              type="button"
+              onClick={onStartNewSession}
+              title="Start New Session"
+              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-slate-950 ring-2 ring-slate-950 shadow-md transition hover:scale-110 hover:bg-teal-300"
+            >
+              <Plus className="h-3.5 w-3.5 stroke-[3]" />
+            </button>
           </div>
+
           <div>
             <div className="flex items-center gap-2.5">
               <h3 className="text-lg font-extrabold text-white tracking-tight">
@@ -74,7 +84,7 @@ export function SpriteChatHeader({
         </button>
       </div>
 
-      {/* Row 2: Permanent 3-Tab Navigation Bar (Never mutates) */}
+      {/* Row 2: Permanent 3-Tab Navigation Bar + Action Pills */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/10">
         <div className="flex items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
           <button
@@ -114,40 +124,28 @@ export function SpriteChatHeader({
           </button>
         </div>
 
-        {/* + New Session ONLY shows when there are turns in the current session */}
-        {hasActiveTurns && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={onStartNewSession}
-            className="flex items-center gap-1.5 rounded-xl border border-teal-400/40 bg-teal-500/15 px-3.5 py-2 text-xs font-extrabold text-teal-300 hover:bg-teal-500/25 transition shadow-sm"
+            type="button"
+            onClick={onTriggerReport}
+            className="flex items-center gap-1.5 rounded-xl border border-indigo-400/30 bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition shrink-0"
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>New Session</span>
+            <FileBarChart className="h-3.5 w-3.5 text-indigo-300" />
+            <span>Progress Report</span>
           </button>
-        )}
-      </div>
 
-      {/* Row 3: Quick Action Pills */}
-      <div className="mt-2.5 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onTriggerReport}
-          className="flex items-center gap-2 rounded-xl border border-indigo-400/30 bg-indigo-500/15 px-3.5 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition shrink-0"
-        >
-          <FileBarChart className="h-3.5 w-3.5 text-indigo-300" />
-          <span>Progress Report</span>
-        </button>
-
-        <button
-          type="button"
-          disabled
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-semibold text-slate-400 opacity-75 cursor-not-allowed shrink-0"
-        >
-          <Dumbbell className="h-3.5 w-3.5 text-slate-400" />
-          <span>Sprite Exercise</span>
-          <span className="rounded-md bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-300">
-            Soon
-          </span>
-        </button>
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-400 opacity-75 cursor-not-allowed shrink-0"
+          >
+            <Dumbbell className="h-3.5 w-3.5 text-slate-400" />
+            <span>Exercise</span>
+            <span className="rounded-md bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-300">
+              Soon
+            </span>
+          </button>
+        </div>
       </div>
     </div>
   );

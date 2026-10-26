@@ -2,23 +2,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isUser } from "@/lib/auth-guard";
-import { SpriteSessionTurnsSchema } from "@/lib/schema/sprite-schema";
 
 export const dynamic = "force-dynamic";
 
-async function getOrCreateSpriteProfile(userId: string) {
+export async function getOrCreateProfileId(userId: string): Promise<string> {
   const existing = await prisma.spriteProfile.findUnique({
     where: { userId },
     select: { id: true },
   });
-  if (existing) return existing;
+  if (existing) return existing.id;
 
-  let defaultSprite = await prisma.sprite.findFirst({
+  let sprite = await prisma.sprite.findFirst({
     where: { slug: "vox" },
   });
 
-  if (!defaultSprite) {
-    defaultSprite = await prisma.sprite.create({
+  if (!sprite) {
+    sprite = await prisma.sprite.create({
       data: {
         slug: "vox",
         name: "Vox",
@@ -28,10 +27,10 @@ async function getOrCreateSpriteProfile(userId: string) {
     });
   }
 
-  return prisma.spriteProfile.create({
+  const created = await prisma.spriteProfile.create({
     data: {
       userId,
-      spriteId: defaultSprite.id,
+      spriteId: sprite.id,
       nativeLanguage: "en-US",
       targetLanguage: "fr-FR",
       nativeVoiceId: "en-US-boy-01",
@@ -39,6 +38,8 @@ async function getOrCreateSpriteProfile(userId: string) {
     },
     select: { id: true },
   });
+
+  return created.id;
 }
 
 export async function GET(
@@ -52,22 +53,20 @@ export async function GET(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const profile = await prisma.spriteProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  });
+  try {
+    const profileId = await getOrCreateProfileId(userId);
 
-  if (!profile) {
-    return NextResponse.json({ sessions: [] });
+    const sessions = await prisma.spriteSession.findMany({
+      where: { spriteProfileId: profileId },
+      orderBy: { updatedAt: "desc" },
+      take: 30,
+    });
+
+    return NextResponse.json({ sessions });
+  } catch (err) {
+    console.error("[SpriteSessions GET Error]:", err);
+    return NextResponse.json({ sessions: [], error: String(err) }, { status: 500 });
   }
-
-  const sessions = await prisma.spriteSession.findMany({
-    where: { spriteProfileId: profile.id },
-    orderBy: { updatedAt: "desc" },
-    take: 30,
-  });
-
-  return NextResponse.json({ sessions });
 }
 
 export async function POST(
@@ -89,48 +88,53 @@ export async function POST(
       return NextResponse.json({ error: "Missing sessionId or turn" }, { status: 400 });
     }
 
-    const profile = await getOrCreateSpriteProfile(userId);
+    const profileId = await getOrCreateProfileId(userId);
 
     const existingSession = await prisma.spriteSession.findUnique({
       where: { id: sessionId },
     });
 
-    const existingTurns = existingSession
-      ? SpriteSessionTurnsSchema.catch([]).parse(existingSession.turns)
+    const existingTurns = Array.isArray(existingSession?.turns)
+      ? (existingSession.turns as any[])
       : [];
 
-    const alreadyExists = existingTurns.some((t) => t.id === turn.id);
-    const updatedTurns = alreadyExists ? existingTurns : [...existingTurns, turn];
+    const alreadySaved = existingTurns.some(
+      (t: any) =>
+        t.id === turn.id ||
+        (t.userPrompt === turn.userPrompt && t.assistantReply === turn.assistantReply)
+    );
+
+    const updatedTurns = alreadySaved ? existingTurns : [...existingTurns, turn];
 
     const autoTitle =
       existingSession?.title && existingSession.title !== "New Session"
         ? existingSession.title
-        : (turn.userPrompt || lessonTitle || "Practice Session").slice(0, 48);
+        : String(turn.userPrompt || lessonTitle || "Session").slice(0, 48);
 
     await prisma.spriteSession.upsert({
       where: { id: sessionId },
       create: {
         id: sessionId,
-        spriteProfileId: profile.id,
+        spriteProfileId: profileId,
         title: autoTitle,
         lessonTitle: lessonTitle || "Active Lesson",
-        turns: updatedTurns as any,
+        turns: updatedTurns,
       },
       update: {
         title: autoTitle,
-        turns: updatedTurns as any,
+        turns: updatedTurns,
       },
     });
 
     const sessions = await prisma.spriteSession.findMany({
-      where: { spriteProfileId: profile.id },
+      where: { spriteProfileId: profileId },
       orderBy: { updatedAt: "desc" },
       take: 30,
     });
 
     return NextResponse.json({ sessions });
-  } catch (error) {
-    console.error("[SpriteSession POST] Failed to save session:", error);
-    return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
+  } catch (err) {
+    console.error("[SpriteSessions POST Error]:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

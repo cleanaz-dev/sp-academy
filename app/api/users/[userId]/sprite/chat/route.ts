@@ -1,6 +1,7 @@
 // app/api/users/[userId]/sprite/chat/route.ts
 import { NextResponse } from "next/server";
 import { isUser } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
 import {
   streamText,
   convertToModelMessages,
@@ -9,6 +10,8 @@ import {
   type UIMessage,
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
+import { getOrCreateProfileId } from "../session/route";
+
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -24,6 +27,26 @@ function clean(value: unknown, fallback: string, max = 100) {
 function cleanNumber(value: unknown, fallback: number) {
   if (typeof value !== "number" || Number.isNaN(value)) return fallback;
   return value;
+}
+
+function stripArtifacts(str: string): string {
+  return str
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/[«»]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getLastUserText(messages: UIMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") {
+      return messages[i].parts
+        .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
+        .map((p) => p.text)
+        .join("");
+    }
+  }
+  return "";
 }
 
 export async function POST(
@@ -48,6 +71,10 @@ export async function POST(
     return NextResponse.json({ error: "messages must be an array" }, { status: 400 });
   }
   const messages: UIMessage[] = body.messages;
+  const sessionId =
+    typeof body.sessionId === "string" && body.sessionId.trim()
+      ? body.sessionId.trim()
+      : undefined;
 
   const rawSpriteName = clean(body.spriteName, "Vox");
   const spriteName =
@@ -74,41 +101,37 @@ You are ${spriteName}, a concise, human-like language tutor.
 You are helping ${userName}, whose native language is ${nativeLang}
 and who is learning ${targetLang}.
 
-LESSON CONTEXT:
+LESSON & VOCABULARY CONTEXT (BACKGROUND ONLY):
 - Current lesson: ${currentLessonTitle}
 - Mastery score: ${avgMastery}%
 - When teaching or practicing: ${adaptiveInstruction}
-
-VOCABULARY CONTEXT:
 ${topWord ? `- Difficult word: ${topWord}` : ""}
 ${recentWords ? `- Recently learned words: ${recentWords}` : ""}
+This context is background information ONLY. Do NOT automatically force it into greetings or casual messages. If the learner says "Hello", just greet them naturally.
 
-STRICT FORMATTING & RESPONSE RULES:
-1. NEVER leave your response blank. Always write 1 to 2 short spoken sentences first.
-2. Always model 100% grammatically correct ${targetLang}. Never tell the learner to say a grammatically incorrect phrase.
-3. NEVER use French guillemets (« or »). Use standard single quotes (') or double quotes (").
-4. No markdown, asterisks, bullet points, or emojis in the spoken sentences.
-5. After your spoken response, if AND ONLY IF you spoke in ${targetLang} (requiring a translation), OR if you need to show a grammar card / trigger an action, output ---JSON--- on a new line followed by a valid JSON object:
+RESPONSE RULES:
+1. Respond ONLY to the learner's latest message and its intent.
+2. Normal responses must be 1 to 2 short plain-text sentences suitable for text-to-speech. Never use markdown, asterisks, bullet points, or French guillemets (« »).
+3. Always model 100% grammatically correct ${targetLang}.
+4. After your 1-2 spoken sentences, ALWAYS output ---JSON--- on a new line followed by this exact JSON structure:
 ---JSON---
 {
-  "translation": "ONLY include this if your spoken response above was in ${targetLang}. If your spoken response was already in ${nativeLang}, set this to null!",
-  "contextCard": {
-    "title": "Short rule or word title",
-    "grammarRule": "Simple 1-sentence explanation in ${nativeLang}",
-    "examples": [
-      { "french": "Correct example in ${targetLang}", "english": "Translation in ${nativeLang}" }
-    ]
-  },
-  "action": {
-    "type": "START_DRILL",
-    "targetWord": "word being practiced"
-  }
+  "isTranslationRequired": false,
+  "translation": null,
+  "contextCard": null,
+  "action": null
 }
-6. CRITICAL TRANSLATION RULE: If your spoken response is already in ${nativeLang} (even if it quotes 1 or 2 ${targetLang} words), set "translation": null. Only provide a "translation" string when your spoken response is written in ${targetLang}.
-7. Only include "contextCard" when teaching a grammar rule or giving examples. Only include "action" (type must be "START_DRILL", "PROGRESS_REPORT", or "BOOKMARK_WORD") when starting a drill or action.
+
+JSON FIELD RULES:
+- "isTranslationRequired": boolean. Set to TRUE ONLY if your spoken sentences above are written primarily in ${targetLang}. If your spoken sentences are already in ${nativeLang} (even if you quoted a ${targetLang} phrase), you MUST set "isTranslationRequired": false and "translation": null.
+- "translation": string | null. Only provide the ${nativeLang} translation if "isTranslationRequired" is true. Otherwise must be null.
+- "contextCard": null, OR if teaching a rule/examples: { "title": "Rule Title", "grammarRule": "1-sentence explanation", "examples": [{ "french": "${targetLang} example", "english": "${nativeLang} translation" }] }
+- "action": null, OR if starting a drill: { "type": "START_DRILL", "targetWord": "word" }
 `;
 
   try {
+    const userPrompt = getLastUserText(messages);
+
     const result = streamText({
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
@@ -119,6 +142,80 @@ STRICT FORMATTING & RESPONSE RULES:
         },
       },
       maxOutputTokens: 4096,
+      onFinish: async ({ text }) => {
+        if (!sessionId) return;
+        try {
+          const [spokenPart, rawJson] = text.split("---JSON---");
+          const assistantReply = stripArtifacts(spokenPart || "");
+
+          let parsedJson: any = {};
+          if (rawJson) {
+            try {
+              const cleaned = rawJson.replace(/```json/gi, "").replace(/```/g, "").trim();
+              parsedJson = JSON.parse(cleaned);
+            } catch {
+              parsedJson = {};
+            }
+          }
+
+          const isTranslationRequired = Boolean(parsedJson.isTranslationRequired);
+          const translation =
+            isTranslationRequired && parsedJson.translation
+              ? stripArtifacts(String(parsedJson.translation))
+              : null;
+
+          const newTurn = {
+            id: crypto.randomUUID(),
+            userPrompt: stripArtifacts(userPrompt),
+            assistantReply: assistantReply || "Let's continue practicing.",
+            isTranslationRequired,
+            translation,
+            contextCard: parsedJson.contextCard ?? null,
+            action: parsedJson.action ?? null,
+            createdAt: new Date().toISOString(),
+          };
+
+          const profileId = await getOrCreateProfileId(userId);
+          const existingSession = await prisma.spriteSession.findUnique({
+            where: { id: sessionId },
+          });
+
+          const existingTurns = Array.isArray(existingSession?.turns)
+            ? (existingSession.turns as any[])
+            : [];
+
+          const alreadySaved = existingTurns.some(
+            (t: any) =>
+              t.userPrompt === newTurn.userPrompt &&
+              t.assistantReply === newTurn.assistantReply
+          );
+
+          if (!alreadySaved) {
+            const updatedTurns = [...existingTurns, newTurn];
+            const autoTitle =
+              existingSession?.title && existingSession.title !== "New Session"
+                ? existingSession.title
+                : String(userPrompt || currentLessonTitle).slice(0, 48);
+
+            await prisma.spriteSession.upsert({
+              where: { id: sessionId },
+              create: {
+                id: sessionId,
+                spriteProfileId: profileId,
+                title: autoTitle,
+                lessonTitle: currentLessonTitle,
+                turns: updatedTurns,
+              },
+              update: {
+                title: autoTitle,
+                turns: updatedTurns,
+              },
+            });
+          }
+        } catch (err) {
+          console.error("[Chat onFinish Save Error]:", err);
+        }
+      },
     });
 
     return createUIMessageStreamResponse({

@@ -21,6 +21,7 @@ export interface ChatContextData {
 
 export interface ParsedPayload {
   spokenText: string;
+  isTranslationRequired: boolean;
   translation?: string | null;
   contextCard?: ContextCardData | null;
   action?: SpriteAction | null;
@@ -48,19 +49,15 @@ export function getRawText(m?: UIMessage): string {
     .join("");
 }
 
-function normalizeForComparison(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
 export function parseMessagePayload(m?: UIMessage): ParsedPayload {
   const raw = getRawText(m);
-  if (!raw) return { spokenText: "" };
+  if (!raw) return { spokenText: "", isTranslationRequired: false };
 
   const [spokenPart, jsonPart] = raw.split("---JSON---");
   const spokenText = cleanDisplayString(spokenPart || "");
 
   if (!jsonPart) {
-    return { spokenText };
+    return { spokenText, isTranslationRequired: false };
   }
 
   try {
@@ -70,33 +67,26 @@ export function parseMessagePayload(m?: UIMessage): ParsedPayload {
       .trim();
     const parsed = JSON.parse(cleanedJson);
 
-    let translation =
-      parsed.translation && parsed.translation !== "null"
+    const isTranslationRequired = Boolean(parsed.isTranslationRequired);
+    const translation =
+      isTranslationRequired && parsed.translation && parsed.translation !== "null"
         ? cleanDisplayString(String(parsed.translation))
         : null;
 
-    // Never show translation if it's identical/redundant to spokenText
-    if (
-      translation &&
-      spokenText &&
-      normalizeForComparison(translation) === normalizeForComparison(spokenText)
-    ) {
-      translation = null;
-    }
-
     return {
-      spokenText: spokenText || translation || "",
-      translation: spokenText ? translation : null,
+      spokenText,
+      isTranslationRequired,
+      translation,
       contextCard: parsed.contextCard || null,
       action: parsed.action || null,
     };
   } catch {
-    return { spokenText };
+    return { spokenText, isTranslationRequired: false };
   }
 }
 
 export function turnsToUIMessages(
-  turns: (SpriteTurn & { translation?: string | null })[]
+  turns: (SpriteTurn & { isTranslationRequired?: boolean; translation?: string | null })[]
 ): UIMessage[] {
   const msgs: UIMessage[] = [];
   for (const t of turns) {
@@ -106,14 +96,12 @@ export function turnsToUIMessages(
       parts: [{ type: "text", text: cleanDisplayString(t.userPrompt) }],
     });
 
-    const hasJson = t.translation || t.contextCard || t.action;
-    const rawAssistantText = hasJson
-      ? `${cleanDisplayString(t.assistantReply)}\n---JSON---\n${JSON.stringify({
-          translation: t.translation ?? null,
-          contextCard: t.contextCard ?? null,
-          action: t.action ?? null,
-        })}`
-      : cleanDisplayString(t.assistantReply);
+    const rawAssistantText = `${cleanDisplayString(t.assistantReply)}\n---JSON---\n${JSON.stringify({
+      isTranslationRequired: Boolean(t.isTranslationRequired ?? t.translation),
+      translation: t.translation ?? null,
+      contextCard: t.contextCard ?? null,
+      action: t.action ?? null,
+    })}`;
 
     msgs.push({
       id: `${t.id}-assistant`,
