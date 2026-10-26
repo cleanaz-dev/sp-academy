@@ -1,7 +1,14 @@
 // components/sprite/sprite-chat.tsx
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,23 +34,28 @@ interface SpriteChatProps {
 }
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
+  const { summonSprite, profile, deleteSession } = useSprite();
+
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveTab>("session");
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
-  const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(null);
+  const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(
+    null,
+  );
   const [input, setInput] = useState("");
 
   const lastUserPromptRef = useRef<string>("");
 
-  const { summonSprite, profile } = useSprite();
   const lastSummonedId = useRef<string | null>(null);
 
   const isVivi = profile?.sprite?.slug === "vivi";
   const rawName = profile?.sprite?.name ?? (isVivi ? "Vivi" : "Vox");
-  const spriteName = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
-  const avatarSrc = profile?.sprite?.avatarUrl || (isVivi ? "/sprite-f.png" : "/sprite-m.png");
+  const spriteName =
+    rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+  const avatarSrc =
+    profile?.sprite?.avatarUrl || (isVivi ? "/sprite-f.png" : "/sprite-m.png");
 
   const aiBrain: ChatContextData = initialContext || {
     userName: "Student",
@@ -92,7 +104,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
       new DefaultChatTransport({
         api: `/api/users/${userId}/sprite/chat`,
       }),
-    [userId]
+    [userId],
   );
 
   const { messages, setMessages, sendMessage, status, error } = useChat({
@@ -148,10 +160,10 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
             spriteName: sessionRef.current.spriteName,
             dossier: sessionRef.current.dossier,
           },
-        }
+        },
       );
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
@@ -165,7 +177,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
 
   const activeAssistantPayload = useMemo(
     () => parseMessagePayload(activeTurn?.assistantMessage),
-    [activeTurn?.assistantMessage]
+    [activeTurn?.assistantMessage],
   );
 
   useEffect(() => {
@@ -247,7 +259,9 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">
                 Current: {aiBrain.currentLessonTitle}
               </span>
-              <span className="text-xs font-bold text-white">Open {spriteName} Assistant</span>
+              <span className="text-xs font-bold text-white">
+                Open {spriteName} Assistant
+              </span>
             </div>
 
             <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
@@ -288,12 +302,28 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <defs>
-                  <linearGradient id="spoonGradWave" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient
+                    id="spoonGradWave"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.4" />
                     <stop offset="55%" stopColor="#6366F1" stopOpacity="0.28" />
-                    <stop offset="100%" stopColor="#A855F7" stopOpacity="0.08" />
+                    <stop
+                      offset="100%"
+                      stopColor="#A855F7"
+                      stopOpacity="0.08"
+                    />
                   </linearGradient>
-                  <linearGradient id="spoonOrbitBright" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient
+                    id="spoonOrbitBright"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.65" />
                     <stop offset="50%" stopColor="#818CF8" stopOpacity="0.45" />
                     <stop offset="100%" stopColor="#C084FC" stopOpacity="0.2" />
@@ -307,14 +337,47 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                   d="M-80 190 C 160 80, 420 290, 720 130 L 720 0 L -80 0 Z"
                   fill="url(#spoonGradWave)"
                 />
-                <circle cx="560" cy="240" r="210" stroke="url(#spoonOrbitBright)" strokeWidth="1.75" strokeDasharray="8 8" />
-                <circle cx="560" cy="240" r="145" stroke="url(#spoonOrbitBright)" strokeWidth="1.5" />
-                <circle cx="560" cy="240" r="85" stroke="url(#spoonOrbitBright)" strokeWidth="1" strokeDasharray="4 6" />
+                <circle
+                  cx="560"
+                  cy="240"
+                  r="210"
+                  stroke="url(#spoonOrbitBright)"
+                  strokeWidth="1.75"
+                  strokeDasharray="8 8"
+                />
+                <circle
+                  cx="560"
+                  cy="240"
+                  r="145"
+                  stroke="url(#spoonOrbitBright)"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="560"
+                  cy="240"
+                  r="85"
+                  stroke="url(#spoonOrbitBright)"
+                  strokeWidth="1"
+                  strokeDasharray="4 6"
+                />
                 <circle cx="415" cy="240" r="5" fill="#2DD4BF" />
                 <circle cx="415" cy="240" r="16" fill="url(#spoonGlowOrb)" />
                 <circle cx="560" cy="385" r="4" fill="#818CF8" />
-                <circle cx="90" cy="680" r="240" stroke="url(#spoonOrbitBright)" strokeWidth="1.75" />
-                <circle cx="90" cy="680" r="165" stroke="url(#spoonOrbitBright)" strokeWidth="1.5" strokeDasharray="10 8" />
+                <circle
+                  cx="90"
+                  cy="680"
+                  r="240"
+                  stroke="url(#spoonOrbitBright)"
+                  strokeWidth="1.75"
+                />
+                <circle
+                  cx="90"
+                  cy="680"
+                  r="165"
+                  stroke="url(#spoonOrbitBright)"
+                  strokeWidth="1.5"
+                  strokeDasharray="10 8"
+                />
                 <circle cx="255" cy="680" r="5" fill="#2DD4BF" />
                 <circle cx="255" cy="680" r="18" fill="url(#spoonGlowOrb)" />
                 <circle cx="260" cy="510" r="4" fill="#A855F7" />
@@ -329,7 +392,9 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 sessionsCount={sessionsList.length}
                 onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
-                onTriggerReport={() => handleQuickPrompt("Generate my progress report")}
+                onTriggerReport={() =>
+                  handleQuickPrompt("Generate my progress report")
+                }
                 onClose={() => setIsOpen(false)}
               />
 
@@ -351,6 +416,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 onSelectTurnIndex={setSelectedTurnIndex}
                 onTriggerPractice={triggerPractice}
                 onQuickPrompt={handleQuickPrompt}
+                onDeleteSession={deleteSession}
               />
 
               {/* PART 3: CONTROLS / INPUT (ONLY RENDERED INSIDE THE SESSION TAB) */}

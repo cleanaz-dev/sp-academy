@@ -45,11 +45,12 @@ export type SpritePayload = {
 // Matches what getUserSprite(userId) returns: SpriteProfile + its Sprite
 export type SpriteProfileData = {
   id: string;
+  userId: string; // <--- NEW: needed for /api/users/[userId]/sprite/... calls
   nativeLanguage: string;
   targetLanguage: string;
   nativeVoiceId: string;
   targetVoiceId: string;
-  context: SpriteAIContext | null; // <--- ADD THIS
+  context: SpriteAIContext | null;
   sprite: {
     slug: string;
     name: string;
@@ -64,6 +65,8 @@ interface SpriteContextValue {
   setActiveSprite: (sprite: SpriteType) => void;
   summonSprite: (payload: SpritePayload) => void;
   dismissSprite: () => void;
+  /** Deletes a saved chat session. Resolves true on success, false on failure. */
+  deleteSession: (sessionId: string) => Promise<boolean>;
   isShowing: boolean;
   profile: SpriteProfileData; // id, voice IDs, languages, sprite (name/avatar/persona)
 }
@@ -78,6 +81,7 @@ export function SpriteProvider({
   spriteData?: SpriteProfileData;
 }) {
   const dbSprite = spriteData?.sprite ?? null;
+  const userId = spriteData?.userId ?? null;
 
   const [activeSprite, setActiveSprite] = useState<SpriteType>(
     (dbSprite?.slug as SpriteType) ?? "vox"
@@ -179,6 +183,26 @@ export function SpriteProvider({
     [playAudioUrl, stopAudio]
   );
 
+  // DELETE /api/users/[userId]/sprite/sessions/[sessionId]
+  // A 404 counts as success: the session is already gone, which is what the user wanted.
+  const deleteSession = useCallback(
+    async (sessionId: string): Promise<boolean> => {
+      if (!userId) return false;
+
+      try {
+        const res = await fetch(
+          `/api/users/${userId}/sprite/sessions/${sessionId}`,
+          { method: "DELETE" }
+        );
+        return res.ok || res.status === 404;
+      } catch (err) {
+        console.error("Failed to delete sprite session:", err);
+        return false;
+      }
+    },
+    [userId]
+  );
+
   useEffect(() => {
     return () => {
       stopAudio();
@@ -209,6 +233,7 @@ export function SpriteProvider({
         setActiveSprite,
         summonSprite,
         dismissSprite,
+        deleteSession,
         isShowing: !!current,
         profile: spriteData,
       }}
