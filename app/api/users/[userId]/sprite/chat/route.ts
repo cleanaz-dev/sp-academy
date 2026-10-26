@@ -29,7 +29,11 @@ function cleanNumber(value: unknown, fallback: number) {
 }
 
 function stripGuillemets(str: string): string {
-  return str.replace(/[«»]/g, '"').replace(/\s+/g, " ").trim();
+  return str
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/[«»]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function getLastUserText(messages: UIMessage[]): string {
@@ -42,6 +46,41 @@ function getLastUserText(messages: UIMessage[]): string {
     }
   }
   return "";
+}
+
+async function getOrCreateSpriteProfile(userId: string) {
+  const existing = await prisma.spriteProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (existing) return existing;
+
+  let defaultSprite = await prisma.sprite.findFirst({
+    where: { slug: "vox" },
+  });
+
+  if (!defaultSprite) {
+    defaultSprite = await prisma.sprite.create({
+      data: {
+        slug: "vox",
+        name: "Vox",
+        avatarUrl: "/sprite-m.png",
+        moodUrls: [],
+      },
+    });
+  }
+
+  return prisma.spriteProfile.create({
+    data: {
+      userId,
+      spriteId: defaultSprite.id,
+      nativeLanguage: "en-US",
+      targetLanguage: "fr-FR",
+      nativeVoiceId: "en-US-boy-01",
+      targetVoiceId: "fr-FR-boy-01",
+    },
+    select: { id: true },
+  });
 }
 
 export async function POST(
@@ -66,7 +105,10 @@ export async function POST(
     return NextResponse.json({ error: "messages must be an array" }, { status: 400 });
   }
   const messages: UIMessage[] = body.messages;
-  const sessionId = typeof body.sessionId === "string" ? body.sessionId : undefined;
+  const sessionId =
+    typeof body.sessionId === "string" && body.sessionId.trim()
+      ? body.sessionId.trim()
+      : crypto.randomUUID();
 
   const rawSpriteName = clean(body.spriteName, "Vox");
   const spriteName =
@@ -132,8 +174,12 @@ STRICT FORMATTING & RESPONSE RULES:
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
       messages: await convertToModelMessages(messages),
-      reasoning: "low",
-      maxOutputTokens: 4096, // Higher budget so reasoning tokens never starve output text
+      providerOptions: {
+        groq: {
+          reasoningFormat: "hidden",
+        },
+      },
+      maxOutputTokens: 4096,
       onFinish: async ({ text }) => {
         try {
           const [spokenPart, rawJson] = text.split("---JSON---");
@@ -142,7 +188,11 @@ STRICT FORMATTING & RESPONSE RULES:
           let parsedJson: any = {};
           if (rawJson) {
             try {
-              parsedJson = JSON.parse(rawJson.trim());
+              const cleanedJson = rawJson
+                .replace(/```json/gi, "")
+                .replace(/```/g, "")
+                .trim();
+              parsedJson = JSON.parse(cleanedJson);
             } catch {
               parsedJson = {};
             }
@@ -171,43 +221,36 @@ STRICT FORMATTING & RESPONSE RULES:
             createdAt: new Date().toISOString(),
           };
 
-          if (sessionId) {
-            const profile = await prisma.spriteProfile.findUnique({
-              where: { userId },
-              select: { id: true },
-            });
+          const profile = await getOrCreateSpriteProfile(userId);
 
-            if (profile) {
-              const existingSession = await prisma.spriteSession.findUnique({
-                where: { id: sessionId },
-              });
+          const existingSession = await prisma.spriteSession.findUnique({
+            where: { id: sessionId },
+          });
 
-              const existingTurns = existingSession
-                ? SpriteSessionTurnsSchema.catch([]).parse(existingSession.turns)
-                : [];
+          const existingTurns = existingSession
+            ? SpriteSessionTurnsSchema.catch([]).parse(existingSession.turns)
+            : [];
 
-              const updatedTurns = [...existingTurns, newTurn];
-              const autoTitle =
-                existingSession?.title && existingSession.title !== "New Session"
-                  ? existingSession.title
-                  : userPrompt.slice(0, 48) || currentLessonTitle;
+          const updatedTurns = [...existingTurns, newTurn];
+          const autoTitle =
+            existingSession?.title && existingSession.title !== "New Session"
+              ? existingSession.title
+              : userPrompt.slice(0, 48) || currentLessonTitle;
 
-              await prisma.spriteSession.upsert({
-                where: { id: sessionId },
-                create: {
-                  id: sessionId,
-                  spriteProfileId: profile.id,
-                  title: autoTitle,
-                  lessonTitle: currentLessonTitle,
-                  turns: updatedTurns as any,
-                },
-                update: {
-                  title: autoTitle,
-                  turns: updatedTurns as any,
-                },
-              });
-            }
-          }
+          await prisma.spriteSession.upsert({
+            where: { id: sessionId },
+            create: {
+              id: sessionId,
+              spriteProfileId: profile.id,
+              title: autoTitle,
+              lessonTitle: currentLessonTitle,
+              turns: updatedTurns as any,
+            },
+            update: {
+              title: autoTitle,
+              turns: updatedTurns as any,
+            },
+          });
         } catch (dbErr) {
           console.error("[SpriteSession] Failed to save turn:", dbErr);
         }
