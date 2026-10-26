@@ -116,6 +116,7 @@ RESPONSE RULES:
       model: groq(GROQ_LLM),
       instructions: systemPrompt, // v7 name for `system`
       messages: await convertToModelMessages(messages), // async; useChat sends UIMessages
+      maxOutputTokens: 2048
     });
 
     return createUIMessageStreamResponse({
