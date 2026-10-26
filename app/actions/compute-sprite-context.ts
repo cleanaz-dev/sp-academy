@@ -254,7 +254,7 @@ export async function computeSpriteContext(userId: string) {
       where: { userId },
       data: { context },
     });
-
+    console.log("Sprite Context:", JSON.stringify(context, null, 2));
     return context;
   } catch (error) {
     console.error("Failed to compute Sprite Context:", error);
