@@ -21,13 +21,9 @@ export const getSpriteNode = cache(
     orderIndex: number
   ): Promise<SpriteNodeRecord | null> => {
     const targetNodeId = `${p.slug}:${p.nativeVoiceId}:${p.targetVoiceId}:${orderIndex}`;
-    console.log("\n==========================================");
-    console.log("🔥 [SERVER: getSpriteNode] Looking up nodeId:", targetNodeId);
 
     const node = await prisma.spriteNode.findUnique({
-      where: {
-        nodeId: targetNodeId,
-      },
+      where: { nodeId: targetNodeId },
       select: {
         nodeId: true,
         header: true,
@@ -39,13 +35,7 @@ export const getSpriteNode = cache(
       },
     });
 
-    console.log("🔥 [SERVER: getSpriteNode] Prisma result:", node);
-
-    if (!node) {
-      console.log("❌ [SERVER: getSpriteNode] NO NODE FOUND IN DB FOR:", targetNodeId);
-      console.log("==========================================\n");
-      return null;
-    }
+    if (!node) return null;
 
     const keysToSign = [node.nativeAudioUrl, node.targetAudioUrl].filter(
       Boolean
@@ -53,9 +43,6 @@ export const getSpriteNode = cache(
 
     const signedMap =
       keysToSign.length > 0 ? await getPresignedUrls(keysToSign) : {};
-
-    console.log("🔥 [SERVER: getSpriteNode] Signed S3 URLs:", signedMap);
-    console.log("==========================================\n");
 
     return {
       ...node,

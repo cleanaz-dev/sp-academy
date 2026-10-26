@@ -7,6 +7,7 @@ export const getUserSprite = cache(async (userId: string) => {
     where: { userId },
     select: {
       id: true,
+      userId: true, // <--- added
       nativeLanguage: true,
       targetLanguage: true,
       nativeVoiceId: true,
