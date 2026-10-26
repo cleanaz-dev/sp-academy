@@ -6,14 +6,19 @@ import {
   convertToModelMessages,
   toUIMessageStream,
   createUIMessageStreamResponse,
+  tool,
+  stepCountIs,
   type UIMessage,
 } from 'ai';
 import { createGroq } from '@ai-sdk/groq';
+import { z } from 'zod';
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// Note: Ensure the model you use on Groq supports tool calling 
+// (e.g., 'llama-3.3-70b-versatile' or 'openai/gpt-oss-20b')
 const GROQ_LLM = 'openai/gpt-oss-20b';
 
 function clean(value: unknown, fallback: string, max = 100) {
@@ -36,7 +41,6 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
-
 
   let body: any;
   try {
@@ -67,7 +71,7 @@ export async function POST(
       ? `They are doing great (Pronunciation: ${avgPronunciation}%). Use slightly more advanced vocabulary to challenge them.`
       : `They are struggling (Pronunciation: ${avgPronunciation}%). Be highly encouraging, use very simple words, and praise their effort.`;
 
-const systemPrompt = `
+  const systemPrompt = `
 You are ${spriteName}, a concise, human-like language tutor.
 You are helping ${userName}, whose native language is ${nativeLang}
 and who is learning ${targetLang}.
@@ -80,43 +84,79 @@ LESSON CONTEXT:
 VOCABULARY CONTEXT:
 ${topWord ? `- Difficult word: ${topWord}` : ''}
 ${recentWords ? `- Recently learned words: ${recentWords}` : ''}
-This vocabulary is background information only. Do not automatically include it
-in responses, and never turn it into an unsolicited vocabulary list.
 
-RESPONSE RULES:
-1. Respond only to the learner's latest message and its intent. Do not continue
-   an earlier explanation or repeat information unless explicitly asked.
-
-2. Language and conversation-mode requests take priority over lesson and
-   vocabulary context. If the learner says something like "English",
-   "speak English", or "just speak English", stop teaching and switch to
-   English. For that message, respond only with a short acknowledgment,
-   such as "Got it. I'll use English."
-
-3. After an English-only request, do not add ${targetLang} words, translations,
-   pronunciation guidance, quizzes, or examples unless the learner explicitly
-   asks for a translation, an example, or ${targetLang} practice.
-
-4. Otherwise, explain concepts in ${nativeLang}. Use ${targetLang} only when
-   it is useful for an explicitly requested example, translation, or practice.
-   Include at most one relevant vocabulary item per response.
-
-5. Normal responses must be 1 to 2 short sentences. Give a longer explanation
-   only when the learner explicitly asks for more detail. Never repeat the
-   same explanation using different wording.
-
-6. Do not use markdown, bullet points, asterisks, or emojis. Write plain text
-   suitable for text-to-speech.
+TOOL & COMPONENT RULES:
+1. When the learner asks how to use a word, asks for examples, or needs a grammar breakdown, call the "showGrammarCard" tool to display a visual card, accompanied by a 1-sentence spoken intro.
+2. When the learner requests to start a drill, bookmark a word, or log an action, call "triggerBackendAction".
+3. Keep spoken text responses to 1 to 2 short plain-text sentences suitable for text-to-speech (no markdown or emojis).
 `;
-
-
 
   try {
     const result = streamText({
       model: groq(GROQ_LLM),
-      instructions: systemPrompt, // v7 name for `system`
-      messages: await convertToModelMessages(messages), // async; useChat sends UIMessages
-      maxOutputTokens: 2048
+      instructions: systemPrompt,
+      messages: await convertToModelMessages(messages),
+      maxOutputTokens: 2048,
+      // Allows the model to call a tool AND speak a response in the same turn
+      stopWhen: stepCountIs(2), 
+      tools: {
+        // 1. UI Component Tool: Renders <ContextCard /> in the assistant stage
+        showGrammarCard: tool({
+          description: 'Display a structured grammar or vocabulary breakdown card with examples to the student.',
+          inputSchema: z.object({
+            title: z.string().describe('Short title of the grammar rule or word'),
+            grammarRule: z.string().describe('Clear, concise explanation of the rule or usage'),
+            examples: z.array(
+              z.object({
+                french: z.string().describe(`The example phrase in ${targetLang}`),
+                english: z.string().describe(`The translation in ${nativeLang}`),
+              })
+            ).min(1).max(3),
+          }),
+          execute: async (cardData) => {
+            // Returning the data sends it straight to message.parts on the client!
+            return cardData;
+          },
+        }),
+
+        // 2. Action / Lambda Tool: Invokes your Lambda or external service
+        triggerBackendAction: tool({
+          description: 'Trigger a backend Lambda action such as starting a pronunciation drill, saving a word to the bank, or logging mastery.',
+          inputSchema: z.object({
+            actionType: z.enum(['START_DRILL', 'BOOKMARK_WORD', 'LOG_STRUGGLE']),
+            targetWord: z.string().describe('The word or phrase associated with the action'),
+            metadata: z.string().optional().describe('Any extra context for the payload'),
+          }),
+          execute: async ({ actionType, targetWord, metadata }) => {
+            // --- INVOKE YOUR LAMBDA / WEBHOOK HERE ---
+            const payload = {
+              userId,
+              actionType,
+              targetWord,
+              lesson: currentLessonTitle,
+              metadata,
+              timestamp: new Date().toISOString(),
+            };
+
+            if (process.env.ACTION_LAMBDA_URL) {
+              await fetch(process.env.ACTION_LAMBDA_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${process.env.LAMBDA_SECRET_KEY}`,
+                },
+                body: JSON.stringify(payload),
+              });
+            }
+
+            // Return the payload so the UI can also render an Action Pill / Component
+            return {
+              status: 'executed',
+              ...payload,
+            };
+          },
+        }),
+      },
     });
 
     return createUIMessageStreamResponse({
