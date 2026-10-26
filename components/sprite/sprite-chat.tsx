@@ -201,6 +201,25 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     setActiveTab("session");
   };
 
+  // Wraps the context's deleteSession(id) to match the modal's (session) => Promise<boolean>
+  const handleDeleteSession = async (
+    session: SpriteSessionData,
+  ): Promise<boolean> => {
+    const ok = await deleteSession(session.id);
+    if (!ok) return false;
+
+    setSessionsList((prev) => prev.filter((s) => s.id !== session.id));
+
+    // If the open session was deleted, reset the chat but stay on the History tab
+    if (session.id === sessionId) {
+      setSessionId(crypto.randomUUID());
+      setMessages([]);
+      setSelectedTurnIndex(null);
+    }
+
+    return true;
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
@@ -416,7 +435,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 onSelectTurnIndex={setSelectedTurnIndex}
                 onTriggerPractice={triggerPractice}
                 onQuickPrompt={handleQuickPrompt}
-                onDeleteSession={deleteSession}
+                onDeleteSession={handleDeleteSession}
               />
 
               {/* PART 3: CONTROLS / INPUT (ONLY RENDERED INSIDE THE SESSION TAB) */}
