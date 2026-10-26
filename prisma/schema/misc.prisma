@@ -195,6 +195,7 @@ model SystemTask {
   error    String?
   metadata Json?
   result   String?
+  lockKey  String?
 
   journalId String?
   journal   DailyJournal? @relation(fields: [journalId], references: [id], onDelete: Cascade)
