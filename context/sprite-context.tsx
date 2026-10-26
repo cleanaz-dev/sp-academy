@@ -19,7 +19,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { getPresignedUrls } from "@/app/actions/s3";
-import type { SpriteAIContext } from "@/app/actions/compute-sprite-context";
+import type { SpriteAIContext } from "@/lib/schema/sprite-schema";
 
 export type SpriteType = "vox" | "vivi";
 

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import type { SpriteAIContext } from "@/app/actions/compute-sprite-context";
+import type { SpriteAIContext } from "@/lib/schema/sprite-schema";
 
 export const getUserSprite = cache(async (userId: string) => {
   const data = await prisma.spriteProfile.findUnique({
