@@ -122,21 +122,21 @@ function ActiveStepTile({
       onClick={(e) => {
         if (isBuilding) e.preventDefault();
       }}
-      className={`group relative flex items-center gap-5 overflow-hidden rounded-2xl border p-5 shadow-sm backdrop-blur-md transition-all ${
+      className={`group relative flex overflow-hidden rounded-2xl border shadow-sm backdrop-blur-md transition-all ${
         isBuilding
           ? "cursor-wait border-indigo-100 bg-white/75"
           : "border-indigo-200/80 bg-white/90 hover:border-indigo-300 hover:bg-white hover:shadow-md"
       }`}
     >
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-slate-900 shadow-sm">
+      <div className="relative w-32 shrink-0 bg-slate-900 sm:w-40">
         {thumbUrl ? (
           <img
             src={thumbUrl}
             alt={title}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             {isBuilding ? (
               <Loader2 className="h-6 w-6 animate-spin text-indigo-300" />
             ) : type === "BOSS" ? (
@@ -150,59 +150,61 @@ function ActiveStepTile({
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span
-            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide ${
-              type === "BOSS"
-                ? "bg-fuchsia-100 text-fuchsia-700"
-                : type === "BRIDGE"
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-indigo-100 text-indigo-700"
-            }`}
-          >
-            {badgeLabel}
-          </span>
-          <span
-            className={`text-xs font-bold ${
-              isBuilding ? "text-indigo-500" : "text-emerald-600"
-            }`}
-          >
-            • {isBuilding ? "Building..." : "Active Focus"}
-          </span>
+      <div className="flex min-w-0 flex-1 items-center gap-4 p-5">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide ${
+                type === "BOSS"
+                  ? "bg-fuchsia-100 text-fuchsia-700"
+                  : type === "BRIDGE"
+                    ? "bg-amber-100 text-amber-800"
+                    : "bg-indigo-100 text-indigo-700"
+              }`}
+            >
+              {badgeLabel}
+            </span>
+            <span
+              className={`text-xs font-bold ${
+                isBuilding ? "text-indigo-500" : "text-emerald-600"
+              }`}
+            >
+              • {isBuilding ? "Building..." : "Active Focus"}
+            </span>
+          </div>
+
+          <h4 className="mt-1.5 truncate text-base font-black text-slate-900 group-hover:text-indigo-600">
+            {title}
+          </h4>
+
+          {type === "BOSS" ? (
+            <div className="mt-1.5 flex items-center gap-2">
+              {[startSpoon, startSpoon + 1, lesson.orderIndex].map((num) => (
+                <span
+                  key={num}
+                  className="inline-flex items-center gap-0.5 text-[11px] font-bold text-slate-500"
+                >
+                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                  Spoon {num}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-0.5 truncate text-sm text-slate-500">
+              {isBuilding
+                ? "Preparing audio & visual assets..."
+                : "Continue active step"}
+            </p>
+          )}
         </div>
 
-        <h4 className="mt-1.5 truncate text-base font-black text-slate-900 group-hover:text-indigo-600">
-          {title}
-        </h4>
-
-        {type === "BOSS" ? (
-          <div className="mt-1.5 flex items-center gap-2">
-            {[startSpoon, startSpoon + 1, lesson.orderIndex].map((num) => (
-              <span
-                key={num}
-                className="inline-flex items-center gap-0.5 text-[11px] font-bold text-slate-500"
-              >
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                Spoon {num}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-0.5 truncate text-sm text-slate-500">
-            {isBuilding
-              ? "Preparing audio & visual assets..."
-              : "Continue active step"}
-          </p>
-        )}
-      </div>
-
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
-        {isBuilding ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <ArrowRight className="h-5 w-5" />
-        )}
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
+          {isBuilding ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <ArrowRight className="h-5 w-5" />
+          )}
+        </div>
       </div>
     </Link>
   );
@@ -240,13 +242,13 @@ function UpNextCompactTile({
       : lesson.imageUrl;
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-200/45 p-3">
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+    <div className="flex overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-200/45">
+      <div className="relative w-24 shrink-0 bg-slate-200 sm:w-28">
         {thumbUrl ? (
           <img
             src={thumbUrl}
             alt={lesson.imageAlt ?? ""}
-            className="h-full w-full object-cover opacity-60 saturate-[0.2]"
+            className="absolute inset-0 h-full w-full object-cover opacity-60 saturate-[0.2]"
           />
         ) : null}
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/35">
@@ -254,18 +256,20 @@ function UpNextCompactTile({
         </div>
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-            Locked • {badge}
-          </span>
+      <div className="flex min-w-0 flex-1 items-center p-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+              Locked • {badge}
+            </span>
+          </div>
+          <h4 className="mt-0.5 truncate text-sm font-bold text-slate-600">
+            {title}
+          </h4>
+          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
+            Unlocks automatically after current step
+          </p>
         </div>
-        <h4 className="mt-0.5 truncate text-sm font-bold text-slate-600">
-          {title}
-        </h4>
-        <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
-          Unlocks automatically after current step
-        </p>
       </div>
     </div>
   );
