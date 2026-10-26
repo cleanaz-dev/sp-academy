@@ -19,6 +19,7 @@ const groq = createGroq({
 });
 
 const GROQ_LLM = "qwen/qwen3.8-27b";
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== "string") return fallback;
@@ -47,25 +48,42 @@ function getLastUserText(messages: UIMessage[]): string {
   return "";
 }
 
+function describeType(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  return typeof value;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  const reqId = crypto.randomUUID().slice(0, 8);
+  const tag = `[sprite-chat:${reqId}]`;
+  const startedAt = Date.now();
+
   const { userId } = await params;
+  console.log(`${tag} POST start`, { userId });
 
   const user = await isUser(userId);
   if (!user) {
+    console.warn(`${tag} 404 user not found`, { userId });
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   let body: any;
   try {
     body = await req.json();
-  } catch {
+  } catch (error) {
+    console.warn(`${tag} 400 invalid JSON body`, error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   if (!Array.isArray(body.messages)) {
+    console.warn(`${tag} 400 messages is not an array`, {
+      messagesType: describeType(body.messages),
+      bodyKeys: Object.keys(body ?? {}),
+    });
     return NextResponse.json(
       { error: "messages must be an array" },
       { status: 400 }
@@ -87,11 +105,40 @@ export async function POST(
   // Validate the dossier instead of trusting it blindly
   const contextResult = SpriteContextSchema.safeParse(body.dossier);
   if (!contextResult.success) {
+    const issues = contextResult.error.issues.map((issue) => ({
+      path: issue.path.join(".") || "(root)",
+      code: issue.code,
+      message: issue.message,
+    }));
+
+    console.warn(`${tag} 409 dossier validation failed`, {
+      userId,
+      sessionId,
+      bodyKeys: Object.keys(body ?? {}),
+      dossierType: describeType(body.dossier),
+      dossierKeys:
+        body.dossier && typeof body.dossier === "object"
+          ? Object.keys(body.dossier)
+          : null,
+      issueCount: issues.length,
+      issues,
+    });
+
+    // Full payload only in dev (it contains the learner's name and words)
+    if (IS_DEV) {
+      console.warn(
+        `${tag} 409 received dossier:`,
+        JSON.stringify(body.dossier, null, 2)
+      );
+    }
+
     return NextResponse.json(
       {
         error:
           "Sprite context is missing or outdated. Recompute it before chatting.",
         code: "SPRITE_CONTEXT_REFRESH_REQUIRED",
+        // Lets you see the failing fields in the browser's Network tab (dev only)
+        ...(IS_DEV ? { issues } : {}),
       },
       { status: 409 }
     );
@@ -103,6 +150,16 @@ export async function POST(
   const nativeLang = clean(d.nativeLang, "English");
   const targetLang = clean(d.targetLang, "French");
   const currentLessonTitle = d.currentLessonTitle ?? "General practice";
+
+  console.log(`${tag} dossier OK`, {
+    sessionId,
+    nativeLang,
+    targetLang,
+    lesson: d.currentLessonTitle ?? null,
+    messageCount: messages.length,
+    focusWords: Array.isArray(d.focusWords) ? d.focusWords.length : 0,
+    recentWords: Array.isArray(d.recentWords) ? d.recentWords.length : 0,
+  });
 
   const evidence = JSON.stringify({
     pronunciation: {
@@ -168,6 +225,12 @@ B: <1-2 sentences in ${nativeLang}>
   try {
     const userPrompt = getLastUserText(messages);
 
+    console.log(`${tag} calling model`, {
+      model: GROQ_LLM,
+      promptChars: systemPrompt.length,
+      userPromptChars: userPrompt.length,
+    });
+
     const result = streamText({
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
@@ -181,7 +244,16 @@ B: <1-2 sentences in ${nativeLang}>
       maxOutputTokens: 4096,
 
       onFinish: async ({ text }) => {
-        if (!sessionId) return;
+        console.log(`${tag} model finished`, {
+          ms: Date.now() - startedAt,
+          outputChars: text.length,
+          hasJsonDelimiter: text.includes("---JSON---"),
+        });
+
+        if (!sessionId) {
+          console.log(`${tag} no sessionId, skipping save`);
+          return;
+        }
 
         try {
           const [spokenPart, rawJson] = text.split("---JSON---");
@@ -189,7 +261,11 @@ B: <1-2 sentences in ${nativeLang}>
 
           let parsedJson: any = {};
 
-          if (rawJson) {
+          if (!rawJson) {
+            console.warn(`${tag} model output had no ---JSON--- block`, {
+              preview: text.slice(0, 200),
+            });
+          } else {
             try {
               const cleanedJson = rawJson
                 .replace(/```json/gi, "")
@@ -200,7 +276,11 @@ B: <1-2 sentences in ${nativeLang}>
 
               parsedJson =
                 parsed && typeof parsed === "object" ? parsed : {};
-            } catch {
+            } catch (error) {
+              console.warn(`${tag} failed to parse model JSON`, {
+                error: error instanceof Error ? error.message : error,
+                rawJson: rawJson.slice(0, 300),
+              });
               parsedJson = {};
             }
           }
@@ -240,7 +320,10 @@ B: <1-2 sentences in ${nativeLang}>
               turn.assistantReply === newTurn.assistantReply
           );
 
-          if (alreadySaved) return;
+          if (alreadySaved) {
+            console.log(`${tag} duplicate turn, skipping save`, { sessionId });
+            return;
+          }
 
           const updatedTurns = [...existingTurns, newTurn];
 
@@ -263,8 +346,17 @@ B: <1-2 sentences in ${nativeLang}>
               turns: updatedTurns,
             },
           });
+
+          console.log(`${tag} turn saved`, {
+            sessionId,
+            created: !existingSession,
+            turnCount: updatedTurns.length,
+            isTranslationRequired,
+            hasContextCard: Boolean(newTurn.contextCard),
+            action: newTurn.action?.type ?? null,
+          });
         } catch (error) {
-          console.error("[Chat onFinish Save Error]:", error);
+          console.error(`${tag} [Chat onFinish Save Error]:`, error);
         }
       },
     });
@@ -273,7 +365,7 @@ B: <1-2 sentences in ${nativeLang}>
       stream: toUIMessageStream({ stream: result.stream }),
     });
   } catch (error) {
-    console.error("Groq chat error:", error);
+    console.error(`${tag} Groq chat error:`, error);
 
     return NextResponse.json({ error: "AI service error" }, { status: 502 });
   }
