@@ -84,66 +84,50 @@ export function SpriteChatHeader({
         </button>
       </div>
 
-      {/* Row 2: Permanent 3-Tab Navigation Bar + Action Pills */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-white/10">
-        <div className="flex items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
-          <button
-            onClick={() => onSelectTab("session")}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-              activeTab === "session"
-                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>Session</span>
-          </button>
-
-          <button
-            onClick={() => onSelectTab("briefing")}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-              activeTab === "briefing"
-                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Target className="h-3.5 w-3.5" />
-            <span>Briefing</span>
-          </button>
-
-          <button
-            onClick={() => onSelectTab("history")}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-              activeTab === "history"
-                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <History className="h-3.5 w-3.5" />
-            <span>History ({sessionsCount})</span>
-          </button>
+      {/* Row 2: Tabs (left) + Action Pills (right), always inline */}
+      <div className="mt-4 flex flex-nowrap items-center justify-between gap-2 pt-3 border-t border-white/10">
+        {/* LEFT: tabs */}
+        <div className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
+          {([
+            { id: "session", label: "Session", Icon: MessageSquare },
+            { id: "briefing", label: "Briefing", Icon: Target },
+            { id: "history", label: `History (${sessionsCount})`, Icon: History },
+          ] as const).map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => onSelectTab(id)}
+              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                activeTab === id
+                  ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* RIGHT: action pills */}
+        <div className="ml-auto flex min-w-0 items-center gap-2">
           <button
             type="button"
             onClick={onTriggerReport}
-            className="flex items-center gap-1.5 rounded-xl border border-indigo-400/30 bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition shrink-0"
+            title="Progress Report"
+            className="flex items-center gap-1.5 rounded-xl border border-indigo-400/30 bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition"
           >
             <FileBarChart className="h-3.5 w-3.5 text-indigo-300" />
-            <span>Progress Report</span>
+            <span className="hidden sm:inline">Progress Report</span>
           </button>
 
           <button
             type="button"
             disabled
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-400 opacity-75 cursor-not-allowed shrink-0"
+            title="Exercise"
+            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-400 opacity-75 cursor-not-allowed"
           >
             <Dumbbell className="h-3.5 w-3.5 text-slate-400" />
-            <span>Exercise</span>
-            <span className="rounded-md bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-300">
-              Soon
-            </span>
+            <span className="hidden sm:inline">Exercise</span>
           </button>
         </div>
       </div>
