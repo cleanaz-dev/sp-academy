@@ -13,6 +13,10 @@ import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
 // NOTE: adjust this import path to wherever SpriteContextSchema lives
 import { SpriteContextSchema } from "@/lib/schema/sprite-schema";
+import {
+  buildDossier,
+  DossierUnavailableError,
+} from "@/lib/sprites/build-dossier";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -102,8 +106,35 @@ export async function POST(
     rawSpriteName.charAt(0).toUpperCase() +
     rawSpriteName.slice(1).toLowerCase();
 
-  // Validate the dossier instead of trusting it blindly
-  const contextResult = SpriteContextSchema.safeParse(body.dossier);
+  // Build the dossier on the server from the DB. body.dossier is ignored.
+  let dossier;
+  try {
+    dossier = await buildDossier(userId);
+  } catch (error) {
+    if (error instanceof DossierUnavailableError) {
+      console.warn(`${tag} 409 dossier unavailable`, {
+        userId,
+        reason: error.message,
+      });
+      return NextResponse.json(
+        {
+          error: "Learning context isn't ready yet.",
+          code: "SPRITE_CONTEXT_UNAVAILABLE",
+          ...(IS_DEV ? { reason: error.message } : {}),
+        },
+        { status: 409 }
+      );
+    }
+
+    console.error(`${tag} 500 buildDossier crashed`, error);
+    return NextResponse.json(
+      { error: "Failed to build learning context" },
+      { status: 500 }
+    );
+  }
+
+  // Safety net: if the builder and the schema ever drift, fail loudly here.
+  const contextResult = SpriteContextSchema.safeParse(dossier);
   if (!contextResult.success) {
     const issues = contextResult.error.issues.map((issue) => ({
       path: issue.path.join(".") || "(root)",
@@ -111,36 +142,28 @@ export async function POST(
       message: issue.message,
     }));
 
-    console.warn(`${tag} 409 dossier validation failed`, {
+    console.error(`${tag} 500 built dossier does not match schema`, {
       userId,
       sessionId,
-      bodyKeys: Object.keys(body ?? {}),
-      dossierType: describeType(body.dossier),
-      dossierKeys:
-        body.dossier && typeof body.dossier === "object"
-          ? Object.keys(body.dossier)
-          : null,
+      dossierKeys: Object.keys(dossier),
       issueCount: issues.length,
       issues,
     });
 
-    // Full payload only in dev (it contains the learner's name and words)
     if (IS_DEV) {
-      console.warn(
-        `${tag} 409 received dossier:`,
-        JSON.stringify(body.dossier, null, 2)
+      console.error(
+        `${tag} built dossier:`,
+        JSON.stringify(dossier, null, 2)
       );
     }
 
     return NextResponse.json(
       {
-        error:
-          "Sprite context is missing or outdated. Recompute it before chatting.",
-        code: "SPRITE_CONTEXT_REFRESH_REQUIRED",
-        // Lets you see the failing fields in the browser's Network tab (dev only)
+        error: "Server-built sprite context is invalid.",
+        code: "SPRITE_CONTEXT_BUILD_MISMATCH",
         ...(IS_DEV ? { issues } : {}),
       },
-      { status: 409 }
+      { status: 500 }
     );
   }
 
