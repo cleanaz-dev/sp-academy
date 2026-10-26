@@ -12,7 +12,7 @@ import {
 import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
 // NOTE: adjust this import path to wherever SpriteContextSchema lives
-import { SpriteContextSchema } from "@/lib/sprite-context";
+import { SpriteContextSchema } from "@/lib/schema/sprite-schema";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
