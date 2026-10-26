@@ -1,9 +1,8 @@
 // components/sprite/sprite-chat-messages.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Mic2,
   ArrowRight,
@@ -17,6 +16,7 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
 import { ContextCard } from "./context-card";
 import {
   cleanDisplayString,
@@ -94,19 +94,6 @@ export function SpriteChatMessages({
     }
   };
 
-  // Close the modal on Escape
-  useEffect(() => {
-    if (!sessionToDelete) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isDeleting) {
-        setSessionToDelete(null);
-        setDeleteError(null);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [sessionToDelete, isDeleting]);
-
   const deleteTurnCount = Array.isArray(sessionToDelete?.turns)
     ? sessionToDelete.turns.length
     : 0;
@@ -123,7 +110,7 @@ export function SpriteChatMessages({
           </div>
 
           {sessionsList.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-10 text-center my-auto backdrop-blur-md">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-10 text-center my-auto">
               <MessageSquare className="h-10 w-10 text-teal-400/60 mx-auto mb-3" />
               <p className="text-base font-bold text-white">No saved sessions yet</p>
               <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
@@ -139,7 +126,7 @@ export function SpriteChatMessages({
               return (
                 <div
                   key={sess.id}
-                  className={`flex items-stretch rounded-2xl border transition backdrop-blur-md ${
+                  className={`flex items-stretch rounded-2xl border transition ${
                     isCurrentSession
                       ? "border-teal-500/60 bg-gradient-to-r from-teal-950/50 to-indigo-950/50"
                       : "border-white/10 bg-slate-900/70 hover:border-indigo-500/40 hover:bg-slate-900"
@@ -201,7 +188,7 @@ export function SpriteChatMessages({
       ) : activeTab === "briefing" ? (
         /* ================= TAB 2: LESSON BRIEFING & PRIORITY TARGETS ================= */
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-6 shadow-lg backdrop-blur-md">
+          <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-6 shadow-lg">
             <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 block mb-1">
               Active Lesson Objective
             </span>
@@ -222,7 +209,7 @@ export function SpriteChatMessages({
                 {aiBrain.topWord && (
                   <button
                     onClick={() => onTriggerPractice(aiBrain.topWord!.word)}
-                    className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-indigo-950/50 p-4 border border-indigo-500/30 hover:border-indigo-400 transition text-left shadow-md backdrop-blur-md"
+                    className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-indigo-950/50 p-4 border border-indigo-500/30 hover:border-indigo-400 transition text-left shadow-md"
                   >
                     <div>
                       <span className="font-extrabold text-white text-base block group-hover:text-indigo-300 transition">
@@ -247,7 +234,7 @@ export function SpriteChatMessages({
                 {aiBrain.topPhrase && (
                   <button
                     onClick={() => onTriggerPractice(aiBrain.topPhrase!.word)}
-                    className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-teal-950/50 p-4 border border-teal-500/30 hover:border-teal-400 transition text-left shadow-md backdrop-blur-md"
+                    className="group relative overflow-hidden flex items-center justify-between rounded-2xl bg-gradient-to-br from-slate-900/90 to-teal-950/50 p-4 border border-teal-500/30 hover:border-teal-400 transition text-left shadow-md"
                   >
                     <div>
                       <span className="font-extrabold text-white text-base block group-hover:text-teal-300 transition">
@@ -325,7 +312,7 @@ export function SpriteChatMessages({
         >
           {/* 1. User Prompt Bar + < Turn X / Y > Stepper */}
           {activeTurn.userMessage && (
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-r from-indigo-950/70 via-slate-900/85 to-teal-950/50 px-5 py-3.5 shrink-0 shadow-md backdrop-blur-md">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-400/30 bg-gradient-to-r from-indigo-950/70 via-slate-900/85 to-teal-950/50 px-5 py-3.5 shrink-0 shadow-md">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="rounded-lg bg-indigo-500/30 border border-indigo-400/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-200 shrink-0">
                   You
@@ -364,7 +351,7 @@ export function SpriteChatMessages({
           )}
 
           {/* 2. Assistant 1-to-1 Main Stage Card */}
-          <div className="flex-1 flex flex-col rounded-3xl border border-teal-500/30 bg-gradient-to-b from-slate-900/80 via-[#0B1020]/85 to-indigo-950/40 p-6 shadow-2xl backdrop-blur-md">
+          <div className="flex-1 flex flex-col rounded-3xl border border-teal-500/30 bg-gradient-to-b from-slate-900/80 via-[#0B1020]/85 to-indigo-950/40 p-6 shadow-2xl">
             <div className="space-y-5">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-800 shadow-lg">
@@ -454,97 +441,78 @@ export function SpriteChatMessages({
         </motion.div>
       )}
 
-      {/* ================= DELETE CONFIRMATION MODAL ================= */}
-      {/* Portaled to <body> so parent overflow/transform never clips or offsets it */}
-      {typeof document !== "undefined" &&
-        createPortal(
-          <AnimatePresence>
-            {sessionToDelete && (
-              <motion.div
-                key="delete-session-backdrop"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={closeDeleteModal}
-                className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 "
-              >
-                <motion.div
-                  role="alertdialog"
-                  aria-modal="true"
-                  aria-labelledby="delete-session-title"
-                  initial={{ opacity: 0, scale: 0.94, y: 12 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96, y: 8 }}
-                  transition={{ type: "spring", stiffness: 360, damping: 28 }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-gradient-to-b from-slate-900 to-slate-950 p-6 shadow-2xl shadow-rose-950/40"
+      {/* ================= DELETE CONFIRMATION MODAL (native <dialog>) ================= */}
+      <Modal
+        open={!!sessionToDelete}
+        onClose={closeDeleteModal}
+        labelledBy="delete-session-title"
+        dismissible={!isDeleting}
+      >
+        {sessionToDelete && (
+          <div className="rounded-3xl border border-rose-500/30 bg-gradient-to-b from-slate-900 to-slate-950 p-6 shadow-2xl shadow-rose-950/40">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/15">
+                <AlertTriangle className="h-5 w-5 text-rose-300" />
+              </div>
+              <div className="min-w-0">
+                <h3
+                  id="delete-session-title"
+                  className="text-lg font-extrabold text-white"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-rose-500/40 bg-rose-500/15">
-                      <AlertTriangle className="h-5 w-5 text-rose-300" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3
-                        id="delete-session-title"
-                        className="text-lg font-extrabold text-white"
-                      >
-                        Delete this session?
-                      </h3>
-                      <p className="mt-0.5 truncate text-xs font-bold text-slate-400">
-                        {cleanDisplayString(sessionToDelete.title)}
-                        {deleteTurnCount > 0 &&
-                          ` · ${deleteTurnCount} ${deleteTurnCount === 1 ? "turn" : "turns"}`}
-                      </p>
-                    </div>
-                  </div>
+                  Delete this session?
+                </h3>
+                <p className="mt-0.5 truncate text-xs font-bold text-slate-400">
+                  {cleanDisplayString(sessionToDelete.title)}
+                  {deleteTurnCount > 0 &&
+                    ` · ${deleteTurnCount} ${deleteTurnCount === 1 ? "turn" : "turns"}`}
+                </p>
+              </div>
+            </div>
 
-                  <p className="mt-4 text-sm leading-relaxed text-slate-300">
-                    Please review this session before deleting it. Once it&apos;s gone,{" "}
-                    <span className="font-bold text-white">{spriteName}</span> won&apos;t be
-                    able to recall this conversation, pick up where you left off, or build on
-                    it in future practice. This can&apos;t be undone.
-                  </p>
+            <p className="mt-4 text-sm leading-relaxed text-slate-300">
+              Please review this session before deleting it. Once it&apos;s gone,{" "}
+              <span className="font-bold text-white">{spriteName}</span> won&apos;t be
+              able to recall this conversation, pick up where you left off, or build on
+              it in future practice. This can&apos;t be undone.
+            </p>
 
-                  {deleteError && (
-                    <p className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300">
-                      {deleteError}
-                    </p>
-                  )}
-
-                  <div className="mt-6 flex items-center justify-end gap-2.5">
-                    <button
-                      type="button"
-                      onClick={closeDeleteModal}
-                      disabled={isDeleting}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
-                    >
-                      Keep session
-                    </button>
-                    <button
-                      type="button"
-                      onClick={confirmDelete}
-                      disabled={isDeleting}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-rose-400 disabled:opacity-70"
-                    >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          <span>Deleting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span>Delete session</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
+            {deleteError && (
+              <p className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300">
+                {deleteError}
+              </p>
             )}
-          </AnimatePresence>,
-          document.body
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+              >
+                Keep session
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-4 py-2 text-xs font-extrabold text-white transition hover:bg-rose-400 disabled:opacity-70"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete session</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         )}
+      </Modal>
     </div>
   );
 }
