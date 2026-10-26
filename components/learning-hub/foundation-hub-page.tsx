@@ -18,7 +18,7 @@ import { PrimaryHeroCard } from "./primary-hero-card";
 import { GenerationCycleCard } from "./generation-cycle-card";
 import { LearningPathMiniCards } from "./learning-mini-path-cards";
 import { WordMatrixCard } from "./word-matrix-card";
-import { AiTutorCard } from "./ai-tutor-card";
+
 import { SpriteChat } from "@/components/sprite/sprite-chat";
 
 type Props = {
@@ -268,7 +268,7 @@ export default function FoundationHubPage({
         </div>
 
         {/* BOTTOM SANDBOX BAR */}
-        <AiTutorCard />
+    
       </main>
 
      {user?.id && (
