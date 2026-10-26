@@ -1,3 +1,4 @@
+// wherever computeSpriteContext lives (e.g. lib/actions/sprite-context.ts)
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -40,7 +41,10 @@ export async function computeSpriteContext(userId: string) {
       },
     });
 
-    if (!course) return null;
+    if (!course) {
+      console.warn("[computeSpriteContext] no course found", { userId });
+      return null;
+    }
 
     // Prefer FoundationProgress, then fall back to the first unfinished lesson.
     // If everything is complete, there is no active lesson.
@@ -136,8 +140,7 @@ export async function computeSpriteContext(userId: string) {
         ? Math.round(
             scoredSpokenWords.reduce(
               (sum, word) =>
-                sum +
-                (word.avgSpokenScore ?? 0) * word.spokenAttempts,
+                sum + (word.avgSpokenScore ?? 0) * word.spokenAttempts,
               0
             ) / pronunciationAttemptCount
           )
@@ -156,10 +159,7 @@ export async function computeSpriteContext(userId: string) {
       let reason: SpriteFocusWord["reason"] | null = null;
       let priority = 99;
 
-      if (
-        word.nextReviewDate &&
-        word.nextReviewDate.getTime() <= now
-      ) {
+      if (word.nextReviewDate && word.nextReviewDate.getTime() <= now) {
         reason = "due_review";
         priority = 0;
       } else if (
@@ -176,10 +176,7 @@ export async function computeSpriteContext(userId: string) {
       ) {
         reason = "low_recognition";
         priority = 2;
-      } else if (
-        word.status !== "NEW" &&
-        word.masteryScore < 60
-      ) {
+      } else if (word.status !== "NEW" && word.masteryScore < 60) {
         reason = "low_mastery";
         priority = 3;
       }
@@ -209,11 +206,7 @@ export async function computeSpriteContext(userId: string) {
     });
 
     const focusWords = focusCandidates
-      .sort(
-        (a, b) =>
-          a.priority - b.priority ||
-          b.activity - a.activity
-      )
+      .sort((a, b) => a.priority - b.priority || b.activity - a.activity)
       .slice(0, MAX_FOCUS_WORDS)
       .map((candidate) => candidate.item);
 
@@ -226,9 +219,7 @@ export async function computeSpriteContext(userId: string) {
       version: 2,
 
       userName:
-        course.user.firstName ||
-        course.user.username ||
-        "Student",
+        course.user.firstName || course.user.username || "Student",
 
       nativeLang: course.nativeLanguage,
       targetLang: course.targetLanguage,
@@ -250,15 +241,25 @@ export async function computeSpriteContext(userId: string) {
       lastUpdated: new Date().toISOString(),
     });
 
-    await prisma.spriteProfile.update({
-      where: { userId },
-      data: { context },
-    });
+    // Log BEFORE the DB write so you still see it if the write fails
     console.log("Sprite Context:", JSON.stringify(context, null, 2));
+
+    // A failed save should not throw away a context that was computed fine
+    try {
+      await prisma.spriteProfile.update({
+        where: { userId },
+        data: { context },
+      });
+    } catch (error) {
+      console.error(
+        "[computeSpriteContext] computed OK but failed to save to spriteProfile:",
+        error
+      );
+    }
+
     return context;
   } catch (error) {
     console.error("Failed to compute Sprite Context:", error);
     return null;
   }
 }
-
