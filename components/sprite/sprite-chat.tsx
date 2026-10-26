@@ -20,7 +20,7 @@ import {
   RotateCcw,
   Grid,
   Dumbbell,
-  Compass,
+  FileBarChart,
 } from "lucide-react";
 import { useSprite } from "@/context/sprite-context";
 import { ContextCard } from "./context-card";
@@ -110,7 +110,8 @@ function groupMessagesIntoTurns(messages: UIMessage[]): ConversationTurn[] {
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"stage" | "history">("stage");
+  // 3 clean views: "stage" (1-to-1 message), "briefing" (targets & quick prompts), "history" (past turns)
+  const [viewMode, setViewMode] = useState<"stage" | "briefing" | "history">("briefing");
   const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(null);
   const [input, setInput] = useState("");
 
@@ -179,7 +180,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     sendMessage({ text: `Help me practice how to use "${word}"` });
   };
 
-  // Only summon the bottom-left sprite toast when the drawer is CLOSED
+  // Only summon bottom-left sprite toast when the drawer is CLOSED
   useEffect(() => {
     if (isLoading || isOpen) return;
     const lastMessage = messages[messages.length - 1];
@@ -210,14 +211,14 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
             className="fixed bottom-6 right-6 z-40 flex items-center gap-3 cursor-pointer group"
             onClick={() => setIsOpen(true)}
           >
-            <div className="hidden sm:flex flex-col items-end rounded-2xl border border-primary/40 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md">
-              <span className="text-[10px] font-black uppercase tracking-wider text-accent">
+            <div className="hidden sm:flex flex-col items-end rounded-2xl border border-indigo-500/30 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md">
+              <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">
                 {aiBrain.currentLessonTitle}
               </span>
-              <span className="text-xs font-bold text-white">Launch {spriteName} Assistant</span>
+              <span className="text-xs font-bold text-white">Open {spriteName} Assistant</span>
             </div>
 
-            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-primary/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
+            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-indigo-500/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
               <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
             </div>
           </motion.div>
@@ -233,7 +234,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[2px]"
+              className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px]"
             />
 
             <motion.div
@@ -241,125 +242,123 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               animate={{ opacity: 1, x: 0, y: 0 }}
               exit={{ opacity: 0, x: 40, y: 40 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-0 right-0 z-50 flex h-[85vh] w-full sm:w-[540px] md:w-[620px] flex-col overflow-hidden rounded-tl-[32px] border-t border-l border-primary/30 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 shadow-[-24px_-24px_80px_rgba(0,0,0,0.65)] backdrop-blur-2xl"
+              className="fixed bottom-0 right-0 z-50 flex h-[85vh] w-full sm:w-[540px] md:w-[600px] flex-col overflow-hidden rounded-tl-[32px] border-t border-l border-indigo-500/30 bg-[#0B0F19] shadow-[-20px_-20px_60px_rgba(0,0,0,0.7)]"
             >
-              {/* AMBIENT THEME GLOWS */}
-              <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-              <div className="pointer-events-none absolute top-1/3 -right-24 h-64 w-64 rounded-full bg-secondary/15 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-tertiary/10 blur-3xl" />
+              {/* SUBTLE COHESIVE SPOON GLOW (Indigo & Teal only) */}
+              <div className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full bg-indigo-600/15 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
 
-              {/* 1. HEADER */}
-              <div className="relative z-10 flex items-center justify-between border-b border-white/10 bg-white/[0.03] px-6 py-4 shrink-0">
+              {/* 1. HEADER & NAVIGATION TABS */}
+              <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] bg-slate-900/50 px-6 py-4 shrink-0">
                 <div className="flex items-center gap-3.5">
-                  <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-primary/50 bg-slate-800 shadow-lg shadow-primary/20">
+                  <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-800">
                     <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
-                    <span className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-slate-950" />
+                    <span className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full bg-teal-400 ring-2 ring-slate-950" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-extrabold text-white tracking-tight">
-                        {spriteName}
-                      </h3>
-                      <span className="rounded-full bg-primary/20 border border-primary/40 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
-                        AI Co-Pilot
+                      <h3 className="text-base font-bold text-white">{spriteName}</h3>
+                      <span className="rounded-md bg-indigo-500/20 border border-indigo-500/30 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-indigo-300">
+                        Assistant
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-slate-300 truncate max-w-[240px]">
+                    <p className="text-xs font-medium text-slate-400 truncate max-w-[200px]">
                       {aiBrain.currentLessonTitle}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* View Switcher Pills (Stage / Targets / History) */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setViewMode(viewMode === "briefing" ? (activeTurn ? "stage" : "briefing") : "briefing")}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
+                      viewMode === "briefing"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-800/70 text-slate-300 border-white/10 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <Target className="h-3.5 w-3.5" />
+                    <span>Briefing</span>
+                  </button>
+
                   {turns.length > 0 && (
                     <button
-                      onClick={() => setViewMode(viewMode === "stage" ? "history" : "stage")}
-                      className="flex items-center gap-1.5 rounded-xl bg-white/5 border border-white/15 px-3 py-2 text-xs font-bold text-white hover:bg-primary/20 hover:border-primary/40 transition"
+                      onClick={() => setViewMode(viewMode === "history" ? "stage" : "history")}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
+                        viewMode === "history"
+                          ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                          : "bg-slate-800/70 text-slate-300 border-white/10 hover:text-white hover:bg-slate-800"
+                      }`}
                     >
-                      {viewMode === "history" ? (
-                        <>
-                          <ChevronLeft className="h-3.5 w-3.5 text-primary" /> Active Stage
-                        </>
-                      ) : (
-                        <>
-                          <History className="h-3.5 w-3.5 text-accent" /> History ({turns.length})
-                        </>
-                      )}
+                      <History className="h-3.5 w-3.5" />
+                      <span>{turns.length}</span>
                     </button>
                   )}
 
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl p-2 text-slate-400 hover:bg-white/10 hover:text-white transition"
+                    className="ml-1 rounded-xl p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
 
-              {/* 2. PERSISTENT ASSISTANT ACTION BAR (Word Matrix + Generate Sprite Exercise) */}
-              <div className="relative z-10 grid grid-cols-2 gap-3 border-b border-white/10 bg-slate-900/60 px-6 py-3 shrink-0">
+              {/* 2. SLEEK ACTION TOOLBAR (Progress Report • Word Matrix • Exercise) */}
+              <div className="relative z-10 flex items-center gap-2 border-b border-white/[0.06] bg-slate-900/30 px-6 py-2.5 shrink-0 overflow-x-auto no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode("stage");
+                    sendMessage({ text: "Generate my progress report" });
+                  }}
+                  className="flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition shrink-0"
+                >
+                  <FileBarChart className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>Progress Report</span>
+                </button>
+
                 <Link
                   href="/matrix"
-                  className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-r from-primary/20 via-secondary/10 to-transparent p-3 transition hover:border-primary hover:from-primary/30"
+                  className="flex items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-500/10 px-3 py-1.5 text-xs font-bold text-teal-200 hover:bg-teal-500/20 hover:border-teal-500/50 transition shrink-0"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/25 text-primary border border-primary/30 shadow-inner">
-                      <Grid className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="block text-xs font-extrabold text-white group-hover:text-primary transition">
-                        Word Matrix
-                      </span>
-                      <span className="block text-[10px] font-medium text-slate-400">
-                        Open vocab network
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-white" />
+                  <Grid className="h-3.5 w-3.5 text-teal-400" />
+                  <span>Word Matrix</span>
+                  <ArrowRight className="h-3 w-3 opacity-70" />
                 </Link>
 
                 <button
                   type="button"
                   disabled
-                  className="relative flex items-center justify-between overflow-hidden rounded-2xl border border-tertiary/30 bg-gradient-to-r from-tertiary/15 via-accent/5 to-transparent p-3 text-left opacity-80 cursor-not-allowed"
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-400 opacity-70 cursor-not-allowed shrink-0"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-tertiary/20 text-tertiary border border-tertiary/30">
-                      <Dumbbell className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="block text-xs font-extrabold text-white">
-                        Sprite Exercise
-                      </span>
-                      <span className="inline-block rounded bg-accent/20 border border-accent/30 px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider text-accent mt-0.5">
-                        Coming Soon
-                      </span>
-                    </div>
-                  </div>
+                  <Dumbbell className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Sprite Exercise</span>
+                  <span className="rounded bg-white/10 px-1.5 py-0.2 text-[9px] font-black uppercase text-slate-300">
+                    Soon
+                  </span>
                 </button>
               </div>
 
-              {/* 3. MAIN WORKSPACE STAGE */}
-              <div className="relative z-10 flex-1 overflow-y-auto p-6 space-y-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+              {/* 3. FULL-HEIGHT MAIN CANVAS (100% Dedicated to the active view) */}
+              <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col">
                 {viewMode === "history" ? (
-                  /* HISTORY LOG VIEW */
+                  /* ================= VIEW A: HISTORY LIST ================= */
                   <div className="space-y-3">
                     <div className="flex items-center justify-between pb-2">
                       <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                        Session History
+                        Conversation History ({turns.length})
                       </span>
-                      {selectedTurnIndex !== null && (
-                        <button
-                          onClick={() => {
-                            setSelectedTurnIndex(null);
-                            setViewMode("stage");
-                          }}
-                          className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                        >
-                          <RotateCcw className="h-3 w-3" /> Return to Latest
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setSelectedTurnIndex(null);
+                          setViewMode("stage");
+                        }}
+                        className="flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" /> Back to Active Stage
+                      </button>
                     </div>
 
                     {turns.map((turn, idx) => {
@@ -373,23 +372,23 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             setSelectedTurnIndex(idx);
                             setViewMode("stage");
                           }}
-                          className="w-full text-left rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-primary/50 hover:bg-primary/10 transition"
+                          className="w-full text-left rounded-2xl border border-white/10 bg-slate-900/70 p-4 hover:border-indigo-500/50 hover:bg-slate-900 transition"
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-primary">
-                              Interaction #{idx + 1}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
+                              Turn #{idx + 1}
                             </span>
                             {contextCard && (
-                              <span className="rounded-md bg-accent/20 border border-accent/30 px-2 py-0.5 text-[10px] font-bold text-accent">
+                              <span className="rounded-md bg-teal-500/20 border border-teal-500/30 px-2 py-0.5 text-[10px] font-bold text-teal-300">
                                 {contextCard.title}
                               </span>
                             )}
                           </div>
                           {userText && (
-                            <p className="text-xs font-bold text-white truncate">You: {userText}</p>
+                            <p className="text-xs font-bold text-white truncate">You: &ldquo;{userText}&rdquo;</p>
                           )}
                           {spokenText && (
-                            <p className="text-xs text-slate-300 line-clamp-2 mt-1">
+                            <p className="text-xs text-slate-400 line-clamp-2 mt-1">
                               {spriteName}: {spokenText}
                             </p>
                           )}
@@ -397,202 +396,255 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                       );
                     })}
                   </div>
+                ) : viewMode === "briefing" || !activeTurn ? (
+                  /* ================= VIEW B: BRIEFING & TARGETS STAGE ================= */
+                  <div className="flex-1 flex flex-col justify-between gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 block mb-1">
+                            Current Lesson Focus
+                          </span>
+                          <h2 className="text-lg font-extrabold text-white">
+                            {aiBrain.currentLessonTitle}
+                          </h2>
+                        </div>
+                        {activeTurn && (
+                          <button
+                            onClick={() => setViewMode("stage")}
+                            className="flex items-center gap-1 rounded-xl bg-indigo-500/20 border border-indigo-500/30 px-3 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/30"
+                          >
+                            Return to Message →
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Priority Targets */}
+                      {(aiBrain.topWord || aiBrain.topPhrase) && (
+                        <div className="space-y-2.5 pt-2">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Priority Targets (Click to Launch Drill)
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {aiBrain.topWord && (
+                              <button
+                                onClick={() => triggerPractice(aiBrain.topWord!.word)}
+                                className="group flex items-center justify-between rounded-2xl bg-slate-900/90 p-4 border border-white/10 hover:border-indigo-500/60 hover:bg-indigo-950/30 transition text-left"
+                              >
+                                <div>
+                                  <span className="font-extrabold text-white text-base block group-hover:text-indigo-300 transition">
+                                    {aiBrain.topWord.word}
+                                  </span>
+                                  <span className="text-xs text-slate-400 block mt-0.5">
+                                    {aiBrain.topWord.translation || "Vocabulary word"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5">
+                                  {aiBrain.topWord.avgSpokenScore != null && (
+                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-400">
+                                      <Mic2 className="h-3 w-3 inline mr-1" />
+                                      {aiBrain.topWord.avgSpokenScore}%
+                                    </span>
+                                  )}
+                                  <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-indigo-400 transition" />
+                                </div>
+                              </button>
+                            )}
+
+                            {aiBrain.topPhrase && (
+                              <button
+                                onClick={() => triggerPractice(aiBrain.topPhrase!.word)}
+                                className="group flex items-center justify-between rounded-2xl bg-slate-900/90 p-4 border border-white/10 hover:border-teal-500/60 hover:bg-teal-950/20 transition text-left"
+                              >
+                                <div>
+                                  <span className="font-extrabold text-white text-base block group-hover:text-teal-300 transition">
+                                    {aiBrain.topPhrase.word}
+                                  </span>
+                                  <span className="text-xs text-slate-400 block mt-0.5">
+                                    {aiBrain.topPhrase.translation || "Key phrase"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-end gap-1.5">
+                                  {aiBrain.topPhrase.avgSpokenScore != null && (
+                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-teal-500/20 text-teal-400">
+                                      <Mic2 className="h-3 w-3 inline mr-1" />
+                                      {aiBrain.topPhrase.avgSpokenScore}%
+                                    </span>
+                                  )}
+                                  <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-teal-400 transition" />
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Center Prompt Suggestions */}
+                    <div className="my-auto flex flex-col items-center text-center max-w-sm mx-auto py-6">
+                      <div className="h-16 w-16 overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-900 mb-3 shadow-xl">
+                        <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
+                      </div>
+                      <h3 className="text-sm font-bold text-white mb-1">
+                        Ready when you are, {aiBrain.userName}
+                      </h3>
+                      <p className="text-xs text-slate-400 mb-4">
+                        Select a target above or trigger a quick lesson action below.
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewMode("stage");
+                            sendMessage({
+                              text: `Give me a grammar breakdown for ${aiBrain.currentLessonTitle}`,
+                            });
+                          }}
+                          className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-2 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition"
+                        >
+                          Explain Lesson Grammar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setViewMode("stage");
+                            sendMessage({
+                              text: `Quiz me on ${aiBrain.currentLessonTitle}`,
+                            });
+                          }}
+                          className="rounded-xl border border-teal-500/30 bg-teal-500/10 px-3.5 py-2 text-xs font-bold text-teal-300 hover:bg-teal-500/20 transition"
+                        >
+                          Quick 1-Question Quiz
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  /* ACTIVE 1-TO-1 ASSISTANT STAGE */
-                  <>
-                    {/* ACTIVE TURN (Sized to content — NO giant empty black void!) */}
-                    {activeTurn && (
-                      <motion.div
-                        key={activeTurn.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        {/* User Prompt Pill */}
-                        {activeTurn.userMessage && (
-                          <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-primary/25 via-secondary/15 to-transparent border border-primary/40 px-4 py-3 shadow-sm">
-                            <span className="text-sm font-bold text-white">
-                              &ldquo;{getRawText(activeTurn.userMessage)}&rdquo;
+                  /* ================= VIEW C: TRUE 1-TO-1 FULL STAGE ================= */
+                  <motion.div
+                    key={activeTurn.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex-1 flex flex-col justify-between gap-6"
+                  >
+                    {/* 1. User Prompt Bar at Top of Stage */}
+                    {activeTurn.userMessage && (
+                      <div className="flex items-center justify-between rounded-2xl border border-indigo-500/30 bg-indigo-950/30 px-5 py-3.5 shrink-0">
+                        <div className="flex items-center gap-3">
+                          <span className="rounded-md bg-indigo-500/20 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-300">
+                            You
+                          </span>
+                          <p className="text-sm font-semibold text-white">
+                            &ldquo;{getRawText(activeTurn.userMessage)}&rdquo;
+                          </p>
+                        </div>
+                        {turns.length > 1 && (
+                          <span className="text-[10px] font-bold text-slate-400">
+                            Turn {(selectedTurnIndex ?? turns.length - 1) + 1} of {turns.length}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 2. Assistant 1-to-1 Main Stage (Takes up the rest of the screen) */}
+                    <div className="flex-1 flex flex-col justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-inner">
+                      <div className="space-y-6">
+                        {/* Vox Spoken Response */}
+                        <div className="flex items-start gap-4">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-800 shadow-lg">
+                            <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
+                          </div>
+                          <div className="flex-1 pt-0.5">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-teal-400 flex items-center gap-1.5 mb-2">
+                              <Sparkles className="h-3.5 w-3.5" /> {spriteName}
                             </span>
-                            <span className="rounded-lg bg-primary/30 border border-primary/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shrink-0 ml-3">
-                              You
+
+                            {activeAssistantPayload.spokenText ? (
+                              <p className="text-lg font-medium text-white leading-relaxed">
+                                {activeAssistantPayload.spokenText}
+                              </p>
+                            ) : isLoading ? (
+                              <div className="flex items-center gap-2 py-3">
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-400 [animation-delay:-0.3s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-400 [animation-delay:-0.15s]" />
+                                <span className="h-2 w-2 animate-bounce rounded-full bg-teal-400" />
+                                <span className="text-xs font-medium text-slate-400 ml-1">
+                                  Thinking...
+                                </span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Rendered Component Slot (ContextCard / ReportCard) */}
+                        {activeAssistantPayload.contextCard && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="pt-2"
+                          >
+                            <ContextCard
+                              title={activeAssistantPayload.contextCard.title}
+                              grammarRule={activeAssistantPayload.contextCard.grammarRule}
+                              examples={activeAssistantPayload.contextCard.examples || []}
+                            />
+                          </motion.div>
+                        )}
+
+                        {/* Action Status Pill */}
+                        {activeAssistantPayload.action && (
+                          <div className="flex items-center justify-between rounded-2xl border border-teal-500/30 bg-teal-950/30 px-4 py-3 text-xs font-bold text-teal-300">
+                            <div className="flex items-center gap-2">
+                              <Zap className="h-4 w-4 text-teal-400" />
+                              <span>
+                                Action Triggered: {activeAssistantPayload.action.type}{" "}
+                                {activeAssistantPayload.action.targetWord
+                                  ? `(${activeAssistantPayload.action.targetWord})`
+                                  : ""}
+                              </span>
+                            </div>
+                            <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-[10px] uppercase">
+                              Active
                             </span>
                           </div>
                         )}
-
-                        {/* Assistant Response Card (Wraps tightly around content + components) */}
-                        <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.07] via-white/[0.03] to-transparent p-5 shadow-xl space-y-4">
-                          <div className="flex items-start gap-3.5">
-                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-accent/40 bg-slate-800 shadow-md">
-                              <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-[11px] font-black uppercase tracking-wider text-accent flex items-center gap-1 mb-1">
-                                <Sparkles className="h-3 w-3" /> {spriteName}
-                              </span>
-
-                              {activeAssistantPayload.spokenText ? (
-                                <p className="text-base font-medium text-white leading-relaxed">
-                                  {activeAssistantPayload.spokenText}
-                                </p>
-                              ) : isLoading ? (
-                                <div className="flex gap-1.5 py-2">
-                                  <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-                                  <span className="h-2 w-2 animate-bounce rounded-full bg-secondary [animation-delay:-0.15s]" />
-                                  <span className="h-2 w-2 animate-bounce rounded-full bg-accent" />
-                                </div>
-                              ) : null}
-                            </div>
-                          </div>
-
-                          {/* Dynamic Component Slot: ContextCard */}
-                          {activeAssistantPayload.contextCard && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="pt-1"
-                            >
-                              <ContextCard
-                                title={activeAssistantPayload.contextCard.title}
-                                grammarRule={activeAssistantPayload.contextCard.grammarRule}
-                                examples={activeAssistantPayload.contextCard.examples || []}
-                              />
-                            </motion.div>
-                          )}
-
-                          {/* Dynamic Action Triggered Pill */}
-                          {activeAssistantPayload.action && (
-                            <div className="flex items-center justify-between rounded-2xl border border-accent/40 bg-accent/15 px-4 py-3 text-xs font-bold text-accent">
-                              <div className="flex items-center gap-2">
-                                <Zap className="h-4 w-4" />
-                                <span>
-                                  Action Triggered: {activeAssistantPayload.action.type}{" "}
-                                  {activeAssistantPayload.action.targetWord
-                                    ? `(${activeAssistantPayload.action.targetWord})`
-                                    : ""}
-                                </span>
-                              </div>
-                              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] uppercase">
-                                Active
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* TUTOR BRIEFING & PRIORITY TARGETS (Stays accessible below the active response so the stage never looks empty!) */}
-                    <div className="rounded-3xl border border-secondary/30 bg-gradient-to-br from-secondary/15 via-primary/10 to-transparent p-5 shadow-lg space-y-4">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                        <div className="flex items-center gap-2">
-                          <Target className="h-4 w-4 text-secondary" />
-                          <h4 className="text-xs font-black text-white uppercase tracking-wider">
-                            Tutor Briefing & Targets
-                          </h4>
-                        </div>
-                        <span className="rounded-full bg-secondary/20 border border-secondary/40 px-2.5 py-0.5 text-[10px] font-bold text-secondary">
-                          Click to Drill
-                        </span>
                       </div>
 
-                      {(aiBrain.topWord || aiBrain.topPhrase) && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {aiBrain.topWord && (
-                            <button
-                              onClick={() => triggerPractice(aiBrain.topWord!.word)}
-                              className="group flex items-center justify-between rounded-2xl bg-slate-900/70 p-3.5 border border-white/10 hover:border-primary hover:bg-primary/15 transition text-left shadow-sm"
-                            >
-                              <div>
-                                <span className="font-extrabold text-white text-sm block group-hover:text-primary transition">
-                                  {aiBrain.topWord.word}
-                                </span>
-                                <span className="text-xs text-slate-300 block mt-0.5">
-                                  {aiBrain.topWord.translation || "Vocabulary word"}
-                                </span>
-                              </div>
-                              <div className="flex flex-col items-end gap-1.5">
-                                {aiBrain.topWord.avgSpokenScore != null && (
-                                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-rose-500/20 border border-rose-500/30 text-rose-300">
-                                    <Mic2 className="h-3 w-3 inline mr-1" />
-                                    {aiBrain.topWord.avgSpokenScore}%
-                                  </span>
-                                )}
-                                <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 group-hover:text-primary transition" />
-                              </div>
-                            </button>
-                          )}
+                      {/* Subtle contextual footer inside the stage */}
+                      <div className="flex items-center justify-between border-t border-white/[0.06] pt-4 mt-6">
+                        <button
+                          type="button"
+                          onClick={() => setViewMode("briefing")}
+                          className="text-xs font-bold text-slate-400 hover:text-indigo-300 transition flex items-center gap-1.5"
+                        >
+                          <Target className="h-3.5 w-3.5 text-indigo-400" />
+                          <span>Practice priority words</span>
+                        </button>
 
-                          {aiBrain.topPhrase && (
-                            <button
-                              onClick={() => triggerPractice(aiBrain.topPhrase!.word)}
-                              className="group flex items-center justify-between rounded-2xl bg-slate-900/70 p-3.5 border border-white/10 hover:border-accent hover:bg-accent/15 transition text-left shadow-sm"
-                            >
-                              <div>
-                                <span className="font-extrabold text-white text-sm block group-hover:text-accent transition">
-                                  {aiBrain.topPhrase.word}
-                                </span>
-                                <span className="text-xs text-slate-300 block mt-0.5">
-                                  {aiBrain.topPhrase.translation || "Key phrase"}
-                                </span>
-                              </div>
-                              <div className="flex flex-col items-end gap-1.5">
-                                {aiBrain.topPhrase.avgSpokenScore != null && (
-                                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-accent/20 border border-accent/30 text-accent">
-                                    <Mic2 className="h-3 w-3 inline mr-1" />
-                                    {aiBrain.topPhrase.avgSpokenScore}%
-                                  </span>
-                                )}
-                                <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 group-hover:text-accent transition" />
-                              </div>
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Quick Suggested Assistant Prompts */}
-                      <div className="pt-1">
-                        <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">
-                          Quick Assistant Actions
-                        </span>
-                        <div className="flex flex-wrap gap-2">
+                        {selectedTurnIndex !== null && (
                           <button
                             type="button"
-                            onClick={() =>
-                              sendMessage({
-                                text: `Give me a quick grammar breakdown for ${aiBrain.currentLessonTitle}`,
-                              })
-                            }
-                            className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-white hover:bg-primary/25 transition"
+                            onClick={() => setSelectedTurnIndex(null)}
+                            className="text-xs font-bold text-teal-400 hover:underline flex items-center gap-1"
                           >
-                            <Compass className="h-3.5 w-3.5 text-primary" /> Explain Lesson Grammar
+                            <RotateCcw className="h-3 w-3" /> Back to latest turn
                           </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              sendMessage({
-                                text: `Quiz me on one phrase from ${aiBrain.currentLessonTitle}`,
-                              })
-                            }
-                            className="flex items-center gap-1.5 rounded-xl border border-tertiary/30 bg-tertiary/10 px-3 py-1.5 text-xs font-bold text-white hover:bg-tertiary/25 transition"
-                          >
-                            <Sparkles className="h-3.5 w-3.5 text-tertiary" /> Quick 1-Question Quiz
-                          </button>
-                        </div>
+                        )}
                       </div>
                     </div>
-                  </>
+                  </motion.div>
                 )}
               </div>
 
               {/* 4. INPUT COMMAND BAR */}
-              <div className="relative z-10 border-t border-white/10 bg-slate-900/90 px-6 py-4 shrink-0">
+              <div className="relative z-10 border-t border-white/[0.08] bg-slate-900/80 px-6 py-4 shrink-0">
                 <form
                   onSubmit={handleSubmit}
-                  className="flex items-center gap-2 rounded-2xl border border-white/15 bg-slate-950/90 px-3 py-2 shadow-inner transition-colors focus-within:border-primary"
+                  className="flex items-center gap-2 rounded-2xl border border-white/15 bg-slate-950 px-3 py-2 transition-colors focus-within:border-indigo-500"
                 >
                   <button
                     type="button"
-                    className="rounded-xl p-2 text-slate-400 transition hover:bg-white/10 hover:text-accent"
+                    className="rounded-xl p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
                   >
                     <Mic className="h-4 w-4" />
                   </button>
@@ -600,17 +652,17 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={`Ask ${spriteName} or command an action in ${aiBrain.targetLang}...`}
+                    placeholder={`Ask ${spriteName} in ${aiBrain.targetLang}...`}
                     disabled={isLoading}
                     maxLength={1000}
-                    className="w-full bg-transparent py-1.5 text-sm text-white outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent py-1.5 text-sm text-white outline-none placeholder:text-slate-500"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || !input.trim()}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-primary/30 transition hover:opacity-90 disabled:opacity-40"
+                    className="flex items-center justify-center rounded-xl bg-indigo-600 p-2.5 text-white shadow-md shadow-indigo-600/30 transition hover:bg-indigo-500 disabled:opacity-40"
                   >
-                    <Send className="h-3.5 w-3.5" />
+                    <Send className="h-4 w-4" />
                   </button>
                 </form>
               </div>
