@@ -132,6 +132,7 @@ STRICT FORMATTING & RESPONSE RULES:
       model: groq(GROQ_LLM),
       instructions: systemPrompt,
       messages: await convertToModelMessages(messages),
+      reasoning: "low",
       maxOutputTokens: 4096, // Higher budget so reasoning tokens never starve output text
       onFinish: async ({ text }) => {
         try {
