@@ -27,15 +27,34 @@ model SpriteProfile {
   nativeVoiceId  String   // e.g. "en-US-boy-01"
   targetVoiceId  String   // e.g. "fr-FR-boy-01"
 
-  // 🟢 NEW: Pre-computed AI brain context
   context        Json?    
-
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   sprite         Sprite   @relation(fields: [spriteId], references: [id])
+
+  // 🟢 NEW: Saved Chat Sessions
+  sessions       SpriteSession[]
+}
+
+model SpriteSession {
+  id              String        @id @default(cuid())
+  spriteProfileId String
+  
+  title           String        @default("New Session") // e.g., "Survival States Quiz"
+  lessonTitle     String?       // e.g., "Spoon 13: Survival States"
+
+  // Array of 1-to-1 turns validated by Zod
+  turns           Json          @default("[]")
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  spriteProfile   SpriteProfile @relation(fields: [spriteProfileId], references: [id], onDelete: Cascade)
+
+  @@index([spriteProfileId, updatedAt(sort: Desc)])
 }
 
 // 3. GLOBAL DETERMINISTIC CACHE (Option 1)

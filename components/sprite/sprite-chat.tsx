@@ -1,7 +1,7 @@
 // components/sprite/sprite-chat.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -16,14 +16,22 @@ import {
   History,
   Sparkles,
   ChevronLeft,
+  ChevronRight,
   Zap,
-  RotateCcw,
   Grid,
   Dumbbell,
   FileBarChart,
+  Plus,
+  MessageSquare,
 } from "lucide-react";
 import { useSprite } from "@/context/sprite-context";
 import { ContextCard } from "./context-card";
+import type {
+  SpriteSessionData,
+  SpriteTurn,
+  ContextCardData,
+  SpriteAction,
+} from "@/lib/schema/sprite-schema";
 
 export interface ChatContextData {
   userName: string;
@@ -43,21 +51,8 @@ interface SpriteChatProps {
 
 interface ParsedPayload {
   spokenText: string;
-  contextCard?: {
-    title: string;
-    grammarRule: string;
-    examples: { french: string; english: string }[];
-  } | null;
-  action?: {
-    type: string;
-    targetWord?: string;
-  } | null;
-}
-
-interface ConversationTurn {
-  id: string;
-  userMessage?: UIMessage;
-  assistantMessage?: UIMessage;
+  contextCard?: ContextCardData | null;
+  action?: SpriteAction | null;
 }
 
 function getRawText(m?: UIMessage): string {
@@ -91,8 +86,35 @@ function parseMessagePayload(m?: UIMessage): ParsedPayload {
   }
 }
 
-function groupMessagesIntoTurns(messages: UIMessage[]): ConversationTurn[] {
-  const turns: ConversationTurn[] = [];
+// Convert saved SpriteTurn[] from DB into UIMessage[] so useChat can continue the thread
+function turnsToUIMessages(turns: SpriteTurn[]): UIMessage[] {
+  const msgs: UIMessage[] = [];
+  for (const t of turns) {
+    msgs.push({
+      id: `${t.id}-user`,
+      role: "user",
+      parts: [{ type: "text", text: t.userPrompt }],
+    });
+
+    const hasJson = t.contextCard || t.action;
+    const rawAssistantText = hasJson
+      ? `${t.assistantReply}\n---JSON---\n${JSON.stringify({
+          contextCard: t.contextCard,
+          action: t.action,
+        })}`
+      : t.assistantReply;
+
+    msgs.push({
+      id: `${t.id}-assistant`,
+      role: "assistant",
+      parts: [{ type: "text", text: rawAssistantText }],
+    });
+  }
+  return msgs;
+}
+
+function groupUIMessagesIntoTurns(messages: UIMessage[]) {
+  const turns: { id: string; userMessage?: UIMessage; assistantMessage?: UIMessage }[] = [];
   for (const msg of messages) {
     if (msg.role === "user") {
       turns.push({ id: msg.id, userMessage: msg });
@@ -110,8 +132,11 @@ function groupMessagesIntoTurns(messages: UIMessage[]): ConversationTurn[] {
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  // 3 clean views: "stage" (1-to-1 message), "briefing" (targets & quick prompts), "history" (past turns)
-  const [viewMode, setViewMode] = useState<"stage" | "briefing" | "history">("briefing");
+  const [viewMode, setViewMode] = useState<"stage" | "briefing" | "sessions">("briefing");
+
+  // Active Session ID + List of Saved Sessions from Prisma
+  const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
+  const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
   const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(null);
   const [input, setInput] = useState("");
 
@@ -136,8 +161,8 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     recentWords: aiBrain.recentWords?.map((w) => w.word).join(", ") || "",
   };
 
-  const bodyRef = useRef({ spriteName, dossier: apiDossier });
-  bodyRef.current = { spriteName, dossier: apiDossier };
+  const bodyRef = useRef({ sessionId, spriteName, dossier: apiDossier });
+  bodyRef.current = { sessionId, spriteName, dossier: apiDossier };
 
   const transport = useMemo(
     () =>
@@ -145,23 +170,69 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
         api: `/api/users/${userId}/sprite/chat`,
         body: () => bodyRef.current,
       }),
-    [userId],
+    [userId]
   );
 
-  const { messages, sendMessage, status } = useChat({ transport });
+  const { messages, setMessages, sendMessage, status } = useChat({ transport });
   const isLoading = status === "submitted" || status === "streaming";
 
-  const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages]);
+  const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
 
-  const activeTurn =
+  const currentTurnIdx =
     selectedTurnIndex !== null && turns[selectedTurnIndex]
-      ? turns[selectedTurnIndex]
-      : turns[turns.length - 1];
+      ? selectedTurnIndex
+      : Math.max(0, turns.length - 1);
+
+  const activeTurn = turns[currentTurnIdx];
 
   const activeAssistantPayload = useMemo(
     () => parseMessagePayload(activeTurn?.assistantMessage),
-    [activeTurn?.assistantMessage],
+    [activeTurn?.assistantMessage]
   );
+
+  // Fetch past sessions from Prisma
+  const fetchSessions = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/users/${userId}/sprite/sessions`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.sessions)) {
+        setSessionsList(data.sessions);
+      }
+    } catch (e) {
+      console.error("Failed to fetch sprite sessions:", e);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchSessions();
+    }
+  }, [isOpen, fetchSessions]);
+
+  // Refresh session list when a new turn finishes streaming
+  useEffect(() => {
+    if (!isLoading && messages.length > 0 && isOpen) {
+      fetchSessions();
+    }
+  }, [isLoading, messages.length, isOpen, fetchSessions]);
+
+  // Start a brand new session (like clicking "+ New Chat" in Gemini/Claude)
+  const startNewSession = () => {
+    setSessionId(crypto.randomUUID());
+    setMessages([]);
+    setSelectedTurnIndex(null);
+    setViewMode("briefing");
+  };
+
+  // Load a saved session from the Sessions list
+  const selectSession = (session: SpriteSessionData) => {
+    setSessionId(session.id);
+    const loadedMessages = turnsToUIMessages(session.turns || []);
+    setMessages(loadedMessages);
+    setSelectedTurnIndex(null);
+    setViewMode("stage");
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -180,7 +251,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     sendMessage({ text: `Help me practice how to use "${word}"` });
   };
 
-  // Only summon bottom-left sprite toast when the drawer is CLOSED
   useEffect(() => {
     if (isLoading || isOpen) return;
     const lastMessage = messages[messages.length - 1];
@@ -225,7 +295,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
         )}
       </AnimatePresence>
 
-      {/* 85VH DOCKED ASSISTANT DRAWER (Glued to bottom-0 & right-0) */}
+      {/* 85VH DOCKED ASSISTANT DRAWER */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -244,11 +314,10 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed bottom-0 right-0 z-50 flex h-[85vh] w-full sm:w-[540px] md:w-[600px] flex-col overflow-hidden rounded-tl-[32px] border-t border-l border-indigo-500/30 bg-[#0B0F19] shadow-[-20px_-20px_60px_rgba(0,0,0,0.7)]"
             >
-              {/* SUBTLE COHESIVE SPOON GLOW (Indigo & Teal only) */}
               <div className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full bg-indigo-600/15 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl" />
 
-              {/* 1. HEADER & NAVIGATION TABS */}
+              {/* 1. HEADER & SESSION CONTROLS */}
               <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] bg-slate-900/50 px-6 py-4 shrink-0">
                 <div className="flex items-center gap-3.5">
                   <div className="relative h-11 w-11 overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-800">
@@ -262,16 +331,29 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                         Assistant
                       </span>
                     </div>
-                    <p className="text-xs font-medium text-slate-400 truncate max-w-[200px]">
+                    <p className="text-xs font-medium text-slate-400 truncate max-w-[180px]">
                       {aiBrain.currentLessonTitle}
                     </p>
                   </div>
                 </div>
 
-                {/* View Switcher Pills (Stage / Targets / History) */}
+                {/* Top Right Navigation: + New Session | Briefing | Sessions History */}
                 <div className="flex items-center gap-1.5">
+                  {turns.length > 0 && (
+                    <button
+                      onClick={startNewSession}
+                      title="Start a New Session"
+                      className="flex items-center gap-1 rounded-xl bg-teal-500/15 border border-teal-500/30 px-2.5 py-1.5 text-xs font-bold text-teal-300 hover:bg-teal-500/25 transition"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">New</span>
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => setViewMode(viewMode === "briefing" ? (activeTurn ? "stage" : "briefing") : "briefing")}
+                    onClick={() =>
+                      setViewMode(viewMode === "briefing" ? (activeTurn ? "stage" : "briefing") : "briefing")
+                    }
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
                       viewMode === "briefing"
                         ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
@@ -282,19 +364,19 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     <span>Briefing</span>
                   </button>
 
-                  {turns.length > 0 && (
-                    <button
-                      onClick={() => setViewMode(viewMode === "history" ? "stage" : "history")}
-                      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
-                        viewMode === "history"
-                          ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
-                          : "bg-slate-800/70 text-slate-300 border-white/10 hover:text-white hover:bg-slate-800"
-                      }`}
-                    >
-                      <History className="h-3.5 w-3.5" />
-                      <span>{turns.length}</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() =>
+                      setViewMode(viewMode === "sessions" ? (activeTurn ? "stage" : "briefing") : "sessions")
+                    }
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
+                      viewMode === "sessions"
+                        ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                        : "bg-slate-800/70 text-slate-300 border-white/10 hover:text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    <History className="h-3.5 w-3.5" />
+                    <span>Sessions ({sessionsList.length})</span>
+                  </button>
 
                   <button
                     onClick={() => setIsOpen(false)}
@@ -305,7 +387,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 </div>
               </div>
 
-              {/* 2. SLEEK ACTION TOOLBAR (Progress Report • Word Matrix • Exercise) */}
+              {/* 2. ACTION TOOLBAR */}
               <div className="relative z-10 flex items-center gap-2 border-b border-white/[0.06] bg-slate-900/30 px-6 py-2.5 shrink-0 overflow-x-auto no-scrollbar">
                 <button
                   type="button"
@@ -341,60 +423,79 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 </button>
               </div>
 
-              {/* 3. FULL-HEIGHT MAIN CANVAS (100% Dedicated to the active view) */}
+              {/* 3. MAIN STAGE CANVAS */}
               <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col">
-                {viewMode === "history" ? (
-                  /* ================= VIEW A: HISTORY LIST ================= */
+                {viewMode === "sessions" ? (
+                  /* ================= VIEW A: SAVED SESSIONS LIST (Like Gemini / Claude Threads) ================= */
                   <div className="space-y-3">
                     <div className="flex items-center justify-between pb-2">
                       <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                        Conversation History ({turns.length})
+                        Saved Sessions ({sessionsList.length})
                       </span>
                       <button
-                        onClick={() => {
-                          setSelectedTurnIndex(null);
-                          setViewMode("stage");
-                        }}
-                        className="flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300"
+                        onClick={startNewSession}
+                        className="flex items-center gap-1 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-500 transition"
                       >
-                        <ChevronLeft className="h-3.5 w-3.5" /> Back to Active Stage
+                        <Plus className="h-3.5 w-3.5" /> Start New Session
                       </button>
                     </div>
 
-                    {turns.map((turn, idx) => {
-                      const userText = getRawText(turn.userMessage);
-                      const { spokenText, contextCard } = parseMessagePayload(turn.assistantMessage);
+                    {sessionsList.length === 0 ? (
+                      <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
+                        <MessageSquare className="h-8 w-8 text-slate-500 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-white">No saved sessions yet</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Send a message or start a drill to create your first session.
+                        </p>
+                      </div>
+                    ) : (
+                      sessionsList.map((sess) => {
+                        const isCurrentSession = sess.id === sessionId;
+                        const turnCount = Array.isArray(sess.turns) ? sess.turns.length : 0;
+                        const lastTurn =
+                          turnCount > 0 ? sess.turns[turnCount - 1] : null;
 
-                      return (
-                        <button
-                          key={turn.id}
-                          onClick={() => {
-                            setSelectedTurnIndex(idx);
-                            setViewMode("stage");
-                          }}
-                          className="w-full text-left rounded-2xl border border-white/10 bg-slate-900/70 p-4 hover:border-indigo-500/50 hover:bg-slate-900 transition"
-                        >
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400">
-                              Turn #{idx + 1}
-                            </span>
-                            {contextCard && (
-                              <span className="rounded-md bg-teal-500/20 border border-teal-500/30 px-2 py-0.5 text-[10px] font-bold text-teal-300">
-                                {contextCard.title}
+                        return (
+                          <button
+                            key={sess.id}
+                            onClick={() => selectSession(sess)}
+                            className={`w-full text-left rounded-2xl border p-4 transition ${
+                              isCurrentSession
+                                ? "border-indigo-500 bg-indigo-950/40"
+                                : "border-white/10 bg-slate-900/70 hover:border-indigo-500/40 hover:bg-slate-900"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-extrabold text-white truncate max-w-[320px]">
+                                  {sess.title}
+                                </span>
+                                {isCurrentSession && (
+                                  <span className="rounded bg-indigo-500/30 border border-indigo-500/40 px-1.5 py-0.5 text-[9px] font-black uppercase text-indigo-300">
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <span className="rounded-lg bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] font-bold text-slate-300 shrink-0">
+                                {turnCount} {turnCount === 1 ? "turn" : "turns"}
+                              </span>
+                            </div>
+
+                            {sess.lessonTitle && (
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-teal-400 mb-1">
+                                {sess.lessonTitle}
                               </span>
                             )}
-                          </div>
-                          {userText && (
-                            <p className="text-xs font-bold text-white truncate">You: &ldquo;{userText}&rdquo;</p>
-                          )}
-                          {spokenText && (
-                            <p className="text-xs text-slate-400 line-clamp-2 mt-1">
-                              {spriteName}: {spokenText}
-                            </p>
-                          )}
-                        </button>
-                      );
-                    })}
+
+                            {lastTurn && (
+                              <p className="text-xs text-slate-400 line-clamp-1">
+                                {spriteName}: {lastTurn.assistantReply}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 ) : viewMode === "briefing" || !activeTurn ? (
                   /* ================= VIEW B: BRIEFING & TARGETS STAGE ================= */
@@ -414,12 +515,11 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                             onClick={() => setViewMode("stage")}
                             className="flex items-center gap-1 rounded-xl bg-indigo-500/20 border border-indigo-500/30 px-3 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/30"
                           >
-                            Return to Message →
+                            Return to Active Session →
                           </button>
                         )}
                       </div>
 
-                      {/* Priority Targets */}
                       {(aiBrain.topWord || aiBrain.topPhrase) && (
                         <div className="space-y-2.5 pt-2">
                           <span className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -480,16 +580,15 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                       )}
                     </div>
 
-                    {/* Center Prompt Suggestions */}
                     <div className="my-auto flex flex-col items-center text-center max-w-sm mx-auto py-6">
                       <div className="h-16 w-16 overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-900 mb-3 shadow-xl">
                         <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
                       </div>
                       <h3 className="text-sm font-bold text-white mb-1">
-                        Ready when you are, {aiBrain.userName}
+                        New Session Ready, {aiBrain.userName}
                       </h3>
                       <p className="text-xs text-slate-400 mb-4">
-                        Select a target above or trigger a quick lesson action below.
+                        Select a target above or launch a guided session below.
                       </p>
                       <div className="flex flex-wrap justify-center gap-2">
                         <button
@@ -520,36 +619,57 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                     </div>
                   </div>
                 ) : (
-                  /* ================= VIEW C: TRUE 1-TO-1 FULL STAGE ================= */
+                  /* ================= VIEW C: 1-TO-1 STAGE WITH MINI-SESSION TURN STEPPER ================= */
                   <motion.div
                     key={activeTurn.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 flex flex-col justify-between gap-6"
+                    className="flex-1 flex flex-col justify-between gap-5"
                   >
-                    {/* 1. User Prompt Bar at Top of Stage */}
+                    {/* 1. User Prompt Bar + < Turn X of Y > Stepper */}
                     {activeTurn.userMessage && (
-                      <div className="flex items-center justify-between rounded-2xl border border-indigo-500/30 bg-indigo-950/30 px-5 py-3.5 shrink-0">
-                        <div className="flex items-center gap-3">
-                          <span className="rounded-md bg-indigo-500/20 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-300">
+                      <div className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/30 px-5 py-3.5 shrink-0">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="rounded-md bg-indigo-500/20 border border-indigo-500/40 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-indigo-300 shrink-0">
                             You
                           </span>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-white truncate">
                             &ldquo;{getRawText(activeTurn.userMessage)}&rdquo;
                           </p>
                         </div>
+
+                        {/* Stepper to flip through turns inside the current Session */}
                         {turns.length > 1 && (
-                          <span className="text-[10px] font-bold text-slate-400">
-                            Turn {(selectedTurnIndex ?? turns.length - 1) + 1} of {turns.length}
-                          </span>
+                          <div className="flex items-center gap-1 rounded-xl bg-slate-900/90 border border-white/10 px-2 py-1 shrink-0">
+                            <button
+                              type="button"
+                              disabled={currentTurnIdx === 0}
+                              onClick={() => setSelectedTurnIndex(Math.max(0, currentTurnIdx - 1))}
+                              className="p-0.5 text-slate-400 hover:text-white disabled:opacity-30"
+                            >
+                              <ChevronLeft className="h-3.5 w-3.5" />
+                            </button>
+                            <span className="text-[10px] font-black text-slate-300 px-1">
+                              {currentTurnIdx + 1} / {turns.length}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={currentTurnIdx === turns.length - 1}
+                              onClick={() =>
+                                setSelectedTurnIndex(Math.min(turns.length - 1, currentTurnIdx + 1))
+                              }
+                              className="p-0.5 text-slate-400 hover:text-white disabled:opacity-30"
+                            >
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
 
-                    {/* 2. Assistant 1-to-1 Main Stage (Takes up the rest of the screen) */}
+                    {/* 2. Assistant 1-to-1 Main Stage */}
                     <div className="flex-1 flex flex-col justify-between rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-inner">
                       <div className="space-y-6">
-                        {/* Vox Spoken Response */}
                         <div className="flex items-start gap-4">
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-indigo-500/40 bg-slate-800 shadow-lg">
                             <img src={avatarSrc} alt={spriteName} className="h-full w-full object-cover object-top" />
@@ -576,7 +696,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                           </div>
                         </div>
 
-                        {/* Rendered Component Slot (ContextCard / ReportCard) */}
+                        {/* ContextCard Slot */}
                         {activeAssistantPayload.contextCard && (
                           <motion.div
                             initial={{ opacity: 0, y: 12 }}
@@ -610,7 +730,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                         )}
                       </div>
 
-                      {/* Subtle contextual footer inside the stage */}
+                      {/* Stage Footer */}
                       <div className="flex items-center justify-between border-t border-white/[0.06] pt-4 mt-6">
                         <button
                           type="button"
@@ -621,15 +741,13 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                           <span>Practice priority words</span>
                         </button>
 
-                        {selectedTurnIndex !== null && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTurnIndex(null)}
-                            className="text-xs font-bold text-teal-400 hover:underline flex items-center gap-1"
-                          >
-                            <RotateCcw className="h-3 w-3" /> Back to latest turn
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={startNewSession}
+                          className="text-xs font-bold text-teal-400 hover:underline flex items-center gap-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Start New Session
+                        </button>
                       </div>
                     </div>
                   </motion.div>
