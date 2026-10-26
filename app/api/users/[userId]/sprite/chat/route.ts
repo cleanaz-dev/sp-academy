@@ -10,7 +10,7 @@ import {
   type UIMessage,
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
-import { getOrCreateProfileId } from "../session/route";
+import { getOrCreateProfileId } from "../sessions/route";
 
 
 const groq = createGroq({
