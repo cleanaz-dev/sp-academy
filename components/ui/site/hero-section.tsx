@@ -83,7 +83,7 @@ export default function HeroSection() {
             <Reveal delay={0.7} className="mt-8 lg:mt-10 flex w-full flex-col gap-4 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="#pricing">
                 <Button className="h-14 w-full rounded-full bg-blue-500 px-8 text-lg font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:bg-blue-600 sm:w-auto">
-                  Start Learning Free
+                  Start Learning Today
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

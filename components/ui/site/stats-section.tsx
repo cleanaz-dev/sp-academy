@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Globe, MessageSquare, Star, Users } from "lucide-react";
+import { ArrowRight, Globe, MessageSquare, Star, Users, Languages, Brain } from "lucide-react";
 import Link from "next/link";
 
 import { Reveal } from "@/components/ui/misc/reveal";
@@ -8,31 +8,31 @@ import { Button } from "@/components/ui/button";
 
 const STATS = [
   {
-    id: "learners",
-    icon: Users,
-    value: "100,000+",
-    label: "Active Learners",
+    id: "languages",
+    icon: Languages,
+    value: "3",
+    label: "EN · FR · ES",
     color: "primary",
   },
   {
-    id: "rating",
+    id: "founder",
     icon: Star,
-    value: "4.9/5",
-    label: "App Store Rating",
+    value: "Beta",
+    label: "Founder Pricing for Life",
     color: "secondary",
   },
   {
-    id: "conversations",
-    icon: MessageSquare,
-    value: "5M+",
-    label: "Conversations Held",
+    id: "brain",
+    icon: Brain,
+    value: "Everyday",
+    label: "Learn Something New",
     color: "tertiary",
   },
   {
-    id: "languages",
-    icon: Globe,
-    value: "12+",
-    label: "Languages Available",
+    id: "community",
+    icon: Users,
+    value: "Community",
+    label: "Private Community",
     color: "accent",
   },
 ] as const;
@@ -202,7 +202,7 @@ export default function StatsSection() {
         >
           <Button
             nativeButton={false}
-            render={<Link href="/signup" />}
+            render={<Link href="#pricing" />}
             className="h-[2.85rem] gap-2 rounded-full border border-border bg-foreground px-6 font-semibold text-background shadow-none transition-all duration-200 hover:-translate-y-px hover:bg-foreground hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
             Start your language journey
