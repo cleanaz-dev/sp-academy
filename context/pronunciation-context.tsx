@@ -48,10 +48,9 @@ export const PronunciationProvider = ({
       try {
         setScore(null);
         setError(null);
-        
 
         const token = await getAzureSpeechToken();
-        setStatus("listening");
+        
         const result = await evaluatePronunciation(
           text,
           targetLanguage,
@@ -61,6 +60,9 @@ export const PronunciationProvider = ({
           },
           () => {
             setStatus("analyzing");
+          },
+          () => {
+            setStatus("listening"); // <-- Fires when Azure's mic & WebSocket are actually open
           },
         );
 
