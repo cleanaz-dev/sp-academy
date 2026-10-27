@@ -68,9 +68,12 @@ export const bridgeSceneSchema = z.object({
   imageS3Key: s3Key,
   npcAudioS3Key: optionalS3Key, // "" when NPC TTS failed
   npcLine: z.string(),
+  npcLineNative: z.string().optional(),
   altText: z.string(),
   videoS3Key: s3Key.optional(), // present in some runs, absent in others
 });
+
+
 
 export const vocabMomentItemSchema = z.object({
   word: z.string(),

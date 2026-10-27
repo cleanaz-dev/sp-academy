@@ -48,10 +48,10 @@ export const PronunciationProvider = ({
       try {
         setScore(null);
         setError(null);
-        setStatus("listening");
+        
 
         const token = await getAzureSpeechToken();
-
+        setStatus("listening");
         const result = await evaluatePronunciation(
           text,
           targetLanguage,

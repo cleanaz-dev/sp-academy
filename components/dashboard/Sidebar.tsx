@@ -201,43 +201,38 @@ export const Sidebar = ({
               {navItems.map((navItem) => {
                 const isActive = pathname.includes(navItem.href);
                 return (
-                  <SidebarMenuItem
-                    key={navItem.href}
-                    className={cn("py-1", sidebarOpen ? "px-2" : "px-0")}
-                  >
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      tooltip={navItem.label}
-                      className={cn(
-                        "group flex h-auto items-center gap-4 rounded-sm p-3 transition-all group-data-[collapsible=icon]:justify-center",
-                        isActive
-                          ? "bg-linear-to-r from-blue-400 via-purple-400 to-indigo-400 text-white"
-                          : "text-blue-500",
-                        "hover:bg-linear-to-r hover:from-green-300 hover:via-amber-300 hover:to-purple-300 hover:text-white"
-                      )}
-                      render={
-                        <Link href={navItem.href}>
-                          <div
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    tooltip={navItem.label}
+                    className={cn(
+                      "group group/navitem flex h-auto items-center gap-4 rounded-sm p-3 transition-all group-data-[collapsible=icon]:justify-center",
+                      isActive
+                        ? "bg-linear-to-r from-primary via-secondary to-accent  text-white  "
+                        : "text-blue-500",
+                    )}
+                    render={
+                      <Link href={navItem.href}>
+                        <div
+                          className={cn(
+                            "shrink-0",
+                            isActive ? "text-white" : "text-blue-400",
+                          )}
+                        >
+                          {navItem.icon}
+                        </div>
+                        {sidebarOpen && (
+                          <span
                             className={cn(
-                              "shrink-0",
-                              isActive ? "text-white" : "text-blue-400"
+                              "truncate text-sm font-medium transition-transform duration-300 ease-out group-hover/navitem:translate-x-1",
+                              isActive ? "text-white font-bold " : "text-blue-500",
                             )}
                           >
-                            {navItem.icon}
-                          </div>
-                          {sidebarOpen && (
-                            <span
-                              className={`truncate text-sm font-medium ${
-                                isActive ? "text-white" : "text-blue-500"
-                              }`}
-                            >
-                              {navItem.label}
-                            </span>
-                          )}
-                        </Link>
-                      }
-                    />
-                  </SidebarMenuItem>
+                            {navItem.label}
+                          </span>
+                        )}
+                      </Link>
+                    }
+                  />
                 );
               })}
             </SidebarMenu>
@@ -272,7 +267,7 @@ export const Sidebar = ({
             quality={100}
             className={cn(
               "h-auto object-contain transition-all duration-200",
-              sidebarOpen ? "w-[160px]" : "w-8"
+              sidebarOpen ? "w-[160px]" : "w-8",
             )}
           />
         </div>
