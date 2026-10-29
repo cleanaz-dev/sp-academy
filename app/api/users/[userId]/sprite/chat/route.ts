@@ -19,6 +19,9 @@ import {
   DossierV2,
 } from "@/lib/sprites/build-dossier";
 
+import { getCachedDossier } from "@/lib/sprites/get-cached-dossier";
+import { parseAndValidateSpriteWidgets } from "@/lib/sprites/sprite-chat-tool-functions";
+
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
@@ -28,7 +31,12 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 
 function clean(value: unknown, fallback: string, max = 100) {
   if (typeof value !== "string") return fallback;
-  return value.replace(/[\r\n"]/g, " ").trim().slice(0, max) || fallback;
+  return (
+    value
+      .replace(/[\r\n"]/g, " ")
+      .trim()
+      .slice(0, max) || fallback
+  );
 }
 
 function stripArtifacts(str: string): string {
@@ -44,7 +52,7 @@ function getLastUserText(messages: UIMessage[]): string {
     if (messages[i].role === "user") {
       return messages[i].parts
         .filter(
-          (p): p is Extract<typeof p, { type: "text" }> => p.type === "text"
+          (p): p is Extract<typeof p, { type: "text" }> => p.type === "text",
         )
         .map((p) => p.text)
         .join("");
@@ -61,7 +69,7 @@ function describeType(value: unknown): string {
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ userId: string }> }
+  { params }: { params: Promise<{ userId: string }> },
 ) {
   const reqId = crypto.randomUUID().slice(0, 8);
   const tag = `[sprite-chat:${reqId}]`;
@@ -91,7 +99,7 @@ export async function POST(
     });
     return NextResponse.json(
       { error: "messages must be an array" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -108,95 +116,96 @@ export async function POST(
     rawSpriteName.slice(1).toLowerCase();
 
   // Build the dossier on the server from the DB. body.dossier is ignored.
-  let dossier: DossierV2
+  let dossier: DossierV2;
   try {
-    dossier = await buildDossier(userId);
-  } catch (error) {
-    if (error instanceof DossierUnavailableError) {
-      console.warn(`${tag} 409 dossier unavailable`, {
+    try {
+      dossier = await getCachedDossier(userId);
+    } catch (error) {
+      if (error instanceof DossierUnavailableError) {
+        console.warn(`${tag} 409 dossier unavailable`, {
+          userId,
+          reason: error.message,
+        });
+        return NextResponse.json(
+          {
+            error: "Learning context isn't ready yet.",
+            code: "SPRITE_CONTEXT_UNAVAILABLE",
+            ...(IS_DEV ? { reason: error.message } : {}),
+          },
+          { status: 409 },
+        );
+      }
+
+      console.error(`${tag} 500 buildDossier crashed`, error);
+      return NextResponse.json(
+        { error: "Failed to build learning context" },
+        { status: 500 },
+      );
+    }
+
+    // Safety net: if the builder and the schema ever drift, fail loudly here.
+    const contextResult = SpriteContextSchema.safeParse(dossier);
+    if (!contextResult.success) {
+      const issues = contextResult.error.issues.map((issue) => ({
+        path: issue.path.join(".") || "(root)",
+        code: issue.code,
+        message: issue.message,
+      }));
+
+      console.error(`${tag} 500 built dossier does not match schema`, {
         userId,
-        reason: error.message,
+        sessionId,
+        dossierKeys: Object.keys(dossier),
+        issueCount: issues.length,
+        issues,
       });
+
+      if (IS_DEV) {
+        console.error(
+          `${tag} built dossier:`,
+          JSON.stringify(dossier, null, 2),
+        );
+      }
+
       return NextResponse.json(
         {
-          error: "Learning context isn't ready yet.",
-          code: "SPRITE_CONTEXT_UNAVAILABLE",
-          ...(IS_DEV ? { reason: error.message } : {}),
+          error: "Server-built sprite context is invalid.",
+          code: "SPRITE_CONTEXT_BUILD_MISMATCH",
+          ...(IS_DEV ? { issues } : {}),
         },
-        { status: 409 }
+        { status: 500 },
       );
     }
 
-    console.error(`${tag} 500 buildDossier crashed`, error);
-    return NextResponse.json(
-      { error: "Failed to build learning context" },
-      { status: 500 }
-    );
-  }
+    const d = contextResult.data;
 
-  // Safety net: if the builder and the schema ever drift, fail loudly here.
-  const contextResult = SpriteContextSchema.safeParse(dossier);
-  if (!contextResult.success) {
-    const issues = contextResult.error.issues.map((issue) => ({
-      path: issue.path.join(".") || "(root)",
-      code: issue.code,
-      message: issue.message,
-    }));
+    const userName = clean(d.userName, "Student");
+    const nativeLang = clean(d.nativeLang, "English");
+    const targetLang = clean(d.targetLang, "French");
+    const currentLessonTitle = d.currentLessonTitle ?? "General practice";
 
-    console.error(`${tag} 500 built dossier does not match schema`, {
-      userId,
+    console.log(`${tag} dossier OK`, {
       sessionId,
-      dossierKeys: Object.keys(dossier),
-      issueCount: issues.length,
-      issues,
+      nativeLang,
+      targetLang,
+      lesson: d.currentLessonTitle ?? null,
+      messageCount: messages.length,
+      focusWords: Array.isArray(d.focusWords) ? d.focusWords.length : 0,
+      recentWords: Array.isArray(d.recentWords) ? d.recentWords.length : 0,
     });
 
-    if (IS_DEV) {
-      console.error(
-        `${tag} built dossier:`,
-        JSON.stringify(dossier, null, 2)
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: "Server-built sprite context is invalid.",
-        code: "SPRITE_CONTEXT_BUILD_MISMATCH",
-        ...(IS_DEV ? { issues } : {}),
+    const evidence = JSON.stringify({
+      pronunciation: {
+        avg: d.avgPronunciation,
+        words: d.pronunciationWordCount,
+        attempts: d.pronunciationAttemptCount,
       },
-      { status: 500 }
-    );
-  }
+      mastery: { avg: d.avgMastery, words: d.masteryWordCount },
+      focusWords: d.focusWords,
+      recentWords: d.recentWords,
+    });
 
-  const d = contextResult.data;
-
-  const userName = clean(d.userName, "Student");
-  const nativeLang = clean(d.nativeLang, "English");
-  const targetLang = clean(d.targetLang, "French");
-  const currentLessonTitle = d.currentLessonTitle ?? "General practice";
-
-  console.log(`${tag} dossier OK`, {
-    sessionId,
-    nativeLang,
-    targetLang,
-    lesson: d.currentLessonTitle ?? null,
-    messageCount: messages.length,
-    focusWords: Array.isArray(d.focusWords) ? d.focusWords.length : 0,
-    recentWords: Array.isArray(d.recentWords) ? d.recentWords.length : 0,
-  });
-
-  const evidence = JSON.stringify({
-    pronunciation: {
-      avg: d.avgPronunciation,
-      words: d.pronunciationWordCount,
-      attempts: d.pronunciationAttemptCount,
-    },
-    mastery: { avg: d.avgMastery, words: d.masteryWordCount },
-    focusWords: d.focusWords,
-    recentWords: d.recentWords,
-  });
-
-  const learningContextPrompt = `
+    const learningContextPrompt = `
 LESSON: ${d.currentLessonTitle ?? "none"}. If none, don't invent or imply an active lesson.
 
 EVIDENCE (profile-wide averages over introduced words, NOT current-lesson scores):
@@ -218,176 +227,195 @@ TEACHING POLICY:
 - When teaching/practicing, prefer focus words per their reasons. Never force words or metrics into greetings or casual chat.
 `;
 
-  const systemPrompt = `
+    const systemPrompt = `
 You are ${spriteName}, a concise, human-like tutor helping ${userName} (native: ${nativeLang}, learning: ${targetLang}).
 
 ${learningContextPrompt}
 
 FORMAT:
 1. Answer only the learner's latest message and its intent.
-2. 1-2 short plain-text sentences for text-to-speech: no markdown, asterisks, bullets, or « ».
-3. All ${targetLang} must be 100% grammatically correct.
-4. Then "---JSON---" on a new line, then ONE JSON object with exactly: isTranslationRequired, translation, contextCard, action.
+2. NEVER write more than 2 short plain-text sentences before "---JSON---". Put any lists, stats, spelling fixes, or comparisons inside "chalkboard" in the JSON!
+3. Plain text before "---JSON---" is for text-to-speech: no markdown, asterisks, bullets, or « ».
+4. All ${targetLang} must be 100% grammatically correct.
+5. Then "---JSON---" on a new line, then ONE JSON object with: isTranslationRequired, translation, chalkboard, contextCard, action.
 
 TRANSLATION (decide before writing the JSON):
 - Spoken text mostly/entirely ${targetLang}: translation = natural ${nativeLang} translation of everything, isTranslationRequired = true. Never null here.
 - Spoken text entirely ${nativeLang} (even if quoting a ${targetLang} word): translation = null, isTranslationRequired = false.
 
 JSON FIELDS:
-- contextCard: null, or when teaching a rule: {"title": "...", "grammarRule": "1 sentence", "examples": [{"french": "${targetLang} example", "english": "${nativeLang} translation"}]}
+- chalkboard: null for simple casual replies. Use when summarizing progress/data, contrasting words, or correcting spelling/contractions:
+  {
+    "title": "Short board title",
+    "mode": "lesson_notes" | "correction" | "progress_snapshot",
+    "items": [
+      {"label": "Category/Metric", "target": "Word or Stat", "detail": "1 short explanation", "correctionFrom": "optional wrong form or null"}
+    ],
+    "takeaway": "Optional 1-sentence encouragement or tip"
+  }
+- contextCard: null, or when teaching a formal grammar rule with sentence pairs: {"title": "...", "grammarRule": "1 sentence", "examples": [{"french": "${targetLang} example", "english": "${nativeLang} translation"}]}
 - action: null, or to start a drill: {"type": "START_DRILL", "targetWord": "word"}
 
 Structure examples (never copy placeholder text):
 A: <1-2 sentences in ${targetLang}>
 ---JSON---
-{"isTranslationRequired":true,"translation":"<same in ${nativeLang}>","contextCard":null,"action":null}
+{"isTranslationRequired":true,"translation":"<same in ${nativeLang}>","chalkboard":null,"contextCard":null,"action":null}
 B: <1-2 sentences in ${nativeLang}>
 ---JSON---
-{"isTranslationRequired":false,"translation":null,"contextCard":null,"action":null}
+{"isTranslationRequired":false,"translation":null,"chalkboard":{"title":"...","mode":"progress_snapshot","items":[{"label":"Pronunciation","target":"58% (30 words)","detail":"Solid early foundation","correctionFrom":null}],"takeaway":"..."},"contextCard":null,"action":null}
 `;
 
-  try {
-    const userPrompt = getLastUserText(messages);
+    try {
+      const userPrompt = getLastUserText(messages);
 
-    console.log(`${tag} calling model`, {
-      model: GROQ_LLM,
-      promptChars: systemPrompt.length,
-      userPromptChars: userPrompt.length,
-    });
+      console.log(`${tag} calling model`, {
+        model: GROQ_LLM,
+        promptChars: systemPrompt.length,
+        userPromptChars: userPrompt.length,
+      });
 
-    const result = streamText({
-      model: groq(GROQ_LLM),
-      instructions: systemPrompt,
-      reasoning: "low",
-      messages: await convertToModelMessages(messages),
-      providerOptions: {
-        groq: {
-          reasoningFormat: "hidden",
+      const result = streamText({
+        model: groq(GROQ_LLM),
+        instructions: systemPrompt,
+        reasoning: "low",
+        messages: await convertToModelMessages(messages),
+        providerOptions: {
+          groq: {
+            reasoningFormat: "hidden",
+          },
         },
-      },
-      maxOutputTokens: 4096,
+        maxOutputTokens: 4096,
 
-      onFinish: async ({ text }) => {
-        console.log(`${tag} model finished`, {
-          ms: Date.now() - startedAt,
-          outputChars: text.length,
-          hasJsonDelimiter: text.includes("---JSON---"),
-        });
-
-        if (!sessionId) {
-          console.log(`${tag} no sessionId, skipping save`);
-          return;
-        }
-
-        try {
-          const [spokenPart, rawJson] = text.split("---JSON---");
-          const assistantReply = stripArtifacts(spokenPart || "");
-
-          let parsedJson: any = {};
-
-          if (!rawJson) {
-            console.warn(`${tag} model output had no ---JSON--- block`, {
-              preview: text.slice(0, 200),
-            });
-          } else {
-            try {
-              const cleanedJson = rawJson
-                .replace(/```json/gi, "")
-                .replace(/```/g, "")
-                .trim();
-
-              const parsed = JSON.parse(cleanedJson);
-
-              parsedJson =
-                parsed && typeof parsed === "object" ? parsed : {};
-            } catch (error) {
-              console.warn(`${tag} failed to parse model JSON`, {
-                error: error instanceof Error ? error.message : error,
-                rawJson: rawJson.slice(0, 300),
-              });
-              parsedJson = {};
-            }
-          }
-
-          // A non-empty translation IS the signal; don't depend on the model's boolean
-          const translation = parsedJson.translation
-            ? stripArtifacts(String(parsedJson.translation))
-            : null;
-
-          const isTranslationRequired = Boolean(translation);
-
-          const newTurn = {
-            id: crypto.randomUUID(),
-            userPrompt: stripArtifacts(userPrompt),
-            assistantReply:
-              assistantReply || "Let's continue practicing.",
-            isTranslationRequired,
-            translation,
-            contextCard: parsedJson.contextCard ?? null,
-            action: parsedJson.action ?? null,
-            createdAt: new Date().toISOString(),
-          };
-
-          const profileId = await getOrCreateProfileId(userId);
-
-          const existingSession = await prisma.spriteSession.findUnique({
-            where: { id: sessionId },
+        onFinish: async ({ text }) => {
+          console.log(`${tag} model finished`, {
+            ms: Date.now() - startedAt,
+            outputChars: text.length,
+            hasJsonDelimiter: text.includes("---JSON---"),
           });
 
-          const existingTurns = Array.isArray(existingSession?.turns)
-            ? (existingSession.turns as any[])
-            : [];
-
-          const alreadySaved = existingTurns.some(
-            (turn: any) =>
-              turn.userPrompt === newTurn.userPrompt &&
-              turn.assistantReply === newTurn.assistantReply
-          );
-
-          if (alreadySaved) {
-            console.log(`${tag} duplicate turn, skipping save`, { sessionId });
+          if (!sessionId) {
+            console.log(`${tag} no sessionId, skipping save`);
             return;
           }
 
-          const updatedTurns = [...existingTurns, newTurn];
+          try {
+            const [spokenPart, rawJson] = text.split("---JSON---");
+            const assistantReply = stripArtifacts(spokenPart || "");
+            const widgets = parseAndValidateSpriteWidgets(
+              rawJson,
+              stripArtifacts,
+            );
 
-          const autoTitle =
-            existingSession?.title && existingSession.title !== "New Session"
-              ? existingSession.title
-              : String(userPrompt || currentLessonTitle).slice(0, 48);
+            let parsedJson: any = {};
 
-          await prisma.spriteSession.upsert({
-            where: { id: sessionId },
-            create: {
-              id: sessionId,
-              spriteProfileId: profileId,
-              title: autoTitle,
-              lessonTitle: currentLessonTitle,
-              turns: updatedTurns,
-            },
-            update: {
-              title: autoTitle,
-              turns: updatedTurns,
-            },
-          });
+            if (!rawJson) {
+              console.warn(`${tag} model output had no ---JSON--- block`, {
+                preview: text.slice(0, 200),
+              });
+            } else {
+              try {
+                const cleanedJson = rawJson
+                  .replace(/```json/gi, "")
+                  .replace(/```/g, "")
+                  .trim();
 
-          console.log(`${tag} turn saved`, {
-            sessionId,
-            created: !existingSession,
-            turnCount: updatedTurns.length,
-            isTranslationRequired,
-            hasContextCard: Boolean(newTurn.contextCard),
-            action: newTurn.action?.type ?? null,
-          });
-        } catch (error) {
-          console.error(`${tag} [Chat onFinish Save Error]:`, error);
-        }
-      },
-    });
+                const parsed = JSON.parse(cleanedJson);
 
-    return createUIMessageStreamResponse({
-      stream: toUIMessageStream({ stream: result.stream }),
-    });
+                parsedJson = parsed && typeof parsed === "object" ? parsed : {};
+              } catch (error) {
+                console.warn(`${tag} failed to parse model JSON`, {
+                  error: error instanceof Error ? error.message : error,
+                  rawJson: rawJson.slice(0, 300),
+                });
+                parsedJson = {};
+              }
+            }
+
+            // A non-empty translation IS the signal; don't depend on the model's boolean
+            const translation = parsedJson.translation
+              ? stripArtifacts(String(parsedJson.translation))
+              : null;
+
+            const isTranslationRequired = Boolean(translation);
+
+            const newTurn = {
+              id: crypto.randomUUID(),
+              userPrompt: stripArtifacts(userPrompt),
+              assistantReply: assistantReply || "Let's continue practicing.",
+              isTranslationRequired: widgets.isTranslationRequired,
+              translation: widgets.translation,
+              chalkboard: widgets.chalkboard,
+              contextCard: widgets.contextCard,
+              action: widgets.action,
+              createdAt: new Date().toISOString(),
+            };
+            const profileId = await getOrCreateProfileId(userId);
+
+            const existingSession = await prisma.spriteSession.findUnique({
+              where: { id: sessionId },
+            });
+
+            const existingTurns = Array.isArray(existingSession?.turns)
+              ? (existingSession.turns as any[])
+              : [];
+
+            const alreadySaved = existingTurns.some(
+              (turn: any) =>
+                turn.userPrompt === newTurn.userPrompt &&
+                turn.assistantReply === newTurn.assistantReply,
+            );
+
+            if (alreadySaved) {
+              console.log(`${tag} duplicate turn, skipping save`, {
+                sessionId,
+              });
+              return;
+            }
+
+            const updatedTurns = [...existingTurns, newTurn];
+
+            const autoTitle =
+              existingSession?.title && existingSession.title !== "New Session"
+                ? existingSession.title
+                : String(userPrompt || currentLessonTitle).slice(0, 48);
+
+            await prisma.spriteSession.upsert({
+              where: { id: sessionId },
+              create: {
+                id: sessionId,
+                spriteProfileId: profileId,
+                title: autoTitle,
+                lessonTitle: currentLessonTitle,
+                turns: updatedTurns,
+              },
+              update: {
+                title: autoTitle,
+                turns: updatedTurns,
+              },
+            });
+
+            console.log(`${tag} turn saved`, {
+              sessionId,
+              created: !existingSession,
+              turnCount: updatedTurns.length,
+              isTranslationRequired,
+              hasContextCard: Boolean(newTurn.contextCard),
+              action: newTurn.action?.type ?? null,
+            });
+          } catch (error) {
+            console.error(`${tag} [Chat onFinish Save Error]:`, error);
+          }
+        },
+      });
+
+      return createUIMessageStreamResponse({
+        stream: toUIMessageStream({ stream: result.stream }),
+      });
+    } catch (error) {
+      console.error(`${tag} Groq chat error:`, error);
+
+      return NextResponse.json({ error: "AI service error" }, { status: 502 });
+    }
   } catch (error) {
     console.error(`${tag} Groq chat error:`, error);
 

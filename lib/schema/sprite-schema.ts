@@ -100,6 +100,22 @@ export const SpriteContextSchema = z.object({
   lastUpdated: z.string().datetime(),
 });
 
+export const ChalkboardItemSchema = z.object({
+  label: z.string(), // e.g., "Contraction" | "Watch Out" | "Stat" | "Pattern"
+  target: z.string(), // e.g., "J'ai faim / l'eau" or "58% Pronunciation"
+  detail: z.string(), // e.g., "Always drop the vowel before a vowel sound"
+  correctionFrom: z.string().nullable().optional(), // e.g., "Jai faim" (renders crossed-out -> target)
+});
+
+export const ChalkboardSchema = z.object({
+  title: z.string(), // e.g., "Progress Snapshot" or "Contractions & Endings"
+  mode: z.enum(["lesson_notes", "correction", "progress_snapshot"]).default("lesson_notes"),
+  items: z.array(ChalkboardItemSchema).min(1).max(4),
+  takeaway: z.string().nullable().optional(), // 1-line bottom summary on the board
+});
+
+export type ChalkboardData = z.infer<typeof ChalkboardSchema>;
+
 export type SpriteFocusWord = z.infer<typeof SpriteFocusWordSchema>;
 
 
