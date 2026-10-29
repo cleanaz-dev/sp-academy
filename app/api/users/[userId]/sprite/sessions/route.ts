@@ -65,7 +65,10 @@ export async function GET(
     return NextResponse.json({ sessions });
   } catch (err) {
     console.error("[SpriteSessions GET Error]:", err);
-    return NextResponse.json({ sessions: [], error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { sessions: [], error: String(err) },
+      { status: 500 }
+    );
   }
 }
 
@@ -85,7 +88,10 @@ export async function POST(
     const { sessionId, lessonTitle, turn } = body;
 
     if (!sessionId || !turn) {
-      return NextResponse.json({ error: "Missing sessionId or turn" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing sessionId or turn" },
+        { status: 400 }
+      );
     }
 
     const profileId = await getOrCreateProfileId(userId);
@@ -98,13 +104,34 @@ export async function POST(
       ? (existingSession.turns as any[])
       : [];
 
-    const alreadySaved = existingTurns.some(
+    const alreadySavedIndex = existingTurns.findIndex(
       (t: any) =>
         t.id === turn.id ||
-        (t.userPrompt === turn.userPrompt && t.assistantReply === turn.assistantReply)
+        (t.userPrompt === turn.userPrompt &&
+          t.assistantReply === turn.assistantReply)
     );
 
-    const updatedTurns = alreadySaved ? existingTurns : [...existingTurns, turn];
+    let updatedTurns: any[];
+    if (alreadySavedIndex !== -1) {
+      const prevTurn = existingTurns[alreadySavedIndex];
+      updatedTurns = [...existingTurns];
+      updatedTurns[alreadySavedIndex] = {
+        ...prevTurn,
+        ...turn,
+        translation: turn.translation ?? prevTurn.translation ?? null,
+        isTranslationRequired: Boolean(
+          turn.isTranslationRequired ??
+            prevTurn.isTranslationRequired ??
+            turn.translation ??
+            prevTurn.translation
+        ),
+        chalkboard: turn.chalkboard ?? prevTurn.chalkboard ?? null,
+        contextCard: turn.contextCard ?? prevTurn.contextCard ?? null,
+        action: turn.action ?? prevTurn.action ?? null,
+      };
+    } else {
+      updatedTurns = [...existingTurns, turn];
+    }
 
     const autoTitle =
       existingSession?.title && existingSession.title !== "New Session"

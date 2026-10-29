@@ -124,6 +124,7 @@ const [isHovered, setIsHovered] = useState(false);
         assistantReply: parsed.spokenText || "Let's continue practicing.",
         isTranslationRequired: parsed.isTranslationRequired,
         translation: parsed.translation ?? null,
+        chalkboard: parsed.chalkboard ?? null, // <--- NEW: include chalkboard!
         contextCard: parsed.contextCard ?? null,
         action: parsed.action ?? null,
         createdAt: new Date().toISOString(),
