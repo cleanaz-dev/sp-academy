@@ -104,6 +104,7 @@ interface SpriteContextValue {
   summonSprite: (payload: SpritePayload) => void;
   summonSpriteNode: (options: {
     orderIndex: number;
+    stepType?: "SPOON" | "BRIDGE" | "BOSS"
     dedupeKey?: string;
     actionLabel?: string;
     onAction?: () => void;
@@ -261,21 +262,25 @@ export function SpriteProvider({
     },
     [isChatOpen, playAudioUrl, stopAudio]
   );
-
-  // Centralized helper so pages don't have to manually fetch & wire SpriteNodes
-  const summonSpriteNode = useCallback(
+const summonSpriteNode = useCallback(
     async ({
       orderIndex,
+      stepType,
       dedupeKey,
       actionLabel,
       onAction,
     }: {
       orderIndex: number;
+      stepType?: "SPOON" | "BRIDGE" | "BOSS";
       dedupeKey?: string;
       actionLabel?: string;
       onAction?: () => void;
     }) => {
       if (!spriteData?.sprite) return;
+
+      // Safety check: Boss nodes are strictly multiples of 7 (7, 14, 21, 28, 35)
+      if (stepType === "BOSS" && orderIndex % 7 !== 0) return;
+      if (stepType !== "BOSS" && orderIndex % 7 === 0) return;
 
       const storageKey = dedupeKey || `sprite_seen_${orderIndex}`;
       if (
@@ -296,6 +301,19 @@ export function SpriteProvider({
 
       if (!node) return;
 
+      // Guard: If the DB node at a Spoon/Bridge index accidentally has a Boss header
+      // (from the Lambda prompt confusing subStep===3 with Boss), don't show a Boss alert on a Spoon!
+      const isAccidentalBossNode =
+        stepType !== "BOSS" &&
+        /boss/i.test(`${node.header ?? ""} ${node.action ?? ""}`);
+
+      if (isAccidentalBossNode) {
+        console.warn(
+          `[Sprite] Skipped mislabeled Boss node at orderIndex=${orderIndex} during ${stepType}`
+        );
+        return;
+      }
+
       summonedKeysRef.current.add(storageKey);
       if (typeof window !== "undefined") {
         sessionStorage.setItem(storageKey, "1");
@@ -303,17 +321,18 @@ export function SpriteProvider({
 
       summonSprite({
         id: node.nodeId,
-        badge: node.header ?? undefined,
+        badge: node.header ?? actionLabel ?? undefined,
         text: node.nativeBody,
         targetText: node.targetBody ?? undefined,
         audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
         targetAudioUrl: node.targetAudioUrl,
         autoPlayAudio: true,
-        duration: 20000,
+        duration: 9000, // Auto-hide after 9 seconds instead of lingering for 20s
         position: "bottom-right",
         action: onAction
           ? {
-              label: node.action || actionLabel || "Continue",
+              // Always trust the page's exact step label ("Start Spoon 15") over stale DB action text
+              label: actionLabel || node.action || "Continue",
               onClick: onAction,
               variant: "primary",
             }

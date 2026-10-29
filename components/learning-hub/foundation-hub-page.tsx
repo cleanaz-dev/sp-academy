@@ -138,8 +138,9 @@ export default function FoundationHubPage({
     const focusItemId =
       nextLesson?.id ?? vocabDue?.id ?? bossDue?.id ?? String(orderIndex);
 
-    summonSpriteNode({
+   summonSpriteNode({
       orderIndex,
+      stepType: currentFocus?.type, // "SPOON" | "BRIDGE" | "BOSS"
       dedupeKey: `sprite_seen_${orderIndex}_${focusItemId}`,
       actionLabel: stepLabel,
       onAction: () => router.push(actionHref!),

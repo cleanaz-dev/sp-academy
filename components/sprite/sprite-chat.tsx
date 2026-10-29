@@ -33,22 +33,24 @@ interface SpriteChatProps {
 }
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
-  const {
-    profile,
-    spriteName,
-    avatarSrc,
-    isChatOpen,
-    openChat,
-    closeChat,
-    activeTab,
-    setActiveTab,
-    viewMode,
-    setViewMode,
-    unreadCount,
-    pendingPrompt,
-    clearPendingPrompt,
-    deleteSession,
-  } = useSprite();
+
+const {
+  profile,
+  spriteName,
+  avatarSrc,
+  isChatOpen,
+  openChat,
+  closeChat,
+  activeTab,
+  setActiveTab,
+  viewMode,
+  setViewMode,
+  unreadCount,
+  pendingPrompt,
+  clearPendingPrompt,
+  deleteSession,
+  isShowing, // <--- true when the floating notification toast is visible
+} = useSprite();
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
@@ -56,6 +58,8 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     null,
   );
   const [input, setInput] = useState("");
+  const [isLabelExpanded, setIsLabelExpanded] = useState(true);
+const [isHovered, setIsHovered] = useState(false);
 
   const lastUserPromptRef = useRef<string>("");
 
@@ -255,28 +259,53 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     sendWithSessionBody(`Help me practice how to use "${word}"`);
   };
 
+  useEffect(() => {
+  setIsLabelExpanded(true);
+  const timer = setTimeout(() => {
+    setIsLabelExpanded(false);
+  }, 6000); // Shrinks into just the avatar after 6 seconds
+  return () => clearTimeout(timer);
+}, [aiBrain.currentLessonTitle]);
+
+const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
+
   return (
     <>
-      {/* FLOATING TRIGGER BUTTON */}
+   {/* FLOATING TRIGGER BUTTON */}
       <AnimatePresence>
         {!isChatOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-40 flex items-center gap-3 cursor-pointer group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             onClick={() => openChat()}
+            className="fixed bottom-6 right-6 z-40 flex items-center gap-3 cursor-pointer group"
           >
-            <div className="hidden sm:flex flex-col items-end rounded-2xl border border-teal-500/30 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md">
-              <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">
-                Current: {aiBrain.currentLessonTitle}
-              </span>
-              <span className="text-xs font-bold text-white">
-                Open {spriteName} Assistant
-              </span>
-            </div>
+            {/* Auto-shrinking lesson announcement pill */}
+            <AnimatePresence initial={false}>
+              {showLauncherPill && (
+                <motion.div
+                  key="launcher-pill"
+                  initial={{ opacity: 0, x: 16, scale: 0.92 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 12, scale: 0.92 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="hidden sm:flex flex-col items-end rounded-2xl border border-teal-500/30 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md overflow-hidden whitespace-nowrap"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-400 max-w-[260px] truncate">
+                    Current: {aiBrain.currentLessonTitle}
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    Open {spriteName} Assistant
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <div className="relative h-14 w-14">
+            {/* Avatar Button */}
+            <div className="relative h-14 w-14 shrink-0">
               <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
                 <img
                   src={avatarSrc}
