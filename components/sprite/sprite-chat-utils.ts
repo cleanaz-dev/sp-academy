@@ -109,11 +109,40 @@ export function parseMessagePayload(m?: UIMessage): ParsedPayload {
 
     const isTranslationRequired = Boolean(translation);
 
+    // 1. Check for a full chalkboard or newly generated step-deck (`newBoard`)
+    let resolvedChalkboard: ChalkboardData | null =
+      parsed.chalkboard ??
+      (parsed.newBoard && Array.isArray(parsed.newBoard.steps)
+        ? {
+            title: parsed.newBoard.title || "Lesson Board",
+            status: "IN_PROGRESS",
+            currentStepIndex: 0,
+            steps: parsed.newBoard.steps.map((s: any, idx: number) => ({
+              ...s,
+              id: s.id || `step-${idx + 1}`,
+            })),
+            takeaway: parsed.newBoard.takeaway ?? null,
+            lastFeedback: parsed.feedback ?? null,
+          }
+        : null);
+
+    // 2. If the AI is advancing or giving feedback on an already-cached board
+    if (!resolvedChalkboard && (parsed.stepDecision || parsed.feedback)) {
+      resolvedChalkboard = {
+        title: "__STEP_UPDATE__",
+        status:
+          parsed.stepDecision === "COMPLETE" ? "COMPLETED" : "IN_PROGRESS",
+        currentStepIndex: parsed.stepDecision === "ADVANCE" ? 1 : 0,
+        steps: [],
+        lastFeedback: parsed.feedback ?? null,
+      };
+    }
+
     return {
       spokenText,
       isTranslationRequired,
       translation,
-      chalkboard: parsed.chalkboard ?? null,
+      chalkboard: resolvedChalkboard,
       contextCard: parsed.contextCard ?? null,
       action: parsed.action ?? null,
     };
@@ -176,4 +205,33 @@ export function groupUIMessagesIntoTurns(messages: UIMessage[]): UIMessageTurn[]
     }
   }
   return turns;
+}
+
+export interface ChatContextData {
+  userName: string;
+  nativeLang: string;
+  targetLang: string;
+  currentLessonTitle: string;
+  /** Identifies the Spoon or Boss unit (e.g., "spoon-15" or "boss-5") so Vox sleeps through the Vocab Bridge too! */
+  wakeCycleKey?: string;
+  /** Direct link to the active Spoon, Vocab Bridge, or Boss Stage */
+  activeStepHref?: string;
+  /** Button label, e.g., "Start Spoon 15" | "Complete Vocab Bridge 15" | "Challenge Boss" */
+  activeStepLabel?: string;
+  topWord?: {
+    word: string;
+    translation?: string | null;
+    avgSpokenScore?: number | null;
+  } | null;
+  topPhrase?: {
+    word: string;
+    translation?: string | null;
+    avgSpokenScore?: number | null;
+  } | null;
+  recentWords?: {
+    word: string;
+    translation?: string | null;
+    status: string;
+  }[] | null;
+  avgPronunciation: number;
 }

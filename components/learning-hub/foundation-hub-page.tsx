@@ -254,7 +254,7 @@ export default function FoundationHubPage({
         </div>
       </main>
 
-      {user?.id && (
+    {user?.id && (
         <SpriteChat
           userId={user.id}
           initialContext={{
@@ -264,6 +264,40 @@ export default function FoundationHubPage({
             currentLessonTitle:
               (currentFocus?.data as any)?.title ||
               `Spoon ${(currentFocus?.data as any)?.orderIndex || 1}`,
+            // 🟢 NEW: Spoon 15 + Bridge 15 share the same `spoon-15` cycle key!
+            // Vox only wakes up when the next Spoon (spoon-16) or a Boss Stage (boss-5) unlocks!
+            wakeCycleKey:
+              currentFocus?.type === "BOSS"
+                ? `boss-${
+                    (bossDue as any)?.milestoneIndex ??
+                    (bossDue as any)?.bossStage?.milestoneIndex ??
+                    Math.ceil(completedLessonsCount / 3)
+                  }`
+                : `spoon-${
+                    (currentFocus?.data as any)?.orderIndex ??
+                    completedLessonsCount + 1
+                  }`,
+            activeStepHref:
+              currentFocus?.type === "BOSS" && bossDue
+                ? getBossHref(
+                    (bossDue as any)?.bossStage?.id ??
+                      (bossDue as any)?.id ??
+                      courseId
+                  )
+                : nextLesson
+                  ? getLessonHref(nextLesson.id)
+                  : vocabDue
+                    ? getLessonHref(vocabDue.id)
+                    : undefined,
+            activeStepLabel:
+              currentFocus?.type === "BOSS"
+                ? "Challenge Boss Stage"
+                : currentFocus?.type === "BRIDGE"
+                  ? "Complete Vocab Bridge"
+                  : `Start Spoon ${
+                      (nextLesson as any)?.orderIndex ??
+                      completedLessonsCount + 1
+                    }`,
             topWord: path?.matrixStats?.topWord || null,
             topPhrase: path?.matrixStats?.topPhrase || null,
             recentWords: path?.matrixStats?.recentWords || [],

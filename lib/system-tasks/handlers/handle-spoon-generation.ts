@@ -4,16 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { pusherServer } from "@/lib/pusher-server";
 import { foundationLessonWebhookSchema } from "@/lib/schema/foundation/lesson-schema";
+import { clearLiveTaskState } from "@/app/actions/system-task-actions";
+import { invalidateDossierCache } from "@/lib/sprites/get-cached-dossier";
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
 export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
-  // Log the full incoming body (indented) before anything can reject it
   console.log(
     `[spoon-generation] received body for task ${task.id}:\n${JSON.stringify(body, null, 2)}`
   );
 
-  // 1. Validate
+  // 1. Validate (now includes listeningContent.wordTimestamps)
   const parsed = foundationLessonWebhookSchema.safeParse(body);
   if (!parsed.success) {
     console.error(
@@ -35,7 +36,7 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
   const data = parsed.data;
 
   console.log(
-    `[spoon-generation] payload valid (user=${data.userId}, course=${data.foundationCourseId}, orderIndex=${data.orderIndex})`
+    `[spoon-generation] payload valid (user=${data.userId}, course=${data.foundationCourseId}, orderIndex=${data.orderIndex}, wordTimestamps=${data.listeningContent.wordTimestamps?.length ?? 0})`
   );
 
   // 2. Make sure the course exists and belongs to this user
@@ -47,7 +48,10 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
     console.warn(
       `[spoon-generation] course not found: course=${data.foundationCourseId} user=${data.userId} task=${task.id}`
     );
-    return NextResponse.json({ message: "Foundation course not found" }, { status: 404 });
+    return NextResponse.json(
+      { message: "Foundation course not found" },
+      { status: 404 }
+    );
   }
 
   // 3. Upsert (idempotent on courseId + orderIndex, so lambda retries are safe)
@@ -63,7 +67,6 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
     select: { status: true },
   });
 
-  // A retry must never knock a finished lesson back to an earlier state
   const status =
     existing?.status === FoundationLessonStatus.COMPLETED
       ? FoundationLessonStatus.COMPLETED
@@ -97,7 +100,7 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
     select: { id: true },
   });
 
-  // 3.5 🟢 Seed / Enrich User's Word Matrix from lessonHandoff.wordLexicon
+  // 3.5 Seed / Enrich User's Word Matrix from lessonHandoff.wordLexicon
   const targetLang = data.targetLang;
   const wordLexicon = data.lessonHandoff.wordLexicon;
 
@@ -130,7 +133,6 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
               },
             },
             update: {
-              // Enrich existing word row with metadata if it was missing
               wordType: entry.wordType,
               partOfSpeech: entry.partOfSpeech,
               ...(entry.translation ? { translation: entry.translation } : {}),
@@ -155,7 +157,7 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
               componentWords: entry.componentWords || [],
               audioMaleKey: entry.audio?.m || null,
               audioFemaleKey: entry.audio?.f || null,
-              seenCount: 0, // Will increment as soon as they see/tap it in the lesson
+              seenCount: 0,
               status: "NEW",
             },
           });
@@ -166,30 +168,41 @@ export async function handleSpoonGeneration(task: SystemTask, body: unknown) {
         `[spoon-generation] 🧠 Enriched ${lexiconEntries.length} lexicon items in Word Matrix for user=${data.userId}`
       );
     } catch (matrixErr) {
-      // Never fail lesson generation if matrix seeding has a hiccup
       console.error("[spoon-generation] matrix lexicon seed error:", matrixErr);
     }
   }
 
-  // 4. Tell the client it's ready (failure here must not fail the webhook)
+  // 4. Clear live Redis task state & invalidate Sprite Dossier cache so the AI sees the new lesson immediately
+  await Promise.all([
+    clearLiveTaskState(data.userId),
+    invalidateDossierCache(data.userId),
+  ]);
+
+  // 5. Tell the client it's ready via Pusher
   try {
-    await pusherServer.trigger(`user-${data.userId}`, "foundation-lesson-ready", {
-      lessonId: lesson.id,
-      orderIndex: data.orderIndex,
-    });
+    await Promise.all([
+      pusherServer.trigger(`user-${data.userId}`, "foundation-lesson-ready", {
+        lessonId: lesson.id,
+        orderIndex: data.orderIndex,
+      }),
+      pusherServer.trigger(`user-${data.userId}`, "system-task-completed", {
+        taskId: task.id,
+        lessonId: lesson.id,
+      }),
+    ]);
   } catch (err) {
     console.error("[spoon-generation] pusher failed", err);
   }
 
-  // TODO: mark the SystemTask complete the same way your other handlers do
-   // 6. Mark the task complete
-    await prisma.systemTask.update({
-      where: { id: task.id },
-      data: { status: "COMPLETED" },
-    });
-  
-  console.log(`[spoon-generation] ✅ lesson saved & completed taskId=${task.id} lessonId=${lesson.id}`);
+  // 6. Mark the SystemTask complete
+  await prisma.systemTask.update({
+    where: { id: task.id },
+    data: { status: "COMPLETED" },
+  });
 
-  // The lambda reads `lessonId` from this response to trigger the vocab builder
+  console.log(
+    `[spoon-generation] ✅ lesson saved & completed taskId=${task.id} lessonId=${lesson.id}`
+  );
+
   return NextResponse.json({ lessonId: lesson.id });
 }

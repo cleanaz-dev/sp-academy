@@ -33,33 +33,34 @@ interface SpriteChatProps {
 }
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
-
-const {
-  profile,
-  spriteName,
-  avatarSrc,
-  isChatOpen,
-  openChat,
-  closeChat,
-  activeTab,
-  setActiveTab,
-  viewMode,
-  setViewMode,
-  unreadCount,
-  pendingPrompt,
-  clearPendingPrompt,
-  deleteSession,
-  isShowing, // <--- true when the floating notification toast is visible
-} = useSprite();
+  const {
+    profile,
+    spriteName,
+    avatarSrc,
+    isChatOpen,
+    openChat,
+    closeChat,
+    activeTab,
+    setActiveTab,
+    viewMode,
+    setViewMode,
+    unreadCount,
+    pendingPrompt,
+    clearPendingPrompt,
+    deleteSession,
+    isShowing,
+  } = useSprite();
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
   const [selectedTurnIndex, setSelectedTurnIndex] = useState<number | null>(
-    null,
+    null
   );
   const [input, setInput] = useState("");
+
+  // Auto-shrink the floating launcher label after 6 seconds
   const [isLabelExpanded, setIsLabelExpanded] = useState(true);
-const [isHovered, setIsHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const lastUserPromptRef = useRef<string>("");
 
@@ -70,6 +71,16 @@ const [isHovered, setIsHovered] = useState(false);
     currentLessonTitle: "Active Lesson",
     avgPronunciation: 0,
   };
+
+  useEffect(() => {
+    setIsLabelExpanded(true);
+    const timer = setTimeout(() => {
+      setIsLabelExpanded(false);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [aiBrain.currentLessonTitle]);
+
+  const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
 
   const apiDossier = {
     ...aiBrain,
@@ -110,7 +121,7 @@ const [isHovered, setIsHovered] = useState(false);
       new DefaultChatTransport({
         api: `/api/users/${userId}/sprite/chat`,
       }),
-    [userId],
+    [userId]
   );
 
   const { messages, setMessages, sendMessage, status, error } = useChat({
@@ -124,7 +135,7 @@ const [isHovered, setIsHovered] = useState(false);
         assistantReply: parsed.spokenText || "Let's continue practicing.",
         isTranslationRequired: parsed.isTranslationRequired,
         translation: parsed.translation ?? null,
-        chalkboard: parsed.chalkboard ?? null, // <--- NEW: include chalkboard!
+        chalkboard: parsed.chalkboard ?? null,
         contextCard: parsed.contextCard ?? null,
         action: parsed.action ?? null,
         createdAt: new Date().toISOString(),
@@ -156,41 +167,6 @@ const [isHovered, setIsHovered] = useState(false);
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  const sendWithSessionBody = useCallback(
-    (text: string) => {
-      lastUserPromptRef.current = text;
-      sendMessage(
-        { text },
-        {
-          body: {
-            sessionId: sessionRef.current.sessionId,
-            spriteName: sessionRef.current.spriteName,
-            dossier: sessionRef.current.dossier,
-          },
-        },
-      );
-    },
-    [sendMessage],
-  );
-
-  const handleQuickPrompt = useCallback(
-    (promptText: string) => {
-      if (isLoading) return;
-      setSelectedTurnIndex(null);
-      setActiveTab("session");
-      sendWithSessionBody(promptText);
-    },
-    [isLoading, setActiveTab, sendWithSessionBody],
-  );
-
-  // Fire any prompt queued via openChat({ prompt: "..." })
-  useEffect(() => {
-    if (isChatOpen && pendingPrompt && !isLoading) {
-      handleQuickPrompt(pendingPrompt);
-      clearPendingPrompt();
-    }
-  }, [isChatOpen, pendingPrompt, isLoading, handleQuickPrompt, clearPendingPrompt]);
-
   const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
 
   const currentTurnIdx =
@@ -202,8 +178,74 @@ const [isHovered, setIsHovered] = useState(false);
 
   const activeAssistantPayload = useMemo(
     () => parseMessagePayload(activeTurn?.assistantMessage),
-    [activeTurn?.assistantMessage],
+    [activeTurn?.assistantMessage]
   );
+
+const isSnoozing = useMemo(() => {
+    const currentTitle = cleanDisplayString(
+      aiBrain.currentLessonTitle
+    ).toLowerCase();
+
+    // 1. Check active session: if a board exists, only snooze once status === "COMPLETED"!
+    const currentBoard = activeAssistantPayload.chalkboard;
+    if (currentBoard) {
+      if (currentBoard.status === "COMPLETED") return true;
+      return false; // Keep Vox awake while the student is still on Step 1..N!
+    }
+
+    // 2. Check saved sessions for the current lesson
+    return sessionsList.some((sess) => {
+      const sessLesson = cleanDisplayString(
+        sess.lessonTitle || ""
+      ).toLowerCase();
+      if (!sessLesson || sessLesson !== currentTitle) return false;
+      return sess.board?.status === "COMPLETED";
+    });
+  }, [
+    aiBrain.currentLessonTitle,
+    activeAssistantPayload.chalkboard,
+    sessionsList,
+  ]);
+  const sendWithSessionBody = useCallback(
+    (text: string) => {
+      if (isSnoozing) return;
+      lastUserPromptRef.current = text;
+      sendMessage(
+        { text },
+        {
+          body: {
+            sessionId: sessionRef.current.sessionId,
+            spriteName: sessionRef.current.spriteName,
+            dossier: sessionRef.current.dossier,
+          },
+        }
+      );
+    },
+    [sendMessage, isSnoozing]
+  );
+
+  const handleQuickPrompt = useCallback(
+    (promptText: string) => {
+      if (isLoading || isSnoozing) return;
+      setSelectedTurnIndex(null);
+      setActiveTab("session");
+      sendWithSessionBody(promptText);
+    },
+    [isLoading, isSnoozing, setActiveTab, sendWithSessionBody]
+  );
+
+  useEffect(() => {
+    if (isChatOpen && pendingPrompt && !isLoading) {
+      handleQuickPrompt(pendingPrompt);
+      clearPendingPrompt();
+    }
+  }, [
+    isChatOpen,
+    pendingPrompt,
+    isLoading,
+    handleQuickPrompt,
+    clearPendingPrompt,
+  ]);
 
   useEffect(() => {
     if (isChatOpen) {
@@ -212,6 +254,7 @@ const [isHovered, setIsHovered] = useState(false);
   }, [isChatOpen, fetchSessions]);
 
   const startNewSession = () => {
+    if (isSnoozing) return;
     setSessionId(crypto.randomUUID());
     setMessages([]);
     setSelectedTurnIndex(null);
@@ -227,7 +270,7 @@ const [isHovered, setIsHovered] = useState(false);
   };
 
   const handleDeleteSession = async (
-    session: SpriteSessionData,
+    session: SpriteSessionData
   ): Promise<boolean> => {
     const ok = await deleteSession(session.id);
     if (!ok) return false;
@@ -246,7 +289,7 @@ const [isHovered, setIsHovered] = useState(false);
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const text = input.trim();
-    if (!text || isLoading) return;
+    if (!text || isLoading || isSnoozing) return;
     setSelectedTurnIndex(null);
     setActiveTab("session");
     sendWithSessionBody(text);
@@ -254,25 +297,15 @@ const [isHovered, setIsHovered] = useState(false);
   };
 
   const triggerPractice = (word: string) => {
-    if (isLoading) return;
+    if (isLoading || isSnoozing) return;
     setSelectedTurnIndex(null);
     setActiveTab("session");
     sendWithSessionBody(`Help me practice how to use "${word}"`);
   };
 
-  useEffect(() => {
-  setIsLabelExpanded(true);
-  const timer = setTimeout(() => {
-    setIsLabelExpanded(false);
-  }, 6000); // Shrinks into just the avatar after 6 seconds
-  return () => clearTimeout(timer);
-}, [aiBrain.currentLessonTitle]);
-
-const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
-
   return (
     <>
-   {/* FLOATING TRIGGER BUTTON */}
+      {/* FLOATING TRIGGER BUTTON */}
       <AnimatePresence>
         {!isChatOpen && (
           <motion.div
@@ -284,7 +317,6 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
             onClick={() => openChat()}
             className="fixed bottom-6 right-6 z-40 flex items-center gap-3 cursor-pointer group"
           >
-            {/* Auto-shrinking lesson announcement pill */}
             <AnimatePresence initial={false}>
               {showLauncherPill && (
                 <motion.div
@@ -299,15 +331,22 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
                     Current: {aiBrain.currentLessonTitle}
                   </span>
                   <span className="text-xs font-bold text-white">
-                    Open {spriteName} Assistant
+                    {isSnoozing
+                      ? `💤 ${spriteName} is Napping`
+                      : `Open ${spriteName} Assistant`}
                   </span>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Avatar Button */}
             <div className="relative h-14 w-14 shrink-0">
-              <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
+              <div
+                className={`h-full w-full overflow-hidden rounded-2xl border-2 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105 ${
+                  isSnoozing
+                    ? "border-indigo-400/50 opacity-85"
+                    : "border-teal-400/50"
+                }`}
+              >
                 <img
                   src={avatarSrc}
                   alt={spriteName}
@@ -315,12 +354,15 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
                 />
               </div>
 
-              {/* Unread Sprite Notification Badge */}
-              {unreadCount > 0 && (
+              {isSnoozing ? (
+                <span className="absolute -top-1.5 -right-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-indigo-500 px-1.5 text-[11px] font-black text-white ring-2 ring-slate-950 shadow-md">
+                  💤
+                </span>
+              ) : unreadCount > 0 ? (
                 <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-slate-950 shadow-md">
                   {unreadCount}
                 </span>
-              )}
+              ) : null}
             </div>
           </motion.div>
         )}
@@ -434,13 +476,15 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
                 <circle cx="260" cy="510" r="4" fill="#A855F7" />
               </svg>
 
-              {/* PART 1: HEADER */}
+             {/* PART 1: HEADER */}
               <SpriteChatHeader
                 spriteName={spriteName}
                 avatarSrc={avatarSrc}
                 currentLessonTitle={aiBrain.currentLessonTitle}
                 activeTab={activeTab}
                 sessionsCount={sessionsList.length}
+                isSnoozing={isSnoozing}
+                isSessionActive={turns.length > 0} // <--- Auto-collapses the top bar into a 44px strip!
                 onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
                 onClose={closeChat}
@@ -465,7 +509,11 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
                 activeTurn={activeTurn}
                 activeAssistantPayload={activeAssistantPayload}
                 isLoading={isLoading}
+                isSnoozing={isSnoozing}
                 error={error}
+                input={input}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
                 onSelectSession={selectSession}
                 onSelectTurnIndex={setSelectedTurnIndex}
                 onTriggerPractice={triggerPractice}
@@ -473,17 +521,20 @@ const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
                 onDeleteSession={handleDeleteSession}
               />
 
-              {/* PART 3: CONTROLS / INPUT (ONLY RENDERED INSIDE THE SESSION TAB) */}
-              {activeTab === "session" && (
-                <SpriteChatControls
-                  input={input}
-                  isLoading={isLoading}
-                  spriteName={spriteName}
-                  targetLang={aiBrain.targetLang}
-                  onInputChange={setInput}
-                  onSubmit={handleSubmit}
-                />
-              )}
+              {/* PART 3: BOTTOM SMS INPUT (Only rendered in Multi Mode when NOT snoozing) */}
+              {activeTab === "session" &&
+                viewMode === "multi" &&
+                turns.length > 0 &&
+                !isSnoozing && (
+                  <SpriteChatControls
+                    input={input}
+                    isLoading={isLoading}
+                    spriteName={spriteName}
+                    targetLang={aiBrain.targetLang}
+                    onInputChange={setInput}
+                    onSubmit={handleSubmit}
+                  />
+                )}
             </motion.div>
           </>
         )}

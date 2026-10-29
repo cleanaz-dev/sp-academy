@@ -12,15 +12,22 @@ import {
 import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
 
-import { SpriteContextSchema } from "@/lib/schema/sprite-schema";
 import {
-  buildDossier,
+  SpriteContextSchema,
+  ChalkboardSchema,
+  BoardFeedbackSchema,
+  type ChalkboardData,
+} from "@/lib/schema/sprite-schema";
+import {
   DossierUnavailableError,
-  DossierV2,
+  type DossierV2,
 } from "@/lib/sprites/build-dossier";
-
 import { getCachedDossier } from "@/lib/sprites/get-cached-dossier";
-import { parseAndValidateSpriteWidgets } from "@/lib/sprites/sprite-chat-tool-functions";
+import {
+  getCachedBoard,
+  saveCachedBoard,
+  applyStepDecisionToBoard,
+} from "@/lib/sprites/board-cache";
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -61,12 +68,6 @@ function getLastUserText(messages: UIMessage[]): string {
   return "";
 }
 
-function describeType(value: unknown): string {
-  if (value === null) return "null";
-  if (Array.isArray(value)) return "array";
-  return typeof value;
-}
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ userId: string }> },
@@ -76,27 +77,20 @@ export async function POST(
   const startedAt = Date.now();
 
   const { userId } = await params;
-  console.log(`${tag} POST start`, { userId });
 
   const user = await isUser(userId);
   if (!user) {
-    console.warn(`${tag} 404 user not found`, { userId });
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   let body: any;
   try {
     body = await req.json();
-  } catch (error) {
-    console.warn(`${tag} 400 invalid JSON body`, error);
+  } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   if (!Array.isArray(body.messages)) {
-    console.warn(`${tag} 400 messages is not an array`, {
-      messagesType: describeType(body.messages),
-      bodyKeys: Object.keys(body ?? {}),
-    });
     return NextResponse.json(
       { error: "messages must be an array" },
       { status: 400 },
@@ -104,7 +98,6 @@ export async function POST(
   }
 
   const messages: UIMessage[] = body.messages;
-
   const sessionId =
     typeof body.sessionId === "string" && body.sessionId.trim()
       ? body.sessionId.trim()
@@ -115,310 +108,281 @@ export async function POST(
     rawSpriteName.charAt(0).toUpperCase() +
     rawSpriteName.slice(1).toLowerCase();
 
-  // Build the dossier on the server from the DB. body.dossier is ignored.
+  // 1. Read Dossier from Upstash Redis Cache (or build if cache miss)
   let dossier: DossierV2;
   try {
-    try {
-      dossier = await getCachedDossier(userId);
-    } catch (error) {
-      if (error instanceof DossierUnavailableError) {
-        console.warn(`${tag} 409 dossier unavailable`, {
-          userId,
-          reason: error.message,
-        });
-        return NextResponse.json(
-          {
-            error: "Learning context isn't ready yet.",
-            code: "SPRITE_CONTEXT_UNAVAILABLE",
-            ...(IS_DEV ? { reason: error.message } : {}),
-          },
-          { status: 409 },
-        );
-      }
-
-      console.error(`${tag} 500 buildDossier crashed`, error);
-      return NextResponse.json(
-        { error: "Failed to build learning context" },
-        { status: 500 },
-      );
-    }
-
-    // Safety net: if the builder and the schema ever drift, fail loudly here.
-    const contextResult = SpriteContextSchema.safeParse(dossier);
-    if (!contextResult.success) {
-      const issues = contextResult.error.issues.map((issue) => ({
-        path: issue.path.join(".") || "(root)",
-        code: issue.code,
-        message: issue.message,
-      }));
-
-      console.error(`${tag} 500 built dossier does not match schema`, {
-        userId,
-        sessionId,
-        dossierKeys: Object.keys(dossier),
-        issueCount: issues.length,
-        issues,
-      });
-
-      if (IS_DEV) {
-        console.error(
-          `${tag} built dossier:`,
-          JSON.stringify(dossier, null, 2),
-        );
-      }
-
+    dossier = await getCachedDossier(userId);
+  } catch (error) {
+    if (error instanceof DossierUnavailableError) {
       return NextResponse.json(
         {
-          error: "Server-built sprite context is invalid.",
-          code: "SPRITE_CONTEXT_BUILD_MISMATCH",
-          ...(IS_DEV ? { issues } : {}),
+          error: "Learning context isn't ready yet.",
+          code: "SPRITE_CONTEXT_UNAVAILABLE",
+          ...(IS_DEV ? { reason: error.message } : {}),
         },
-        { status: 500 },
+        { status: 409 },
       );
     }
+    return NextResponse.json(
+      { error: "Failed to build learning context" },
+      { status: 500 },
+    );
+  }
 
-    const d = contextResult.data;
+  const contextResult = SpriteContextSchema.safeParse(dossier);
+  if (!contextResult.success) {
+    return NextResponse.json(
+      { error: "Server-built sprite context is invalid." },
+      { status: 500 },
+    );
+  }
 
-    const userName = clean(d.userName, "Student");
-    const nativeLang = clean(d.nativeLang, "English");
-    const targetLang = clean(d.targetLang, "French");
-    const currentLessonTitle = d.currentLessonTitle ?? "General practice";
+  const d = contextResult.data;
+  const userName = clean(d.userName, "Student");
+  const nativeLang = clean(d.nativeLang, "English");
+  const targetLang = clean(d.targetLang, "French");
+  const currentLessonTitle = d.currentLessonTitle ?? "General practice";
 
-    console.log(`${tag} dossier OK`, {
-      sessionId,
-      nativeLang,
-      targetLang,
-      lesson: d.currentLessonTitle ?? null,
-      messageCount: messages.length,
-      focusWords: Array.isArray(d.focusWords) ? d.focusWords.length : 0,
-      recentWords: Array.isArray(d.recentWords) ? d.recentWords.length : 0,
-    });
+  // 2. Check Upstash Redis for an Active Step-Deck Board on this sessionId
+  const cachedBoard = await getCachedBoard(sessionId);
+  const hasActiveBoard =
+    cachedBoard &&
+    cachedBoard.status === "IN_PROGRESS" &&
+    cachedBoard.steps.length > 0;
 
-    const evidence = JSON.stringify({
-      pronunciation: {
-        avg: d.avgPronunciation,
-        words: d.pronunciationWordCount,
-        attempts: d.pronunciationAttemptCount,
-      },
-      mastery: { avg: d.avgMastery, words: d.masteryWordCount },
-      focusWords: d.focusWords,
-      recentWords: d.recentWords,
-    });
+  const currentStep = hasActiveBoard
+    ? cachedBoard.steps[cachedBoard.currentStepIndex]
+    : null;
+  const nextStep =
+    hasActiveBoard &&
+    cachedBoard.currentStepIndex + 1 < cachedBoard.steps.length
+      ? cachedBoard.steps[cachedBoard.currentStepIndex + 1]
+      : null;
 
-    const learningContextPrompt = `
-LESSON: ${d.currentLessonTitle ?? "none"}. If none, don't invent or imply an active lesson.
+  const evidence = JSON.stringify({
+    pronunciation: {
+      avg: d.avgPronunciation,
+      words: d.pronunciationWordCount,
+      attempts: d.pronunciationAttemptCount,
+    },
+    mastery: { avg: d.avgMastery, words: d.masteryWordCount },
+    focusWords: d.focusWords,
+    recentWords: d.recentWords,
+  });
 
-EVIDENCE (profile-wide averages over introduced words, NOT current-lesson scores):
-${evidence}
+  // 3. Build Board-Aware Instructions
+  const boardPromptSection = hasActiveBoard
+    ? `
+ACTIVE CHALKBOARD STEP-DECK IN PROGRESS:
+- Board Title: "${cachedBoard.title}"
+- Progress: Step ${cachedBoard.currentStepIndex + 1} of ${cachedBoard.steps.length}
+- CURRENT STEP ON SCREEN: ${JSON.stringify(currentStep)}
+- NEXT STEP UPCOMING: ${nextStep ? JSON.stringify(nextStep) : "FINAL STEP (Board completes after this!)"}
 
-READING THE EVIDENCE:
-- A null average means not enough data, not zero ability. Low counts mean an uncertain average.
-- Never diagnose the learner from one overall average.
-- A focus word's "reason" is why it was picked, not proof it's generally hard:
-  due_review = due for review; weak_pronunciation = speaking practice may help (not necessarily weak vocab/grammar);
-  low_recognition = give more examples/scaffolding; low_mastery = more retrieval practice.
-- recentWords are background, not necessarily the current lesson.
-
-TEACHING POLICY:
-- Scale scaffolding by recognition/mastery. Suggest pronunciation practice based on pronunciation evidence.
-- Weak pronunciation alone never means simpler vocab or grammar; strong pronunciation never means advanced vocab.
-- Limited evidence: teach at the activity's level and gather evidence naturally; don't say the learner is struggling.
-  Strong evidence: fewer hints, more learner production.
-- When teaching/practicing, prefer focus words per their reasons. Never force words or metrics into greetings or casual chat.
+HOW TO HANDLE THIS TURN:
+- If the learner answered the CURRENT STEP correctly (or clicked "Next Step" / "Continue"):
+  Set "stepDecision": "ADVANCE", praise briefly in 1 sentence, and introduce the NEXT STEP (or congratulate on finishing if no next step).
+- If the learner made a spelling/accent/grammar mistake on CURRENT STEP:
+  Option A (minor accent like fatigue -> fatigué): Set "stepDecision": "ADVANCE" and include "feedback": {"status":"retry","correctionFrom":"wrong","correctionTo":"right","note":"1 short tip"}.
+  Option B (wrong word/meaning): Set "stepDecision": "STAY" so they stay on this step, give a 1-sentence nudge, and include "feedback": {"status":"retry","correctionFrom":"wrong","correctionTo":"right","note":"1 short tip"}.
+- Set "newBoard": null unless the learner explicitly asks to switch to a brand-new topic/quiz.
+`
+    : `
+NO ACTIVE CHALKBOARD DECK YET:
+- Whenever the learner asks to explain grammar, start a quiz, practice a word, or review their progress, create a 3-to-4 step deck in "newBoard"!
+- Each step in "newBoard.steps" gets the ENTIRE screen to itself. Mix step types naturally:
+  1. "teach_concept": Big targetPhrase, translation, formula ("Je + ai + soif"), and grammarTip.
+  2. "multiple_choice": A clear prompt, 3 options in "options", and "correctAnswer".
+  3. "write_response": A translation/fill-blank prompt, optional "hint", and "correctAnswer".
+  4. "pronunciation": A speaking prompt with targetPhrase and phonetic/grammarTip.
+- In your spoken text (1-2 sentences max), introduce ONLY Step 1!
 `;
 
-    const systemPrompt = `
+  const systemPrompt = `
 You are ${spriteName}, a concise, human-like tutor helping ${userName} (native: ${nativeLang}, learning: ${targetLang}).
+LESSON: ${currentLessonTitle}
+EVIDENCE: ${evidence}
 
-${learningContextPrompt}
+${boardPromptSection}
 
 FORMAT:
-1. Answer only the learner's latest message and its intent.
-2. NEVER write more than 2 short plain-text sentences before "---JSON---". Put any lists, stats, spelling fixes, or comparisons inside "chalkboard" in the JSON!
-3. Plain text before "---JSON---" is for text-to-speech: no markdown, asterisks, bullets, or « ».
-4. All ${targetLang} must be 100% grammatically correct.
-5. Then "---JSON---" on a new line, then ONE JSON object with: isTranslationRequired, translation, chalkboard, contextCard, action.
-
-TRANSLATION (decide before writing the JSON):
-- Spoken text mostly/entirely ${targetLang}: translation = natural ${nativeLang} translation of everything, isTranslationRequired = true. Never null here.
-- Spoken text entirely ${nativeLang} (even if quoting a ${targetLang} word): translation = null, isTranslationRequired = false.
-
-JSON FIELDS:
-- chalkboard: null for simple casual replies. Use when summarizing progress/data, contrasting words, or correcting spelling/contractions:
-  {
-    "title": "Short board title",
-    "mode": "lesson_notes" | "correction" | "progress_snapshot",
-    "items": [
-      {"label": "Category/Metric", "target": "Word or Stat", "detail": "1 short explanation", "correctionFrom": "optional wrong form or null"}
-    ],
-    "takeaway": "Optional 1-sentence encouragement or tip"
-  }
-- contextCard: null, or when teaching a formal grammar rule with sentence pairs: {"title": "...", "grammarRule": "1 sentence", "examples": [{"french": "${targetLang} example", "english": "${nativeLang} translation"}]}
-- action: null, or to start a drill: {"type": "START_DRILL", "targetWord": "word"}
-
-Structure examples (never copy placeholder text):
-A: <1-2 sentences in ${targetLang}>
----JSON---
-{"isTranslationRequired":true,"translation":"<same in ${nativeLang}>","chalkboard":null,"contextCard":null,"action":null}
-B: <1-2 sentences in ${nativeLang}>
----JSON---
-{"isTranslationRequired":false,"translation":null,"chalkboard":{"title":"...","mode":"progress_snapshot","items":[{"label":"Pronunciation","target":"58% (30 words)","detail":"Solid early foundation","correctionFrom":null}],"takeaway":"..."},"contextCard":null,"action":null}
+1. Write 1-2 short plain-text sentences before "---JSON---" (no markdown, bullets, or asterisks).
+2. Then "---JSON---" on a new line, followed by ONE JSON object:
+{
+  "isTranslationRequired": boolean,
+  "translation": string | null,
+  "stepDecision": "ADVANCE" | "STAY" | "COMPLETE" | null,
+  "feedback": {"status": "correct" | "retry", "correctionFrom": string | null, "correctionTo": string | null, "note": string | null} | null,
+  "newBoard": {
+    "title": "Short Deck Title",
+    "takeaway": "1-sentence summary rule",
+    "steps": [
+      {
+        "type": "teach_concept" | "multiple_choice" | "write_response" | "pronunciation",
+        "badge": "Concept" | "Quick Quiz" | "Write It" | "Speak It",
+        "prompt": "Instruction for this single step",
+        "targetPhrase": "${targetLang} focal phrase or null",
+        "translation": "${nativeLang} meaning or null",
+        "formula": "Block + Block + Block or null",
+        "grammarTip": "1-sentence note or null",
+        "hint": "Optional clue or null",
+        "options": ["opt1", "opt2", "opt3"] | null,
+        "correctAnswer": "expected answer or null"
+      }
+    ]
+  } | null
+}
 `;
 
-    try {
-      const userPrompt = getLastUserText(messages);
+  try {
+    const userPrompt = getLastUserText(messages);
 
-      console.log(`${tag} calling model`, {
-        model: GROQ_LLM,
-        promptChars: systemPrompt.length,
-        userPromptChars: userPrompt.length,
-      });
+    // Pre-process fast client step advances: if user clicked "Next Step" on a teach_concept step
+    const isManualStepAdvance =
+      /^next step/i.test(userPrompt.trim()) ||
+      /^got it, next step/i.test(userPrompt.trim());
 
-      const result = streamText({
-        model: groq(GROQ_LLM),
-        instructions: systemPrompt,
-        reasoning: "low",
-        messages: await convertToModelMessages(messages),
-        providerOptions: {
-          groq: {
-            reasoningFormat: "hidden",
-          },
+    const result = streamText({
+      model: groq(GROQ_LLM),
+      instructions: systemPrompt,
+      reasoning: "low",
+      messages: await convertToModelMessages(messages),
+      providerOptions: {
+        groq: {
+          reasoningFormat: "hidden",
         },
-        maxOutputTokens: 4096,
+      },
+      maxOutputTokens: 4096,
 
-        onFinish: async ({ text }) => {
-          console.log(`${tag} model finished`, {
-            ms: Date.now() - startedAt,
-            outputChars: text.length,
-            hasJsonDelimiter: text.includes("---JSON---"),
+      onFinish: async ({ text }) => {
+        if (!sessionId) return;
+
+        try {
+          const [spokenPart, rawJson] = text.split("---JSON---");
+          const assistantReply = stripArtifacts(spokenPart || "");
+
+          let parsedJson: any = {};
+          if (rawJson) {
+            try {
+              const cleanedJson = rawJson
+                .replace(/```json/gi, "")
+                .replace(/```/g, "")
+                .trim();
+              const parsed = JSON.parse(cleanedJson);
+              if (parsed && typeof parsed === "object") parsedJson = parsed;
+            } catch {
+              parsedJson = {};
+            }
+          }
+
+          const translation = parsedJson.translation
+            ? stripArtifacts(String(parsedJson.translation))
+            : null;
+          const isTranslationRequired = Boolean(translation);
+
+          // Resolve the updated Chalkboard state in Redis
+          let resolvedBoard: ChalkboardData | null = null;
+
+          if (
+            parsedJson.newBoard &&
+            Array.isArray(parsedJson.newBoard.steps) &&
+            parsedJson.newBoard.steps.length > 0
+          ) {
+            const candidate = ChalkboardSchema.safeParse({
+              title: parsedJson.newBoard.title || currentLessonTitle,
+              status: "IN_PROGRESS",
+              currentStepIndex: 0,
+              steps: parsedJson.newBoard.steps,
+              takeaway: parsedJson.newBoard.takeaway ?? null,
+              lastFeedback: null,
+            });
+            if (candidate.success) {
+              resolvedBoard = await saveCachedBoard(sessionId, candidate.data);
+            }
+          } else if (hasActiveBoard && cachedBoard) {
+            const decision: "ADVANCE" | "STAY" | "COMPLETE" =
+              isManualStepAdvance
+                ? "ADVANCE"
+                : parsedJson.stepDecision === "ADVANCE" ||
+                    parsedJson.stepDecision === "COMPLETE"
+                  ? parsedJson.stepDecision
+                  : "STAY";
+
+            const fbParsed = BoardFeedbackSchema.safeParse(parsedJson.feedback);
+            resolvedBoard = await applyStepDecisionToBoard(
+              sessionId,
+              cachedBoard,
+              decision,
+              fbParsed.success ? fbParsed.data : null,
+              userPrompt, // <--- records the user's exact answer on that step!
+            );
+          }
+
+          const newTurn = {
+            id: crypto.randomUUID(),
+            userPrompt: stripArtifacts(userPrompt),
+            assistantReply: assistantReply || "Let's continue practicing.",
+            isTranslationRequired,
+            translation,
+            chalkboard: resolvedBoard,
+            contextCard: null,
+            action: null,
+            createdAt: new Date().toISOString(),
+          };
+
+          const profileId = await getOrCreateProfileId(userId);
+          const existingSession = await prisma.spriteSession.findUnique({
+            where: { id: sessionId },
           });
 
-          if (!sessionId) {
-            console.log(`${tag} no sessionId, skipping save`);
-            return;
-          }
+          const existingTurns = Array.isArray(existingSession?.turns)
+            ? (existingSession.turns as any[])
+            : [];
 
-          try {
-            const [spokenPart, rawJson] = text.split("---JSON---");
-            const assistantReply = stripArtifacts(spokenPart || "");
-            const widgets = parseAndValidateSpriteWidgets(
-              rawJson,
-              stripArtifacts,
-            );
+          const updatedTurns = [...existingTurns, newTurn];
+          const autoTitle =
+            existingSession?.title && existingSession.title !== "New Session"
+              ? existingSession.title
+              : String(userPrompt || currentLessonTitle).slice(0, 48);
 
-            let parsedJson: any = {};
+          const finalBoardToSave =
+            resolvedBoard ?? (existingSession?.board as any) ?? null;
 
-            if (!rawJson) {
-              console.warn(`${tag} model output had no ---JSON--- block`, {
-                preview: text.slice(0, 200),
-              });
-            } else {
-              try {
-                const cleanedJson = rawJson
-                  .replace(/```json/gi, "")
-                  .replace(/```/g, "")
-                  .trim();
+          await prisma.spriteSession.upsert({
+            where: { id: sessionId },
+            create: {
+              id: sessionId,
+              spriteProfileId: profileId,
+              title: autoTitle,
+              lessonTitle: currentLessonTitle,
+              turns: updatedTurns,
+              board: finalBoardToSave, // <--- NEW: saved to SpriteSession.board!
+            },
+            update: {
+              title: autoTitle,
+              turns: updatedTurns,
+              ...(finalBoardToSave ? { board: finalBoardToSave } : {}), // <--- NEW!
+            },
+          });
 
-                const parsed = JSON.parse(cleanedJson);
+          console.log(`${tag} turn + board saved`, {
+            sessionId,
+            step: resolvedBoard
+              ? `${resolvedBoard.currentStepIndex + 1}/${resolvedBoard.steps.length}`
+              : "none",
+            status: resolvedBoard?.status ?? null,
+          });
+        } catch (error) {
+          console.error(`${tag} [Chat onFinish Save Error]:`, error);
+        }
+      },
+    });
 
-                parsedJson = parsed && typeof parsed === "object" ? parsed : {};
-              } catch (error) {
-                console.warn(`${tag} failed to parse model JSON`, {
-                  error: error instanceof Error ? error.message : error,
-                  rawJson: rawJson.slice(0, 300),
-                });
-                parsedJson = {};
-              }
-            }
-
-            // A non-empty translation IS the signal; don't depend on the model's boolean
-            const translation = parsedJson.translation
-              ? stripArtifacts(String(parsedJson.translation))
-              : null;
-
-            const isTranslationRequired = Boolean(translation);
-
-            const newTurn = {
-              id: crypto.randomUUID(),
-              userPrompt: stripArtifacts(userPrompt),
-              assistantReply: assistantReply || "Let's continue practicing.",
-              isTranslationRequired: widgets.isTranslationRequired,
-              translation: widgets.translation,
-              chalkboard: widgets.chalkboard,
-              contextCard: widgets.contextCard,
-              action: widgets.action,
-              createdAt: new Date().toISOString(),
-            };
-            const profileId = await getOrCreateProfileId(userId);
-
-            const existingSession = await prisma.spriteSession.findUnique({
-              where: { id: sessionId },
-            });
-
-            const existingTurns = Array.isArray(existingSession?.turns)
-              ? (existingSession.turns as any[])
-              : [];
-
-            const alreadySaved = existingTurns.some(
-              (turn: any) =>
-                turn.userPrompt === newTurn.userPrompt &&
-                turn.assistantReply === newTurn.assistantReply,
-            );
-
-            if (alreadySaved) {
-              console.log(`${tag} duplicate turn, skipping save`, {
-                sessionId,
-              });
-              return;
-            }
-
-            const updatedTurns = [...existingTurns, newTurn];
-
-            const autoTitle =
-              existingSession?.title && existingSession.title !== "New Session"
-                ? existingSession.title
-                : String(userPrompt || currentLessonTitle).slice(0, 48);
-
-            await prisma.spriteSession.upsert({
-              where: { id: sessionId },
-              create: {
-                id: sessionId,
-                spriteProfileId: profileId,
-                title: autoTitle,
-                lessonTitle: currentLessonTitle,
-                turns: updatedTurns,
-              },
-              update: {
-                title: autoTitle,
-                turns: updatedTurns,
-              },
-            });
-
-            console.log(`${tag} turn saved`, {
-              sessionId,
-              created: !existingSession,
-              turnCount: updatedTurns.length,
-              isTranslationRequired,
-              hasContextCard: Boolean(newTurn.contextCard),
-              action: newTurn.action?.type ?? null,
-            });
-          } catch (error) {
-            console.error(`${tag} [Chat onFinish Save Error]:`, error);
-          }
-        },
-      });
-
-      return createUIMessageStreamResponse({
-        stream: toUIMessageStream({ stream: result.stream }),
-      });
-    } catch (error) {
-      console.error(`${tag} Groq chat error:`, error);
-
-      return NextResponse.json({ error: "AI service error" }, { status: 502 });
-    }
+    return createUIMessageStreamResponse({
+      stream: toUIMessageStream({ stream: result.stream }),
+    });
   } catch (error) {
     console.error(`${tag} Groq chat error:`, error);
-
     return NextResponse.json({ error: "AI service error" }, { status: 502 });
   }
 }

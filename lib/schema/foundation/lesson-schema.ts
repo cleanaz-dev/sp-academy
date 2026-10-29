@@ -1,4 +1,4 @@
-// lib/schemas/lesson-schema.ts
+// lib/schema/foundation/lesson-schema.ts
 import { z } from "zod";
 
 const s3Key = z.string().min(1);
@@ -19,7 +19,9 @@ export const grammarContentSchema = z.object({
   targetSentence: z.string(),
   nativeSentence: z.string(),
   romanizedSentence: z.string().nullable(),
-  words: z.array(z.object({ word: z.string(), gloss: z.string(), role: z.string() })),
+  words: z.array(
+    z.object({ word: z.string(), gloss: z.string(), role: z.string() })
+  ),
   highlightGroup: z.array(z.string()),
   clozeItems: z.array(
     z.object({
@@ -27,7 +29,9 @@ export const grammarContentSchema = z.object({
       hostSentence: z.string(),
       blankPosition: z.number().int().min(0),
       acceptableAnswers: z.array(z.string()).min(1),
-      wrongAnswerFeedback: z.array(z.object({ wrong: z.string(), feedback: z.string() })),
+      wrongAnswerFeedback: z.array(
+        z.object({ wrong: z.string(), feedback: z.string() })
+      ),
     })
   ),
 });
@@ -36,9 +40,22 @@ export const pronunciationDataSchema = z.object({
   referenceText: z.string(),
   audioS3Key: s3Key,
   breakdown: z.array(
-    z.object({ text: z.string(), phonetic: z.string(), hint: z.string().nullable() })
+    z.object({
+      text: z.string(),
+      phonetic: z.string(),
+      hint: z.string().nullable(),
+    })
   ),
-  focusSounds: z.array(z.object({ sound: z.string(), positions: z.array(z.number().int()) })),
+  focusSounds: z.array(
+    z.object({ sound: z.string(), positions: z.array(z.number().int()) })
+  ),
+});
+
+// 🟢 NEW: Exact millisecond word-level speech timestamps from Whisper
+export const wordTimestampSchema = z.object({
+  word: z.string(),
+  startMs: z.number().int().nonnegative(),
+  endMs: z.number().int().nonnegative(),
 });
 
 export const listeningContentSchema = z.object({
@@ -48,6 +65,7 @@ export const listeningContentSchema = z.object({
   expectedOrder: z.array(z.string()),
   wordBank: z.array(z.string()),
   contrast: z.string(),
+  wordTimestamps: z.array(wordTimestampSchema).optional().default([]), // 🟢 NEW
 });
 
 const verbalCloze = z.object({
@@ -73,13 +91,15 @@ const trueFalse = z.object({
 });
 
 export const quizContentSchema = z.object({
-  items: z.array(z.discriminatedUnion("type", [verbalCloze, reorder, trueFalse])).min(1),
+  items: z
+    .array(z.discriminatedUnion("type", [verbalCloze, reorder, trueFalse]))
+    .min(1),
   passThreshold: z.number().min(0).max(1),
 });
 
 export const freestyleSchema = z.object({
-  mode: z.string(),   // "SPECIFIC" so far; tighten to an enum once you know the full set
-  level: z.string(),  // "ZERO" so far
+  mode: z.string(),
+  level: z.string(),
   topic: z.string(),
   persona: z.string(),
   requiredChunks: z.array(z.string()),
@@ -91,15 +111,14 @@ export const wordAudioSchema = z.record(
   z.object({ m: z.string(), f: z.string() })
 );
 
-// 🟢 NEW: Rich lexicon metadata per word/phrase from Foundation Builder
 export const wordLexiconEntrySchema = z.object({
   slug: z.string(),
   word: z.string(),
   wordType: z.enum(["WORD", "PHRASE"]).default("WORD"),
-  partOfSpeech: z.string().default("OTHER"), // NOUN, VERB, PRONOUN, GREETING, EXPRESSION, etc.
+  partOfSpeech: z.string().default("OTHER"),
   translation: z.string().default(""),
   lemma: z.string().nullable().optional(),
-  grammaticalGender: z.string().nullable().optional(), // "M", "F", or null
+  grammaticalGender: z.string().nullable().optional(),
   componentWords: z.array(z.string()).default([]),
   audio: z
     .object({
@@ -136,21 +155,22 @@ export const lessonHandoffSchema = z.object({
   sceneDescription: z.string(),
   freestylePersona: z.string(),
   trueFalseStatement: z.string(),
-  wordAudio: wordAudioSchema, // {} is valid (voice skipped)
-  wordLexicon: wordLexiconSchema.optional().default({}), // 🟢 NEW: Rich metadata + audio
+  wordAudio: wordAudioSchema,
+  wordLexicon: wordLexiconSchema.optional().default({}),
 });
 
 export type WordLexiconEntry = z.infer<typeof wordLexiconEntrySchema>;
+export type WordTimestamp = z.infer<typeof wordTimestampSchema>;
 
 /** Full webhook body from the foundation-builder lambda */
 export const foundationLessonWebhookSchema = z.object({
   userId: z.string().min(1),
   foundationCourseId: z.string().min(1),
   orderIndex: z.number().int().min(1),
-  status: z.string(),                 // lambda sends "ready"
-  name: z.string().optional(),        // accepted, not stored
-  nativeLang: z.string().optional(),  // accepted, not stored
-  targetLang: z.string().optional(),  // accepted, not stored
+  status: z.string(),
+  name: z.string().optional(),
+  nativeLang: z.string().optional(),
+  targetLang: z.string().optional(),
   visualContent: visualContentSchema,
   grammarContent: grammarContentSchema,
   pronunciationData: pronunciationDataSchema,
@@ -160,7 +180,6 @@ export const foundationLessonWebhookSchema = z.object({
   lessonHandoff: lessonHandoffSchema,
 });
 
-// Types for the frontend components (step 4)
 export type VisualContent = z.infer<typeof visualContentSchema>;
 export type GrammarContent = z.infer<typeof grammarContentSchema>;
 export type PronunciationData = z.infer<typeof pronunciationDataSchema>;
@@ -169,4 +188,6 @@ export type QuizContent = z.infer<typeof quizContentSchema>;
 export type QuizItem = QuizContent["items"][number];
 export type Freestyle = z.infer<typeof freestyleSchema>;
 export type LessonHandoff = z.infer<typeof lessonHandoffSchema>;
-export type FoundationLessonWebhook = z.infer<typeof foundationLessonWebhookSchema>;
+export type FoundationLessonWebhook = z.infer<
+  typeof foundationLessonWebhookSchema
+>;

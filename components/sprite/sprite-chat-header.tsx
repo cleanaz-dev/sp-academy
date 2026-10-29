@@ -1,18 +1,23 @@
 // components/sprite/sprite-chat-header.tsx
 "use client";
 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Target,
   History,
   Plus,
+  Moon,
   MessageSquare,
   MessagesSquare,
   RectangleHorizontal,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
-import type { ActiveTab } from "./sprite-chat-utils";
+import type { ActiveTab, ChatViewMode } from "./sprite-chat-utils";
 
-export type ChatViewMode = "single" | "multi";
+export type { ChatViewMode } from "./sprite-chat-utils";
 
 interface SpriteChatHeaderProps {
   spriteName: string;
@@ -21,6 +26,9 @@ interface SpriteChatHeaderProps {
   activeTab: ActiveTab;
   viewMode: ChatViewMode;
   sessionsCount: number;
+  isSnoozing?: boolean;
+  /** Automatically collapses the bulky top row when a chat/board session is active */
+  isSessionActive?: boolean;
   onSelectTab: (tab: ActiveTab) => void;
   onChangeViewMode: (mode: ChatViewMode) => void;
   onStartNewSession: () => void;
@@ -34,112 +42,211 @@ export function SpriteChatHeader({
   activeTab,
   viewMode,
   sessionsCount,
+  isSnoozing = false,
+  isSessionActive = false,
   onSelectTab,
   onChangeViewMode,
   onStartNewSession,
   onClose,
 }: SpriteChatHeaderProps) {
-  return (
-    <div className="relative z-10 overflow-hidden border-b border-white/10 bg-gradient-to-r from-teal-950/85 via-indigo-950/85 to-slate-950/90 px-6 pt-5 pb-4 shrink-0">
-      {/* Row 1: Avatar with + New Session Badge, Sprite Name, Current Lesson, Close */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative h-14 w-14 shrink-0">
-            <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-lg shadow-teal-500/20">
-              <img
-                src={avatarSrc}
-                alt={spriteName}
-                className="h-full w-full object-cover object-top"
-              />
-            </div>
+  const [manualExpand, setManualExpand] = useState(false);
 
-            {/* + Icon Badge where the green dot was */}
+  // Auto-collapse Row 1 when inside an active Session tab, unless manually expanded
+  const isCollapsed =
+    activeTab === "session" && isSessionActive && !manualExpand;
+
+  return (
+    <div className="relative z-20 overflow-hidden border-b border-white/10 bg-gradient-to-r from-teal-950/90 via-indigo-950/90 to-slate-950/95 px-4 py-2.5 shrink-0 transition-all">
+      {/* EXPANDED ROW 1: Only shown on Briefing/History, Empty Session, or when toggled open */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            key="expanded-header-row"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 360, damping: 32 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-start justify-between gap-4 pb-3.5 pt-1 px-1 border-b border-white/10 mb-2.5">
+              <div className="flex items-center gap-3.5">
+                <div className="relative h-12 w-12 shrink-0">
+                  <div
+                    className={`h-full w-full overflow-hidden rounded-2xl border-2 bg-slate-900 shadow-lg ${
+                      isSnoozing
+                        ? "border-indigo-400/50 shadow-indigo-500/20"
+                        : "border-teal-400/50 shadow-teal-500/20"
+                    }`}
+                  >
+                    <img
+                      src={avatarSrc}
+                      alt={spriteName}
+                      className="h-full w-full object-cover object-top"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isSnoozing}
+                    onClick={onStartNewSession}
+                    title={
+                      isSnoozing
+                        ? `${spriteName} is napping until you finish your lesson!`
+                        : "Start New Session"
+                    }
+                    className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-slate-950 shadow-md transition ${
+                      isSnoozing
+                        ? "bg-indigo-500 text-white cursor-not-allowed"
+                        : "bg-teal-400 text-slate-950 hover:scale-110 hover:bg-teal-300"
+                    }`}
+                  >
+                    {isSnoozing ? (
+                      <Moon className="h-3 w-3 fill-current" />
+                    ) : (
+                      <Plus className="h-3 w-3 stroke-[3]" />
+                    )}
+                  </button>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-extrabold text-white tracking-tight">
+                      {spriteName}
+                    </h3>
+                    {isSnoozing ? (
+                      <span className="rounded-full bg-indigo-500/20 border border-indigo-400/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-indigo-200">
+                        💤 Snoozing
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-teal-400/15 border border-teal-400/30 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-teal-300">
+                        AI Tutor
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-indigo-200/90 mt-0.5">
+                    <span className="text-teal-400 font-extrabold">
+                      Current:
+                    </span>{" "}
+                    {currentLessonTitle}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* SLEEK SINGLE-LINE COMMAND BAR (Always Visible — Only 44px Tall!) */}
+      <div className="flex flex-nowrap items-center justify-between gap-2">
+        {/* LEFT: Compact New-Session Button (when collapsed) + Navigation Tabs */}
+        <div className="flex items-center gap-2 min-w-0">
+          {isCollapsed && (
             <button
               type="button"
+              disabled={isSnoozing}
               onClick={onStartNewSession}
-              title="Start New Session"
-              className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-slate-950 ring-2 ring-slate-950 shadow-md transition hover:scale-110 hover:bg-teal-300"
+              title={
+                isSnoozing
+                  ? `${spriteName} is napping`
+                  : "Start New Chalkboard Session"
+              }
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition ${
+                isSnoozing
+                  ? "border-indigo-400/30 bg-indigo-500/20 text-indigo-300 cursor-not-allowed"
+                  : "border-teal-400/40 bg-teal-400/15 text-teal-300 hover:bg-teal-400 hover:text-slate-950"
+              }`}
             >
-              <Plus className="h-3.5 w-3.5 stroke-[3]" />
+              {isSnoozing ? (
+                <Moon className="h-3.5 w-3.5 fill-current" />
+              ) : (
+                <Plus className="h-4 w-4 stroke-[2.5]" />
+              )}
             </button>
-          </div>
+          )}
 
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h3 className="text-lg font-extrabold text-white tracking-tight">
-                {spriteName}
-              </h3>
-              <span className="rounded-full bg-teal-400/15 border border-teal-400/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-teal-300">
-                AI Tutor
-              </span>
-            </div>
-            <p className="text-xs font-semibold text-indigo-200/90 mt-1">
-              <span className="text-teal-400 font-extrabold">Current:</span>{" "}
-              {currentLessonTitle}
-            </p>
+          <div className="flex shrink-0 items-center gap-1 rounded-xl bg-slate-950/70 p-1 border border-white/10">
+            {(
+              [
+                { id: "session", label: "Session", Icon: MessageSquare },
+                { id: "briefing", label: "Briefing", Icon: Target },
+                {
+                  id: "history",
+                  label: `History (${sessionsCount})`,
+                  Icon: History,
+                },
+              ] as const
+            ).map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => onSelectTab(id)}
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                  activeTab === id
+                    ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-300 hover:bg-white/15 hover:text-white transition"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Row 2: Tabs (left) + Single/Multi Mode Pills (right), always inline */}
-      <div className="mt-4 flex flex-nowrap items-center justify-between gap-2 pt-3 border-t border-white/10">
-        {/* LEFT: tabs */}
-        <div className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
-          {([
-            { id: "session", label: "Session", Icon: MessageSquare },
-            { id: "briefing", label: "Briefing", Icon: Target },
-            { id: "history", label: `History (${sessionsCount})`, Icon: History },
-          ] as const).map(({ id, label, Icon }) => (
+        {/* RIGHT: Single/Multi Toggle + Expand/Collapse Header Toggle + Close Button */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex items-center gap-1 rounded-xl bg-slate-950/70 p-1 border border-white/10">
             <button
-              key={id}
-              onClick={() => onSelectTab(id)}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                activeTab === id
-                  ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+              type="button"
+              onClick={() => onChangeViewMode("single")}
+              title="Single Stage View"
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                viewMode === "single"
+                  ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-sm"
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              <Icon className="h-3.5 w-3.5" />
-              <span>{label}</span>
+              <RectangleHorizontal className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Single</span>
             </button>
-          ))}
-        </div>
 
-        {/* RIGHT: Single / Multi mode toggle pills */}
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
-          <button
-            type="button"
-            onClick={() => onChangeViewMode("single")}
-            title="Single Turn View"
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              viewMode === "single"
-                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <RectangleHorizontal className="h-3.5 w-3.5" />
-            <span>Single</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onChangeViewMode("multi")}
+              title="Multi Thread View"
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition ${
+                viewMode === "multi"
+                  ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <MessagesSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Multi</span>
+            </button>
+          </div>
 
+          {/* Toggle Full Header Info when in an active session */}
+          {activeTab === "session" && isSessionActive && (
+            <button
+              type="button"
+              onClick={() => setManualExpand((prev) => !prev)}
+              title={isCollapsed ? "Show Lesson Info" : "Compact Fullscreen"}
+              className="rounded-xl border border-white/10 bg-white/5 p-1.5 text-slate-300 hover:bg-white/15 hover:text-white transition"
+            >
+              {isCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </button>
+          )}
+
+          {/* Close Drawer */}
           <button
-            type="button"
-            onClick={() => onChangeViewMode("multi")}
-            title="Multi Thread View"
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-              viewMode === "multi"
-                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
-                : "text-slate-400 hover:text-white"
-            }`}
+            onClick={onClose}
+            title="Close Assistant"
+            className="rounded-xl border border-white/10 bg-white/5 p-1.5 text-slate-300 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-200 transition"
           >
-            <MessagesSquare className="h-3.5 w-3.5" />
-            <span>Multi</span>
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>

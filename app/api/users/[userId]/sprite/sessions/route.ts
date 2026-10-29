@@ -138,6 +138,16 @@ export async function POST(
         ? existingSession.title
         : String(turn.userPrompt || lessonTitle || "Session").slice(0, 48);
 
+    const incomingBoard =
+      turn.chalkboard &&
+      turn.chalkboard.title !== "__STEP_UPDATE__" &&
+      Array.isArray(turn.chalkboard.steps) &&
+      turn.chalkboard.steps.length > 0
+        ? turn.chalkboard
+        : null;
+
+    const finalBoard = incomingBoard ?? existingSession?.board ?? null;
+
     await prisma.spriteSession.upsert({
       where: { id: sessionId },
       create: {
@@ -146,10 +156,12 @@ export async function POST(
         title: autoTitle,
         lessonTitle: lessonTitle || "Active Lesson",
         turns: updatedTurns,
+        ...(finalBoard ? { board: finalBoard } : {}),
       },
       update: {
         title: autoTitle,
         turns: updatedTurns,
+        ...(finalBoard ? { board: finalBoard } : {}),
       },
     });
 

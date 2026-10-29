@@ -43,11 +43,13 @@ model SpriteSession {
   id              String        @id @default(cuid())
   spriteProfileId String
   
-  title           String        @default("New Session") // e.g., "Survival States Quiz"
-  lessonTitle     String?       // e.g., "Spoon 13: Survival States"
+  title           String        @default("New Session")
+  lessonTitle     String?
 
-  // Array of 1-to-1 turns validated by Zod
   turns           Json          @default("[]")
+  
+  // 🟢 NEW: Stores the latest/completed Step-Deck Board & user attempt history for this session!
+  board           Json?         
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
