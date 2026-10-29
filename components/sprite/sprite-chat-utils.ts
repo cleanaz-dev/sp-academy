@@ -4,18 +4,32 @@ import type {
   SpriteTurn,
   ContextCardData,
   SpriteAction,
+  ChalkboardData,
 } from "@/lib/schema/sprite-schema";
 
 export type ActiveTab = "session" | "briefing" | "history";
+export type ChatViewMode = "single" | "multi";
 
 export interface ChatContextData {
   userName: string;
   nativeLang: string;
   targetLang: string;
   currentLessonTitle: string;
-  topWord?: { word: string; translation?: string | null; avgSpokenScore?: number | null } | null;
-  topPhrase?: { word: string; translation?: string | null; avgSpokenScore?: number | null } | null;
-  recentWords?: { word: string; translation?: string | null; status: string }[] | null;
+  topWord?: {
+    word: string;
+    translation?: string | null;
+    avgSpokenScore?: number | null;
+  } | null;
+  topPhrase?: {
+    word: string;
+    translation?: string | null;
+    avgSpokenScore?: number | null;
+  } | null;
+  recentWords?: {
+    word: string;
+    translation?: string | null;
+    status: string;
+  }[] | null;
   avgPronunciation: number;
 }
 
@@ -23,6 +37,7 @@ export interface ParsedPayload {
   spokenText: string;
   isTranslationRequired: boolean;
   translation?: string | null;
+  chalkboard?: ChalkboardData | null;
   contextCard?: ContextCardData | null;
   action?: SpriteAction | null;
 }
@@ -51,13 +66,29 @@ export function getRawText(m?: UIMessage): string {
 
 export function parseMessagePayload(m?: UIMessage): ParsedPayload {
   const raw = getRawText(m);
-  if (!raw) return { spokenText: "", isTranslationRequired: false };
+  if (!raw) {
+    return {
+      spokenText: "",
+      isTranslationRequired: false,
+      translation: null,
+      chalkboard: null,
+      contextCard: null,
+      action: null,
+    };
+  }
 
   const [spokenPart, jsonPart] = raw.split("---JSON---");
   const spokenText = cleanDisplayString(spokenPart || "");
 
   if (!jsonPart) {
-    return { spokenText, isTranslationRequired: false };
+    return {
+      spokenText,
+      isTranslationRequired: false,
+      translation: null,
+      chalkboard: null,
+      contextCard: null,
+      action: null,
+    };
   }
 
   try {
@@ -67,26 +98,43 @@ export function parseMessagePayload(m?: UIMessage): ParsedPayload {
       .trim();
     const parsed = JSON.parse(cleanedJson);
 
-    const isTranslationRequired = Boolean(parsed.isTranslationRequired);
-    const translation =
-      isTranslationRequired && parsed.translation && parsed.translation !== "null"
-        ? cleanDisplayString(String(parsed.translation))
-        : null;
+    const hasValidTranslation =
+      parsed.translation &&
+      parsed.translation !== "null" &&
+      String(parsed.translation).trim().length > 0;
+
+    const translation = hasValidTranslation
+      ? cleanDisplayString(String(parsed.translation))
+      : null;
+
+    const isTranslationRequired = Boolean(translation);
 
     return {
       spokenText,
       isTranslationRequired,
       translation,
-      contextCard: parsed.contextCard || null,
-      action: parsed.action || null,
+      chalkboard: parsed.chalkboard ?? null,
+      contextCard: parsed.contextCard ?? null,
+      action: parsed.action ?? null,
     };
   } catch {
-    return { spokenText, isTranslationRequired: false };
+    return {
+      spokenText,
+      isTranslationRequired: false,
+      translation: null,
+      chalkboard: null,
+      contextCard: null,
+      action: null,
+    };
   }
 }
 
 export function turnsToUIMessages(
-  turns: (SpriteTurn & { isTranslationRequired?: boolean; translation?: string | null })[]
+  turns: (SpriteTurn & {
+    isTranslationRequired?: boolean;
+    translation?: string | null;
+    chalkboard?: ChalkboardData | null;
+  })[]
 ): UIMessage[] {
   const msgs: UIMessage[] = [];
   for (const t of turns) {
@@ -99,6 +147,7 @@ export function turnsToUIMessages(
     const rawAssistantText = `${cleanDisplayString(t.assistantReply)}\n---JSON---\n${JSON.stringify({
       isTranslationRequired: Boolean(t.isTranslationRequired ?? t.translation),
       translation: t.translation ?? null,
+      chalkboard: t.chalkboard ?? null,
       contextCard: t.contextCard ?? null,
       action: t.action ?? null,
     })}`;
@@ -128,7 +177,3 @@ export function groupUIMessagesIntoTurns(messages: UIMessage[]): UIMessageTurn[]
   }
   return turns;
 }
-
-
-
-export type ChatViewMode = "single" | "multi";
