@@ -21,7 +21,6 @@ import {
   parseMessagePayload,
   turnsToUIMessages,
   groupUIMessagesIntoTurns,
-  type ActiveTab,
   type ChatContextData,
 } from "./sprite-chat-utils";
 import type { SpriteSessionData } from "@/lib/schema/sprite-schema";
@@ -34,10 +33,22 @@ interface SpriteChatProps {
 }
 
 export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
-  const { summonSprite, profile, deleteSession } = useSprite();
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("session");
+  const {
+    profile,
+    spriteName,
+    avatarSrc,
+    isChatOpen,
+    openChat,
+    closeChat,
+    activeTab,
+    setActiveTab,
+    viewMode,
+    setViewMode,
+    unreadCount,
+    pendingPrompt,
+    clearPendingPrompt,
+    deleteSession,
+  } = useSprite();
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
   const [sessionsList, setSessionsList] = useState<SpriteSessionData[]>([]);
@@ -47,15 +58,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [input, setInput] = useState("");
 
   const lastUserPromptRef = useRef<string>("");
-
-  const lastSummonedId = useRef<string | null>(null);
-
-  const isVivi = profile?.sprite?.slug === "vivi";
-  const rawName = profile?.sprite?.name ?? (isVivi ? "Vivi" : "Vox");
-  const spriteName =
-    rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
-  const avatarSrc =
-    profile?.sprite?.avatarUrl || (isVivi ? "/sprite-f.png" : "/sprite-m.png");
 
   const aiBrain: ChatContextData = initialContext || {
     userName: "Student",
@@ -166,6 +168,24 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [sendMessage],
   );
 
+  const handleQuickPrompt = useCallback(
+    (promptText: string) => {
+      if (isLoading) return;
+      setSelectedTurnIndex(null);
+      setActiveTab("session");
+      sendWithSessionBody(promptText);
+    },
+    [isLoading, setActiveTab, sendWithSessionBody],
+  );
+
+  // Fire any prompt queued via openChat({ prompt: "..." })
+  useEffect(() => {
+    if (isChatOpen && pendingPrompt && !isLoading) {
+      handleQuickPrompt(pendingPrompt);
+      clearPendingPrompt();
+    }
+  }, [isChatOpen, pendingPrompt, isLoading, handleQuickPrompt, clearPendingPrompt]);
+
   const turns = useMemo(() => groupUIMessagesIntoTurns(messages), [messages]);
 
   const currentTurnIdx =
@@ -181,10 +201,10 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   );
 
   useEffect(() => {
-    if (isOpen) {
+    if (isChatOpen) {
       fetchSessions();
     }
-  }, [isOpen, fetchSessions]);
+  }, [isChatOpen, fetchSessions]);
 
   const startNewSession = () => {
     setSessionId(crypto.randomUUID());
@@ -201,7 +221,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     setActiveTab("session");
   };
 
-  // Wraps the context's deleteSession(id) to match the modal's (session) => Promise<boolean>
   const handleDeleteSession = async (
     session: SpriteSessionData,
   ): Promise<boolean> => {
@@ -210,7 +229,6 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
 
     setSessionsList((prev) => prev.filter((s) => s.id !== session.id));
 
-    // If the open session was deleted, reset the chat but stay on the History tab
     if (session.id === sessionId) {
       setSessionId(crypto.randomUUID());
       setMessages([]);
@@ -237,42 +255,17 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     sendWithSessionBody(`Help me practice how to use "${word}"`);
   };
 
-  const handleQuickPrompt = (promptText: string) => {
-    if (isLoading) return;
-    setSelectedTurnIndex(null);
-    setActiveTab("session");
-    sendWithSessionBody(promptText);
-  };
-
-  useEffect(() => {
-    if (isLoading || isOpen) return;
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage || lastMessage.role !== "assistant") return;
-
-    const { spokenText } = parseMessagePayload(lastMessage);
-    if (spokenText && lastSummonedId.current !== lastMessage.id) {
-      lastSummonedId.current = lastMessage.id;
-      summonSprite({
-        id: lastMessage.id,
-        badge: "AI Tutor",
-        text: spokenText,
-        position: "bottom-left",
-        duration: Infinity,
-      });
-    }
-  }, [messages, isLoading, isOpen, summonSprite]);
-
   return (
     <>
       {/* FLOATING TRIGGER BUTTON */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isChatOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-40 flex items-center gap-3 cursor-pointer group"
-            onClick={() => setIsOpen(true)}
+            onClick={() => openChat()}
           >
             <div className="hidden sm:flex flex-col items-end rounded-2xl border border-teal-500/30 bg-slate-950/90 px-4 py-2.5 text-right shadow-xl backdrop-blur-md">
               <span className="text-[10px] font-black uppercase tracking-wider text-teal-400">
@@ -283,12 +276,21 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               </span>
             </div>
 
-            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
-              <img
-                src={avatarSrc}
-                alt={spriteName}
-                className="h-full w-full object-cover object-top"
-              />
+            <div className="relative h-14 w-14">
+              <div className="h-full w-full overflow-hidden rounded-2xl border-2 border-teal-400/50 bg-slate-900 shadow-2xl transition-transform group-hover:scale-105">
+                <img
+                  src={avatarSrc}
+                  alt={spriteName}
+                  className="h-full w-full object-cover object-top"
+                />
+              </div>
+
+              {/* Unread Sprite Notification Badge */}
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white ring-2 ring-slate-950 shadow-md">
+                  {unreadCount}
+                </span>
+              )}
             </div>
           </motion.div>
         )}
@@ -296,13 +298,13 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
 
       {/* FULL HEIGHT (100VH) DOCKED ASSISTANT DRAWER */}
       <AnimatePresence>
-        {isOpen && (
+        {isChatOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
+              onClick={closeChat}
               className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px]"
             />
 
@@ -411,15 +413,18 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
                 sessionsCount={sessionsList.length}
                 onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
-                onTriggerReport={() =>
-                  handleQuickPrompt("Generate my progress report")
-                }
-                onClose={() => setIsOpen(false)}
+                onClose={closeChat}
+                viewMode={viewMode}
+                onChangeViewMode={(mode) => {
+                  setViewMode(mode);
+                  if (activeTab !== "session") setActiveTab("session");
+                }}
               />
 
               {/* PART 2: MESSAGES / STAGE / BRIEFING / HISTORY */}
               <SpriteChatMessages
                 activeTab={activeTab}
+                viewMode={viewMode}
                 spriteName={spriteName}
                 avatarSrc={avatarSrc}
                 aiBrain={aiBrain}

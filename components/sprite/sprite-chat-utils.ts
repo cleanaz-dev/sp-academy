@@ -128,3 +128,7 @@ export function groupUIMessagesIntoTurns(messages: UIMessage[]): UIMessageTurn[]
   }
   return turns;
 }
+
+
+
+export type ChatViewMode = "single" | "multi";

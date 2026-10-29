@@ -305,6 +305,16 @@ export async function invokeEduBuilder(
         : normalizedPayload.yesterdayLanded,
   };
 
+  // 🟢 NEW: Save the exact lambdaPayload onto the SystemTask so 1-click Retry can re-send it verbatim
+  await prisma.systemTask
+    .update({
+      where: { id: dbContext.taskId },
+      data: {
+        payload: lambdaPayload as any,
+      },
+    })
+    .catch((e) => console.warn("Could not save lambdaPayload to SystemTask:", e));
+
   try {
     const invocations: Promise<any>[] = [
       lambda.send(
@@ -336,6 +346,13 @@ export async function invokeEduBuilder(
         nodeId: dbContext.nodeId,
         webhookUrl: dbContext.spriteWebhookUrl,
       };
+
+      await prisma.systemTask
+        .update({
+          where: { id: dbContext.spriteTaskId },
+          data: { payload: spriteLambdaPayload as any },
+        })
+        .catch(() => {});
 
       invocations.push(
         lambda.send(
@@ -372,6 +389,13 @@ export async function invokeEduBuilder(
         nodeId: dbContext.bridgeNodeId,
         webhookUrl: dbContext.bridgeWebhookUrl,
       };
+
+      await prisma.systemTask
+        .update({
+          where: { id: dbContext.bridgeTaskId },
+          data: { payload: bridgeLambdaPayload as any },
+        })
+        .catch(() => {});
 
       invocations.push(
         lambda.send(

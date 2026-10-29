@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { LearningPath } from "@/app/actions/get-learning-path";
 import type { UserGenerationData } from "@/lib/upstash";
-import { getSpriteNode } from "@/lib/sprites/get-sprite-node";
 import { useSprite } from "@/context/sprite-context";
 import {
   getSpoonSpriteOrderIndex,
@@ -33,8 +32,7 @@ export default function FoundationHubPage({
   generationData,
 }: Props) {
   const router = useRouter();
-  const { summonSprite, profile } = useSprite();
-  const lastSummonedKeyRef = useRef<string | null>(null);
+  const { summonSpriteNode, profile, liveTask, setLiveTask } = useSprite();
 
   const lessons = path?.lessons ?? [];
   const courseId = path?.courseId ?? (path as any)?.id ?? "default";
@@ -97,12 +95,12 @@ export default function FoundationHubPage({
 
   const getBossHref = (bossId: string) => `/foundation/boss/${bossId}`;
 
-  // Poll while Lambda is generating
+  // Poll while Lambda is generating (pause polling if the task explicitly FAILED)
   useEffect(() => {
-    if (!isGenerating) return;
+    if (!isGenerating || liveTask?.status === "FAILED") return;
     const interval = setInterval(() => router.refresh(), 4000);
     return () => clearInterval(interval);
-  }, [isGenerating, router]);
+  }, [isGenerating, liveTask?.status, router]);
 
   // --- SPRITE TRIGGER LOGIC ---
   useEffect(() => {
@@ -112,35 +110,22 @@ export default function FoundationHubPage({
     let actionHref: string | null = null;
     let stepLabel = "";
 
-    // 1. SPOON FOCUS
     if (currentFocus?.type === "SPOON" && nextLesson && !waitingOnSpoon) {
       const spoonNum =
         (nextLesson as any)?.orderIndex ?? completedLessonsCount + 1;
-
-      // Spoon 1 -> 1, Spoon 2 -> 3, Spoon 3 -> 5 | Spoon 4 -> 8, Spoon 5 -> 10...
       orderIndex = getSpoonSpriteOrderIndex(spoonNum);
       actionHref = getLessonHref(nextLesson.id);
       stepLabel = `Start Spoon ${spoonNum}`;
-    }
-
-    // 2. VOCAB BRIDGE FOCUS
-    else if (currentFocus?.type === "BRIDGE" && vocabDue && !waitingOnVocab) {
+    } else if (currentFocus?.type === "BRIDGE" && vocabDue && !waitingOnVocab) {
       const spoonNum = (vocabDue as any)?.orderIndex ?? completedLessonsCount;
-
-      // Bridge 1 -> 2, Bridge 2 -> 4, Bridge 3 -> 6 | Bridge 4 -> 9...
       orderIndex = getBridgeSpriteOrderIndex(spoonNum);
       actionHref = getLessonHref(vocabDue.id);
       stepLabel = "Unlock Bridge";
-    }
-
-    // 3. BOSS STAGE FOCUS
-    else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
+    } else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
       const milestoneNum =
         (bossDue as any)?.milestoneIndex ??
         (bossDue as any)?.bossStage?.milestoneIndex ??
         Math.max(1, Math.ceil(completedLessonsCount / 3));
-
-      // Boss 1 -> 7, Boss 2 -> 14, Boss 3 -> 21...
       orderIndex = getBossSpriteOrderIndex(milestoneNum);
       const bossId =
         (bossDue as any)?.bossStage?.id ?? (bossDue as any)?.id ?? courseId;
@@ -152,57 +137,13 @@ export default function FoundationHubPage({
 
     const focusItemId =
       nextLesson?.id ?? vocabDue?.id ?? bossDue?.id ?? String(orderIndex);
-    const triggerKey = `sprite_seen_${orderIndex}_${focusItemId}`;
 
-    if (
-      lastSummonedKeyRef.current === triggerKey ||
-      sessionStorage.getItem(triggerKey)
-    ) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function triggerSprite(
-      idx: number,
-      href: string,
-      fallbackLabel: string,
-    ) {
-      const node = await getSpriteNode(
-        {
-          slug: profile!.sprite.slug,
-          nativeVoiceId: profile!.nativeVoiceId,
-          targetVoiceId: profile!.targetVoiceId,
-        },
-        idx,
-      );
-
-      if (cancelled || !node) return;
-
-      lastSummonedKeyRef.current = triggerKey;
-      sessionStorage.setItem(triggerKey, "1");
-
-      summonSprite({
-        id: node.nodeId,
-        badge: node.header ?? undefined,
-        text: node.nativeBody,
-        audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
-        autoPlayAudio: true,
-        duration: 20000,
-        position: "bottom-right",
-        action: {
-          label: node.action || fallbackLabel,
-          onClick: () => router.push(href),
-          variant: "primary",
-        },
-      });
-    }
-
-    triggerSprite(orderIndex, actionHref, stepLabel);
-
-    return () => {
-      cancelled = true;
-    };
+    summonSpriteNode({
+      orderIndex,
+      dedupeKey: `sprite_seen_${orderIndex}_${focusItemId}`,
+      actionLabel: stepLabel,
+      onAction: () => router.push(actionHref!),
+    });
   }, [
     profile,
     waitingOnSpoon,
@@ -215,7 +156,51 @@ export default function FoundationHubPage({
     bossDue?.id,
     courseId,
     router,
-    summonSprite,
+    summonSpriteNode,
+  ]);
+
+  // --- SYNC GENERATION STATUS WITH SPRITE CONTEXT ---
+  useEffect(() => {
+    // Don't overwrite a FAILED state with BUILDING!
+    if (liveTask?.status === "FAILED") return;
+
+    if (waitingOnSpoon) {
+      setLiveTask({
+        taskId: nextLesson?.id || "spoon-gen",
+        taskType: "SPOON_GENERATION",
+        status: "BUILDING",
+        label: `Spoon ${(nextLesson as any)?.orderIndex ?? completedLessonsCount + 1} Lesson`,
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (waitingOnVocab) {
+      setLiveTask({
+        taskId: vocabDue?.id || "bridge-gen",
+        taskType: "VOCAB_BRIDGE_GENERATION",
+        status: "BUILDING",
+        label: "Vocab Bridge",
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (waitingOnBoss) {
+      setLiveTask({
+        taskId: bossStageObj?.id || "boss-gen",
+        taskType: "SPOON_BOSS_GENERATION",
+        status: "BUILDING",
+        label: "Boss Stage",
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (liveTask?.status === "BUILDING") {
+      setLiveTask(null);
+    }
+  }, [
+    waitingOnSpoon,
+    waitingOnVocab,
+    waitingOnBoss,
+    nextLesson,
+    vocabDue,
+    bossStageObj,
+    completedLessonsCount,
+    liveTask?.status,
+    setLiveTask,
   ]);
 
   return (
@@ -266,20 +251,18 @@ export default function FoundationHubPage({
             />
           </div>
         </div>
-
-        {/* BOTTOM SANDBOX BAR */}
-    
       </main>
 
-     {user?.id && (
-        <SpriteChat 
-          userId={user.id} 
+      {user?.id && (
+        <SpriteChat
+          userId={user.id}
           initialContext={{
             userName: user?.firstName || user?.username || "Student",
             nativeLang: path?.nativeLanguage || "English",
             targetLang: path?.targetLanguage || "French",
-            currentLessonTitle: (currentFocus?.data as any)?.title || `Spoon ${(currentFocus?.data as any)?.orderIndex || 1}`,
-            // Pass the FULL objects so the UI can show translations & scores
+            currentLessonTitle:
+              (currentFocus?.data as any)?.title ||
+              `Spoon ${(currentFocus?.data as any)?.orderIndex || 1}`,
             topWord: path?.matrixStats?.topWord || null,
             topPhrase: path?.matrixStats?.topPhrase || null,
             recentWords: path?.matrixStats?.recentWords || [],

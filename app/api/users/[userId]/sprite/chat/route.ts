@@ -11,11 +11,12 @@ import {
 } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 import { getOrCreateProfileId } from "../sessions/route";
-// NOTE: adjust this import path to wherever SpriteContextSchema lives
+
 import { SpriteContextSchema } from "@/lib/schema/sprite-schema";
 import {
   buildDossier,
   DossierUnavailableError,
+  DossierV2,
 } from "@/lib/sprites/build-dossier";
 
 const groq = createGroq({
@@ -107,7 +108,7 @@ export async function POST(
     rawSpriteName.slice(1).toLowerCase();
 
   // Build the dossier on the server from the DB. body.dossier is ignored.
-  let dossier;
+  let dossier: DossierV2
   try {
     dossier = await buildDossier(userId);
   } catch (error) {

@@ -1,7 +1,7 @@
 // components/sprite/sprite-chat-messages.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Mic2,
@@ -15,21 +15,29 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  Volume2,
+  Square,
+  X,
+  RotateCcw, ChevronDown, ChevronUp, Cpu
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { ContextCard } from "./context-card";
 import {
   cleanDisplayString,
   getRawText,
+  parseMessagePayload,
   type ActiveTab,
   type ChatContextData,
   type ParsedPayload,
   type UIMessageTurn,
 } from "./sprite-chat-utils";
+import type { ChatViewMode } from "./sprite-chat-header";
 import type { SpriteSessionData } from "@/lib/schema/sprite-schema";
+import { useSprite } from "@/context/sprite-context";
 
 interface SpriteChatMessagesProps {
   activeTab: ActiveTab;
+  viewMode: ChatViewMode;
   spriteName: string;
   avatarSrc: string;
   aiBrain: ChatContextData;
@@ -51,6 +59,7 @@ interface SpriteChatMessagesProps {
 
 export function SpriteChatMessages({
   activeTab,
+  viewMode,
   spriteName,
   avatarSrc,
   aiBrain,
@@ -68,10 +77,38 @@ export function SpriteChatMessages({
   onTriggerPractice,
   onQuickPrompt,
 }: SpriteChatMessagesProps) {
+const {
+  notifications,
+  dismissNotification,
+  playAudioUrl,
+  stopAudio,
+  isPlaying,
+  liveTask,
+  isRetryingTask,
+  retryLiveTask,
+} = useSprite();
+
   const [sessionToDelete, setSessionToDelete] =
     useState<SpriteSessionData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const threadEndRef = useRef<HTMLDivElement>(null);
+  const latestNotification = notifications[0] ?? null;
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
+
+  // Auto-scroll to bottom in Multi mode when turns update or assistant streams
+  useEffect(() => {
+    if (activeTab === "session" && viewMode === "multi") {
+      threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [
+    activeTab,
+    viewMode,
+    turns.length,
+    activeAssistantPayload.spokenText,
+    isLoading,
+  ]);
 
   const closeDeleteModal = () => {
     if (isDeleting) return;
@@ -98,8 +135,224 @@ export function SpriteChatMessages({
     ? sessionToDelete.turns.length
     : 0;
 
+  // Resolves the ParsedPayload for any turn in Multi mode
+  const getTurnPayload = (
+    turn: UIMessageTurn,
+    isLastTurn: boolean,
+  ): ParsedPayload => {
+    if (isLastTurn && turn.id === activeTurn?.id) {
+      return activeAssistantPayload;
+    }
+    return parseMessagePayload(turn.assistantMessage);
+  };
+
   return (
     <div className="relative z-10 flex-1 overflow-y-auto p-6 flex flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+
+      {/* ================= LIVE GENERATION / ERROR LOG BANNER ================= */}
+{liveTask && activeTab !== "history" && (
+  <div
+    className={`mb-5 rounded-3xl border p-4 shadow-lg transition ${
+      liveTask.status === "FAILED"
+        ? "border-rose-500/40 bg-gradient-to-r from-rose-950/75 via-slate-900/90 to-slate-950/90"
+        : "border-indigo-400/35 bg-gradient-to-r from-indigo-950/75 via-teal-950/60 to-slate-900/90"
+    }`}
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-2">
+        {liveTask.status === "FAILED" ? (
+          <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0" />
+        ) : (
+          <Loader2 className="h-4 w-4 animate-spin text-teal-400 shrink-0" />
+        )}
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+            liveTask.status === "FAILED"
+              ? "bg-rose-500/20 border border-rose-500/40 text-rose-300"
+              : "bg-teal-400/20 border border-teal-400/40 text-teal-300"
+          }`}
+        >
+          {liveTask.status === "FAILED"
+            ? `${liveTask.label} Generation Failed`
+            : `Baking ${liveTask.label}...`}
+        </span>
+      </div>
+
+      {liveTask.status === "FAILED" && (
+        <button
+          type="button"
+          onClick={() => setShowErrorDetails((prev) => !prev)}
+          className="inline-flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-white/10"
+        >
+          <Cpu className="h-3 w-3 text-rose-300" />
+          <span>{showErrorDetails ? "Hide Log" : "Error Log"}</span>
+          {showErrorDetails ? (
+            <ChevronUp className="h-3 w-3" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
+        </button>
+      )}
+    </div>
+
+    <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-200">
+      {liveTask.status === "FAILED"
+        ? `${spriteName} ran into an issue in the on-demand lesson builder. You can retry the generation right here or practice with me while we rebuild it.`
+        : `${spriteName} is currently generating your on-demand ${liveTask.label.toLowerCase()}. Feel free to chat or warm up with me while it finishes!`}
+    </p>
+
+    {/* Collapsible Technical Error Log for Debugging */}
+    {liveTask.status === "FAILED" && showErrorDetails && (
+      <div className="mt-3 rounded-2xl border border-rose-500/30 bg-slate-950/90 p-3 font-mono text-[11px] text-rose-200 space-y-1">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
+          <span>
+            <strong className="text-slate-200">Lambda:</strong>{" "}
+            {liveTask.lambdaName || "invoke-edu-builder"}
+          </span>
+          {liveTask.stage && (
+            <span>
+              <strong className="text-slate-200">Stage:</strong>{" "}
+              {liveTask.stage}
+            </span>
+          )}
+          <span>
+            <strong className="text-slate-200">Task ID:</strong>{" "}
+            {liveTask.taskId.slice(0, 10)}...
+          </span>
+        </div>
+        {liveTask.errorMessage && (
+          <p className="text-rose-300 break-words pt-1 border-t border-white/10">
+            {liveTask.errorMessage}
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* Action Row */}
+    {liveTask.status === "FAILED" && (
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={isRetryingTask}
+          onClick={() => retryLiveTask(liveTask.taskId)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-rose-500 px-3.5 py-1.5 text-xs font-extrabold text-white hover:bg-rose-400 disabled:opacity-60 transition shadow-md"
+        >
+          {isRetryingTask ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Retrying Builder...</span>
+            </>
+          ) : (
+            <>
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Retry Generation</span>
+            </>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            onQuickPrompt(
+              `While my ${liveTask.label} is rebuilding, can we do a quick warm-up exercise?`
+            )
+          }
+          className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
+        >
+          <Sparkles className="h-3 w-3 text-teal-300" />
+          <span>Warm up while waiting</span>
+        </button>
+      </div>
+    )}
+  </div>
+)}
+      {/* ================= IN-CHAT SPRITE NOTIFICATION BANNER ================= */}
+      {latestNotification && activeTab !== "history" && (
+        <div className="mb-5 rounded-3xl border border-teal-400/35 bg-gradient-to-r from-teal-950/70 via-indigo-950/70 to-slate-900/90 p-4 shadow-lg">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-teal-400/20 border border-teal-400/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-teal-300">
+                {latestNotification.badge || `${spriteName} Dispatch`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                latestNotification.id &&
+                dismissNotification(latestNotification.id)
+              }
+              className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white transition"
+              title="Dismiss notification"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-100">
+            &ldquo;{latestNotification.text}&rdquo;
+          </p>
+
+          {latestNotification.targetText && (
+            <p className="mt-1.5 text-xs font-bold italic text-teal-300">
+              &ldquo;{latestNotification.targetText}&rdquo;
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {latestNotification.audioUrl && (
+              <button
+                type="button"
+                onClick={() =>
+                  isPlaying
+                    ? stopAudio()
+                    : playAudioUrl(latestNotification.audioUrl!)
+                }
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-extrabold transition ${
+                  isPlaying
+                    ? "bg-teal-400 text-slate-950"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                }`}
+              >
+                {isPlaying ? (
+                  <>
+                    <Square className="h-2.5 w-2.5 fill-current" />
+                    <span>Stop Audio</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-3.5 w-3.5" />
+                    <span>Play Voice</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {latestNotification.action && (
+              <button
+                type="button"
+                onClick={() => latestNotification.action?.onClick()}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500 px-3.5 py-1.5 text-[11px] font-extrabold text-white hover:bg-indigo-400 transition"
+              >
+                <span>{latestNotification.action.label}</span>
+                <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() =>
+                onQuickPrompt(
+                  `Can you help me prepare for ${latestNotification.badge || aiBrain.currentLessonTitle}?`,
+                )
+              }
+              className="inline-flex items-center gap-1.5 rounded-xl border border-teal-400/30 bg-teal-500/15 px-3 py-1.5 text-[11px] font-bold text-teal-200 hover:bg-teal-500/25 transition"
+            >
+              <Sparkles className="h-3 w-3 text-teal-300" />
+              <span>Prep with {spriteName}</span>
+            </button>
+          </div>
+        </div>
+      )}
       {activeTab === "history" ? (
         /* ================= TAB 3: SAVED SESSIONS ARCHIVE ================= */
         <div className="space-y-3">
@@ -112,15 +365,21 @@ export function SpriteChatMessages({
           {sessionsList.length === 0 ? (
             <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-10 text-center my-auto">
               <MessageSquare className="h-10 w-10 text-teal-400/60 mx-auto mb-3" />
-              <p className="text-base font-bold text-white">No saved sessions yet</p>
+              <p className="text-base font-bold text-white">
+                No saved sessions yet
+              </p>
               <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-                Start a conversation in the Session tab to save your first session.
+                Start a conversation in the Session tab to save your first
+                session.
               </p>
             </div>
           ) : (
             sessionsList.map((sess) => {
-              const isCurrentSession = sess.id === sessionId && turns.length > 0;
-              const turnCount = Array.isArray(sess.turns) ? sess.turns.length : 0;
+              const isCurrentSession =
+                sess.id === sessionId && turns.length > 0;
+              const turnCount = Array.isArray(sess.turns)
+                ? sess.turns.length
+                : 0;
               const lastTurn = turnCount > 0 ? sess.turns[turnCount - 1] : null;
 
               return (
@@ -162,7 +421,8 @@ export function SpriteChatMessages({
 
                     {lastTurn && (
                       <p className="text-xs text-slate-300 line-clamp-1">
-                        {spriteName}: {cleanDisplayString(lastTurn.assistantReply)}
+                        {spriteName}:{" "}
+                        {cleanDisplayString(lastTurn.assistantReply)}
                       </p>
                     )}
                   </button>
@@ -196,7 +456,8 @@ export function SpriteChatMessages({
               {aiBrain.currentLessonTitle}
             </h2>
             <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-              Click any priority target below to immediately launch a 1-on-1 practice session with {spriteName}.
+              Click any priority target below to immediately launch a 1-on-1
+              practice session with {spriteName}.
             </p>
           </div>
 
@@ -259,7 +520,7 @@ export function SpriteChatMessages({
             </div>
           )}
         </div>
-      ) : !activeTurn ? (
+      ) : turns.length === 0 || !activeTurn ? (
         /* ================= TAB 1 (EMPTY): NEW SESSION STAGE ================= */
         <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto py-6">
           <div className="relative mb-5">
@@ -278,14 +539,19 @@ export function SpriteChatMessages({
           </h3>
           <p className="text-xs text-slate-300 mb-6 leading-relaxed">
             Type a message below or launch a guided activity for{" "}
-            <span className="text-white font-semibold">{aiBrain.currentLessonTitle}</span>.
+            <span className="text-white font-semibold">
+              {aiBrain.currentLessonTitle}
+            </span>
+            .
           </p>
 
           <div className="flex flex-wrap justify-center gap-2.5">
             <button
               type="button"
               onClick={() =>
-                onQuickPrompt(`Give me a grammar breakdown for ${aiBrain.currentLessonTitle}`)
+                onQuickPrompt(
+                  `Give me a grammar breakdown for ${aiBrain.currentLessonTitle}`,
+                )
               }
               className="rounded-2xl border border-indigo-400/40 bg-indigo-500/15 px-4 py-2.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition shadow-sm"
             >
@@ -302,8 +568,121 @@ export function SpriteChatMessages({
             </button>
           </div>
         </div>
+      ) : viewMode === "multi" ? (
+        /* ================= TAB 1 (MULTI MODE): REGULAR CHAT THREAD ================= */
+        <div className="flex-1 flex flex-col gap-6">
+          {turns.map((turn, idx) => {
+            const isLastTurn = idx === turns.length - 1;
+            const payload = getTurnPayload(turn, isLastTurn);
+            const userText = turn.userMessage
+              ? cleanDisplayString(getRawText(turn.userMessage))
+              : "";
+
+            return (
+              <div key={turn.id} className="space-y-4">
+                {/* User Message Bubble (Right-Aligned) */}
+                {userText && (
+                  <div className="flex justify-end">
+                    <div className="max-w-[82%] rounded-2xl rounded-tr-sm border border-indigo-400/30 bg-gradient-to-r from-indigo-600/35 to-teal-600/25 px-4 py-3 text-sm font-semibold text-white shadow-md">
+                      {userText}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assistant Message Bubble (Left-Aligned) */}
+                <div className="flex items-start gap-3.5">
+                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-teal-400/50 bg-slate-800 shadow-md">
+                    <img
+                      src={avatarSrc}
+                      alt={spriteName}
+                      className="h-full w-full object-cover object-top"
+                    />
+                  </div>
+
+                  <div className="flex-1 max-w-[88%] space-y-3 rounded-2xl rounded-tl-sm border border-teal-500/25 bg-gradient-to-b from-slate-900/90 to-[#0B1020]/90 p-4 shadow-lg">
+                    <span className="text-[11px] font-extrabold tracking-wide text-teal-400 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> {spriteName}
+                    </span>
+
+                    {payload.spokenText ? (
+                      <p className="text-sm font-semibold text-white leading-relaxed">
+                        {payload.spokenText}
+                      </p>
+                    ) : isLastTurn && isLoading ? (
+                      <div className="flex items-center gap-2 py-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-teal-400 [animation-delay:-0.3s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-400 [animation-delay:-0.15s]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-teal-400" />
+                        <span className="text-xs font-medium text-slate-400 ml-1">
+                          {spriteName} is thinking...
+                        </span>
+                      </div>
+                    ) : isLastTurn && error ? (
+                      <p className="text-xs font-medium text-rose-400">
+                        {spriteName} couldn&apos;t respond right now. Please try
+                        asking again.
+                      </p>
+                    ) : (
+                      <p className="text-xs font-medium text-slate-300">
+                        Could you rephrase that? Let&apos;s keep practicing{" "}
+                        {aiBrain.currentLessonTitle}.
+                      </p>
+                    )}
+
+                    {/* Translation Box */}
+                    {payload.translation && (
+                      <div className="flex items-start gap-2 rounded-xl border border-indigo-400/25 bg-indigo-950/35 px-3.5 py-2.5">
+                        <Languages className="h-3.5 w-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                        <p className="text-xs font-medium text-indigo-200 leading-relaxed">
+                          {payload.translation}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ContextCard Component */}
+                    {payload.contextCard && (
+                      <div className="pt-1">
+                        <ContextCard
+                          title={cleanDisplayString(payload.contextCard.title)}
+                          grammarRule={cleanDisplayString(
+                            payload.contextCard.grammarRule,
+                          )}
+                          examples={(payload.contextCard.examples || []).map(
+                            (ex) => ({
+                              french: cleanDisplayString(ex.french),
+                              english: cleanDisplayString(ex.english),
+                            }),
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Action Status Pill */}
+                    {payload.action && (
+                      <div className="flex items-center justify-between rounded-xl border border-teal-400/40 bg-gradient-to-r from-teal-950/60 to-indigo-950/40 px-3.5 py-2.5 text-xs font-bold text-teal-200 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-3.5 w-3.5 text-teal-400" />
+                          <span>
+                            Action Triggered: {payload.action.type}{" "}
+                            {payload.action.targetWord
+                              ? `(${cleanDisplayString(payload.action.targetWord)})`
+                              : ""}
+                          </span>
+                        </div>
+                        <span className="rounded-full bg-teal-400/20 border border-teal-400/30 px-2 py-0.5 text-[9px] font-black uppercase text-teal-300">
+                          Active
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={threadEndRef} />
+        </div>
       ) : (
-        /* ================= TAB 1 (ACTIVE): 1-TO-1 ACTIVE SESSION STAGE ================= */
+        /* ================= TAB 1 (SINGLE MODE): 1-TO-1 ACTIVE SESSION STAGE ================= */
         <motion.div
           key={activeTurn.id}
           initial={{ opacity: 0, y: 10 }}
@@ -318,7 +697,9 @@ export function SpriteChatMessages({
                   You
                 </span>
                 <p className="text-sm font-bold text-white truncate">
-                  &ldquo;{cleanDisplayString(getRawText(activeTurn.userMessage))}&rdquo;
+                  &ldquo;
+                  {cleanDisplayString(getRawText(activeTurn.userMessage))}
+                  &rdquo;
                 </p>
               </div>
 
@@ -327,7 +708,9 @@ export function SpriteChatMessages({
                   <button
                     type="button"
                     disabled={currentTurnIdx === 0}
-                    onClick={() => onSelectTurnIndex(Math.max(0, currentTurnIdx - 1))}
+                    onClick={() =>
+                      onSelectTurnIndex(Math.max(0, currentTurnIdx - 1))
+                    }
                     className="p-0.5 text-slate-300 hover:text-teal-300 disabled:opacity-30"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -339,7 +722,9 @@ export function SpriteChatMessages({
                     type="button"
                     disabled={currentTurnIdx === turns.length - 1}
                     onClick={() =>
-                      onSelectTurnIndex(Math.min(turns.length - 1, currentTurnIdx + 1))
+                      onSelectTurnIndex(
+                        Math.min(turns.length - 1, currentTurnIdx + 1),
+                      )
                     }
                     className="p-0.5 text-slate-300 hover:text-teal-300 disabled:opacity-30"
                   >
@@ -381,23 +766,25 @@ export function SpriteChatMessages({
                     </div>
                   ) : error ? (
                     <p className="text-sm font-medium text-rose-400">
-                      {spriteName} couldn&apos;t respond right now. Please try asking again.
+                      {spriteName} couldn&apos;t respond right now. Please try
+                      asking again.
                     </p>
                   ) : (
                     <p className="text-sm font-medium text-slate-300">
-                      Could you rephrase that? Let&apos;s keep practicing {aiBrain.currentLessonTitle}.
+                      Could you rephrase that? Let&apos;s keep practicing{" "}
+                      {aiBrain.currentLessonTitle}.
                     </p>
                   )}
 
                   {/* Strict Boolean Check: Only show translation when isTranslationRequired === true */}
                   {activeAssistantPayload.translation && (
-                      <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
-                        <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
-                        <p className="text-xs font-medium text-indigo-200 leading-relaxed">
-                          {activeAssistantPayload.translation}
-                        </p>
-                      </div>
-                    )}
+                    <div className="flex items-start gap-2.5 rounded-2xl border border-indigo-400/25 bg-indigo-950/35 px-4 py-3">
+                      <Languages className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
+                      <p className="text-xs font-medium text-indigo-200 leading-relaxed">
+                        {activeAssistantPayload.translation}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -408,9 +795,15 @@ export function SpriteChatMessages({
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <ContextCard
-                    title={cleanDisplayString(activeAssistantPayload.contextCard.title)}
-                    grammarRule={cleanDisplayString(activeAssistantPayload.contextCard.grammarRule)}
-                    examples={(activeAssistantPayload.contextCard.examples || []).map((ex) => ({
+                    title={cleanDisplayString(
+                      activeAssistantPayload.contextCard.title,
+                    )}
+                    grammarRule={cleanDisplayString(
+                      activeAssistantPayload.contextCard.grammarRule,
+                    )}
+                    examples={(
+                      activeAssistantPayload.contextCard.examples || []
+                    ).map((ex) => ({
                       french: cleanDisplayString(ex.french),
                       english: cleanDisplayString(ex.english),
                     }))}
@@ -469,10 +862,11 @@ export function SpriteChatMessages({
             </div>
 
             <p className="mt-4 text-sm leading-relaxed text-slate-300">
-              Please review this session before deleting it. Once it&apos;s gone,{" "}
-              <span className="font-bold text-white">{spriteName}</span> won&apos;t be
-              able to recall this conversation, pick up where you left off, or build on
-              it in future practice. This can&apos;t be undone.
+              Please review this session before deleting it. Once it&apos;s
+              gone, <span className="font-bold text-white">{spriteName}</span>{" "}
+              won&apos;t be able to recall this conversation, pick up where you
+              left off, or build on it in future practice. This can&apos;t be
+              undone.
             </p>
 
             {deleteError && (

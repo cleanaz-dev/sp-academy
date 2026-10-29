@@ -17,11 +17,21 @@ import {
   X,
   ArrowRight,
   RotateCcw,
+  MessageSquare,
 } from "lucide-react";
 import { getPresignedUrls } from "@/app/actions/s3";
+import { getSpriteNode } from "@/lib/sprites/get-sprite-node";
 import type { SpriteAIContext } from "@/lib/schema/sprite-schema";
+import type { ActiveTab } from "@/components/sprite/sprite-chat-utils";
+import {
+  getLiveTaskState,
+  retrySystemTask,
+  type LiveTaskStatus,
+} from "@/app/actions/system-task-actions";
+import { pusherClient } from "@/lib/pusher-client"
 
 export type SpriteType = "vox" | "vivi";
+export type ChatViewMode = "single" | "multi";
 
 export type SpriteAction = {
   label: string;
@@ -33,19 +43,22 @@ export type SpritePayload = {
   id?: string;
   badge?: string;
   text: string;
+  targetText?: string; // Optional target language line from SpriteNode
   audioUrl?: string | null;
+  targetAudioUrl?: string | null;
   autoPlayAudio?: boolean;
   sprite?: SpriteType;
   spriteUrl?: string;
   duration?: number; // ms, pass Infinity to stay until closed/clicked
   position?: "bottom-left" | "bottom-right" | "top-right";
   action?: SpriteAction;
+  createdAt?: number;
+  read?: boolean;
 };
 
-// Matches what getUserSprite(userId) returns: SpriteProfile + its Sprite
 export type SpriteProfileData = {
   id: string;
-  userId: string; // <--- NEW: needed for /api/users/[userId]/sprite/... calls
+  userId: string;
   nativeLanguage: string;
   targetLanguage: string;
   nativeVoiceId: string;
@@ -61,14 +74,57 @@ export type SpriteProfileData = {
 } | null;
 
 interface SpriteContextValue {
+  // Identity & Profile
   activeSprite: SpriteType;
   setActiveSprite: (sprite: SpriteType) => void;
+  profile: SpriteProfileData;
+  spriteName: string;
+  avatarSrc: string;
+
+  // Chat UI State & Navigation
+  isChatOpen: boolean;
+  setIsChatOpen: (open: boolean) => void;
+  openChat: (options?: { tab?: ActiveTab; prompt?: string }) => void;
+  closeChat: () => void;
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
+  viewMode: ChatViewMode;
+  setViewMode: (mode: ChatViewMode) => void;
+
+  // Queued Prompt (for external buttons / notifications to trigger a chat turn)
+  pendingPrompt: string | null;
+  clearPendingPrompt: () => void;
+
+  // Notifications & SpriteNode Engine
+  current: SpritePayload | null;
+  notifications: SpritePayload[];
+  unreadCount: number;
+  markNotificationsRead: () => void;
+  dismissNotification: (id: string) => void;
   summonSprite: (payload: SpritePayload) => void;
+  summonSpriteNode: (options: {
+    orderIndex: number;
+    dedupeKey?: string;
+    actionLabel?: string;
+    onAction?: () => void;
+  }) => Promise<void>;
   dismissSprite: () => void;
-  /** Deletes a saved chat session. Resolves true on success, false on failure. */
-  deleteSession: (sessionId: string) => Promise<boolean>;
   isShowing: boolean;
-  profile: SpriteProfileData; // id, voice IDs, languages, sprite (name/avatar/persona)
+
+  // Shared Audio Controls
+  isPlaying: boolean;
+  playAudioUrl: (urlOrKey: string) => Promise<void>;
+  stopAudio: () => void;
+
+  // Session Management
+  deleteSession: (sessionId: string) => Promise<boolean>;
+
+  // sprite phasess messages
+  liveTask: LiveTaskStatus | null;
+  setLiveTask: (task: LiveTaskStatus | null) => void;
+  isRetryingTask: boolean;
+  retryLiveTask: (taskId?: string) => Promise<boolean>;
+
 }
 
 const SpriteContext = createContext<SpriteContextValue | null>(null);
@@ -86,12 +142,26 @@ export function SpriteProvider({
   const [activeSprite, setActiveSprite] = useState<SpriteType>(
     (dbSprite?.slug as SpriteType) ?? "vox"
   );
+
+  // Chat UI states
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("session");
+  const [viewMode, setViewMode] = useState<ChatViewMode>("single");
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+
+  // Notification states
   const [current, setCurrent] = useState<SpritePayload | null>(null);
+  const [notifications, setNotifications] = useState<SpritePayload[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const s3CacheRef = useRef<Record<string, string>>({});
+  const summonedKeysRef = useRef<Set<string>>(new Set());
+  const [liveTask, setLiveTask] = useState<LiveTaskStatus | null>(null);
+  const [isRetryingTask, setIsRetryingTask] = useState(false);
+
+  
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
@@ -144,10 +214,7 @@ export function SpriteProvider({
       audioRef.current = audio;
       setIsPlaying(true);
 
-      audio.onended = () => {
-        setIsPlaying(false);
-      };
-
+      audio.onended = () => setIsPlaying(false);
       audio.play().catch((err) => {
         console.warn("Sprite audio autoplay blocked or failed:", err);
         setIsPlaying(false);
@@ -163,32 +230,136 @@ export function SpriteProvider({
 
       const nextPayload: SpritePayload = {
         id: payload.id || String(Date.now()),
-        duration: payload.duration ?? 5000,
-        position: payload.position ?? "bottom-left",
+        duration: payload.duration ?? 8000,
+        position: payload.position ?? "bottom-right",
+        createdAt: Date.now(),
+        read: isChatOpen, // If chat is already open, mark as read immediately
         ...payload,
       };
 
-      setCurrent(nextPayload);
+      // 1. Add to persistent in-chat notification feed (avoid duplicates by ID)
+      setNotifications((prev) => {
+        const filtered = prev.filter((item) => item.id !== nextPayload.id);
+        return [nextPayload, ...filtered].slice(0, 10);
+      });
 
+      // 2. Only show floating toast if the Chat Drawer is closed
+      if (!isChatOpen) {
+        setCurrent(nextPayload);
+
+        if (nextPayload.duration && nextPayload.duration !== Infinity) {
+          timerRef.current = setTimeout(() => {
+            setCurrent(null);
+          }, nextPayload.duration);
+        }
+      }
+
+      // 3. Play audio whether chat is open or closed
       if (nextPayload.audioUrl && nextPayload.autoPlayAudio) {
         playAudioUrl(nextPayload.audioUrl);
       }
-
-      if (nextPayload.duration && nextPayload.duration !== Infinity) {
-        timerRef.current = setTimeout(() => {
-          setCurrent(null);
-        }, nextPayload.duration);
-      }
     },
-    [playAudioUrl, stopAudio]
+    [isChatOpen, playAudioUrl, stopAudio]
   );
 
-  // DELETE /api/users/[userId]/sprite/sessions/[sessionId]
-  // A 404 counts as success: the session is already gone, which is what the user wanted.
+  // Centralized helper so pages don't have to manually fetch & wire SpriteNodes
+  const summonSpriteNode = useCallback(
+    async ({
+      orderIndex,
+      dedupeKey,
+      actionLabel,
+      onAction,
+    }: {
+      orderIndex: number;
+      dedupeKey?: string;
+      actionLabel?: string;
+      onAction?: () => void;
+    }) => {
+      if (!spriteData?.sprite) return;
+
+      const storageKey = dedupeKey || `sprite_seen_${orderIndex}`;
+      if (
+        summonedKeysRef.current.has(storageKey) ||
+        (typeof window !== "undefined" && sessionStorage.getItem(storageKey))
+      ) {
+        return;
+      }
+
+      const node = await getSpriteNode(
+        {
+          slug: spriteData.sprite.slug,
+          nativeVoiceId: spriteData.nativeVoiceId,
+          targetVoiceId: spriteData.targetVoiceId,
+        },
+        orderIndex
+      );
+
+      if (!node) return;
+
+      summonedKeysRef.current.add(storageKey);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(storageKey, "1");
+      }
+
+      summonSprite({
+        id: node.nodeId,
+        badge: node.header ?? undefined,
+        text: node.nativeBody,
+        targetText: node.targetBody ?? undefined,
+        audioUrl: node.nativeAudioUrl ?? node.targetAudioUrl,
+        targetAudioUrl: node.targetAudioUrl,
+        autoPlayAudio: true,
+        duration: 20000,
+        position: "bottom-right",
+        action: onAction
+          ? {
+              label: node.action || actionLabel || "Continue",
+              onClick: onAction,
+              variant: "primary",
+            }
+          : undefined,
+      });
+    },
+    [spriteData, summonSprite]
+  );
+
+  const markNotificationsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const openChat = useCallback(
+    (options?: { tab?: ActiveTab; prompt?: string }) => {
+      // Hide floating toast when opening the full chat drawer
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setCurrent(null);
+
+      if (options?.tab) setActiveTab(options.tab);
+      if (options?.prompt) {
+        setActiveTab("session");
+        setPendingPrompt(options.prompt);
+      }
+
+      setIsChatOpen(true);
+      markNotificationsRead();
+    },
+    [markNotificationsRead]
+  );
+
+  const closeChat = useCallback(() => {
+    setIsChatOpen(false);
+  }, []);
+
+  const clearPendingPrompt = useCallback(() => {
+    setPendingPrompt(null);
+  }, []);
+
   const deleteSession = useCallback(
     async (sessionId: string): Promise<boolean> => {
       if (!userId) return false;
-
       try {
         const res = await fetch(
           `/api/users/${userId}/sprite/sessions/${sessionId}`,
@@ -210,7 +381,6 @@ export function SpriteProvider({
     };
   }, [stopAudio]);
 
-  // Sprite identity now comes from the DB (via layout), with the old hardcoded values as fallback
   const resolvedSprite = current?.sprite || activeSprite;
   const isVivi = resolvedSprite === "vivi";
   const spriteName = dbSprite?.name ?? (isVivi ? "Vivi" : "Vox");
@@ -219,30 +389,172 @@ export function SpriteProvider({
     dbSprite?.avatarUrl ||
     (isVivi ? "/sprite-f.png" : "/sprite-m.png");
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   const positionClasses =
     current?.position === "bottom-right"
-      ? "bottom-6 right-6"
+      ? "bottom-24 right-6" // Raised slightly so it sits cleanly above the Chat Launcher button!
       : current?.position === "top-right"
         ? "top-6 right-6"
         : "bottom-6 left-6";
+
+        const retryLiveTask = useCallback(
+    async (explicitTaskId?: string): Promise<boolean> => {
+      const targetId = explicitTaskId || liveTask?.taskId;
+      if (!targetId) return false;
+
+      setIsRetryingTask(true);
+      const res = await retrySystemTask(targetId);
+      setIsRetryingTask(false);
+
+      if (res.ok) {
+        setLiveTask((prev) =>
+          prev ? { ...prev, status: "BUILDING", errorMessage: null } : null
+        );
+        summonSprite({
+          id: `retry_${targetId}`,
+          badge: "Rebuilding 🛠️",
+          text: `I just restarted the generator for ${
+            liveTask?.label || "your lesson"
+          }. Hang tight while I bake it!`,
+          duration: 7000,
+          position: "bottom-right",
+        });
+        return true;
+      }
+      return false;
+    },
+    [liveTask, summonSprite]
+  );
+
+  // 1. Hydrate initial task state from Upstash Redis on mount
+  // 2. Subscribe to `user-${userId}` on Pusher for instant Lambda error/completion events
+  useEffect(() => {
+    if (!userId) return;
+
+    let mounted = true;
+
+    // Initial check in case a task failed before page load/refresh
+    getLiveTaskState(userId).then((cached) => {
+      if (!mounted || !cached) return;
+      setLiveTask(cached);
+      if (cached.status === "FAILED") {
+        summonSprite({
+          id: `fail_${cached.taskId}`,
+          badge: `${cached.label || "Generation"} Hit a Snag ⚠️`,
+          text: `Something interrupted ${
+            cached.label || "your lesson"
+          } while building (${cached.stage || cached.lambdaName || "builder"}). Want me to retry it?`,
+          duration: Infinity,
+          position: "bottom-right",
+          action: {
+            label: "Retry Generation",
+            variant: "retry",
+            onClick: () => {
+              retryLiveTask(cached.taskId);
+            },
+          },
+        });
+      }
+    });
+
+    // Live Pusher subscription
+    const channelName = `user-${userId}`;
+    const channel = pusherClient.subscribe(channelName);
+
+    const handleFailed = (data: LiveTaskStatus) => {
+      const nextState: LiveTaskStatus = {
+        ...data,
+        status: "FAILED",
+        label: data.label || "Lesson Generation",
+        updatedAt: new Date().toISOString(),
+      };
+      setLiveTask(nextState);
+
+      summonSprite({
+        id: `fail_${data.taskId}`,
+        badge: `${nextState.label} Failed ⚠️`,
+        text: `Oops! My builder hit an error while generating ${nextState.label}. Click Retry and I'll spin it right back up.`,
+        duration: Infinity,
+        position: "bottom-right",
+        action: {
+          label: "Retry Now",
+          variant: "retry",
+          onClick: () => {
+            retryLiveTask(data.taskId);
+          },
+        },
+      });
+    };
+
+    const handleBuilding = (data: LiveTaskStatus) => {
+      setLiveTask({
+        ...data,
+        status: "BUILDING",
+        updatedAt: new Date().toISOString(),
+      });
+    };
+
+    const handleCompleted = () => {
+      setLiveTask(null);
+    };
+
+    channel.bind("system-task-failed", handleFailed);
+    channel.bind("system-task-building", handleBuilding);
+    channel.bind("system-task-completed", handleCompleted);
+
+    return () => {
+      mounted = false;
+      channel.unbind("system-task-failed", handleFailed);
+      channel.unbind("system-task-building", handleBuilding);
+      channel.unbind("system-task-completed", handleCompleted);
+      pusherClient.unsubscribe(channelName);
+    };
+  }, [userId, summonSprite, retryLiveTask]);
 
   return (
     <SpriteContext.Provider
       value={{
         activeSprite,
         setActiveSprite,
-        summonSprite,
-        dismissSprite,
-        deleteSession,
-        isShowing: !!current,
         profile: spriteData,
+        spriteName,
+        avatarSrc,
+        isChatOpen,
+        setIsChatOpen,
+        openChat,
+        closeChat,
+        activeTab,
+        setActiveTab,
+        viewMode,
+        setViewMode,
+        pendingPrompt,
+        clearPendingPrompt,
+        current,
+        notifications,
+        unreadCount,
+        markNotificationsRead,
+        dismissNotification,
+        summonSprite,
+        summonSpriteNode,
+        dismissSprite,
+        isShowing: !!current,
+        isPlaying,
+        playAudioUrl,
+        stopAudio,
+        deleteSession,
+
+        isRetryingTask,
+        liveTask,
+        retryLiveTask,
+        setLiveTask
       }}
     >
       {children}
 
-      {/* GLOBAL FLOATING SPRITE HUD */}
+      {/* GLOBAL FLOATING SPRITE HUD (Only shown when Chat Drawer is closed) */}
       <AnimatePresence mode="wait">
-        {current && (
+        {current && !isChatOpen && (
           <motion.div
             key={current.id}
             initial={{ opacity: 0, y: 24, scale: 0.92 }}
@@ -281,7 +593,6 @@ export function SpriteProvider({
 
             {/* Bubble Content */}
             <div className="flex-1 min-w-0">
-              {/* Top Meta Row */}
               <div className="mb-1 flex items-center gap-1.5">
                 <span className="rounded-full bg-teal-400/20 px-2 py-0.5 text-[10px] font-black tracking-wider text-teal-300 uppercase">
                   {spriteName}
@@ -294,67 +605,72 @@ export function SpriteProvider({
                 )}
               </div>
 
-              {/* Main Message */}
               <p className="text-xs leading-relaxed font-semibold text-slate-100">
                 &ldquo;{current.text}&rdquo;
               </p>
 
-              {/* Optional Audio & Action Controls Row */}
-              {(current.audioUrl || current.action) && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {current.audioUrl && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        isPlaying
-                          ? stopAudio()
-                          : playAudioUrl(current.audioUrl!)
-                      }
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition ${
-                        isPlaying
-                          ? "bg-teal-500 text-slate-950"
-                          : "bg-white/10 text-white hover:bg-white/20"
-                      }`}
-                    >
-                      {isPlaying ? (
-                        <>
-                          <Square className="h-2.5 w-2.5 fill-current" />
-                          <span>Stop</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="h-3 w-3" />
-                          <span>Listen</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+              {/* Controls Row: Listen + Primary Action + Open in Chat */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {current.audioUrl && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      isPlaying ? stopAudio() : playAudioUrl(current.audioUrl!)
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition ${
+                      isPlaying
+                        ? "bg-teal-500 text-slate-950"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Square className="h-2.5 w-2.5 fill-current" />
+                        <span>Stop</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="h-3 w-3" />
+                        <span>Listen</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
-                  {current.action && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        current.action?.onClick();
-                        dismissSprite();
-                      }}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[11px] font-extrabold transition active:scale-95 ${
-                        current.action.variant === "danger" ||
-                        current.action.variant === "retry"
-                          ? "bg-rose-500 text-white hover:bg-rose-400"
-                          : "bg-indigo-500 text-white hover:bg-indigo-400"
-                      }`}
-                    >
-                      {current.action.variant === "retry" && (
-                        <RotateCcw className="h-3 w-3" />
-                      )}
-                      <span>{current.action.label}</span>
-                      {current.action.variant !== "retry" && (
-                        <ArrowRight className="h-3 w-3" />
-                      )}
-                    </button>
-                  )}
-                </div>
-              )}
+                {current.action && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      current.action?.onClick();
+                      dismissSprite();
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[11px] font-extrabold transition active:scale-95 ${
+                      current.action.variant === "danger" ||
+                      current.action.variant === "retry"
+                        ? "bg-rose-500 text-white hover:bg-rose-400"
+                        : "bg-indigo-500 text-white hover:bg-indigo-400"
+                    }`}
+                  >
+                    {current.action.variant === "retry" && (
+                      <RotateCcw className="h-3 w-3" />
+                    )}
+                    <span>{current.action.label}</span>
+                    {current.action.variant !== "retry" && (
+                      <ArrowRight className="h-3 w-3" />
+                    )}
+                  </button>
+                )}
+
+                {/* Bridge button: moves user from notification toast right into the Chat UI */}
+                <button
+                  type="button"
+                  onClick={() => openChat({ tab: "briefing" })}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-slate-300 transition hover:bg-white/15 hover:text-white"
+                >
+                  <MessageSquare className="h-3 w-3 text-teal-400" />
+                  <span>Chat</span>
+                </button>
+              </div>
             </div>
 
             {/* Close Button */}

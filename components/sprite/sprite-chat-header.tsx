@@ -5,22 +5,25 @@ import {
   X,
   Target,
   History,
-  Dumbbell,
-  FileBarChart,
   Plus,
   MessageSquare,
+  MessagesSquare,
+  RectangleHorizontal,
 } from "lucide-react";
 import type { ActiveTab } from "./sprite-chat-utils";
+
+export type ChatViewMode = "single" | "multi";
 
 interface SpriteChatHeaderProps {
   spriteName: string;
   avatarSrc: string;
   currentLessonTitle: string;
   activeTab: ActiveTab;
+  viewMode: ChatViewMode;
   sessionsCount: number;
   onSelectTab: (tab: ActiveTab) => void;
+  onChangeViewMode: (mode: ChatViewMode) => void;
   onStartNewSession: () => void;
-  onTriggerReport: () => void;
   onClose: () => void;
 }
 
@@ -29,10 +32,11 @@ export function SpriteChatHeader({
   avatarSrc,
   currentLessonTitle,
   activeTab,
+  viewMode,
   sessionsCount,
   onSelectTab,
+  onChangeViewMode,
   onStartNewSession,
-  onTriggerReport,
   onClose,
 }: SpriteChatHeaderProps) {
   return (
@@ -84,7 +88,7 @@ export function SpriteChatHeader({
         </button>
       </div>
 
-      {/* Row 2: Tabs (left) + Action Pills (right), always inline */}
+      {/* Row 2: Tabs (left) + Single/Multi Mode Pills (right), always inline */}
       <div className="mt-4 flex flex-nowrap items-center justify-between gap-2 pt-3 border-t border-white/10">
         {/* LEFT: tabs */}
         <div className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
@@ -108,26 +112,34 @@ export function SpriteChatHeader({
           ))}
         </div>
 
-        {/* RIGHT: action pills */}
-        <div className="ml-auto flex min-w-0 items-center gap-2">
+        {/* RIGHT: Single / Multi mode toggle pills */}
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 rounded-2xl bg-slate-950/60 p-1 border border-white/10">
           <button
             type="button"
-            onClick={onTriggerReport}
-            title="Progress Report"
-            className="flex items-center gap-1.5 rounded-xl border border-indigo-400/30 bg-indigo-500/15 px-3 py-1.5 text-xs font-bold text-indigo-200 hover:bg-indigo-500/25 transition"
+            onClick={() => onChangeViewMode("single")}
+            title="Single Turn View"
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+              viewMode === "single"
+                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
-            <FileBarChart className="h-3.5 w-3.5 text-indigo-300" />
-            <span className="hidden sm:inline">Progress Report</span>
+            <RectangleHorizontal className="h-3.5 w-3.5" />
+            <span>Single</span>
           </button>
 
           <button
             type="button"
-            disabled
-            title="Exercise"
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-400 opacity-75 cursor-not-allowed"
+            onClick={() => onChangeViewMode("multi")}
+            title="Multi Thread View"
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+              viewMode === "multi"
+                ? "bg-gradient-to-r from-indigo-600 to-teal-600 text-white shadow-md"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
-            <Dumbbell className="h-3.5 w-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Exercise</span>
+            <MessagesSquare className="h-3.5 w-3.5" />
+            <span>Multi</span>
           </button>
         </div>
       </div>
