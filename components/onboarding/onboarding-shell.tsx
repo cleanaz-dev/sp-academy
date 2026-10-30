@@ -33,6 +33,7 @@ import { invokeEduBuilder } from "@/app/actions/invoke-edu-builder";
 import { setUserGeneration } from "@/lib/upstash";
 import { Gender } from "@prisma/client";
 import { SpriteStep } from "./steps/stripe-step";
+import { invokeTrialBuilder } from "@/app/actions/invoke-trial-builder";
 
 // 🛡️ Guarantees plain English names always convert to valid BCP-47 locale codes
 
@@ -186,8 +187,6 @@ const handleCompleteOnboarding = async () => {
     setError(null);
 
     try {
-      // Extract the voice style suffix (e.g. "boy-01", "man-01", "girl-01", "woman-01")
-      // from the selected voiceId ("fr-FR-boy-01") so both native & target match their choice!
       const voiceSuffix =
         voiceId.split("-").slice(2).join("-") ||
         (sprite === "vivi" ? "girl-01" : "boy-01");
@@ -195,36 +194,34 @@ const handleCompleteOnboarding = async () => {
       const resolvedNativeVoiceId = `${nativeLanguage}-${voiceSuffix}`;
       const resolvedTargetVoiceId = voiceId || `${targetLanguage}-${voiceSuffix}`;
 
-      console.log("Submitting Onboarding:", {
+      const commonPayload = {
+        userId,
+        firstName,
+        gender: gender || Gender.M,
+        spoon: 1,
         nativeLanguage,
         targetLanguage,
-        sprite,
-        resolvedNativeVoiceId,
-        resolvedTargetVoiceId,
-      });
+        levelBand: level.toLowerCase(),
+        goal: goal.toLowerCase(),
+        scriptComfort: "unspecified",
+        type: "lang",
+        isOnboarding: true,
+        spriteSlug: sprite,
+        nativeVoiceId: resolvedNativeVoiceId,
+        targetVoiceId: resolvedTargetVoiceId,
+      };
 
-      // Run both the builder invocation and the Redis token creation in parallel
+      // 🟢 BRANCH: Paid with Stripe vs. Free Trial Milestone 1
+      const isPaid = Boolean(sessionId);
+      const builderAction = isPaid
+        ? invokeEduBuilder({ ...commonPayload, sessionId })
+        : invokeTrialBuilder(commonPayload);
+
       const [_, setupToken] = await Promise.all([
-        invokeEduBuilder({
-          userId,
-          sessionId,
-          firstName,
-          gender: gender || "M",
-          spoon: 1,
-          nativeLanguage,
-          targetLanguage,
-          levelBand: level.toLowerCase(),
-          goal: goal.toLowerCase(),
-          scriptComfort: "unspecified",
-          type: "lang",
-          isOnboarding: true,
-          spriteSlug: sprite,
-          nativeVoiceId: resolvedNativeVoiceId,
-          targetVoiceId: resolvedTargetVoiceId,
-        }),
+        builderAction,
         setUserGeneration({
           firstName: firstName.trim(),
-          gender: gender || "M",
+          gender: gender || Gender.M,
           nativeLanguage,
           targetLanguage,
           level: level.toLowerCase(),

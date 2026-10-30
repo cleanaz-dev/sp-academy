@@ -7,6 +7,7 @@ import {
   Check,
   Infinity as InfinityIcon,
   Sparkles,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +25,7 @@ import {
 const PLANS = pricingData.plans;
 
 const PLAN_ICONS: Record<string, LucideIcon> = {
+  free: Zap,
   founder: Sparkles,
   unlimited: InfinityIcon,
   enterprise: Building2,
@@ -90,6 +92,11 @@ export default function PricingSection() {
   const isAnnual = billingInterval === "annual";
 
   async function startCheckout(plan: Plan) {
+    if (plan.id === "free") {
+      window.location.href = plan.cta.href || "/onboarding";
+      return;
+    }
+
     setError(null);
     setLoadingId(plan.id);
 
@@ -183,7 +190,9 @@ export default function PricingSection() {
             const accent = ACCENTS[plan.accent];
             const isLoading = loadingId === plan.id;
             const isSolid = SOLID_PLANS.includes(plan.id);
-            const usesCheckout = plan.id !== "enterprise";
+            
+            // Only founder and unlimited launch Stripe checkout
+            const usesCheckout = plan.id === "founder" || plan.id === "unlimited";
 
             const displayPrice =
               isAnnual && plan.annualPrice ? plan.annualPrice : plan.price;
@@ -227,7 +236,7 @@ export default function PricingSection() {
                         {plan.label}
                       </span>
 
-                      {isAnnual && plan.annualSavingsLabel && (
+                      {isAnnual && plan.annualSavingsLabel && plan.id !== "free" && (
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide uppercase ${
                             isSolid
@@ -284,7 +293,7 @@ export default function PricingSection() {
                       )}
                     </div>
 
-                    {isAnnual && plan.annualTotal && (
+                    {isAnnual && plan.annualTotal && plan.id !== "free" && (
                       <p
                         className={`mt-1.5 text-xs font-semibold ${
                           isSolid ? "text-white/75" : "text-muted-foreground"

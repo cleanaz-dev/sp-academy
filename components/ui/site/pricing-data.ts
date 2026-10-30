@@ -30,7 +30,7 @@ export type PricingData = {
 };
 
 // ---------------------------------------------------------------------------
-// INDIVIDUAL PLANS
+// 1. INDIVIDUAL PLANS
 // ---------------------------------------------------------------------------
 
 export const PLAN_FREE_MILESTONE: Plan = {
@@ -41,19 +41,18 @@ export const PLAN_FREE_MILESTONE: Plan = {
   featured: false,
   price: "$0",
   originalPrice: "",
-  period: "Free test drive",
-  description:
-    "Test-drive the complete learning engine through Milestone 1 before committing.",
+  period: "Free trial",
+  description: "Test-drive the complete learning engine through Milestone 1.",
   features: [
-    "Full access to Milestone 1 (Spoons 1–3 + Vocab Bridges 1–3)",
-    "Boss Stage 1 Assessment with live Azure pronunciation analysis",
-    "1-on-1 Interactive Chalkboard prep with your AI Sprite (Vox or Vivi)",
-    "Personal Word Matrix & speech resonance tracking",
-    "No credit card required to start",
+    "Spoons 1–3 + Vocab Bridges 1–3",
+    "Boss Stage 1 with live Azure speech scoring",
+    "Interactive Chalkboard prep with Vox or Vivi",
+    "Personal Word Matrix tracking",
+    "No credit card required",
   ],
   cta: {
     label: "Start Milestone 1 Free",
-    href: "/signup",
+    href: "/onboarding",
   },
 };
 
@@ -69,20 +68,19 @@ export const PLAN_CORE_FOUNDER: Plan = {
   annualPrice: "$29",
   annualTotal: "$348 CAD billed annually",
   annualSavingsLabel: "2 months free (Save $72)",
-  description:
-    "Daily structured fluency: 15 full learning cycles per month with personal Chalkboard tutoring and live AI speaking practice.",
+  description: "15 full learning cycles per month with 1-on-1 AI coaching.",
   features: [
-    "Up to 45 custom-baked Spoons + 45 Video Vocab Bridges monthly (15 complete cycles)",
-    "15 interactive Boss Stage assessments with live pronunciation grading",
-    "1-on-1 Step-by-Step Chalkboard Tutoring with 3D visuals, syntax tiles & accent assistance",
-    "5 daily 5-minute AI Conversation sprints (spaced-repetition pacing)",
-    "Targeted 3-Round Repair Arcades that diagnose and drill your exact mistakes",
-    "Private Founder Community access & weekly speaking challenges",
-    "Lifetime Founder rate lock (keeps $35 CAD/mo as new modules release)",
+    "45 Spoons + 45 Video Vocab Bridges /mo",
+    "15 Boss Stage assessments with live grading",
+    "1-on-1 Chalkboard with 3D visuals & accent keys",
+    "5 daily 5-min AI Conversation sprints",
+    "3-Round Repair Arcades for your mistakes",
+    "Private Founder Community access",
+    "Lifetime Founder rate lock ($35 CAD/mo)",
   ],
   cta: {
     label: "Become a founder",
-    href: "/signup",
+    href: "/onboarding",
   },
 };
 
@@ -98,40 +96,38 @@ export const PLAN_UNLIMITED_PLUS: Plan = {
   annualPrice: "$99",
   annualTotal: "$1,188 CAD billed annually",
   annualSavingsLabel: "Save $312/year",
-  description:
-    "Built for rapid immersion, exam prep (TEF/DELF), and relocation—unthrottled learning cycles and unlimited Sprite energy.",
+  description: "Rapid immersion for exams (TEF/DELF) and relocation.",
   features: [
-    "Up to 180 Spoons + 180 Video Vocab Bridges monthly (60 complete cycles)",
-    "60 cinematic, video-enhanced Boss Stage assessments",
-    "15 daily AI Conversation sessions with zero cooldown friction",
-    "Unlimited Sprite Energy (⚡) — no nap cooldowns on bonus Chalkboard drills",
-    "Priority background lesson pre-baking & high-speed audio generation",
-    "Targeted professional & certification vocabulary focus",
-    "VIP Founder Community access + early beta access to Read-Along Books",
+    "180 Spoons + 180 Video Vocab Bridges /mo",
+    "60 cinematic video Boss Stage assessments",
+    "15 daily AI Conversation sessions (no cooldown)",
+    "Unlimited Sprite Energy (⚡) on Chalkboard",
+    "Priority high-speed lesson & audio pre-baking",
+    "Targeted professional & exam vocabulary",
+    "VIP Founder Community + early access to Books",
   ],
   cta: {
     label: "Go Unlimited+",
-    href: "/signup",
+    href: "/onboarding",
   },
 };
 
 export const PLAN_ENTERPRISE: Plan = {
   id: "enterprise",
   name: "Enterprise",
-  label: "For teams and organizations",
+  label: "For organizations",
   accent: "tertiary",
   featured: false,
   price: "Custom",
   originalPrice: "",
   period: "",
-  description:
-    "Custom spoken-language immersion for schools, government departments, and multinational teams.",
+  description: "Spoken language training for teams, schools, and companies.",
   features: [
-    "Everything in Spoon Unlimited+ with custom seat allocations",
-    "Team dashboards, Word Matrix cohort analytics, and progress reporting",
-    "Custom workplace scenarios, terminology, and customized Boss Stages",
-    "Single Sign-On (SSO) and centralized admin billing",
-    "Dedicated onboarding specialist & SLA support",
+    "Everything in Unlimited+ with custom seats",
+    "Team dashboards & Word Matrix analytics",
+    "Custom workplace scenarios & Boss Stages",
+    "Single Sign-On (SSO) & admin billing",
+    "Dedicated onboarding & SLA support",
   ],
   cta: {
     label: "Contact sales",
@@ -140,34 +136,32 @@ export const PLAN_ENTERPRISE: Plan = {
 };
 
 // ---------------------------------------------------------------------------
-// ARRAY 1: PAID ONLY (Current 3 plans — matches your layout 1:1)
+// 2. ARRAYS
 // ---------------------------------------------------------------------------
+
 export const PRICING_PLANS_PAID_ONLY: Plan[] = [
   PLAN_CORE_FOUNDER,
   PLAN_UNLIMITED_PLUS,
   PLAN_ENTERPRISE,
 ];
 
-// ---------------------------------------------------------------------------
-// ARRAY 2: WITH FREE TIER (Includes Milestone 1 Pass)
-// ---------------------------------------------------------------------------
 export const PRICING_PLANS_WITH_FREE: Plan[] = [
   PLAN_FREE_MILESTONE,
   PLAN_CORE_FOUNDER,
   PLAN_UNLIMITED_PLUS,
-  PLAN_ENTERPRISE,
 ];
 
 // ---------------------------------------------------------------------------
-// DEFAULT EXPORT (Uses the 3-plan paid array so nothing breaks)
+// 3. EXPORT
 // ---------------------------------------------------------------------------
+
 export const PRICING_DATA: PricingData = {
   eyebrow: "Pricing",
   heading: "Simple pricing.",
   headingAccent: "Real fluency.",
   intro:
-    "Lock in Beta Founder pricing for full access to personalized Spoons, video Vocab Bridges, 1-on-1 Chalkboard coaching, and daily AI conversation practice.",
+    "Lock in Beta Founder pricing for personalized Spoons, video Vocab Bridges, 1-on-1 Chalkboard coaching, and daily AI conversation practice.",
   footnote:
-    "Prices in CAD. Beta founders keep their discounted rate locked in for the entire life of their active subscription.",
-  plans: PRICING_PLANS_PAID_ONLY,
+    "Prices in CAD. Beta founders keep their rate locked in for the lifetime of their active subscription.",
+  plans: PRICING_PLANS_WITH_FREE,
 };
