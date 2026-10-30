@@ -16,7 +16,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const apiKey = process.env.FISH_API_KEY ? process.env.FISH_AUDIO_API_KEY
+    const apiKey = process.env.FISH_API_KEY ?? process.env.FISH_AUDIO_API_KEY
+    
     if (!apiKey) {
       return NextResponse.json(
         { error: "Missing FISH_API_KEY" },
