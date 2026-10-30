@@ -49,6 +49,8 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     clearPendingPrompt,
     deleteSession,
     isShowing,
+    playAudioUrl, // <--- Used to play the TTS audio blob
+    stopAudio,    // <--- Used to stop audio when user replies or closes chat
   } = useSprite();
 
   const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
@@ -63,6 +65,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const lastUserPromptRef = useRef<string>("");
+  const ttsAbortRef = useRef<AbortController | null>(null);
 
   const aiBrain: ChatContextData = initialContext || {
     userName: "Student",
@@ -79,6 +82,16 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     }, 6000);
     return () => clearTimeout(timer);
   }, [aiBrain.currentLessonTitle]);
+
+  // Cancel any in-flight TTS if the drawer closes or unmounts
+  useEffect(() => {
+    if (!isChatOpen) {
+      ttsAbortRef.current?.abort();
+    }
+    return () => {
+      ttsAbortRef.current?.abort();
+    };
+  }, [isChatOpen]);
 
   const showLauncherPill = (isLabelExpanded || isHovered) && !isShowing;
 
@@ -116,6 +129,62 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     }
   }, [userId]);
 
+  // 🔊 NON-SEQUENTIAL, WEIGHTED TTS TRIGGER FOR SPRITE SPOKEN TEXT
+  const maybeSpeakTurn = useCallback(
+    async (
+      spokenText: string,
+      isTranslationRequired: boolean,
+      boardStatus?: "IN_PROGRESS" | "COMPLETED" | null,
+      isNewBoard?: boolean
+    ) => {
+      const cleanText = cleanDisplayString(spokenText);
+      if (!cleanText || cleanText.length < 4) return;
+
+      // Smart Weight:
+      // - 85% chance when a new Chalkboard opens or when a Chalkboard completes
+      // - 35% chance on middle step updates
+      const weight =
+        isNewBoard || boardStatus === "COMPLETED" ? 0.85 : 0.35;
+
+      if (Math.random() > weight) return;
+
+      // Abort any previous in-flight TTS request
+      ttsAbortRef.current?.abort();
+      const controller = new AbortController();
+      ttsAbortRef.current = controller;
+
+      const voiceId = isTranslationRequired
+        ? profile?.targetVoiceId
+        : profile?.nativeVoiceId;
+
+      try {
+        const res = await fetch(`/api/users/${userId}/sprite/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: cleanText,
+            voiceId,
+            isTargetLang: isTranslationRequired,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok || controller.signal.aborted) return;
+
+        const blob = await res.blob();
+        if (controller.signal.aborted) return;
+
+        const blobUrl = URL.createObjectURL(blob);
+        await playAudioUrl(blobUrl);
+      } catch (err: any) {
+        if (err?.name !== "AbortError") {
+          console.warn("[Sprite TTS] skipped:", err);
+        }
+      }
+    },
+    [userId, profile?.nativeVoiceId, profile?.targetVoiceId, playAudioUrl]
+  );
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -129,6 +198,19 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     onFinish: async ({ message }) => {
       if (message.role !== "assistant") return;
       const parsed = parseMessagePayload(message);
+
+      // 1. Trigger non-sequential weighted voice in the background (do NOT await so UI never blocks!)
+      const isNewBoard = Boolean(
+        parsed.chalkboard && parsed.chalkboard.title !== "__STEP_UPDATE__"
+      );
+      void maybeSpeakTurn(
+        parsed.spokenText,
+        parsed.isTranslationRequired,
+        parsed.chalkboard?.status,
+        isNewBoard
+      );
+
+      // 2. Persist turn to session history
       const turnPayload = {
         id: message.id || crypto.randomUUID(),
         userPrompt: cleanDisplayString(lastUserPromptRef.current || "Practice"),
@@ -181,7 +263,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [activeTurn?.assistantMessage]
   );
 
-const isSnoozing = useMemo(() => {
+  const isSnoozing = useMemo(() => {
     const currentTitle = cleanDisplayString(
       aiBrain.currentLessonTitle
     ).toLowerCase();
@@ -206,9 +288,14 @@ const isSnoozing = useMemo(() => {
     activeAssistantPayload.chalkboard,
     sessionsList,
   ]);
+
   const sendWithSessionBody = useCallback(
     (text: string) => {
       if (isSnoozing) return;
+      // Stop any playing or loading TTS when the user sends a new message
+      ttsAbortRef.current?.abort();
+      stopAudio();
+
       lastUserPromptRef.current = text;
       sendMessage(
         { text },
@@ -221,7 +308,7 @@ const isSnoozing = useMemo(() => {
         }
       );
     },
-    [sendMessage, isSnoozing]
+    [sendMessage, isSnoozing, stopAudio]
   );
 
   const handleQuickPrompt = useCallback(
@@ -255,6 +342,8 @@ const isSnoozing = useMemo(() => {
 
   const startNewSession = () => {
     if (isSnoozing) return;
+    ttsAbortRef.current?.abort();
+    stopAudio();
     setSessionId(crypto.randomUUID());
     setMessages([]);
     setSelectedTurnIndex(null);
@@ -262,6 +351,8 @@ const isSnoozing = useMemo(() => {
   };
 
   const selectSession = (session: SpriteSessionData) => {
+    ttsAbortRef.current?.abort();
+    stopAudio();
     setSessionId(session.id);
     const loadedMessages = turnsToUIMessages(session.turns || []);
     setMessages(loadedMessages);
@@ -476,7 +567,7 @@ const isSnoozing = useMemo(() => {
                 <circle cx="260" cy="510" r="4" fill="#A855F7" />
               </svg>
 
-             {/* PART 1: HEADER */}
+              {/* PART 1: HEADER */}
               <SpriteChatHeader
                 spriteName={spriteName}
                 avatarSrc={avatarSrc}
@@ -484,7 +575,7 @@ const isSnoozing = useMemo(() => {
                 activeTab={activeTab}
                 sessionsCount={sessionsList.length}
                 isSnoozing={isSnoozing}
-                isSessionActive={turns.length > 0} // <--- Auto-collapses the top bar into a 44px strip!
+                isSessionActive={turns.length > 0}
                 onSelectTab={setActiveTab}
                 onStartNewSession={startNewSession}
                 onClose={closeChat}

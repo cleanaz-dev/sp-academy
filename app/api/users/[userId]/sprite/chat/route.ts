@@ -83,6 +83,7 @@ export async function POST(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
+
   let body: any;
   try {
     body = await req.json();
@@ -104,9 +105,22 @@ export async function POST(
       : undefined;
 
   const rawSpriteName = clean(body.spriteName, "Vox");
+
+   // 1. Fetch the user's Sprite + Persona (cached or fast indexed lookup)
+  const userSpriteProfile = await prisma.spriteProfile.findUnique({
+    where: { userId },
+    include: { sprite: true },
+  });
+
   const spriteName =
-    rawSpriteName.charAt(0).toUpperCase() +
-    rawSpriteName.slice(1).toLowerCase();
+    userSpriteProfile?.sprite?.name ||
+    clean(body.spriteName, "Vox");
+
+  const spritePersona =
+    userSpriteProfile?.sprite?.persona ||
+    (spriteName.toLowerCase() === "vivi"
+      ? "Warm, witty, encouraging, and expressive."
+      : "Energetic, sharp, encouraging, and slightly playful.");
 
   // 1. Read Dossier from Upstash Redis Cache (or build if cache miss)
   let dossier: DossierV2;
@@ -200,6 +214,8 @@ NO ACTIVE CHALKBOARD DECK YET:
 
   const systemPrompt = `
 You are ${spriteName}, a concise, human-like tutor helping ${userName} (native: ${nativeLang}, learning: ${targetLang}).
+YOUR PERSONA & VOICE STYLE:
+${spritePersona}
 LESSON: ${currentLessonTitle}
 EVIDENCE: ${evidence}
 
