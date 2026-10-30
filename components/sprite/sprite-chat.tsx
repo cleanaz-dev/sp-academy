@@ -430,7 +430,7 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
               </div>
 
               {isSnoozing ? (
-                <span className="absolute -top-1.5 -right-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-indigo-500 px-1.5 text-[11px] font-black text-white ring-2 ring-slate-950 shadow-md">
+                <span className="absolute -top-1.5 -right-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-indigo-500/50 px-1.5 text-[11px] font-black text-white ring-2 ring-slate-950 shadow-md">
                   💤
                 </span>
               ) : unreadCount > 0 ? (
