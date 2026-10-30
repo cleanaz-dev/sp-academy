@@ -138,6 +138,7 @@ const LANGUAGE_CODES: Record<string, string> = {
   SPANISH: "es-ES",
   GERMAN: "de-DE",
   ITALIAN: "it-IT",
+  ENGLISH: "en-US"
 };
 
 const NEXT_EXERCISE_PAUSE_MS = 900;

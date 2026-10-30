@@ -47,10 +47,15 @@ export function ExerciseBlock({
 
   const exercise = message.exercise;
 
-  const initialTime =
-    exercise?.type === "PRONUNCIATION" || exercise?.type.includes("BUILDER")
-      ? 25
-      : 15;
+const TIME_BY_TYPE: Record<string, number> = {
+  MULTIPLE_CHOICE: 45,
+  LISTEN_PICTURE_SELECTOR: 45,
+  SENTENCE_BUILDER: 60,
+  LISTEN_SENTENCE_BUILDER: 60,
+  PRONUNCIATION: 45,
+};
+
+const initialTime = TIME_BY_TYPE[exercise?.type ?? ""] ?? 15;
 
   const [timeLeft, setTimeLeft] = useState(initialTime);
 

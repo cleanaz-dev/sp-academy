@@ -26,7 +26,7 @@ interface Props {
 }
 
 export default function BossFoundationFreestyle({ onEnd, onRetry }: Props) {
-  // Inside BossFoundationFreestyle:
+  
   const {
     boss,
     messages,
