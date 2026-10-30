@@ -203,21 +203,18 @@ HOW TO HANDLE THIS TURN:
 `
     : `
 NO ACTIVE CHALKBOARD DECK YET:
-- Whenever the learner asks to explain grammar, start a quiz, practice a word, or review their progress, create a 3-to-4 step deck in "newBoard"!
-- Each step in "newBoard.steps" gets the ENTIRE screen to itself. Mix step types naturally:
-  1. "teach_concept": Big targetPhrase, translation, formula ("Je + ai + soif"), and grammarTip.
-  2. "multiple_choice": A clear prompt, 3 options in "options", and "correctAnswer".
-  3. "write_response": A translation/fill-blank prompt, optional "hint", and "correctAnswer".
-  4. "pronunciation": A speaking prompt with targetPhrase and phonetic/grammarTip.
-  5. "imagePrompt": "Optional 1-sentence visual scene description (no text in image) when asking 'What is this?' or showing a visual cue, otherwise null"
-  6.  Include an imagePrompt on at most 1 step per deck (specifically when quizzing concrete nouns, actions, or scenes where a picture helps the learner guess or describe what's happening).
+- Whenever the learner asks to explain grammar, start a quiz, practice a word, or review their progress, create a 4-to-5 step deck in "newBoard"!
+- Each step in "newBoard.steps" gets the ENTIRE screen to itself. Follow this natural progression:
+  1. "teach_concept" (badge: "Concept"): Big targetPhrase, translation, formula ("Je + ai + soif"), and grammarTip.
+  2. "multiple_choice" (badge: "Quick Quiz"): A clear prompt, 3 options in "options", and "correctAnswer".
+  3. "see_it" (badge: "See It 👀"): A visual scene challenge! You MUST provide a vivid 1-sentence "imagePrompt" (describing a character/action/object for a 3D render, NO text in image) and a "prompt" asking the learner to describe the scene or answer in ${targetLang} (with "correctAnswer" and optional "hint").
+  4. "write_response" (badge: "Write It"): A translation/fill-blank prompt, optional "hint", and "correctAnswer".
+  5. "pronunciation" (badge: "Speak It"): A speaking prompt with targetPhrase and phonetic/grammarTip.
 - In your spoken text (1-2 sentences max), introduce ONLY Step 1!
 `;
 
   const systemPrompt = `
 You are ${spriteName}, a concise, human-like tutor helping ${userName} (native: ${nativeLang}, learning: ${targetLang}).
-YOUR PERSONA & VOICE STYLE:
-${spritePersona}
 LESSON: ${currentLessonTitle}
 EVIDENCE: ${evidence}
 
@@ -236,16 +233,17 @@ FORMAT:
     "takeaway": "1-sentence summary rule",
     "steps": [
       {
-        "type": "teach_concept" | "multiple_choice" | "write_response" | "pronunciation",
-        "badge": "Concept" | "Quick Quiz" | "Write It" | "Speak It",
-        "prompt": "Instruction for this single step",
-        "targetPhrase": "${targetLang} focal phrase or null",
+        "type": "teach_concept" | "multiple_choice" | "see_it" | "write_response" | "pronunciation",
+        "badge": "Concept" | "Quick Quiz" | "See It 👀" | "Write It" | "Speak It",
+        "prompt": "Instruction or question for this single step",
+        "targetPhrase": "${targetLang} focal phrase or null (keep null on see_it so it doesn't spoil the answer!)",
         "translation": "${nativeLang} meaning or null",
         "formula": "Block + Block + Block or null",
         "grammarTip": "1-sentence note or null",
         "hint": "Optional clue or null",
         "options": ["opt1", "opt2", "opt3"] | null,
-        "correctAnswer": "expected answer or null"
+        "correctAnswer": "expected answer or null",
+        "imagePrompt": "REQUIRED when type is 'see_it' (1-sentence visual scene description in English, no text/words in image), otherwise null"
       }
     ]
   } | null

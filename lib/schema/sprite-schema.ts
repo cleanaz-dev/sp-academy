@@ -7,6 +7,7 @@ export const BoardStepTypeSchema = z.enum([
   "multiple_choice",
   "write_response",
   "pronunciation",
+  "see_it", 
 ]);
 
 export const BoardFeedbackSchema = z.object({

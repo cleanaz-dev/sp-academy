@@ -108,8 +108,10 @@ export async function retrySystemTask(taskId: string): Promise<{
       task.type === "SPRITE_NOTIFICATION_GENERATION"
         ? "spoon-sprite-builder"
         : task.type === "SPOON_BOSS_GENERATION"
-          ? meta.lambdaName || "spoon-boss-builder" // or your boss lambda function name
-          : "spoon-edu-builder";
+          ? meta.lambdaName || "spoon-boss-builder"
+          : task.type === "SPRITE_EXERCISE_GENERATION"
+            ? meta.lambdaName || "spoon-sprite-exercise-builder"
+            : "spoon-edu-builder";
 
     // 1. Reset SystemTask status back to PROCESSING / PENDING
     await prisma.systemTask.update({
@@ -179,6 +181,8 @@ function getFriendlyTaskLabel(taskType: string, spoon?: number | null) {
       return "Boss Stage Challenge";
     case "SPRITE_NOTIFICATION_GENERATION":
       return "Sprite Dispatch";
+    case "SPRITE_EXERCISE_GENERATION":
+      return "Sprite Repair Drill";
     default:
       return "Lesson Content";
   }

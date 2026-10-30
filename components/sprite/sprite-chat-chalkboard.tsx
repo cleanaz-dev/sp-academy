@@ -64,6 +64,8 @@ export interface SpriteChatChalkboardProps {
 
 const ACCENT_KEYS = ["é", "è", "ê", "à", "ù", "ç", "œ", "’"];
 
+
+
 export function normalizeBoardData(
   board?: ChalkboardData | null,
   contextCard?: ContextCardData | null,
@@ -319,6 +321,41 @@ export function SpriteChatChalkboard({
       el.setSelectionRange(start + char.length, start + char.length);
     });
   };
+
+  useEffect(() => {
+    if (!activeBoard?.steps || !userId) return;
+
+    activeBoard.steps.forEach((step, idx) => {
+      const prompt = step.imagePrompt?.trim();
+      if (!prompt) return;
+      const cacheKey = step.id || `${activeBoard.boardId || "board"}-${idx}`;
+      if (imageCacheRef.current[cacheKey] || step.imageUrl) return;
+
+      // Mark as in-flight with "" temporarily so we don't fire twice
+      imageCacheRef.current[cacheKey] = "__LOADING__";
+
+      fetch(`/api/users/${userId}/sprite/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.imageUrl) {
+            imageCacheRef.current[cacheKey] = data.imageUrl;
+            if (idx === safeStepIdx) {
+              setStepImageUrl(data.imageUrl);
+              setIsGeneratingImage(false);
+            }
+          } else {
+            delete imageCacheRef.current[cacheKey];
+          }
+        })
+        .catch(() => {
+          delete imageCacheRef.current[cacheKey];
+        });
+    });
+  }, [activeBoard?.boardId, activeBoard?.steps, userId, safeStepIdx]);
 
   return (
     <div
