@@ -365,21 +365,24 @@ export async function invokeEduBuilder(
       );
     }
 
-    // 2. If Bridge SpriteNode wasn't in DB cache, invoke spoon-sprite-builder for Vocab Bridge too
+   // 2. If Bridge SpriteNode wasn't in DB cache, invoke spoon-sprite-builder for Vocab Bridge too
     if (
       dbContext.bridgeWebhookUrl &&
       dbContext.bridgeTaskId &&
       dbContext.bridgeOrderIndex
     ) {
       const bridgeLambdaPayload = {
-        spriteSlug: dbContext.spriteSlug || normalizedPayload.spriteSlug || "vox",
+        spriteSlug:
+          dbContext.spriteSlug || normalizedPayload.spriteSlug || "vox",
         spriteName: dbContext.spriteName || "Vox",
         persona: dbContext.persona || "",
         nativeLanguage: normalizedPayload.nativeLanguage,
         targetLanguage: normalizedPayload.targetLanguage,
-        nativeVoiceId: dbContext.nativeVoiceId || normalizedPayload.nativeVoiceId,
-        targetVoiceId: dbContext.targetVoiceId || normalizedPayload.targetVoiceId,
-        spoon: normalizedPayload.spoon - 1,
+        nativeVoiceId:
+          dbContext.nativeVoiceId || normalizedPayload.nativeVoiceId,
+        targetVoiceId:
+          dbContext.targetVoiceId || normalizedPayload.targetVoiceId,
+        spoon: normalizedPayload.spoon, // <--- FIXED: matches the current Spoon's Bridge!
         milestoneIndex,
         subStep: milestoneSubStep,
         orderIndex: dbContext.bridgeOrderIndex,

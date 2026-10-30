@@ -151,18 +151,19 @@ export function SpriteChatSessionTab({
           )}
         </div>
 
+       {/* Inside Empty Stage (turns.length === 0) when isSnoozing === true: */}
         {isSnoozing ? (
           <>
             <h3 className="text-lg font-extrabold text-white mb-1.5">
-              {spriteName} is recharging! 💤
+              {spriteName} is resting up! 💤
             </h3>
             <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-              You already completed your chalkboard session for{" "}
+              {spriteName} is resting their voice for your lesson! Head into{" "}
               <span className="text-white font-semibold">
-                {aiBrain.currentLessonTitle}
-              </span>
-              . Complete your active Spoon &amp; Vocab Bridge to wake{" "}
-              {spriteName} back up!
+                {aiBrain.activeStepLabel?.replace(/^Start\s+/i, "") ||
+                  aiBrain.currentLessonTitle}
+              </span>{" "}
+              to wake {spriteName} up.
             </p>
 
             {aiBrain.activeStepHref && (
@@ -394,13 +395,18 @@ export function SpriteChatSessionTab({
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-400/40 bg-indigo-500/20 text-base">
                   <Moon className="h-5 w-5 text-indigo-300" />
                 </div>
-                <div>
+               <div>
                   <h5 className="text-xs font-black uppercase tracking-wider text-indigo-300">
-                    {spriteName} is napping until your next lesson!
+                    {spriteName} is resting up! 💤
                   </h5>
                   <p className="text-xs font-semibold text-slate-300 mt-0.5">
-                    Complete your active Spoon &amp; Vocab Bridge to wake{" "}
-                    {spriteName} up.
+                    {spriteName} is resting their voice for your lesson! Head
+                    into{" "}
+                    <span className="text-white font-bold">
+                      {aiBrain.activeStepLabel?.replace(/^Start\s+/i, "") ||
+                        aiBrain.currentLessonTitle}
+                    </span>{" "}
+                    to wake {spriteName} up.
                   </p>
                 </div>
               </div>

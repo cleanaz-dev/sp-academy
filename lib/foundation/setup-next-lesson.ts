@@ -84,26 +84,20 @@ export async function setupNextLesson(
       update: {},
     });
 
-    // 3. Option 1 Cache Check: Spoon Node
+    // 3. Option 1 Cache Check: Spoon Node + This Spoon's Vocab Bridge Node
     const spriteOrderIndex = getSpoonSpriteOrderIndex(spoon);
     const spriteSlug = spriteProfile.sprite.slug;
     const nodeId = `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.targetVoiceId}:${spriteOrderIndex}`;
 
-    // Also check previous Vocab Bridge node if this isn't spoon 1!
-    const bridgeSpoonNum = spoon - 1;
-    const bridgeOrderIndex =
-      bridgeSpoonNum > 0 ? getBridgeSpriteOrderIndex(bridgeSpoonNum) : null;
-    const bridgeNodeId = bridgeOrderIndex
-      ? `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.targetVoiceId}:${bridgeOrderIndex}`
-      : null;
+    // Pre-bake the Vocab Bridge SpriteNode for THIS spoon (so it's ready as soon as they finish the Spoon!)
+    const bridgeOrderIndex = getBridgeSpriteOrderIndex(spoon);
+    const bridgeNodeId = `${spriteSlug}:${spriteProfile.nativeVoiceId}:${spriteProfile.targetVoiceId}:${bridgeOrderIndex}`;
 
     const [cachedSpriteNode, cachedBridgeNode] = await Promise.all([
       tx.spriteNode.findUnique({ where: { nodeId } }),
-      bridgeNodeId
-        ? tx.spriteNode.findUnique({ where: { nodeId: bridgeNodeId } })
-        : Promise.resolve(null),
+      tx.spriteNode.findUnique({ where: { nodeId: bridgeNodeId } }),
     ]);
-
+    
     const taskPayload = JSON.stringify({
       ...payload,
       spriteSlug,
