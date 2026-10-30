@@ -3,6 +3,8 @@ import { getLearningPath } from "@/app/actions/get-learning-path";
 import { getUserLanguage } from "@/app/actions/get-user-language";
 import { requireUser } from "@/lib/auth-guard";
 import { getUserGeneration } from "@/lib/upstash";
+import { PronunciationProvider } from "@/context/pronunciation-context";
+import { MatrixProvider } from "@/context/matrix-context";
 
 export default async function Page({
   searchParams,
@@ -11,7 +13,8 @@ export default async function Page({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const setupToken = typeof params?.setup === "string" ? params.setup : undefined;
+  const setupToken =
+    typeof params?.setup === "string" ? params.setup : undefined;
 
   const [path, userLang, generationData] = await Promise.all([
     getLearningPath(user.id),
@@ -20,10 +23,15 @@ export default async function Page({
   ]);
 
   return (
-    <FoundationHubPage
-      path={path}
-      lang={userLang as any}
-      generationData={generationData}
-    />
+  
+      <PronunciationProvider>
+        <MatrixProvider>
+        <FoundationHubPage
+          path={path}
+          lang={userLang as any}
+          generationData={generationData}
+        />
+        </MatrixProvider>
+      </PronunciationProvider>
   );
 }

@@ -1,7 +1,7 @@
 // components/sprite/sprite-chat-chalkboard.tsx
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, useMemo, type FormEvent } from "react";
 import {
   Sparkles,
   Eye,
@@ -14,11 +14,16 @@ import {
   Languages,
   ArrowRight,
   CheckCircle2,
-  Mic2,
+  Mic,
+  Volume2,
+  RotateCcw,
   Trophy,
   ImageIcon,
+  X,
 } from "lucide-react";
 import { useSprite } from "@/context/sprite-context";
+import { usePronunciation } from "@/context/pronunciation-context";
+import { useMatrix } from "@/context/matrix-context";
 import type {
   ChalkboardData,
   ContextCardData,
@@ -64,7 +69,112 @@ export interface SpriteChatChalkboardProps {
 
 const ACCENT_KEYS = ["é", "è", "ê", "à", "ù", "ç", "œ", "’"];
 
+function cleanToken(w?: string | null): string {
+  if (!w) return "";
+  return w
+    .normalize("NFC")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}'’-]/gu, "");
+}
 
+function extractTrackableTokens(text?: string | null): string[] {
+  if (!text) return [];
+  return Array.from(
+    new Set(
+      text
+        .split(/\s+/)
+        .map(cleanToken)
+        .filter((w) => w.length >= 2)
+    )
+  );
+}
+
+/**
+ * Compact 60fps microphone waveform for the Chalkboard pronunciation step
+ */
+function ChalkboardWaveform() {
+  const BAR_COUNT = 22;
+  const barRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    let audioCtx: AudioContext | null = null;
+    let stream: MediaStream | null = null;
+    let rafId: number | null = null;
+    let cancelled = false;
+
+    async function initMic() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext;
+        audioCtx = new AudioCtx();
+        const source = audioCtx.createMediaStreamSource(stream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 64;
+        analyser.smoothingTimeConstant = 0.75;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const half = Math.floor(BAR_COUNT / 2);
+
+        const tick = () => {
+          analyser.getByteFrequencyData(dataArray);
+          for (let i = 0; i < half; i++) {
+            const val = dataArray[i + 1] ?? 0;
+            const norm = Math.min(1, val / 190);
+            const h = Math.max(6, Math.round(norm * 36));
+            const left = barRefs.current[half - 1 - i];
+            const right = barRefs.current[half + i];
+            if (left) left.style.height = `${h}px`;
+            if (right) right.style.height = `${h}px`;
+          }
+          rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+      } catch {
+        // Fallback if mic visualization stream is busy
+      }
+    }
+
+    initMic();
+    return () => {
+      cancelled = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close().catch(() => {});
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex h-10 items-center justify-center gap-1 px-3">
+      {Array.from({ length: BAR_COUNT }).map((_, i) => (
+        <div
+          key={i}
+          ref={(el) => {
+            barRefs.current[i] = el;
+          }}
+          style={{ height: "6px" }}
+          className="w-1.5 rounded-full bg-teal-400 transition-[height] duration-75 ease-out"
+        />
+      ))}
+    </div>
+  );
+}
 
 export function normalizeBoardData(
   board?: ChalkboardData | null,
@@ -203,8 +313,19 @@ export function SpriteChatChalkboard({
   snoozeState,
   interactiveInput,
 }: SpriteChatChalkboardProps) {
-  const { profile } = useSprite();
+  const { profile, playAudioUrl } = useSprite();
   const userId = profile?.userId;
+
+  // Word Matrix & Azure Pronunciation Hooks
+  const { trackInteraction } = useMatrix();
+  const {
+    status: pronStatus,
+    score: pronScore,
+    error: pronError,
+    assessSpeech,
+    cancelAssessment,
+    reset: resetPronunciation,
+  } = usePronunciation();
 
   const activeBoard = normalizeBoardData(board, contextCard);
 
@@ -212,8 +333,15 @@ export function SpriteChatChalkboard({
     activeBoard?.currentStepIndex ?? 0
   );
   const [hintRevealed, setHintRevealed] = useState(false);
+  const [assessedPhrase, setAssessedPhrase] = useState<string | null>(null);
+  const [isLoadingPhraseTTS, setIsLoadingPhraseTTS] = useState(false);
 
-  // Cache generated prunaai/p-image URLs per step so navigating back/forth never re-generates
+  // Dedupe tracking sets per board session
+  const trackedSeenStepsRef = useRef<Set<string>>(new Set());
+  const trackedHeardStepsRef = useRef<Set<string>>(new Set());
+  const lastTrackedScoreRef = useRef<unknown>(null);
+
+  // Cache generated prunaai/p-image URLs per step
   const imageCacheRef = useRef<Record<string, string>>({});
   const [stepImageUrl, setStepImageUrl] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -224,8 +352,10 @@ export function SpriteChatChalkboard({
     if (activeBoard) {
       setViewingStepIdx(activeBoard.currentStepIndex);
       setHintRevealed(false);
+      resetPronunciation();
+      setAssessedPhrase(null);
     }
-  }, [activeBoard?.boardId, activeBoard?.currentStepIndex]);
+  }, [activeBoard?.boardId, activeBoard?.currentStepIndex, resetPronunciation]);
 
   const totalSteps = activeBoard?.steps.length ?? 0;
   const safeStepIdx = Math.min(
@@ -235,7 +365,95 @@ export function SpriteChatChalkboard({
   const currentStep: BoardStep | null =
     activeBoard && totalSteps > 0 ? activeBoard.steps[safeStepIdx] : null;
 
-  // Automatically generate or load cached image when a step has `imagePrompt` or `imageUrl`
+  // ================= 1. WORD MATRIX: TRACK "SEEN" WHEN STEP RENDERS =================
+  useEffect(() => {
+    if (!currentStep) return;
+    const stepKey = `${activeBoard?.boardId || "b"}-${safeStepIdx}-${currentStep.targetPhrase || ""}`;
+    if (trackedSeenStepsRef.current.has(stepKey)) return;
+
+    const wordsToTrack = extractTrackableTokens(
+      currentStep.targetPhrase || currentStep.correctAnswer
+    );
+    if (wordsToTrack.length > 0) {
+      wordsToTrack.forEach((w) => trackInteraction(w, { seen: 1 }));
+      trackedSeenStepsRef.current.add(stepKey);
+    }
+  }, [
+    currentStep,
+    safeStepIdx,
+    activeBoard?.boardId,
+    trackInteraction,
+  ]);
+
+  // ================= 2. WORD MATRIX: TRACK "SPOKEN" WHEN AZURE SCORE ARRIVES =================
+  const phraseToSpeak = cleanDisplayString(
+    currentStep?.targetPhrase || currentStep?.correctAnswer || ""
+  );
+  const scoreMatchesStep =
+    Boolean(pronScore) && assessedPhrase === phraseToSpeak;
+
+  const wordScoreMap = useMemo(() => {
+    const map = new Map<string, { score: number; omitted: boolean }>();
+    if (!pronScore) return map;
+    for (const w of pronScore.words ?? []) {
+      const k = cleanToken(w.word);
+      if (!k) continue;
+      const omitted = w.errorType === "Omission";
+      map.set(k, { score: omitted ? 0 : w.accuracyScore, omitted });
+    }
+    return map;
+  }, [pronScore]);
+
+  useEffect(() => {
+    if (!pronScore || !scoreMatchesStep) return;
+    if (pronScore === lastTrackedScoreRef.current) return;
+    lastTrackedScoreRef.current = pronScore;
+
+    const tokens = extractTrackableTokens(phraseToSpeak);
+    tokens.forEach((tok) => {
+      const r = wordScoreMap.get(tok);
+      trackInteraction(tok, {
+        spokenAttempt: true,
+        spokenScore: r ? r.score : pronScore.pronunciationScore,
+      });
+    });
+  }, [pronScore, scoreMatchesStep, phraseToSpeak, wordScoreMap, trackInteraction]);
+
+  // ================= 3. PRE-FETCH & LOAD "SEE_IT" STEP IMAGES =================
+  useEffect(() => {
+    if (!activeBoard?.steps || !userId) return;
+
+    activeBoard.steps.forEach((step, idx) => {
+      const prompt = step.imagePrompt?.trim();
+      if (!prompt) return;
+      const cacheKey = step.id || `${activeBoard.boardId || "board"}-${idx}`;
+      if (imageCacheRef.current[cacheKey] || step.imageUrl) return;
+
+      imageCacheRef.current[cacheKey] = "__LOADING__";
+
+      fetch(`/api/users/${userId}/sprite/image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.imageUrl) {
+            imageCacheRef.current[cacheKey] = data.imageUrl;
+            if (idx === safeStepIdx) {
+              setStepImageUrl(data.imageUrl);
+              setIsGeneratingImage(false);
+            }
+          } else {
+            delete imageCacheRef.current[cacheKey];
+          }
+        })
+        .catch(() => {
+          delete imageCacheRef.current[cacheKey];
+        });
+    });
+  }, [activeBoard?.boardId, activeBoard?.steps, userId, safeStepIdx]);
+
   useEffect(() => {
     if (!currentStep) {
       setStepImageUrl(null);
@@ -253,9 +471,16 @@ export function SpriteChatChalkboard({
       return;
     }
 
-    if (imageCacheRef.current[cacheKey]) {
-      setStepImageUrl(imageCacheRef.current[cacheKey]);
+    const cachedVal = imageCacheRef.current[cacheKey];
+    if (cachedVal && cachedVal !== "__LOADING__") {
+      setStepImageUrl(cachedVal);
       setIsGeneratingImage(false);
+      return;
+    }
+
+    if (cachedVal === "__LOADING__") {
+      setStepImageUrl(null);
+      setIsGeneratingImage(true);
       return;
     }
 
@@ -283,9 +508,6 @@ export function SpriteChatChalkboard({
           setStepImageUrl(data.imageUrl);
         }
       })
-      .catch((err) => {
-        console.warn("[Chalkboard Image] Failed to generate:", err);
-      })
       .finally(() => {
         if (!cancelled) setIsGeneratingImage(false);
       });
@@ -301,6 +523,91 @@ export function SpriteChatChalkboard({
     activeBoard?.boardId,
     userId,
   ]);
+
+  // Play target phrase audio via Sprite TTS & track "heard: 1" in Word Matrix
+  const handleListenToTargetPhrase = async (phrase: string) => {
+    if (!phrase || !userId || isLoadingPhraseTTS) return;
+
+    const stepKey = `${activeBoard?.boardId || "b"}-${safeStepIdx}-${phrase}`;
+    if (!trackedHeardStepsRef.current.has(stepKey)) {
+      extractTrackableTokens(phrase).forEach((w) =>
+        trackInteraction(w, { heard: 1 })
+      );
+      trackedHeardStepsRef.current.add(stepKey);
+    }
+
+    setIsLoadingPhraseTTS(true);
+    try {
+      const res = await fetch(`/api/users/${userId}/sprite/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: phrase,
+          voiceId: profile?.targetVoiceId,
+          isTargetLang: true,
+        }),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        await playAudioUrl(url);
+      }
+    } catch (err) {
+      console.warn("[Chalkboard Listen] error:", err);
+    } finally {
+      setIsLoadingPhraseTTS(false);
+    }
+  };
+
+  // Start real Azure Pronunciation Recording on the Chalkboard
+  const handleStartPronunciation = async () => {
+    if (pronStatus !== "idle" || !phraseToSpeak) return;
+    const targetLangCode =
+      profile?.targetLanguage || interactiveInput?.targetLang || "fr-FR";
+    setAssessedPhrase(phraseToSpeak);
+    await assessSpeech(phraseToSpeak, targetLangCode);
+  };
+
+  // Handle Multiple Choice Option Tap + Word Matrix tracking
+  const handleMultipleChoiceTap = (opt: string) => {
+    const cleanOpt = cleanDisplayString(opt);
+    const expected = cleanDisplayString(currentStep?.correctAnswer || "");
+
+    const tokens = extractTrackableTokens(cleanOpt);
+    if (expected) {
+      const isRight = cleanOpt.toLowerCase() === expected.toLowerCase();
+      tokens.forEach((w) =>
+        trackInteraction(w, isRight ? { tappedCorrect: 1 } : { tappedWrong: 1 })
+      );
+    } else {
+      tokens.forEach((w) => trackInteraction(w, { tappedCorrect: 1 }));
+    }
+
+    interactiveInput?.onQuickAction?.(cleanOpt);
+  };
+
+  // Handle Written Form Submit + Word Matrix tracking
+  const handleFormSubmitWithTracking = (e: FormEvent) => {
+    if (interactiveInput?.value.trim()) {
+      const userTyped = interactiveInput.value.trim();
+      const expected = cleanDisplayString(currentStep?.correctAnswer || "");
+      const typedTokens = extractTrackableTokens(userTyped);
+
+      if (expected) {
+        const isMatch =
+          cleanToken(userTyped) === cleanToken(expected);
+        typedTokens.forEach((w) =>
+          trackInteraction(
+            w,
+            isMatch ? { tappedCorrect: 1 } : { tappedWrong: 1 }
+          )
+        );
+      } else {
+        typedTokens.forEach((w) => trackInteraction(w, { seen: 1 }));
+      }
+    }
+    interactiveInput?.onSubmit(e);
+  };
 
   const insertAccent = (char: string) => {
     if (!interactiveInput) return;
@@ -322,40 +629,8 @@ export function SpriteChatChalkboard({
     });
   };
 
-  useEffect(() => {
-    if (!activeBoard?.steps || !userId) return;
-
-    activeBoard.steps.forEach((step, idx) => {
-      const prompt = step.imagePrompt?.trim();
-      if (!prompt) return;
-      const cacheKey = step.id || `${activeBoard.boardId || "board"}-${idx}`;
-      if (imageCacheRef.current[cacheKey] || step.imageUrl) return;
-
-      // Mark as in-flight with "" temporarily so we don't fire twice
-      imageCacheRef.current[cacheKey] = "__LOADING__";
-
-      fetch(`/api/users/${userId}/sprite/image`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data?.imageUrl) {
-            imageCacheRef.current[cacheKey] = data.imageUrl;
-            if (idx === safeStepIdx) {
-              setStepImageUrl(data.imageUrl);
-              setIsGeneratingImage(false);
-            }
-          } else {
-            delete imageCacheRef.current[cacheKey];
-          }
-        })
-        .catch(() => {
-          delete imageCacheRef.current[cacheKey];
-        });
-    });
-  }, [activeBoard?.boardId, activeBoard?.steps, userId, safeStepIdx]);
+  const isListeningMic = pronStatus === "listening";
+  const isAnalyzingMic = pronStatus === "analyzing";
 
   return (
     <div
@@ -519,7 +794,6 @@ export function SpriteChatChalkboard({
                   </div>
                 </div>
 
-                {/* Segmented Progress Bar */}
                 <div className="flex items-center gap-1.5">
                   {activeBoard.steps.map((s, idx) => (
                     <button
@@ -574,7 +848,7 @@ export function SpriteChatChalkboard({
 
             {/* CENTER STAGE: Dedicated Full-Screen Step Card */}
             <div className="my-auto py-4 flex flex-col items-center justify-center text-center space-y-4">
-              {/* 🖼️ VISUAL FLASHCARD (prunaai/p-image) IF STEP HAS AN IMAGE PROMPT */}
+              {/* 🖼️ VISUAL FLASHCARD (prunaai/p-image) */}
               {(stepImageUrl || isGeneratingImage) && (
                 <div className="w-full max-w-md overflow-hidden rounded-2xl border-2 border-slate-500/50 bg-[#111827] shadow-xl">
                   {stepImageUrl ? (
@@ -599,11 +873,60 @@ export function SpriteChatChalkboard({
                 {cleanDisplayString(currentStep.prompt)}
               </p>
 
+              {/* Big Target Phrase Card (With Word-by-Word Azure Score Coloring on Pronunciation Steps!) */}
               {currentStep.targetPhrase && (
-                <div className="w-full max-w-md rounded-2xl border border-slate-500/50 bg-[#24324B] px-6 py-4 shadow-lg space-y-1.5">
-                  <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    {cleanDisplayString(currentStep.targetPhrase)}
+                <div className="w-full max-w-md rounded-2xl border border-slate-500/50 bg-[#24324B] px-6 py-4 shadow-lg space-y-2">
+                  <div className="flex items-center justify-center gap-2.5 flex-wrap text-2xl sm:text-3xl font-black tracking-tight">
+                    {cleanDisplayString(currentStep.targetPhrase)
+                      .split(/\s+/)
+                      .map((tok, i) => {
+                        const r = scoreMatchesStep
+                          ? wordScoreMap.get(cleanToken(tok))
+                          : null;
+                        if (!r) {
+                          return (
+                            <span key={i} className="text-white">
+                              {tok}
+                            </span>
+                          );
+                        }
+                        const badgeColor =
+                          r.omitted || r.score < 60
+                            ? "bg-rose-500/30 text-rose-200 border border-rose-400/50"
+                            : r.score < 80
+                              ? "bg-amber-400/30 text-amber-100 border border-amber-300/50"
+                              : "bg-teal-400/30 text-teal-100 border border-teal-300/50";
+                        return (
+                          <span
+                            key={i}
+                            title={`${Math.round(r.score)}%`}
+                            className={`rounded-lg px-2 py-0.5 ${badgeColor}`}
+                          >
+                            {tok}
+                          </span>
+                        );
+                      })}
+
+                    {/* Listen Button right inside the Target Phrase card */}
+                    <button
+                      type="button"
+                      disabled={isLoadingPhraseTTS}
+                      onClick={() =>
+                        handleListenToTargetPhrase(
+                          cleanDisplayString(currentStep.targetPhrase!)
+                        )
+                      }
+                      title="Listen to phrase"
+                      className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-500 bg-slate-800/90 text-teal-300 hover:border-teal-300 hover:bg-slate-700 transition"
+                    >
+                      {isLoadingPhraseTTS ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
+
                   {currentStep.translation && (
                     <div className="text-sm font-bold text-teal-300">
                       &ldquo;{cleanDisplayString(currentStep.translation)}&rdquo;
@@ -626,11 +949,7 @@ export function SpriteChatChalkboard({
                         disabled={
                           interactiveInput?.isLoading || snoozeState?.isSnoozing
                         }
-                        onClick={() =>
-                          interactiveInput?.onQuickAction?.(
-                            cleanDisplayString(opt)
-                          )
-                        }
+                        onClick={() => handleMultipleChoiceTap(opt)}
                         className="flex items-center justify-between rounded-xl border border-slate-500/60 bg-[#24324B] hover:border-teal-300 hover:bg-teal-500/20 px-4 py-3 text-left text-sm font-extrabold text-white transition shadow-sm group disabled:opacity-50"
                       >
                         <span>{cleanDisplayString(opt)}</span>
@@ -659,13 +978,106 @@ export function SpriteChatChalkboard({
                   </button>
                 )}
 
-              {/* STEP TYPE C: PRONUNCIATION PROMPT */}
-              {currentStep.type === "pronunciation" && (
-                <div className="inline-flex items-center gap-2 rounded-xl border border-teal-400/40 bg-teal-500/15 px-4 py-2 text-xs font-bold text-teal-200">
-                  <Mic2 className="h-4 w-4 text-teal-300" />
-                  <span>Type or speak the phrase below to check!</span>
-                </div>
-              )}
+              {/* STEP TYPE C: REAL AZURE PRONUNCIATION RECORDER ON CHALKBOARD */}
+              {currentStep.type === "pronunciation" &&
+                !snoozeState?.isSnoozing && (
+                  <div className="w-full max-w-md space-y-3 pt-1">
+                    {pronStatus === "idle" && (
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleStartPronunciation}
+                          className="inline-flex items-center gap-2 rounded-xl bg-teal-400 px-6 py-3 text-sm font-black text-slate-950 hover:bg-teal-300 transition shadow-lg active:scale-95"
+                        >
+                          {scoreMatchesStep ? (
+                            <>
+                              <RotateCcw className="h-4 w-4" />
+                              <span>Speak Again</span>
+                            </>
+                          ) : (
+                            <>
+                              <Mic className="h-4 w-4" />
+                              <span>Tap to Speak Phrase</span>
+                            </>
+                          )}
+                        </button>
+
+                        {scoreMatchesStep && pronScore && (
+                          <button
+                            type="button"
+                            disabled={interactiveInput?.isLoading}
+                            onClick={() =>
+                              interactiveInput?.onQuickAction?.(
+                                `${phraseToSpeak} (Pronunciation score: ${Math.round(
+                                  pronScore.pronunciationScore
+                                )}%)`
+                              )
+                            }
+                            className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-3 text-sm font-black text-white hover:bg-indigo-400 transition shadow-lg"
+                          >
+                            <span>
+                              Submit {Math.round(pronScore.pronunciationScore)}%
+                              Score
+                            </span>
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {isListeningMic && (
+                      <div className="rounded-2xl border border-teal-400/50 bg-[#111827] p-4 space-y-2">
+                        <ChalkboardWaveform />
+                        <p className="text-xs font-extrabold text-teal-300">
+                          Listening... Say &ldquo;{phraseToSpeak}&rdquo; clearly!
+                        </p>
+                        <button
+                          type="button"
+                          onClick={cancelAssessment}
+                          className="inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1 text-[11px] font-bold text-slate-300 hover:bg-white/20"
+                        >
+                          <X className="h-3 w-3" /> Cancel
+                        </button>
+                      </div>
+                    )}
+
+                    {isAnalyzingMic && (
+                      <div className="rounded-2xl border border-amber-300/40 bg-[#111827] p-4 flex items-center justify-center gap-2.5 text-xs font-bold text-amber-200">
+                        <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                        <span>Scoring your pronunciation...</span>
+                      </div>
+                    )}
+
+                    {pronError && (
+                      <p className="text-xs font-bold text-rose-300">
+                        {pronError}
+                      </p>
+                    )}
+
+                    {scoreMatchesStep && pronScore && pronStatus === "idle" && (
+                      <div className="rounded-xl border border-slate-600 bg-[#111827]/90 px-4 py-2.5 flex items-center justify-around text-xs font-bold">
+                        <span className="text-slate-300">
+                          Overall:{" "}
+                          <strong className="text-teal-300">
+                            {Math.round(pronScore.pronunciationScore)}%
+                          </strong>
+                        </span>
+                        <span className="text-slate-300">
+                          Accuracy:{" "}
+                          <strong className="text-white">
+                            {Math.round(pronScore.accuracyScore)}%
+                          </strong>
+                        </span>
+                        <span className="text-slate-300">
+                          Fluency:{" "}
+                          <strong className="text-white">
+                            {Math.round(pronScore.fluencyScore)}%
+                          </strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* Optional Tap-to-Reveal Hint */}
               {currentStep.hint && (
@@ -771,7 +1183,7 @@ export function SpriteChatChalkboard({
       ) : (
         interactiveInput && (
           <form
-            onSubmit={interactiveInput.onSubmit}
+            onSubmit={handleFormSubmitWithTracking}
             className="relative z-10 mt-auto border-t border-slate-600/70 bg-[#111827] px-6 py-3.5 space-y-2.5 shrink-0"
           >
             <div className="flex items-center gap-2.5 rounded-xl bg-[#1E293B] border-2 border-slate-500/60 focus-within:border-teal-400 px-4 py-2.5 transition">

@@ -1,7 +1,22 @@
 // components/sprite/sprite-chat-briefing-tab.tsx
 "use client";
 
-import { Mic2, ArrowRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Mic2,
+  ArrowRight,
+  Zap,
+  Dumbbell,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
+import { useSprite } from "@/context/sprite-context";
+import { invokeSpriteExercise } from "@/app/actions/invoke-sprite-exercise";
+import {
+  getActiveSpriteExercise,
+  type HydratedSpriteExercise,
+} from "@/app/actions/complete-sprite-exercise";
+import { SpriteExerciseArcade } from "./sprite-exercise-arcade";
 import type { ChatContextData } from "./sprite-chat-utils";
 
 interface SpriteChatBriefingTabProps {
@@ -15,29 +30,190 @@ export function SpriteChatBriefingTab({
   aiBrain,
   onTriggerPractice,
 }: SpriteChatBriefingTabProps) {
+  const { profile, liveTask } = useSprite();
+  const userId = profile?.userId;
+
+  const [activeExercise, setActiveExercise] =
+    useState<HydratedSpriteExercise | null>(null);
+  const [isLoadingExercise, setIsLoadingExercise] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [isPlayingArcade, setIsPlayingArcade] = useState(false);
+  const [energyCount, setEnergyCount] = useState<number>(
+    (profile as any)?.energy ?? 1
+  );
+
+  const refreshExercise = useCallback(async () => {
+    if (!userId) return;
+    setIsLoadingExercise(true);
+    try {
+      const ex = await getActiveSpriteExercise(userId);
+      setActiveExercise(ex);
+      if (ex?.status === "READY") {
+        setIsGenerating(false);
+      } else if (ex?.status === "BUILDING") {
+        setIsGenerating(true);
+      }
+    } catch (err) {
+      console.warn("[BriefingTab] Failed to fetch active exercise:", err);
+    } finally {
+      setIsLoadingExercise(false);
+    }
+  }, [userId]);
+
+  // Fetch on mount & whenever liveTask transitions (e.g. when Pusher signals completion)
+  useEffect(() => {
+    void refreshExercise();
+  }, [refreshExercise, liveTask?.status]);
+
+  const handleGenerateOrLaunch = async () => {
+    if (!userId) return;
+    setGenError(null);
+
+    // If a READY exercise is already waiting, launch the 3-Round Arcade immediately!
+    if (activeExercise?.status === "READY" && activeExercise.content) {
+      setIsPlayingArcade(true);
+      return;
+    }
+
+    setIsGenerating(true);
+    const res = await invokeSpriteExercise({ userId });
+    if (!res.ok) {
+      setIsGenerating(false);
+      setGenError(res.error);
+      return;
+    }
+
+    await refreshExercise();
+  };
+
+  // If the user clicked "Play Workout", render the 3-Round Arcade full-stage!
+  if (
+    isPlayingArcade &&
+    userId &&
+    activeExercise?.status === "READY" &&
+    activeExercise.content
+  ) {
+    return (
+      <div className="-mx-5 -my-4 flex-1 flex flex-col">
+        <SpriteExerciseArcade
+          userId={userId}
+          exerciseId={activeExercise.id}
+          title={activeExercise.title}
+          spriteName={spriteName}
+          content={activeExercise.content}
+          onFinishExercise={(newEnergy) => {
+            setEnergyCount(newEnergy);
+            setIsPlayingArcade(false);
+            setActiveExercise(null);
+          }}
+          onClose={() => setIsPlayingArcade(false)}
+        />
+      </div>
+    );
+  }
+
+  const isBuildingNow =
+    isGenerating ||
+    activeExercise?.status === "BUILDING" ||
+    (liveTask?.taskType === "SPRITE_EXERCISE_GENERATION" &&
+      liveTask.status === "BUILDING");
+
+  const isReadyToPlay =
+    activeExercise?.status === "READY" && Boolean(activeExercise.content);
+
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="flex-1 flex flex-col gap-4">
       {/* 1. Active Lesson Objective Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-6 shadow-lg shrink-0">
-        <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 block mb-1">
-          Active Lesson Objective
-        </span>
-        <h2 className="text-xl font-extrabold text-white">
+      <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-950/60 via-indigo-950/50 to-slate-900/80 p-5 shadow-lg shrink-0">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">
+            Active Lesson Objective
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 border border-amber-300/35 px-2.5 py-0.5 text-[10px] font-black text-amber-300">
+            <Zap className="h-3 w-3 fill-current" />
+            {energyCount} {energyCount === 1 ? "Charge" : "Charges"}
+          </span>
+        </div>
+
+        <h2 className="text-lg font-extrabold text-white">
           {aiBrain.currentLessonTitle}
         </h2>
-        <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-          Click any priority target below to immediately launch a 1-on-1
-          practice session with {spriteName}.
+        <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+          Click any priority target below to launch a 1-on-1 practice session,
+          or run a 3-round repair workout to earn{" "}
+          <span className="text-amber-300 font-bold">+1 ⚡ Energy</span>.
         </p>
       </div>
 
-      {/* 2. Priority Targets Row */}
+      {/* 2. SPRITE REPAIR ARCADE LAUNCHER CARD (+1 ⚡ ENERGY) */}
+      <div className="relative overflow-hidden rounded-3xl border border-amber-400/35 bg-gradient-to-r from-amber-950/40 via-indigo-950/60 to-slate-900/90 p-5 shadow-lg shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/40 bg-amber-400/15 text-amber-300 shadow-md">
+              <Dumbbell className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black text-white">
+                  3-Round Mistake Repair Arcade
+                </h3>
+                <span className="rounded-md bg-amber-300 px-2 py-0.5 text-[9px] font-black uppercase text-slate-950">
+                  +1 ⚡ Reward
+                </span>
+              </div>
+              <p className="text-xs font-medium text-slate-300 mt-0.5 leading-relaxed">
+                {isReadyToPlay
+                  ? `Your custom 3-round workout (${activeExercise?.title}) is ready!`
+                  : `Visual Match · Binary Sentence Dash · 3x Voice Burst built from your recent Chalkboard mistakes.`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={isBuildingNow || isLoadingExercise}
+            onClick={handleGenerateOrLaunch}
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition shrink-0 shadow-lg ${
+              isReadyToPlay
+                ? "bg-gradient-to-r from-amber-300 to-teal-300 text-slate-950 hover:brightness-110"
+                : "bg-indigo-500 text-white hover:bg-indigo-400 disabled:opacity-60"
+            }`}
+          >
+            {isBuildingNow ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Baking Workout...</span>
+              </>
+            ) : isReadyToPlay ? (
+              <>
+                <Zap className="h-3.5 w-3.5 fill-current" />
+                <span>Play 3-Round Workout</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Build Repair Workout</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {genError && (
+          <p className="mt-2.5 rounded-xl border border-rose-500/30 bg-rose-950/50 px-3 py-1.5 text-xs font-semibold text-rose-200">
+            {genError}
+          </p>
+        )}
+      </div>
+
+      {/* 3. Priority Targets Row */}
       {(aiBrain.topWord || aiBrain.topPhrase) && (
-        <div className="space-y-2.5 shrink-0">
+        <div className="space-y-2 shrink-0">
           <span className="block text-[11px] font-black uppercase tracking-wider text-slate-300">
             Priority Targets (Click to Launch in Session)
           </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {aiBrain.topWord && (
               <button
                 onClick={() => onTriggerPractice(aiBrain.topWord!.word)}
@@ -91,8 +267,8 @@ export function SpriteChatBriefingTab({
         </div>
       )}
 
-      {/* 3. FLEX-1 COSMETIC TELEMETRY & VECTOR RADAR DECK */}
-      <div className="relative flex-1 min-h-[280px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/75 via-[#090E1A]/90 to-indigo-950/40 p-6 flex flex-col justify-between shadow-xl">
+      {/* 4. FLEX-1 COSMETIC TELEMETRY & VECTOR RADAR DECK */}
+      <div className="relative flex-1 min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/75 via-[#090E1A]/90 to-indigo-950/40 p-5 flex flex-col justify-between shadow-xl">
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full opacity-40"
           viewBox="0 0 600 340"
@@ -188,8 +364,8 @@ export function SpriteChatBriefingTab({
           </span>
         </div>
 
-        <div className="relative z-10 my-auto py-4 flex flex-col items-center justify-center text-center">
-          <div className="flex items-end justify-center gap-1.5 h-10 mb-3">
+        <div className="relative z-10 my-auto py-3 flex flex-col items-center justify-center text-center">
+          <div className="flex items-end justify-center gap-1.5 h-9 mb-2.5">
             {[40, 75, 55, 100, 65, 85, 50, 95, 60, 80, 45].map((h, i) => (
               <span
                 key={i}

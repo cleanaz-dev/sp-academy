@@ -10,6 +10,7 @@ import { handleSpoonGeneration } from "@/lib/system-tasks/handlers/handle-spoon-
 import { handleSpriteNotificationGeneration } from "@/lib/system-tasks/handlers/handle-sprite-notification";
 import { handleVocabBridgeGeneration } from "@/lib/system-tasks/handlers/handle-vocab-bridge";
 import { handleFreestyleReview } from "@/lib/system-tasks/handlers/handler-freestyle-review";
+import { handleSpriteExerciseGeneration } from "@/lib/system-tasks/handlers/handle-sprite-exercise";
 import { SystemTaskType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import {
@@ -88,6 +89,10 @@ export async function POST(req: Request, { params }: Params) {
 
       case SystemTaskType.SPRITE_NOTIFICATION_GENERATION: {
         return await handleSpriteNotificationGeneration(task, body);
+      }
+
+       case SystemTaskType.SPRITE_EXERCISE_GENERATION: {
+        return await handleSpriteExerciseGeneration(task, body);
       }
 
       default:
