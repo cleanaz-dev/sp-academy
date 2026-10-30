@@ -269,8 +269,7 @@ const getLessonHref = (lessonId: string) =>
             currentLessonTitle:
               (currentFocus?.data as any)?.title ||
               `Spoon ${(currentFocus?.data as any)?.orderIndex || 1}`,
-            // 🟢 NEW: Spoon 15 + Bridge 15 share the same `spoon-15` cycle key!
-            // Vox only wakes up when the next Spoon (spoon-16) or a Boss Stage (boss-5) unlocks!
+            currentFocusType: currentFocus?.type ?? null, // <--- "SPOON" | "BRIDGE" | "BOSS"
             wakeCycleKey:
               currentFocus?.type === "BOSS"
                 ? `boss-${

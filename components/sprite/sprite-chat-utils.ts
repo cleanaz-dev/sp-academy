@@ -212,6 +212,7 @@ export interface ChatContextData {
   nativeLang: string;
   targetLang: string;
   currentLessonTitle: string;
+  currentFocusType?: "SPOON" | "BRIDGE" | "BOSS" | null; // <--- NEW!
   /** Identifies the Spoon or Boss unit (e.g., "spoon-15" or "boss-5") so Vox sleeps through the Vocab Bridge too! */
   wakeCycleKey?: string;
   /** Direct link to the active Spoon, Vocab Bridge, or Boss Stage */

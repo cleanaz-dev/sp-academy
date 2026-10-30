@@ -263,31 +263,15 @@ export function SpriteChat({ userId, initialContext }: SpriteChatProps) {
     [activeTurn?.assistantMessage]
   );
 
-  const isSnoozing = useMemo(() => {
-    const currentTitle = cleanDisplayString(
-      aiBrain.currentLessonTitle
-    ).toLowerCase();
-
-    // 1. Check active session: if a board exists, only snooze once status === "COMPLETED"!
-    const currentBoard = activeAssistantPayload.chalkboard;
-    if (currentBoard) {
-      if (currentBoard.status === "COMPLETED") return true;
-      return false; // Keep Vox awake while the student is still on Step 1..N!
+ const isSnoozing = useMemo(() => {
+    if (aiBrain.currentFocusType === "SPOON" || aiBrain.currentFocusType === "BOSS") {
+      return false;
     }
-
-    // 2. Check saved sessions for the current lesson
-    return sessionsList.some((sess) => {
-      const sessLesson = cleanDisplayString(
-        sess.lessonTitle || ""
-      ).toLowerCase();
-      if (!sessLesson || sessLesson !== currentTitle) return false;
-      return sess.board?.status === "COMPLETED";
-    });
-  }, [
-    aiBrain.currentLessonTitle,
-    activeAssistantPayload.chalkboard,
-    sessionsList,
-  ]);
+    if (aiBrain.currentFocusType === "BRIDGE") {
+      return true;
+    }
+    return false;
+  }, [aiBrain.currentFocusType]);
 
   const sendWithSessionBody = useCallback(
     (text: string) => {
