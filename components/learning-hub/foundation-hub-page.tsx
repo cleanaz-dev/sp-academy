@@ -90,8 +90,11 @@ export default function FoundationHubPage({
     )
     .reverse();
 
-  const getLessonHref = (lessonId: string) =>
+const getLessonHref = (lessonId: string) =>
     `/foundation/${lessonId}/${courseId}`;
+
+  const getVocabHref = (bridgeId: string) =>
+    `/foundation/vocab/${bridgeId}`;
 
   const getBossHref = (bossId: string) => `/foundation/boss/${bossId}`;
 
@@ -118,9 +121,11 @@ export default function FoundationHubPage({
       stepLabel = `Start Spoon ${spoonNum}`;
     } else if (currentFocus?.type === "BRIDGE" && vocabDue && !waitingOnVocab) {
       const spoonNum = (vocabDue as any)?.orderIndex ?? completedLessonsCount;
+      const bridgeId =
+        (vocabDue as any)?.bridge?.id ?? (vocabDue as any)?.id;
       orderIndex = getBridgeSpriteOrderIndex(spoonNum);
-      actionHref = getLessonHref(vocabDue.id);
-      stepLabel = "Unlock Bridge";
+      actionHref = getVocabHref(bridgeId);
+      stepLabel = `Unlock Bridge ${spoonNum}`;
     } else if (currentFocus?.type === "BOSS" && bossDue && !waitingOnBoss) {
       const milestoneNum =
         (bossDue as any)?.milestoneIndex ??
@@ -284,10 +289,12 @@ export default function FoundationHubPage({
                       (bossDue as any)?.id ??
                       courseId
                   )
-                : nextLesson
-                  ? getLessonHref(nextLesson.id)
-                  : vocabDue
-                    ? getLessonHref(vocabDue.id)
+                : currentFocus?.type === "BRIDGE" && vocabDue
+                  ? getVocabHref(
+                      (vocabDue as any)?.bridge?.id ?? (vocabDue as any)?.id
+                    )
+                  : nextLesson
+                    ? getLessonHref(nextLesson.id)
                     : undefined,
             activeStepLabel:
               currentFocus?.type === "BOSS"
