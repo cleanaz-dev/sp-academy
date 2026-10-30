@@ -209,6 +209,7 @@ NO ACTIVE CHALKBOARD DECK YET:
   2. "multiple_choice": A clear prompt, 3 options in "options", and "correctAnswer".
   3. "write_response": A translation/fill-blank prompt, optional "hint", and "correctAnswer".
   4. "pronunciation": A speaking prompt with targetPhrase and phonetic/grammarTip.
+  5. "imagePrompt": "Optional 1-sentence visual scene description (no text in image) when asking 'What is this?' or showing a visual cue, otherwise null"
 - In your spoken text (1-2 sentences max), introduce ONLY Step 1!
 `;
 

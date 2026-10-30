@@ -28,8 +28,10 @@ export const BoardStepSchema = z.object({
   hint: z.string().nullable().optional(),
   options: z.array(z.string()).nullable().optional(),
   correctAnswer: z.string().nullable().optional(),
+  // 🟢 NEW: Visual Flashcard / Picture Prompt support on any Chalkboard step!
+  imagePrompt: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
 
-  // 🟢 NEW: Per-step learner telemetry for custom exercise generation!
   userAttempts: z.array(z.string()).default([]),
   struggled: z.boolean().default(false),
   correctionGiven: BoardFeedbackSchema.nullable().optional(),

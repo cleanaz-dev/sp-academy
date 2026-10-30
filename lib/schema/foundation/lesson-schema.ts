@@ -9,6 +9,7 @@ export const visualContentSchema = z.object({
   sceneDescription: z.string(),
   altText: z.string(),
   npcLine: z.string(),
+  nativeNpcLine: z.string().optional().default(""), // 🟢 NEW: Backward-compatible!
   constraint: z.object({
     requiredChunk: z.string(),
     validReplies: z.array(z.string()),
