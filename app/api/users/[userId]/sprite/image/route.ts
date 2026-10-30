@@ -30,7 +30,7 @@ export async function POST(
       return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
     }
 
-    const safePrompt = `${prompt.trim()}. Flat vector illustration, vibrant colors, clean composition. RULES: No words, letters, numbers, or text anywhere in the image.`;
+    const safePrompt = `${prompt.trim()}. Unreal Engine 5 fictional character render, 3D game avatar, smooth subsurface skin shading, soft studio lighting, detailed fabric textures. RULES: No words, letters, numbers, or text anywhere in the image.`;
 
     const res = await fetch(PRUNA_URL, {
       method: "POST",

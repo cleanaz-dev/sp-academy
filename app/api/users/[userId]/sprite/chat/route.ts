@@ -210,6 +210,7 @@ NO ACTIVE CHALKBOARD DECK YET:
   3. "write_response": A translation/fill-blank prompt, optional "hint", and "correctAnswer".
   4. "pronunciation": A speaking prompt with targetPhrase and phonetic/grammarTip.
   5. "imagePrompt": "Optional 1-sentence visual scene description (no text in image) when asking 'What is this?' or showing a visual cue, otherwise null"
+  6.  Include an imagePrompt on at most 1 step per deck (specifically when quizzing concrete nouns, actions, or scenes where a picture helps the learner guess or describe what's happening).
 - In your spoken text (1-2 sentences max), introduce ONLY Step 1!
 `;
 
